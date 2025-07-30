@@ -1,157 +1,125 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Bonanza GPS Test</title>
-  <meta charset="utf-8">
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-    .form-container {
-      position: absolute;
-      top: 50px;
-      left: 50px;
-      background-color: rgba(0, 43, 0, 0.85); /* verde oscuro con opacidad */
-      padding: 20px;
-      border-radius: 16px;
-      color: white;
-      width: 340px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      z-index: 999;
-    }
-    .form-container h2 {
-      margin-top: 0;
-      color: #FFD700;
-      font-size: 20px;
-    }
-    .form-container label {
-      display: block;
-      margin-top: 10px;
-      margin-bottom: 4px;
-      font-weight: bold;
-    }
-    .form-container input, .form-container select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 8px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    .form-container button {
-      width: 100%;
-      padding: 10px;
-      background-color: #FFD700;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 16px;
-      color: #003300;
-      cursor: pointer;
-    }
-    .form-container button:hover {
-      background-color: #ffe760;
-    }
-  <script>
-function calculateDistanceAndPrice() {
-    const origin = document.getElementById('pickup').value;
-    const destination = document.getElementById('dropoff').value;
-    const datetime = new Date(document.getElementById('datetime').value);
+  <head>
+    <title>Bonanza GPS Test</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #003300;
+        color: #fff;
+      }
 
-    if (!origin || !destination || !datetime) return;
+      .form-container {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: #004d00;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+        width: 280px;
+      }
 
-    const hour = datetime.getHours();
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
 
-    const service = new google.maps.DistanceMatrixService();
+      input {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 8px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+      }
 
-    service.getDistanceMatrix({
-        origins: [origin],
-        destinations: [destination],
-        travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.IMPERIAL,
-    }, function (response, status) {
-        if (status !== 'OK') {
-            alert('Error calculating distance: ' + status);
-            return;
-        }
+      button {
+        width: 100%;
+        padding: 10px;
+        background-color: #ffd700;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 16px;
+        color: #003300;
+        cursor: pointer;
+      }
 
-        const distanceText = response.rows[0].elements[0].distance.text;
-        const miles = parseFloat(distanceText.replace('mi', '').replace(',', '').trim());
+      .form-container button:hover {
+        background-color: #ffe760;
+      }
 
-        let price = 0;
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
 
-        if (miles <= 10) price = 120;
-        else if (miles <= 35) price = 190;
-        else if (miles <= 39) price = 210;
-        else if (miles <= 48) price = 230;
-        else if (miles <= 55) price = 250;
-        else price = miles * 5.40;
+      .logo-container {
+        text-align: center;
+        margin-top: 20px;
+      }
 
-        // Recargo nocturno
-        if (hour < 6 || hour >= 22) {
-            price += 100;
-        }
+      .logo-container img {
+        width: 180px;
+        border-radius: 50%;
+        box-shadow: 4px 8px 8px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
 
-        document.getElementById('price').value = `$${price.toFixed(2)}`;
-    });
-}
+  <body>
+    <div class="logo-container">
+      <img
+        src="https://bonanza11.github.io/bonanza-gps/logo-bonanza.png"
+        alt="Bonanza Transportation Logo"
+      />
+    </div>
 
-// Ejecuta la función cuando cambian los valores
-document.getElementById('pickup').addEventListener('change', calculateDistanceAndPrice);
-document.getElementById('dropoff').addEventListener('change', calculateDistanceAndPrice);
-document.getElementById('datetime').addEventListener('change', calculateDistanceAndPrice);
-</script>
-                                                     
-<body>
-                                                     <div style="text-align: center; margin-top: 20px;">
-  <img src="https://bonanza11.github.io/bonanza-gps/logo-bonanza.png" alt="Bonanza Transportation Logo" style="width: 180px; border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.3);" />
-</div>
+    <div class="form-container">
+      <h2>Bonanza Reservation</h2>
 
-                                                     
-  <div class="form-container">
-    <h2>Bonanza Reservation</h2>
-    <label for="pickup">Pick-up Address:</label>
-    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy">
+      <label for="pickup">Pick-up Address:</label>
+      <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
 
-    <label for="dropoff">Drop-off Address:</label>
-    <input type="text" id="dropoff" placeholder="e.g. SLC Airport">
+      <label for="dropoff">Drop-off Address:</label>
+      <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
 
-    <label for="datetime">Date & Time:</label>
-    <input type="datetime-local" id="datetime">
+      <label for="datetime">Date & Time:</label>
+      <input type="datetime-local" id="datetime" />
 
-    <label for="flight">Flight Number (if airport):</label>
-    <input type="text" id="flight" placeholder="Optional">
+      <label for="flight">Flight Number (if airport):</label>
+      <input type="text" id="flight" placeholder="Optional" />
 
-    <label for="price">Estimated Price:</label>
-<input type="text" id="price" value="$0.00" readonly style="background-color: #f5f5f5;">
+      <label for="price">Estimated Price:</label>
+      <input type="text" id="price" value="$0.00" readonly style="background-color: #f5f5f5;" />
 
-    <button onclick="submitReservation()">Book Now</button>
-  </div>
+      <button onclick="submitReservation()">Book Now</button>
+    </div>
 
-  <div id="map"></div>
+    <div id="map"></div>
 
-  <script>
-    function initMap() {
-      const center = { lat: 40.7740, lng: -111.4455 };
-      new google.maps.Map(document.getElementById("map"), {
-        zoom: 7,
-        center: center
-      });
-    }
+    <script>
+      function initMap() {
+        const center = { lat: 40.7740, lng: -111.4455 };
+        new google.maps.Map(document.getElementById("map"), {
+          zoom: 7,
+          center: center,
+        });
+      }
 
-    function submitReservation() {
-      alert("This is a test submission.\nThe full reservation system will be connected soon.");
-    }
-  </script>
+      function submitReservation() {
+        alert("This is a test submission.\nThe full reservation system will be connected soon.");
+      }
+    </script>
 
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&callback=initMap"></script>
-
-  </script>
-</body>
+    <script
+      async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&callback=initMap"
+    ></script>
+  </body>
 </html>
