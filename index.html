@@ -60,6 +60,46 @@
     }
   </style>
 </head>
+  <script>
+  function calculateDistanceAndPrice() {
+    const origin = document.getElementById('pickup').value;
+    const destination = document.getElementById('dropoff').value;
+
+    if (!origin || !destination) return;
+
+    const service = new google.maps.DistanceMatrixService();
+
+    service.getDistanceMatrix(
+      {
+        origins: [origin],
+        destinations: [destination],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.IMPERIAL,
+      },
+      function (response, status) {
+        if (status === 'OK') {
+          const distanceText = response.rows[0].elements[0].distance.text;
+          const miles = parseFloat(distanceText.replace('mi', '').replace(',', ''));
+
+          let price = 0;
+
+          if (miles <= 10) price = 120;
+          else if (miles <= 35) price = 190;
+          else if (miles <= 39) price = 210;
+          else if (miles <= 48) price = 230;
+          else if (miles <= 55) price = 250;
+          else price = miles * 5.40;
+
+          document.getElementById('price').value = `$${price.toFixed(2)}`;
+        }
+      }
+    );
+  }
+
+  // Escucha cambios en los campos
+  document.getElementById('pickup').addEventListener('change', calculateDistanceAndPrice);
+  document.getElementById('dropoff').addEventListener('change', calculateDistanceAndPrice);
+</script>
 <body>
   <div class="form-container">
     <h2>Bonanza Reservation</h2>
@@ -76,7 +116,7 @@
     <input type="text" id="flight" placeholder="Optional">
 
     <label for="price">Estimated Price:</label>
-    <input type="text" id="price" value="$0.00" disabled>
+<input type="text" id="price" value="$0.00" readonly style="background-color: #f5f5f5;">
 
     <button onclick="submitReservation()">Book Now</button>
   </div>
