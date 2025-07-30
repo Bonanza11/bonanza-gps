@@ -58,54 +58,55 @@
     .form-container button:hover {
       background-color: #ffe760;
     }
-  </style>
+  <script>
 function calculateDistanceAndPrice() {
-  const origin = document.getElementById('pickup').value.trim();
-  const destination = document.getElementById('dropoff').value.trim();
-  const dateTime = new Date(document.getElementById('datetime').value);
-  const flight = document.getElementById('flight').value.trim().toUpperCase();
+    const origin = document.getElementById('pickup').value;
+    const destination = document.getElementById('dropoff').value;
+    const datetime = new Date(document.getElementById('datetime').value);
 
-  if (!origin || !destination || !dateTime) return;
+    if (!origin || !destination || !datetime) return;
 
-  const service = new google.maps.DistanceMatrixService();
+    const hour = datetime.getHours();
 
-  service.getDistanceMatrix(
-    {
-      origins: [origin],
-      destinations: [destination],
-      travelMode: google.maps.TravelMode.DRIVING,
-      unitSystem: google.maps.UnitSystem.IMPERIAL,
-    },
-    (response, status) => {
-      if (status !== 'OK') return;
+    const service = new google.maps.DistanceMatrixService();
 
-      const distanceText = response.rows[0].elements[0].distance.text;
-      const miles = parseFloat(distanceText.replace(/[^0-9.]/g, ''));
-      let price = 0;
+    service.getDistanceMatrix({
+        origins: [origin],
+        destinations: [destination],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.IMPERIAL,
+    }, function (response, status) {
+        if (status !== 'OK') {
+            alert('Error calculating distance: ' + status);
+            return;
+        }
 
-      // Precios por millas
-      if (miles <= 10) price = 120;
-      else if (miles <= 35) price = 190;
-      else if (miles <= 39) price = 210;
-      else if (miles <= 48) price = 230;
-      else if (miles <= 55) price = 250;
-      else price = miles * 5.40;
+        const distanceText = response.rows[0].elements[0].distance.text;
+        const miles = parseFloat(distanceText.replace('mi', '').replace(',', '').trim());
 
-      // Recargo nocturno
-      const hour = dateTime.getHours();
-      if (hour < 6.5 || hour > 22.5) {
-        price += 100;
-      }
+        let price = 0;
 
-      // Meet & Greet solo si es SLC
-      if (origin.toUpperCase().includes("SLC") && flight !== "") {
-        price += 60;
-      }
+        if (miles <= 10) price = 120;
+        else if (miles <= 35) price = 190;
+        else if (miles <= 39) price = 210;
+        else if (miles <= 48) price = 230;
+        else if (miles <= 55) price = 250;
+        else price = miles * 5.40;
 
-      document.getElementById('price').value = `$${price.toFixed(2)}`;
-    }
-  );
+        // Recargo nocturno
+        if (hour < 6 || hour >= 22) {
+            price += 100;
+        }
+
+        document.getElementById('price').value = `$${price.toFixed(2)}`;
+    });
 }
+
+// Ejecuta la función cuando cambian los valores
+document.getElementById('pickup').addEventListener('change', calculateDistanceAndPrice);
+document.getElementById('dropoff').addEventListener('change', calculateDistanceAndPrice);
+document.getElementById('datetime').addEventListener('change', calculateDistanceAndPrice);
+</script>
 
 <body>
   <div class="form-container">
