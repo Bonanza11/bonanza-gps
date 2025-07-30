@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza GPS</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -138,12 +136,26 @@
   <div id="map"></div>
 
   <script>
+    let map;
+    let pickupAutocomplete;
+    let dropoffAutocomplete;
+
     function initMap() {
       const center = { lat: 40.7740, lng: -111.4455 };
-      new google.maps.Map(document.getElementById("map"), {
+
+      map = new google.maps.Map(document.getElementById("map"), {
         zoom: 6,
         center: center,
       });
+
+      const pickupInput = document.getElementById("pickup");
+      const dropoffInput = document.getElementById("dropoff");
+
+      pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
+      dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
+
+      pickupAutocomplete.bindTo("bounds", map);
+      dropoffAutocomplete.bindTo("bounds", map);
     }
 
     function submitReservation() {
@@ -151,6 +163,8 @@
     }
   </script>
 
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&callback=initMap"></script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
+  </script>
 </body>
 </html>
