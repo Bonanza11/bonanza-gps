@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza GPS</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -12,35 +16,50 @@
 
     .header {
       background-color: #013220;
-      padding: 20px;
       text-align: center;
+      padding: 10px;
     }
 
     .header img {
-      width: 180px;
+      width: 130px;
+      max-width: 80%;
+      height: auto;
       border-radius: 50%;
-      box-shadow: 4px 8px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.4);
     }
 
     .form-container {
       position: absolute;
-      top: 80px;
+      top: 135px;
       left: 20px;
       background-color: #013220;
       color: white;
-      padding: 20px;
+      padding: 15px;
       border-radius: 10px;
       box-shadow: 4px 8px 8px rgba(0, 0, 0, 0.3);
-      width: 260px;
+      width: 280px;
+      max-width: 90%;
       z-index: 10;
+    }
+
+    .form-container h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .form-container label {
+      font-size: 14px;
+      display: block;
+      margin-top: 10px;
     }
 
     .form-container input {
       width: 100%;
       padding: 8px;
-      margin: 8px 0;
+      margin-top: 4px;
       border: none;
       border-radius: 5px;
+      font-size: 14px;
     }
 
     #price {
@@ -57,11 +76,37 @@
       font-weight: bold;
       border-radius: 5px;
       cursor: pointer;
+      margin-top: 15px;
     }
 
     #map {
       width: 100%;
       height: 100vh;
+    }
+
+    @media screen and (max-width: 600px) {
+      .form-container {
+        left: 5%;
+        top: 150px;
+        width: 90%;
+      }
+
+      .header img {
+        width: 100px;
+      }
+
+      .form-container h3 {
+        font-size: 16px;
+      }
+
+      .form-container label,
+      .form-container input {
+        font-size: 13px;
+      }
+
+      .form-container button {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -96,7 +141,7 @@
     function initMap() {
       const center = { lat: 40.7740, lng: -111.4455 };
       new google.maps.Map(document.getElementById("map"), {
-        zoom: 7,
+        zoom: 6,
         center: center,
       });
     }
