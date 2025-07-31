@@ -16,12 +16,12 @@
       padding: 20px;
     }
     header img {
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      border: 4px solid #FFD700;
+      width: 160px;
+      height: 160px;
       object-fit: cover;
-      background: white;
+      border-radius: 50%;
+      border: 4px solid gold;
+      box-shadow: 0 0 15px gold;
     }
     main {
       display: flex;
@@ -33,7 +33,7 @@
       background: #003300dd;
       padding: 20px;
       border-radius: 10px;
-      max-width: 350px;
+      max-width: 400px;
       width: 100%;
       margin-bottom: 10px;
     }
@@ -48,7 +48,7 @@
       border: none;
     }
     button {
-      background: #FFD700;
+      background: gold;
       border: none;
       padding: 10px;
       font-weight: bold;
@@ -58,20 +58,19 @@
     }
     #map {
       width: 100%;
-      height: 500px;
+      height: 350px;
       border-radius: 10px;
+      overflow: hidden;
     }
     #infoBox {
       margin-top: 10px;
       background: #004400dd;
       padding: 10px;
       border-radius: 10px;
-      max-width: 350px;
-      width: 100%;
     }
     @media (max-width: 768px) {
-      #map {
-        height: 300px;
+      #formContainer {
+        max-width: 100%;
       }
     }
   </style>
@@ -116,6 +115,9 @@
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7769, lng: -111.8910 },
         zoom: 9,
+        gestureHandling: "none",
+        zoomControl: false,
+        scrollwheel: false,
       });
 
       directionsService = new google.maps.DirectionsService();
