@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,8 +7,8 @@
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0b0b0b;
+      font-family: Arial, sans-serif;
+      background-color: #121212;
       color: gold;
     }
     header {
@@ -17,147 +17,129 @@
     }
     header img {
       width: 150px;
-      height: 150px;
       border-radius: 50%;
-      border: 4px solid gold;
+      border: 3px solid gold;
     }
     main {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 15px;
+      padding: 10px;
     }
     #formContainer {
-      background: #1a1a1a;
+      background: #1c1c1c;
       padding: 20px;
-      border-radius: 12px;
+      border-radius: 10px;
       max-width: 400px;
       width: 100%;
-      margin-bottom: 15px;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+      margin-bottom: 10px;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
     }
     label {
       font-weight: bold;
       margin-top: 10px;
-      color: gold;
     }
     input {
       display: block;
       width: 100%;
+      margin-bottom: 10px;
       padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 12px;
-      border-radius: 6px;
+      border-radius: 5px;
       border: none;
       background-color: #333;
       color: white;
     }
-    input::placeholder {
-      color: #aaa;
-    }
     button {
       background: gold;
       color: black;
+      font-weight: bold;
       border: none;
       padding: 12px;
-      font-weight: bold;
-      width: 100%;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
+      width: 100%;
     }
-    #map {
+        #map {
       width: 100%;
       height: 400px;
-      border-radius: 12px;
-      overflow: hidden;
+      border-radius: 10px;
+      margin-top: 20px;
     }
     #infoBox {
-      margin-top: 12px;
-      background: #141414;
-      padding: 12px;
+      margin-top: 15px;
+      background: #2a2a2a;
+      padding: 15px;
       border-radius: 10px;
       font-size: 14px;
-      line-height: 1.5;
     }
-    .info-title {
-      font-weight: bold;
-      color: gold;
-    }
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       #formContainer {
         max-width: 100%;
-        padding: 15px;
-      }
-      #map {
-        height: 300px;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo-bonanza.png" alt="Bonanza Transportation Logo"/>
+    <img src="logo-bonanza.png" alt="Bonanza Logo"/>
   </header>
+
   <main>
     <div id="formContainer">
-      <label>Full Name:</label>
-      <input id="fullname" type="text" placeholder="John Doe"/>
+      <label>First & Last Name:</label>
+      <input type="text" id="fullname" placeholder="John Doe">
 
       <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="e.g. (801) 123-4567"/>
+      <input type="tel" id="phone" placeholder="(123) 456-7890">
 
-      <label>Email:</label>
-      <input id="email" type="email" placeholder="e.g. your@email.com"/>
+      <label>Email Address:</label>
+      <input type="email" id="email" placeholder="john@example.com">
 
       <label>Pick-up Address:</label>
-      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy"/>
+      <input type="text" id="pickup" placeholder="13742 N Jordanelle Pkwy">
 
       <label>Drop-off Address:</label>
-      <input id="dropoff" type="text" placeholder="e.g. SLC Airport"/>
+      <input type="text" id="dropoff" placeholder="SLC Airport">
 
       <label>Date & Time:</label>
-      <input id="datetime" type="datetime-local"/>
+      <input type="datetime-local" id="datetime">
 
       <label>Flight Number (if airport):</label>
-      <input id="flight" type="text" placeholder="Optional"/>
-
-      <label>Estimated Price:</label>
-      <input id="price" type="text" readonly value="$0.00" style="background:#eee; color:black;"/>
+      <input type="text" id="flight" placeholder="Optional">
       
       <button onclick="calculateRoute()">Calculate Price</button>
+
+      <label>Estimated Price:</label>
+      <input type="text" id="price" readonly value="$0.00" style="background-color:#444;">
     </div>
-    <div id="infoBox">
-      <div><span class="info-title">Distance:</span> <span id="distance">—</span></div>
-      <div><span class="info-title">Duration:</span> <span id="duration">—</span></div>
-      <div><span class="info-title">Note:</span> Pet-Friendly Service (No Extra Charge)</div>
-      <div><span class="info-title">SUV Capacity:</span> 1 to 5 passengers</div>
-      <div><span class="info-title">Luggage Options:</span><br/>
-        Option 1: 5 ski bags, 2 large, 3 small suitcases<br/>
-        Option 2: 3 large, 4 small suitcases
-      </div>
+        <div id="infoBox">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div style="margin-top:10px;"><strong>Vehicle:</strong> Up to 5 passengers (Captain's chairs)</div>
+      <div><strong>Luggage:</strong> Option 1: 5 ski bags, 2 large bags, 3 small bags</div>
+      <div><strong></strong>Option 2: 3 large bags, 4 small bags</div>
     </div>
+
     <div id="map"></div>
-      </main>
+  </main>
 
   <script>
     let map, directionsService, directionsRenderer;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.758701, lng: -111.876183 },
+        center: { lat: 40.7769, lng: -111.8910 },
         zoom: 9,
-        gestureHandling: "greedy"
+        disableDefaultUI: false,
+        gestureHandling: "greedy" // permite tocar en móvil sin zoom forzado
       });
 
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
-
-      const pickupInput = document.getElementById("pickup");
-      const dropoffInput = document.getElementById("dropoff");
-
-      new google.maps.places.Autocomplete(pickupInput);
-      new google.maps.places.Autocomplete(dropoffInput);
+      directionsRenderer = new google.maps.DirectionsRenderer({ map });
+      
+      new google.maps.places.Autocomplete(document.getElementById("pickup"));
+      new google.maps.places.Autocomplete(document.getElementById("dropoff"));
     }
 
     function calculateRoute() {
@@ -165,7 +147,7 @@
       const dropoff = document.getElementById("dropoff").value;
 
       if (!pickup || !dropoff) {
-        alert("Please enter both pick-up and drop-off addresses.");
+        alert("Please enter both pickup and drop-off addresses.");
         return;
       }
 
@@ -194,14 +176,14 @@
 
           document.getElementById("price").value = "$" + price.toFixed(2);
         } else {
-          alert("Could not calculate route. Please check the addresses.");
+          alert("Could not calculate the route. Please check the addresses.");
         }
       });
     }
   </script>
 
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"
-    async defer></script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
+  </script>
 </body>
 </html>
