@@ -1,200 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – Luxury GPS Quote</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Arial', sans-serif;
-      background-color: #000;
-      color: #c29c74;
-    }
-    header {
-      text-align: center;
-      padding: 20px;
-    }
-    header img {
-      width: 160px;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 3px solid #c29c74;
-    }
-    main {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-    }
-    #formContainer {
-      background: #111;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 360px;
-      width: 100%;
-      box-shadow: 0 0 10px #c29c74aa;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    input {
-      padding: 8px;
-      width: 100%;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      border: none;
-      background-color: #222;
-      color: #c29c74;
-    }
-    button {
-      background: #c29c74;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      padding: 10px;
-      width: 100%;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #map {
-      width: 100%;
-      height: 400px;
-      margin-top: 20px;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    #infoBox {
-      background: #111;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-      max-width: 360px;
-      text-align: left;
-      font-size: 0.95em;
-      line-height: 1.6;
-    }
-    strong {
-      color: #d8b887;
-    }
-    @media (max-width: 768px) {
-      #formContainer, #infoBox {
-        width: 100%;
-      }
-      #map {
-        height: 300px;
-      }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bonanza Transportation – Luxury GPS Quote</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #000;
+      color: #c29c74;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #c29c74;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+    #formContainer {
+      background: #111;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 0 10px #c29c74aa;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    input {
+      padding: 8px;
+      width: 100%;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      border: none;
+      background-color: #222;
+      color: #c29c74;
+    }
+    button {
+      background: #c29c74;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 10px;
+      width: 100%;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #infoBox {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      max-width: 360px;
+      text-align: left;
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+    strong {
+      color: #d8b887;
+    }
+    @media (max-width: 768px) {
+      #formContainer, #infoBox {
+        width: 100%;
+      }
+      #map {
+        height: 300px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <img src="logo-bonanza.png" alt="Bonanza Logo">
-  </header>
-  <main>
-    <div id="formContainer">
-      <label>First & Last Name:</label>
-      <input id="fullname" type="text" placeholder="John Doe">
+  <header>
+    <img src="logo-bonanza.png" alt="Bonanza Logo">
+  </header>
+  <main>
+    <div id="formContainer">
+      <label>First & Last Name:</label>
+      <input id="fullname" type="text" placeholder="John Doe">
 
-      <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567">
+      <label>Phone Number:</label>
+      <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567">
 
-      <label>Email Address:</label>
-      <input id="email" type="email" placeholder="example@email.com">
+      <label>Email Address:</label>
+      <input id="email" type="email" placeholder="example@email.com">
 
-      <label>Pick-up Address:</label>
-      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
+      <label>Pick-up Address:</label>
+      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
 
-      <label>Drop-off Address:</label>
-      <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
+      <label>Drop-off Address:</label>
+      <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
 
-      <label>Date & Time:</label>
-      <input id="datetime" type="datetime-local">
+      <label>Date & Time:</label>
+      <input id="datetime" type="datetime-local">
 
-      <label>Flight Number (if airport):</label>
-      <input id="flight" type="text" placeholder="Optional">
+      <label>Flight Number (if airport):</label>
+      <input id="flight" type="text" placeholder="Optional">
 
-      <label>Estimated Price:</label>
-      <input id="price" type="text" readonly value="$0.00" style="background:#333;">
-      
-      <button onclick="calculateRoute()">Calculate Price</button>
-    </div>
+      <label>Estimated Price:</label>
+      <input id="price" type="text" readonly value="$0.00" style="background:#333;">
+      
+      <button onclick="calculateRoute()">Calculate Price</button>
+    </div>
 
-    <div id="map"></div>
+    <div id="map"></div>
 
-    <div id="infoBox">
-      <div><strong>Distance:</strong> <span id="distance">—</span></div>
-      <div><strong>Duration:</strong> <span id="duration">—</span></div>
-      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
-      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
-      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Standard Rate Hours:</strong> 6:30 AM – 10:30 PM</div>
-      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
-      <div><strong>We are a 5-Star, 5-Diamond Luxury Transportation Company</strong></div>
-    </div>
-  </main>
+    <div id="infoBox">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
+      <div><strong>Standard Rate Hours:</strong> 6:30 AM – 10:30 PM</div>
+      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
+      <div><strong>We are a 5-Star, 5-Diamond Luxury Transportation Company</strong></div>
+    </div>
+  </main>
 
-  <script>
-    let map, directionsService, directionsRenderer;
+  <script>
+    let map, directionsService, directionsRenderer;
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.7769, lng: -111.8910 },
-        zoom: 9,
-        disableDefaultUI: false
-      });
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7769, lng: -111.8910 },
+        zoom: 9,
+        disableDefaultUI: false
+      });
 
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
-      directionsRenderer.setMap(map);
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+      directionsRenderer.setMap(map);
 
-      const pickupInput = document.getElementById('pickup');
-      const dropoffInput = document.getElementById('dropoff');
+      const pickupInput = document.getElementById('pickup');
+      const dropoffInput = document.getElementById('dropoff');
 
-      new google.maps.places.Autocomplete(pickupInput);
-      new google.maps.places.Autocomplete(dropoffInput);
-    }
+      new google.maps.places.Autocomplete(pickupInput);
+      new google.maps.places.Autocomplete(dropoffInput);
+    }
 
-    function calculateRoute() {
-      const pickup = document.getElementById("pickup").value;
-      const dropoff = document.getElementById("dropoff").value;
+    function calculateRoute() {
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
 
-      if (!pickup || !dropoff) {
-        alert("Please enter both addresses.");
-        return;
-      }
+      if (!pickup || !dropoff) {
+        alert("Please enter both addresses.");
+        return;
+      }
 
-      directionsService.route({
-        origin: pickup,
-        destination: dropoff,
-        travelMode: google.maps.TravelMode.DRIVING
-      }, (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-          const route = response.routes[0].legs[0];
-          const distanceMiles = route.distance.value / 1609.34;
-          const durationText = route.duration.text;
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
 
-          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
-          document.getElementById("duration").textContent = durationText;
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
 
-          let price = 0;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
 
-          document.getElementById("price").value = "$" + price.toFixed(2);
-        } else {
-          alert("Could not calculate route. Please check the addresses.");
-        }
-      });
-    }
-  </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+          document.getElementById("price").value = "$" + price.toFixed(2);
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
+        }
+      });
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
