@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza GPS Demo</title>
+  <title>Bonanza GPS</title>
   <style>
     body {
       background-color: #003300;
@@ -53,6 +53,7 @@
   <img src="logo-bonanza.png" alt="Bonanza Transportation Logo" id="logo" />
   <div class="container">
     <h2>Bonanza Transportation</h2>
+
     <label for="pickup">Pickup Address</label>
     <input id="pickup" type="text" placeholder="Enter pickup location" />
 
@@ -78,4 +79,63 @@
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer();
 
-      map =
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.646062, lng: -111.498444 },
+        zoom: 9,
+      });
+
+      directionsRenderer.setMap(map);
+
+      const pickup = document.getElementById("pickup");
+      const dropoff = document.getElementById("dropoff");
+
+      pickupAutocomplete = new google.maps.places.Autocomplete(pickup);
+      dropoffAutocomplete = new google.maps.places.Autocomplete(dropoff);
+
+      [pickup, dropoff].forEach(field => {
+        field.addEventListener("change", () => {
+          calculateAndDisplayRoute();
+        });
+      });
+    }
+
+    function calculateAndDisplayRoute() {
+      const origin = document.getElementById("pickup").value;
+      const destination = document.getElementById("dropoff").value;
+
+      if (!origin || !destination) return;
+
+      directionsService.route(
+        {
+          origin,
+          destination,
+          travelMode: google.maps.TravelMode.DRIVING,
+        },
+        (response, status) => {
+          if (status === "OK") {
+            directionsRenderer.setDirections(response);
+
+            const distanceInMeters = response.routes[0].legs[0].distance.value;
+            const miles = distanceInMeters / 1609.34;
+            const price = calculatePrice(miles);
+            document.getElementById("price").value = `$${price.toFixed(2)}`;
+          }
+        }
+      );
+    }
+
+    function calculatePrice(miles) {
+      if (miles <= 10) return 120;
+      if (miles <= 35) return 190;
+      if (miles <= 39) return 210;
+      if (miles <= 48) return 230;
+      if (miles <= 55) return 250;
+      return miles * 5.4;
+    }
+  </script>
+
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
+  </script>
+</body>
+</html>
