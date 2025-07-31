@@ -17,6 +17,11 @@
     }
     header img {
       width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 4px solid #FFD700;
+      object-fit: cover;
+      background: white;
     }
     main {
       display: flex;
@@ -43,7 +48,7 @@
       border: none;
     }
     button {
-      background: gold;
+      background: #FFD700;
       border: none;
       padding: 10px;
       font-weight: bold;
@@ -54,19 +59,19 @@
     #map {
       width: 100%;
       height: 500px;
+      border-radius: 10px;
     }
     #infoBox {
       margin-top: 10px;
       background: #004400dd;
       padding: 10px;
       border-radius: 10px;
+      max-width: 350px;
+      width: 100%;
     }
     @media (max-width: 768px) {
-      main {
-        padding: 10px;
-      }
-      #formContainer {
-        max-width: 100%;
+      #map {
+        height: 300px;
       }
     }
   </style>
@@ -94,11 +99,13 @@
 
       <button onclick="calculateRoute()">Calculate Price</button>
     </div>
+
     <div id="infoBox">
       <div><strong>Distance:</strong> <span id="distance">—</span></div>
       <div><strong>Duration:</strong> <span id="duration">—</span></div>
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
     </div>
+
     <div id="map"></div>
   </main>
 
