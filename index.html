@@ -1,213 +1,203 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – GPS System</title>
+  <title>Bonanza Transportation – GPS Quote</title>
   <style>
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
-      background-color: #0d1b16;
-      color: #f0e6d2;
+      background-color: #000;
+      color: #cba77f;
     }
-
     header {
       text-align: center;
       padding: 20px;
     }
-
     header img {
-      width: 160px;
+      width: 180px;
       border-radius: 50%;
-      border: 3px solid gold;
+      border: 3px solid #cba77f;
+      background-color: #000;
     }
-
     main {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: 10px;
     }
-
     #formContainer {
-      background-color: #11291f;
+      background: rgba(30, 30, 30, 0.95);
       padding: 20px;
       border-radius: 12px;
       max-width: 380px;
       width: 100%;
-      box-shadow: 0 0 10px #00000088;
+      box-shadow: 0 0 15px #cba77f66;
+      margin-bottom: 10px;
     }
-
     label {
       display: block;
-      margin-top: 10px;
+      margin-bottom: 5px;
       font-weight: bold;
-      color: gold;
+      color: #f0c282;
     }
-
     input {
+      display: block;
       width: 100%;
       padding: 10px;
-      border-radius: 6px;
-      border: none;
-      margin-top: 5px;
-      background-color: #1c3a2d;
-      color: white;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #cba77f;
+      background: #111;
+      color: #f5f5f5;
     }
-
-    input::placeholder {
-      color: #cccccc;
+    input:focus {
+      outline: none;
+      border-color: #ffcc99;
     }
-
     button {
-      background: gold;
-      color: #0d1b16;
+      background: #cba77f;
+      color: #000;
       font-weight: bold;
       padding: 12px;
       width: 100%;
       border: none;
       border-radius: 8px;
-      margin-top: 15px;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
-
     button:hover {
-      background-color: #ffcc00;
+      background: #dcb07e;
     }
+   #map {
+      width: 100%;
+      height: 400px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
 
-    #map {
-      margin-top: 20px;
-      width: 100%;
-      height: 400px;
-      border-radius: 10px;
-    }
+    #infoBox {
+      margin-top: 12px;
+      background: #111;
+      padding: 15px;
+      border-radius: 12px;
+      color: #e2c08d;
+      box-shadow: 0 0 10px #cba77f44;
+    }
 
-    #infoBox {
-      background-color: #1a3c2c;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-      width: 100%;
-      max-width: 380px;
-      color: #ffffff;
-    }
-
-    @media (max-width: 768px) {
-      #formContainer, #infoBox {
-        max-width: 100%;
-      }
-
-      #map {
-        height: 300px;
-      }
-    }
-  </style>
+    @media (max-width: 768px) {
+      #formContainer {
+        max-width: 100%;
+      }
+      #map {
+        height: 300px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <img src="logo-bonanza.png" alt="Bonanza Logo"/>
-  </header>
-  <main>
-    <div id="formContainer">
-      <label>Full Name:</label>
-      <input id="fullname" type="text" placeholder="John Doe">
+  <header>
+    <img src="logo-bonanza.png" alt="Bonanza Logo">
+  </header>
+  <main>
+    <div id="formContainer">
+      <label>Full Name:</label>
+      <input id="fullname" type="text" placeholder="Your name">
 
-      <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="+1 (123) 456-7890">
+      <label>Phone Number:</label>
+      <input id="phone" type="tel" placeholder="e.g. (123) 456-7890">
 
-      <label>Email Address:</label>
-      <input id="email" type="email" placeholder="you@example.com">
+      <label>Email:</label>
+      <input id="email" type="email" placeholder="example@email.com">
 
-      <label>Pick-up Address:</label>
-      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
+      <label>Pick-up Address:</label>
+      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
 
-      <label>Drop-off Address:</label>
-      <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
-            <label>Date & Time:</label>
-      <input id="datetime" type="datetime-local">
+      <label>Drop-off Address:</label>
+      <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
 
-      <label>Flight Number (optional):</label>
-      <input id="flight" type="text" placeholder="Only if airport pick-up">
+      <label>Date & Time:</label>
+      <input id="datetime" type="datetime-local">
 
-      <label>Estimated Price:</label>
-      <input id="price" type="text" readonly style="background-color:#2f4f3f; color:white;"/>
+      <label>Flight Number (if airport):</label>
+      <input id="flight" type="text" placeholder="Optional">
 
-      <button onclick="calculateRoute()">Calculate Price</button>
-    </div>
+      <button onclick="calculateRoute()">Calculate Price</button>
 
-    <div id="infoBox">
-      <div><strong>Distance:</strong> <span id="distance">—</span></div>
-      <div><strong>Duration:</strong> <span id="duration">—</span></div>
-      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
-      <div style="margin-top:10px;"><strong>Vehicle Capacity:</strong><br>
-        – 1 to 5 passengers (Captain seats)<br>
-        – Option 1: 5 ski bags, 2 large suitcases, 3 small bags<br>
-        – Option 2: 3 large suitcases, 4 small bags
-      </div>
-    </div>
+      <label>Estimated Price:</label>
+      <input id="price" type="text" readonly value="$0.00" style="background:#222; color:#fff;">
+    </div>
 
-    <div id="map"></div>
-  </main>
+    <div id="infoBox">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div style="margin-top:8px;"><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
+    </div>
 
+    <div id="map"></div>
+  </main>
   <script>
-    let map, directionsService, directionsRenderer;
+    let map, directionsService, directionsRenderer, autocompletePickup, autocompleteDropoff;
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.7769, lng: -111.8910 },
-        zoom: 10,
-        disableDefaultUI: true,
-        gestureHandling: "greedy",
-      });
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7769, lng: -111.8910 },
+        zoom: 10,
+        disableDefaultUI: false,
+        gestureHandling: "greedy",
+        mapId: "DETAILED_VIEW", // Puedes personalizar más con Map ID si lo registras
+      });
 
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
-      directionsRenderer.setMap(map);
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map });
 
-      new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      new google.maps.places.Autocomplete(document.getElementById('dropoff'));
-    }
+      autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("pickup"));
+      autocompleteDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"));
+    }
 
-    function calculateRoute() {
-      const pickup = document.getElementById("pickup").value;
-      const dropoff = document.getElementById("dropoff").value;
+    function calculateRoute() {
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
 
-      if (!pickup || !dropoff) {
-        alert("Please enter both pick-up and drop-off addresses.");
-        return;
-      }
+      if (!pickup || !dropoff) {
+        alert("Please enter both addresses.");
+        return;
+      }
 
-      directionsService.route({
-        origin: pickup,
-        destination: dropoff,
-        travelMode: google.maps.TravelMode.DRIVING
-      }, (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-                    const route = response.routes[0].legs[0];
-          const distanceMiles = route.distance.value / 1609.34;
-          const durationText = route.duration.text;
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING,
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
 
-          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
-          document.getElementById("duration").textContent = durationText;
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
 
-          let price = 0;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
 
-          document.getElementById("price").value = "$" + price.toFixed(2);
-        } else {
-          alert("Could not calculate route. Please verify the addresses.");
-        }
-      });
-    }
-  </script>
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+          document.getElementById("price").value = "$" + price.toFixed(2);
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
+        }
+      });
+    }
+  </script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
