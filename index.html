@@ -6,53 +6,62 @@
   <title>Bonanza GPS</title>
   <style>
     body {
-      background-color: #003300;
-      font-family: Arial, sans-serif;
-      color: white;
       margin: 0;
-      padding: 0;
-      text-align: center;
+      font-family: 'Arial', sans-serif;
+      background-color: #003300;
+      color: white;
     }
     .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background-color: #1a1a1a;
+      max-width: 700px;
+      margin: auto;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      background-color: #1b1b1b;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
+      margin-top: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: gold;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      color: #ccc;
     }
     input, select {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
+      border-radius: 6px;
       border: none;
-      border-radius: 5px;
+      margin-top: 5px;
+      font-size: 16px;
     }
-    label {
-      text-align: left;
-      display: block;
-      margin-top: 10px;
-      color: #ccc;
+    #price {
+      background-color: #ccc;
+      color: black;
+      font-weight: bold;
     }
     #map {
-      width: 100%;
       height: 300px;
+      width: 100%;
       margin-top: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
     }
     #logo {
+      display: block;
+      margin: 20px auto;
       width: 160px;
       border-radius: 50%;
-      margin: 20px auto;
-      display: block;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     }
   </style>
 </head>
 <body>
-  <img src="logo-bonanza.png" alt="Bonanza Transportation Logo" id="logo" />
+  <img src="https://bonanza11.github.io/bonanza-gps/logo-bonanza.png" alt="Bonanza Logo" id="logo" />
   <div class="container">
-    <h2>Bonanza Transportation</h2>
+    <h1>Bonanza Transportation</h1>
+    <h2>Luxury Dog-Friendly Service</h2>
 
     <label for="pickup">Pickup Address</label>
     <input id="pickup" type="text" placeholder="Enter pickup location" />
@@ -66,14 +75,14 @@
     <label for="time">Time</label>
     <input id="time" type="time" />
 
-    <label for="price">Estimated Price</label>
-    <input id="price" type="text" readonly style="background-color: #ccc; color: #000;" />
+    <label for="price">Estimated Total Price (Includes Tips & Taxes)</label>
+    <input id="price" type="text" readonly />
 
     <div id="map"></div>
   </div>
 
   <script>
-    let map, directionsService, directionsRenderer, pickupAutocomplete, dropoffAutocomplete;
+    let map, directionsService, directionsRenderer;
 
     function initMap() {
       directionsService = new google.maps.DirectionsService();
@@ -89,14 +98,11 @@
       const pickup = document.getElementById("pickup");
       const dropoff = document.getElementById("dropoff");
 
-      pickupAutocomplete = new google.maps.places.Autocomplete(pickup);
-      dropoffAutocomplete = new google.maps.places.Autocomplete(dropoff);
+      const pickupAutocomplete = new google.maps.places.Autocomplete(pickup);
+      const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoff);
 
-      [pickup, dropoff].forEach(field => {
-        field.addEventListener("change", () => {
-          calculateAndDisplayRoute();
-        });
-      });
+      pickup.addEventListener("change", calculateAndDisplayRoute);
+      dropoff.addEventListener("change", calculateAndDisplayRoute);
     }
 
     function calculateAndDisplayRoute() {
@@ -119,6 +125,8 @@
             const miles = distanceInMeters / 1609.34;
             const price = calculatePrice(miles);
             document.getElementById("price").value = `$${price.toFixed(2)}`;
+          } else {
+            alert("Could not calculate route. Please check the addresses.");
           }
         }
       );
@@ -133,7 +141,8 @@
       return miles * 5.4;
     }
   </script>
-  <script async
+
+  <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
 </body>
