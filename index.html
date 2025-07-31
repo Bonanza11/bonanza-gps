@@ -1,149 +1,172 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Bonanza Transportation — GPS Quote</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bonanza Transportation – GPS System</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #0e1a14;
-      color: gold;
+      font-family: 'Arial', sans-serif;
+      background-color: #0d1b16;
+      color: #f0e6d2;
     }
+
     header {
       text-align: center;
       padding: 20px;
     }
+
     header img {
-      width: 140px;
+      width: 160px;
       border-radius: 50%;
-      border: 2px solid gold;
+      border: 3px solid gold;
     }
+
     main {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 10px;
-    }
-    #formContainer {
-      background: #001d0fdd;
       padding: 20px;
-      border-radius: 15px;
-      max-width: 400px;
-      width: 100%;
-      margin-bottom: 10px;
     }
+
+    #formContainer {
+      background-color: #11291f;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 0 10px #00000088;
+    }
+
     label {
       display: block;
-      margin-bottom: 5px;
+      margin-top: 10px;
       font-weight: bold;
+      color: gold;
     }
+
     input {
-      display: block;
       width: 100%;
       padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 8px;
+      border-radius: 6px;
       border: none;
-      background: #f5f5f5;
-      font-size: 14px;
+      margin-top: 5px;
+      background-color: #1c3a2d;
+      color: white;
     }
+
+    input::placeholder {
+      color: #cccccc;
+    }
+
     button {
       background: gold;
-      color: black;
+      color: #0d1b16;
       font-weight: bold;
-      border: none;
       padding: 12px;
-      border-radius: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      margin-top: 15px;
       cursor: pointer;
-      width: 100%;
     }
-    #infoBox, #baggageInfo {
-      background: #002e1add;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 10px;
-      width: 100%;
-      max-width: 400px;
+
+    button:hover {
+      background-color: #ffcc00;
     }
+
     #map {
+      margin-top: 20px;
       width: 100%;
       height: 400px;
-      margin-top: 10px;
       border-radius: 10px;
-      overflow: hidden;
     }
+
+    #infoBox {
+      background-color: #1a3c2c;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 380px;
+      color: #ffffff;
+    }
+
     @media (max-width: 768px) {
-      header img {
-        width: 100px;
-      }
-      #formContainer, #infoBox, #baggageInfo {
+      #formContainer, #infoBox {
         max-width: 100%;
+      }
+
+      #map {
+        height: 300px;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo-bonanza.png" alt="Bonanza Transportation Logo"/>
+    <img src="logo-bonanza.png" alt="Bonanza Logo"/>
   </header>
   <main>
     <div id="formContainer">
-      <label>First Name:</label>
-      <input id="firstName" type="text" placeholder="John">
-      <label>Last Name:</label>
-      <input id="lastName" type="text" placeholder="Doe">
+      <label>Full Name:</label>
+      <input id="fullname" type="text" placeholder="John Doe">
+
       <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="123-456-7890">
-      <label>Email:</label>
-      <input id="email" type="email" placeholder="email@example.com">
+      <input id="phone" type="tel" placeholder="+1 (123) 456-7890">
+
+      <label>Email Address:</label>
+      <input id="email" type="email" placeholder="you@example.com">
+
       <label>Pick-up Address:</label>
       <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
+
       <label>Drop-off Address:</label>
       <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
-      <label>Date & Time:</label>
+            <label>Date & Time:</label>
       <input id="datetime" type="datetime-local">
-      <label>Flight Number (if airport):</label>
-      <input id="flight" type="text" placeholder="Optional">
+
+      <label>Flight Number (optional):</label>
+      <input id="flight" type="text" placeholder="Only if airport pick-up">
+
       <label>Estimated Price:</label>
-      <input id="price" type="text" readonly value="$0.00" style="background:#eee;">
+      <input id="price" type="text" readonly style="background-color:#2f4f3f; color:white;"/>
+
       <button onclick="calculateRoute()">Calculate Price</button>
     </div>
-        <div id="infoBox">
+
+    <div id="infoBox">
       <div><strong>Distance:</strong> <span id="distance">—</span></div>
       <div><strong>Duration:</strong> <span id="duration">—</span></div>
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
-    </div>
-
-    <div id="baggageInfo">
-      <strong>Suburban SUV Capacity:</strong>
-      <ul style="margin-top: 10px; padding-left: 20px;">
-        <li>1 to 5 passengers (Captain chairs)</li>
-        <li>Option 1: 5 ski bags, 2 large suitcases, 3 small bags</li>
-        <li>Option 2: 3 large suitcases, 4 small bags</li>
-      </ul>
+      <div style="margin-top:10px;"><strong>Vehicle Capacity:</strong><br>
+        – 1 to 5 passengers (Captain seats)<br>
+        – Option 1: 5 ski bags, 2 large suitcases, 3 small bags<br>
+        – Option 2: 3 large suitcases, 4 small bags
+      </div>
     </div>
 
     <div id="map"></div>
   </main>
 
   <script>
-    let map, directionsService, directionsRenderer, autocompletePickup, autocompleteDropoff;
+    let map, directionsService, directionsRenderer;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7769, lng: -111.8910 },
         zoom: 10,
         disableDefaultUI: true,
-        gestureHandling: "none"
+        gestureHandling: "greedy",
       });
 
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+      directionsRenderer.setMap(map);
 
-      autocompletePickup = new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      autocompleteDropoff = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
+      new google.maps.places.Autocomplete(document.getElementById('pickup'));
+      new google.maps.places.Autocomplete(document.getElementById('dropoff'));
     }
 
     function calculateRoute() {
@@ -151,19 +174,19 @@
       const dropoff = document.getElementById("dropoff").value;
 
       if (!pickup || !dropoff) {
-        alert("Please enter both addresses.");
+        alert("Please enter both pick-up and drop-off addresses.");
         return;
       }
 
       directionsService.route({
         origin: pickup,
         destination: dropoff,
-        travelMode: google.maps.TravelMode.DRIVING,
+        travelMode: google.maps.TravelMode.DRIVING
       }, (response, status) => {
         if (status === "OK") {
           directionsRenderer.setDirections(response);
-          const route = response.routes[0].legs[0];
-                    const distanceMiles = route.distance.value / 1609.34;
+                    const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
           const durationText = route.duration.text;
 
           document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
@@ -179,7 +202,7 @@
 
           document.getElementById("price").value = "$" + price.toFixed(2);
         } else {
-          alert("Could not calculate route. Please check the addresses.");
+          alert("Could not calculate route. Please verify the addresses.");
         }
       });
     }
