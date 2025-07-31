@@ -7,8 +7,8 @@
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0e1f15;
+      font-family: Arial, sans-serif;
+      background-color: #1c3a27;
       color: white;
     }
     header {
@@ -20,8 +20,6 @@
       height: 150px;
       border-radius: 50%;
       border: 3px solid gold;
-      object-fit: cover;
-      background-color: white;
     }
     main {
       display: flex;
@@ -30,68 +28,53 @@
       padding: 10px;
     }
     #formContainer {
-      background: #003300ee;
+      background: #003300dd;
       padding: 20px;
-      border-radius: 15px;
-      max-width: 400px;
+      border-radius: 10px;
+      max-width: 360px;
       width: 100%;
       margin-bottom: 10px;
-      box-shadow: 0 0 15px #00000077;
     }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
+    label, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
     }
     input {
-      padding: 10px;
-      border-radius: 8px;
+      padding: 8px;
+      border-radius: 5px;
       border: none;
-      width: 100%;
-      margin-bottom: 12px;
-      font-size: 16px;
-    }
-    input[readonly] {
-      background-color: #ccc;
-      color: black;
     }
     button {
       background: gold;
-      color: black;
-      font-weight: bold;
       border: none;
-      padding: 12px;
+      padding: 10px;
+      font-weight: bold;
       width: 100%;
-      border-radius: 8px;
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      background: #e6c200;
     }
     #map {
       width: 100%;
-      max-width: 600px;
       height: 350px;
       border-radius: 10px;
-      margin-top: 10px;
     }
     #infoBox {
       margin-top: 10px;
       background: #004400dd;
-      padding: 15px;
+      padding: 10px;
       border-radius: 10px;
-      max-width: 600px;
-      width: 100%;
-    }
-    #infoBox div {
-      margin: 5px 0;
     }
     @media (max-width: 768px) {
-      #formContainer, #infoBox {
-        max-width: 100%;
+      header img {
+        width: 120px;
+        height: 120px;
       }
       #map {
         height: 300px;
+      }
+      #formContainer {
+        max-width: 100%;
       }
     }
   </style>
@@ -100,23 +83,22 @@
   <header>
     <img src="logo-bonanza.png" alt="Bonanza Transportation Logo"/>
   </header>
-
   <main>
     <div id="formContainer">
       <label>Pick-up Address:</label>
-      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
+      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy" />
 
       <label>Drop-off Address:</label>
-      <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
+      <input id="dropoff" type="text" placeholder="e.g. SLC Airport" />
 
       <label>Date & Time:</label>
-      <input id="datetime" type="datetime-local">
+      <input id="datetime" type="datetime-local" />
 
       <label>Flight Number (if airport):</label>
-      <input id="flight" type="text" placeholder="Optional">
+      <input id="flight" type="text" placeholder="Optional" />
 
       <label>Estimated Price:</label>
-      <input id="price" type="text" readonly value="$0.00">
+      <input id="price" type="text" readonly value="$0.00" style="background:#eee;" />
 
       <button onclick="calculateRoute()">Calculate Price</button>
     </div>
@@ -137,15 +119,15 @@
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7769, lng: -111.8910 },
         zoom: 9,
-        gestureHandling: "greedy", // Desactiva zoom automático al hacer scroll
+        disableDefaultUI: false
       });
 
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
       directionsRenderer.setMap(map);
 
-      autocompletePickup = new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      autocompleteDropoff = new google.maps.places.Autocomplete(document.getElementById('dropoff'));
+      autocompletePickup = new google.maps.places.Autocomplete(document.getElementById("pickup"));
+      autocompleteDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"));
     }
 
     function calculateRoute() {
@@ -181,6 +163,11 @@
           else price = distanceMiles * 5.4;
 
           document.getElementById("price").value = "$" + price.toFixed(2);
+
+          // Zoom y centra en la ruta
+          const bounds = new google.maps.LatLngBounds();
+          response.routes[0].overview_path.forEach(point => bounds.extend(point));
+          map.fitBounds(bounds);
         } else {
           alert("Could not calculate route. Please check the addresses.");
         }
