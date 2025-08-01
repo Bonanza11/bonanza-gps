@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – GPS Payment</title>
+  <title>Bonanza Transportation – Luxury GPS Quote</title>
   <style>
     body {
       margin: 0;
@@ -32,7 +32,7 @@
       background: #111;
       padding: 20px;
       border-radius: 12px;
-      max-width: 380px;
+      max-width: 360px;
       width: 100%;
       box-shadow: 0 0 10px #c29c74aa;
     }
@@ -59,7 +59,7 @@
       width: 100%;
       border-radius: 5px;
       cursor: pointer;
-      margin-bottom: 10px;
+      margin-top: 10px;
     }
     #map {
       width: 100%;
@@ -73,7 +73,7 @@
       padding: 15px;
       border-radius: 10px;
       margin-top: 20px;
-      max-width: 380px;
+      max-width: 360px;
       text-align: left;
       font-size: 0.95em;
       line-height: 1.6;
@@ -81,18 +81,25 @@
     strong {
       color: #d8b887;
     }
-    .suv-image {
-      margin-top: 20px;
-      width: 100%;
-      max-width: 500px;
-      border-radius: 12px;
-    }
     .signature {
+      font-size: 1.4em;
       text-align: center;
-      font-size: 1.6em;
-      margin-top: 20px;
+      margin-top: 25px;
       font-weight: bold;
-      text-shadow: 1px 1px 2px #000;
+      text-shadow: 1px 1px 3px #000;
+    }
+    #suvImage {
+      width: 100%;
+      max-width: 700px;
+      border-radius: 10px;
+      margin-top: 30px;
+    }
+    .sectionTitle {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #d8b887;
     }
     @media (max-width: 768px) {
       #formContainer, #infoBox {
@@ -106,7 +113,7 @@
 </head>
 <body>
   <header>
-    <img src="logo-bonanza.png" alt="Bonanza Logo">
+    <img src="bonanza-logo.PNG" alt="Bonanza Logo">
   </header>
   <main>
     <div id="formContainer">
@@ -146,11 +153,15 @@
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
       <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Hours:</strong> 6:30 AM – 10:30 PM (Outside: +$100 surcharge)</div>
+      <div><strong>Standard Hours:</strong> 6:30 AM – 10:30 PM</div>
+      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
     </div>
 
     <div class="signature">Bonanza Transportation</div>
-    <img src="IMG_4072.png" alt="Our SUVs" class="suv-image">
+
+    <div class="sectionTitle">Our SUVs</div>
+    <img id="suvImage" src="IMG_4072.png" alt="Bonanza SUV">
+
   </main>
 
   <script>
@@ -210,14 +221,10 @@
     }
 
     function payNow() {
-      const priceText = document.getElementById("price").value;
-      if (!priceText || priceText === "$0.00") {
-        alert("Please calculate the price first.");
-        return;
-      }
-
-      // Simulate Stripe redirect
-      window.location.href = "https://buy.stripe.com/test_4gw4i0aWq1xHbAsdQQ"; // Replace with dynamic Stripe Checkout URL
+      const priceValue = document.getElementById("price").value.replace('$', '');
+      const priceInCents = Math.round(parseFloat(priceValue) * 100);
+      const url = `https://buy.stripe.com/test_7sIcNAbDg2awgaU4gg?amount=${priceInCents}`;
+      window.location.href = url;
     }
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
