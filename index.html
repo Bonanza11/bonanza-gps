@@ -9,18 +9,29 @@
       margin: 0;
       font-family: 'Arial', sans-serif;
       background-color: #000;
-      color: #c29c74;
+      color: #d6a56d;
+      animation: fadeIn 1.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
     }
     header {
       text-align: center;
-      padding: 20px;
+      padding: 25px 10px 10px;
     }
     header img {
-      width: 160px;
-      height: 160px;
+      width: 150px;
+      height: 150px;
       object-fit: cover;
       border-radius: 50%;
-      border: 3px solid #c29c74;
+      border: 3px solid #d6a56d;
+      box-shadow: 0 0 15px #d6a56d88;
+    }
+    h1 {
+      font-size: 1.6em;
+      text-align: center;
+      margin-top: 10px;
+      text-shadow: 1px 1px 4px #000;
     }
     main {
       display: flex;
@@ -32,93 +43,102 @@
       background: #111;
       padding: 20px;
       border-radius: 12px;
-      max-width: 360px;
+      max-width: 370px;
       width: 100%;
-      box-shadow: 0 0 10px #c29c74aa;
+      box-shadow: 0 0 10px #d6a56d88;
+      margin-bottom: 20px;
     }
     label {
       font-weight: bold;
-      margin-top: 10px;
+      margin-top: 12px;
+      display: block;
+      text-shadow: 1px 1px 2px #000;
     }
     input {
-      padding: 8px;
+      padding: 10px;
       width: 100%;
       border-radius: 5px;
       margin-bottom: 10px;
       border: none;
       background-color: #222;
-      color: #c29c74;
+      color: #d6a56d;
+      font-size: 1em;
     }
     button {
-      background: #c29c74;
+      background: #d6a56d;
       color: #000;
       font-weight: bold;
       border: none;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 1em;
+      margin-top: 10px;
     }
     #map {
       width: 100%;
       height: 400px;
-      margin-top: 20px;
+      margin: 20px 0 10px;
       border-radius: 10px;
       overflow: hidden;
+      box-shadow: 0 0 10px #d6a56d55;
     }
     #infoBox {
       background: #111;
       padding: 15px;
       border-radius: 10px;
-      margin-top: 20px;
-      max-width: 360px;
+      max-width: 370px;
       text-align: left;
-      font-size: 0.95em;
+      font-size: 1em;
       line-height: 1.6;
+      box-shadow: 0 0 5px #d6a56d55;
     }
     strong {
-      color: #d8b887;
+      color: #f3c992;
+    }
+    .section-title {
+      font-size: 1.2em;
+      margin-top: 30px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .signature {
+      font-size: 1.5em;
+      text-align: center;
+      margin-top: 25px;
+      font-weight: bold;
+      text-shadow: 1px 1px 5px #000;
+    }
+    .vehicle-img {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #d6a56d55;
     }
     @media (max-width: 768px) {
       #formContainer, #infoBox {
         width: 100%;
       }
       #map {
-        height: 300px;
+        height: 320px;
+      }
+      input, button {
+        font-size: 1em;
       }
     }
   </style>
 </head>
-<body>
-  <header>
-    <img src="logo-bonanza.png" alt="Bonanza Logo">
-  </header>
-  <main>
-    <div id="formContainer">
-      <label>First & Last Name:</label>
-      <input id="fullname" type="text" placeholder="John Doe">
+      <label>Date:</label>
+      <input id="date" type="date">
 
-      <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567">
-
-      <label>Email Address:</label>
-      <input id="email" type="email" placeholder="example@email.com">
-
-      <label>Pick-up Address:</label>
-      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
-
-      <label>Drop-off Address:</label>
-      <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
-
-      <label>Date & Time:</label>
-      <input id="datetime" type="datetime-local">
-
-      <label>Flight Number (if airport):</label>
-      <input id="flight" type="text" placeholder="Optional">
+      <label>Time:</label>
+      <input id="time" type="time">
 
       <label>Estimated Price:</label>
       <input id="price" type="text" readonly value="$0.00" style="background:#333;">
-      
+
       <button onclick="calculateRoute()">Calculate Price</button>
     </div>
 
@@ -130,31 +150,31 @@
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
       <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Standard Rate Hours:</strong> 6:30 AM – 10:30 PM</div>
-      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
-      <div><strong>We are a 5-Star, 5-Diamond Luxury Transportation Company</strong></div>
+      <div class="signature">Bonanza Transportation</div>
+    </div>
+
+    <div id="suvBanner">
+      <img src="suv-banner.jpeg" alt="Bonanza SUVs">
+      <div class="bannerText">Our SUVs</div>
     </div>
   </main>
-
-  <script>
+    <script>
     let map, directionsService, directionsRenderer;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7769, lng: -111.8910 },
-        zoom: 9,
-        disableDefaultUI: false
+        zoom: 10,
+        disableDefaultUI: false,
+        gestureHandling: "greedy"
       });
 
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
       directionsRenderer.setMap(map);
 
-      const pickupInput = document.getElementById('pickup');
-      const dropoffInput = document.getElementById('dropoff');
-
-      new google.maps.places.Autocomplete(pickupInput);
-      new google.maps.places.Autocomplete(dropoffInput);
+      new google.maps.places.Autocomplete(document.getElementById('pickup'));
+      new google.maps.places.Autocomplete(document.getElementById('dropoff'));
     }
 
     function calculateRoute() {
@@ -195,6 +215,7 @@
       });
     }
   </script>
+
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
