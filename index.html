@@ -24,7 +24,7 @@
       object-fit: cover;
     }
     main {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
       padding: 20px;
     }
@@ -57,7 +57,14 @@
       height: 400px;
       margin-top: 20px;
       border-radius: 10px;
-      overflow: hidden;
+    }
+    #results {
+      margin-top: 20px;
+      font-size: 0.95em;
+      line-height: 1.6;
+      background: #111;
+      padding: 12px;
+      border-radius: 8px;
     }
     footer img {
       width: 100%;
@@ -92,21 +99,23 @@
     <label for="time">Time:</label>
     <input type="time" id="time" />
 
-    <button onclick="alert('Next: Calculate route and price.')">Calculate Price</button>
+    <button onclick="calculateRoute()">Calculate Price</button>
 
     <div id="map"></div>
+
+    <div id="results">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
+    </div>
   </main>
   <footer>
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
-  <link
-    rel="stylesheet"
-    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
-    type="text/css"
-  />
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" />
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
@@ -116,32 +125,73 @@
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-111.8910, 40.7608],
       zoom: 9,
-      dragRotate: false,
-      scrollZoom: false,
-      touchZoomRotate: false
+      scrollZoom: false
     });
 
-    const pickupInput = document.getElementById('pickup');
-    const dropoffInput = document.getElementById('dropoff');
+    const directionsRequest = async (start, end) => {
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      return json.routes[0];
+    };
 
-    function addAutocomplete(inputElement) {
-      const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        placeholder: inputElement.placeholder,
-        mapboxgl: mapboxgl,
-        marker: false
+    async function calculateRoute() {
+      const pickup = document.getElementById('pickup').value;
+      const dropoff = document.getElementById('dropoff').value;
+
+      if (!pickup || !dropoff) {
+        alert("Please enter both addresses.");
+        return;
+      }
+
+      const geocode = async (query) => {
+        const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}`);
+        const data = await res.json();
+        return data.features[0].center;
+      };
+
+      const [pickupCoord, dropoffCoord] = await Promise.all([geocode(pickup), geocode(dropoff)]);
+      const route = await directionsRequest(pickupCoord, dropoffCoord);
+
+      const distanceMiles = route.distance / 1609.34;
+      const durationText = (route.duration / 60).toFixed(0) + " mins";
+
+      document.getElementById('distance').textContent = distanceMiles.toFixed(1) + " miles";
+      document.getElementById('duration').textContent = durationText;
+
+      let price = 0;
+      if (distanceMiles <= 10) price = 120;
+      else if (distanceMiles <= 35) price = 190;
+      else if (distanceMiles <= 39) price = 210;
+      else if (distanceMiles <= 48) price = 230;
+      else if (distanceMiles <= 55) price = 250;
+      else price = distanceMiles * 5.4;
+
+      document.getElementById('price').textContent = "$" + price.toFixed(2);
+
+      map.getSource('route')?.setData({
+        type: 'Feature',
+        geometry: route.geometry
+      }) || map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: route.geometry
+        }
       });
-      const container = document.createElement('div');
-      container.style.marginTop = '5px';
-      inputElement.parentNode.insertBefore(container, inputElement.nextSibling);
-      container.appendChild(geocoder.onAdd(map));
-      geocoder.on('result', function(e) {
-        inputElement.value = e.result.place_name;
+
+      map.getLayer('route') || map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-color': '#c08b5c', 'line-width': 6 }
       });
+
+      const bounds = new mapboxgl.LngLatBounds();
+      route.geometry.coordinates.forEach(coord => bounds.extend(coord));
+      map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
     }
-
-    addAutocomplete(pickupInput);
-    addAutocomplete(dropoffInput);
   </script>
 </body>
 </html>
