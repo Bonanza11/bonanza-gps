@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://unpkg.com/@mapbox/search-js@1.5.0/dist/mapbox-search.umd.min.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -83,10 +82,10 @@
     <input type="email" id="email" placeholder="e.g. your@email.com" />
 
     <label for="pickup">Pick-up Address:</label>
-    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+    <div id="pickup-geocoder" class="geocoder"></div>
 
     <label for="dropoff">Drop-off Address:</label>
-    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
+    <div id="dropoff-geocoder" class="geocoder"></div>
 
     <label for="date">Date:</label>
     <input type="date" id="date" />
@@ -102,6 +101,8 @@
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
@@ -109,51 +110,50 @@
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-111.8910, 40.7608],
-      zoom: 10,
+      zoom: 9,
       scrollZoom: false,
       dragRotate: false,
       dragPan: true
     });
 
-    const pickupInput = document.getElementById("pickup");
-    const dropoffInput = document.getElementById("dropoff");
+    const directionsClient = 'https://api.mapbox.com/directions/v5/mapbox/driving';
+    let pickupCoords, dropoffCoords;
 
-    const pickupSearchBox = new MapboxSearchBox();
-    const dropoffSearchBox = new MapboxSearchBox();
+    const geocoderPickup = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      placeholder: "Pick-up address",
+      mapboxgl: mapboxgl
+    });
+    geocoderPickup.addTo('#pickup-geocoder');
+    geocoderPickup.on('result', e => pickupCoords = e.result.geometry.coordinates);
 
-    pickupSearchBox.accessToken = mapboxgl.accessToken;
-    dropoffSearchBox.accessToken = mapboxgl.accessToken;
+    const geocoderDropoff = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      placeholder: "Drop-off address",
+      mapboxgl: mapboxgl
+    });
+    geocoderDropoff.addTo('#dropoff-geocoder');
+    geocoderDropoff.on('result', e => dropoffCoords = e.result.geometry.coordinates);
 
-    pickupSearchBox.options = { types: ['address', 'place'] };
-    dropoffSearchBox.options = { types: ['address', 'place'] };
-
-    pickupSearchBox.attach(pickupInput);
-    dropoffSearchBox.attach(dropoffInput);
-
-    let directions;
+    let directionsLayer;
 
     function calculateRoute() {
-      const start = pickupInput.value;
-      const end = dropoffInput.value;
-
-      if (!start || !end) {
-        alert("Please enter both addresses.");
+      if (!pickupCoords || !dropoffCoords) {
+        alert("Please enter both pick-up and drop-off addresses.");
         return;
       }
 
-      fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(start)};${encodeURIComponent(end)}?access_token=${mapboxgl.accessToken}&geometries=geojson`)
+      fetch(`${directionsClient}/${pickupCoords.join(',')};${dropoffCoords.join(',')}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
         .then(res => res.json())
         .then(data => {
-          if (!data.routes || data.routes.length === 0) {
-            alert("Could not calculate route.");
-            return;
-          }
-
           const route = data.routes[0];
-          const coordinates = route.geometry.coordinates;
+          const coords = route.geometry.coordinates;
+          const distanceMiles = route.distance / 1609.34;
 
-          if (directions) map.removeLayer('route');
-          if (map.getSource('route')) map.removeSource('route');
+          if (directionsLayer) {
+            map.removeLayer('route');
+            map.removeSource('route');
+          }
 
           map.addSource('route', {
             type: 'geojson',
@@ -161,7 +161,7 @@
               type: 'Feature',
               geometry: {
                 type: 'LineString',
-                coordinates: coordinates
+                coordinates: coords
               }
             }
           });
@@ -170,23 +170,26 @@
             id: 'route',
             type: 'line',
             source: 'route',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#c08b5c',
-              'line-width': 6
-            }
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#c08b5c', 'line-width': 6 }
           });
 
-          const bounds = coordinates.reduce((b, coord) => b.extend(coord), new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
-          map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
+          directionsLayer = true;
+
+          const bounds = coords.reduce((b, coord) => b.extend(coord), new mapboxgl.LngLatBounds(coords[0], coords[0]));
+          map.fitBounds(bounds, { padding: 60, maxZoom: 15, linear: true });
+
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          alert("Estimated price: $" + price.toFixed(2));
         })
-        .catch(err => {
-          alert("Error fetching route.");
-          console.error(err);
-        });
+        .catch(() => alert("Could not calculate route."));
     }
   </script>
 </body>
