@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/@mapbox/search-js@1.5.0/dist/mapbox-search.umd.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -42,9 +43,6 @@
       color: #c08b5c;
       border: 1px solid #444;
       border-radius: 6px;
-    }
-    .geocoder {
-      margin-top: 4px;
     }
     button {
       width: 100%;
@@ -84,11 +82,11 @@
     <label for="email">Email Address:</label>
     <input type="email" id="email" placeholder="e.g. your@email.com" />
 
-    <label>Pick-up Address:</label>
-    <div id="pickup-geocoder" class="geocoder"></div>
+    <label for="pickup">Pick-up Address:</label>
+    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
 
-    <label>Drop-off Address:</label>
-    <div id="dropoff-geocoder" class="geocoder"></div>
+    <label for="dropoff">Drop-off Address:</label>
+    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
 
     <label for="date">Date:</label>
     <input type="date" id="date" />
@@ -104,8 +102,6 @@
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
@@ -113,93 +109,83 @@
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-111.8910, 40.7608],
-      zoom: 9,
+      zoom: 10,
       scrollZoom: false,
-      dragRotate: false
+      dragRotate: false,
+      dragPan: true
     });
 
-    let pickupCoords = null;
-    let dropoffCoords = null;
+    const pickupInput = document.getElementById("pickup");
+    const dropoffInput = document.getElementById("dropoff");
 
-    const pickupGeocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      placeholder: "Enter pick-up address",
-      mapboxgl: mapboxgl,
-      marker: false
-    });
-    const dropoffGeocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      placeholder: "Enter drop-off address",
-      mapboxgl: mapboxgl,
-      marker: false
-    });
+    const pickupSearchBox = new MapboxSearchBox();
+    const dropoffSearchBox = new MapboxSearchBox();
 
-    pickupGeocoder.on('result', e => pickupCoords = e.result.geometry.coordinates);
-    dropoffGeocoder.on('result', e => dropoffCoords = e.result.geometry.coordinates);
+    pickupSearchBox.accessToken = mapboxgl.accessToken;
+    dropoffSearchBox.accessToken = mapboxgl.accessToken;
 
-    pickupGeocoder.addTo('#pickup-geocoder');
-    dropoffGeocoder.addTo('#dropoff-geocoder');
+    pickupSearchBox.options = { types: ['address', 'place'] };
+    dropoffSearchBox.options = { types: ['address', 'place'] };
+
+    pickupSearchBox.attach(pickupInput);
+    dropoffSearchBox.attach(dropoffInput);
+
+    let directions;
 
     function calculateRoute() {
-      if (!pickupCoords || !dropoffCoords) {
-        alert("Please select both pick-up and drop-off locations.");
+      const start = pickupInput.value;
+      const end = dropoffInput.value;
+
+      if (!start || !end) {
+        alert("Please enter both addresses.");
         return;
       }
 
-      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${pickupCoords[0]},${pickupCoords[1]};${dropoffCoords[0]},${dropoffCoords[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-
-      fetch(url)
-        .then(response => response.json())
+      fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(start)};${encodeURIComponent(end)}?access_token=${mapboxgl.accessToken}&geometries=geojson`)
+        .then(res => res.json())
         .then(data => {
+          if (!data.routes || data.routes.length === 0) {
+            alert("Could not calculate route.");
+            return;
+          }
+
           const route = data.routes[0];
           const coordinates = route.geometry.coordinates;
-          const distanceMiles = route.distance / 1609.34;
 
-          if (map.getSource('route')) {
-            map.getSource('route').setData({
+          if (directions) map.removeLayer('route');
+          if (map.getSource('route')) map.removeSource('route');
+
+          map.addSource('route', {
+            type: 'geojson',
+            data: {
               type: 'Feature',
               geometry: {
                 type: 'LineString',
                 coordinates: coordinates
               }
-            });
-          } else {
-            map.addSource('route', {
-              type: 'geojson',
-              data: {
-                type: 'Feature',
-                geometry: {
-                  type: 'LineString',
-                  coordinates: coordinates
-                }
-              }
-            });
-            map.addLayer({
-              id: 'route',
-              type: 'line',
-              source: 'route',
-              layout: { 'line-join': 'round', 'line-cap': 'round' },
-              paint: { 'line-color': '#c08b5c', 'line-width': 4 }
-            });
-          }
+            }
+          });
+
+          map.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#c08b5c',
+              'line-width': 6
+            }
+          });
 
           const bounds = coordinates.reduce((b, coord) => b.extend(coord), new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
           map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
-
-          // Estimate price
-          let price = 0;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
-
-          alert(`Estimated Distance: ${distanceMiles.toFixed(1)} miles\nEstimated Price: $${price.toFixed(2)}`);
         })
         .catch(err => {
+          alert("Error fetching route.");
           console.error(err);
-          alert("Error calculating route.");
         });
     }
   </script>
