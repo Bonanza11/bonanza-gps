@@ -3,48 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – Luxury GPS Quote</title>
+  <title>Bonanza Transportation – GPS Booking</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Arial', sans-serif;
       background-color: #000;
       color: #c29c74;
+      font-family: 'Arial', sans-serif;
     }
     header {
       text-align: center;
       padding: 20px;
     }
     header img {
-      width: 160px;
-      height: 160px;
-      object-fit: cover;
+      width: 150px;
+      height: 150px;
       border-radius: 50%;
       border: 3px solid #c29c74;
+      object-fit: cover;
     }
     main {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 10px;
+      padding: 20px;
     }
     #formContainer {
       background: #111;
       padding: 20px;
-      border-radius: 12px;
-      max-width: 360px;
+      border-radius: 15px;
+      max-width: 400px;
       width: 100%;
-      box-shadow: 0 0 10px #c29c74aa;
+      box-shadow: 0 0 12px #c29c74aa;
     }
     label {
       font-weight: bold;
       margin-top: 10px;
-      display: block;
     }
     input {
-      padding: 8px;
+      padding: 10px;
       width: 100%;
-      border-radius: 5px;
+      border-radius: 6px;
       margin-bottom: 10px;
       border: none;
       background-color: #222;
@@ -55,9 +54,9 @@
       color: #000;
       font-weight: bold;
       border: none;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       margin-top: 10px;
     }
@@ -65,41 +64,30 @@
       width: 100%;
       height: 400px;
       margin-top: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
     }
     #infoBox {
       background: #111;
       padding: 15px;
-      border-radius: 10px;
+      border-radius: 12px;
       margin-top: 20px;
-      max-width: 360px;
+      max-width: 400px;
       text-align: left;
       font-size: 0.95em;
       line-height: 1.6;
     }
-    strong {
-      color: #d8b887;
-    }
-    .signature {
-      font-size: 1.4em;
-      text-align: center;
-      margin-top: 25px;
+    #signature {
+      font-size: 1.6em;
+      margin-top: 20px;
       font-weight: bold;
-      text-shadow: 1px 1px 3px #000;
+      text-align: center;
     }
     #suvImage {
       width: 100%;
-      max-width: 700px;
+      max-width: 600px;
+      margin-top: 20px;
       border-radius: 10px;
-      margin-top: 30px;
-    }
-    .sectionTitle {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 1.2em;
-      font-weight: bold;
-      color: #d8b887;
     }
     @media (max-width: 768px) {
       #formContainer, #infoBox {
@@ -113,18 +101,18 @@
 </head>
 <body>
   <header>
-    <img src="bonanza-logo.PNG" alt="Bonanza Logo">
+    <img src="logo-bonanza.png" alt="Bonanza Logo" />
   </header>
   <main>
     <div id="formContainer">
       <label>Full Name:</label>
       <input id="fullname" type="text" placeholder="John Doe">
 
-      <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567">
+      <label>Phone:</label>
+      <input id="phone" type="tel" placeholder="+1 385 123 4567">
 
       <label>Email:</label>
-      <input id="email" type="email" placeholder="example@email.com">
+      <input id="email" type="email" placeholder="email@example.com">
 
       <label>Pick-up Address:</label>
       <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
@@ -153,15 +141,11 @@
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
       <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Standard Hours:</strong> 6:30 AM – 10:30 PM</div>
-      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
+      <div><strong>Hours:</strong> Standard rate 6:30 AM – 10:30 PM ($100 surcharge outside)</div>
     </div>
 
-    <div class="signature">Bonanza Transportation</div>
-
-    <div class="sectionTitle">Our SUVs</div>
-    <img id="suvImage" src="IMG_4072.png" alt="Bonanza SUV">
-
+    <div id="signature">Bonanza Transportation</div>
+    <img id="suvImage" src="IMG_4072.png" alt="Our SUVs" />
   </main>
 
   <script>
@@ -171,15 +155,18 @@
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7769, lng: -111.8910 },
         zoom: 9,
-        disableDefaultUI: false
+        disableDefaultUI: false,
+        zoomControl: false,
+        scrollwheel: false,
+        gestureHandling: "none"
       });
 
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
       directionsRenderer.setMap(map);
 
-      new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      new google.maps.places.Autocomplete(document.getElementById('dropoff'));
+      new google.maps.places.Autocomplete(document.getElementById("pickup"));
+      new google.maps.places.Autocomplete(document.getElementById("dropoff"));
     }
 
     function calculateRoute() {
@@ -214,6 +201,11 @@
           else price = distanceMiles * 5.4;
 
           document.getElementById("price").value = "$" + price.toFixed(2);
+
+          // Zoom máximo al tramo
+          const bounds = new google.maps.LatLngBounds();
+          response.routes[0].overview_path.forEach(p => bounds.extend(p));
+          map.fitBounds(bounds);
         } else {
           alert("Could not calculate route. Please check the addresses.");
         }
@@ -221,10 +213,14 @@
     }
 
     function payNow() {
-      const priceValue = document.getElementById("price").value.replace('$', '');
-      const priceInCents = Math.round(parseFloat(priceValue) * 100);
-      const url = `https://buy.stripe.com/test_7sIcNAbDg2awgaU4gg?amount=${priceInCents}`;
-      window.location.href = url;
+      const amount = document.getElementById("price").value.replace("$", "");
+      if (amount === "0.00") {
+        alert("Please calculate a route first.");
+        return;
+      }
+
+      const stripeSession = `https://buy.stripe.com/test_aEUdU9egK0Jj7gk28c?prefilled_price=${amount}`;
+      window.location.href = stripeSession;
     }
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
