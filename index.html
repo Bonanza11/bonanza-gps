@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -25,7 +25,7 @@
       object-fit: cover;
     }
     main {
-      max-width: 400px;
+      max-width: 500px;
       margin: auto;
       padding: 20px;
     }
@@ -43,16 +43,15 @@
       border: 1px solid #444;
       border-radius: 6px;
     }
+    #pickup-container, #dropoff-container {
+      margin-top: 12px;
+    }
     .mapboxgl-ctrl-geocoder {
+      min-width: 100%;
+      border-radius: 6px;
       background-color: #1a1a1a;
       border: 1px solid #444;
-      border-radius: 6px;
-      max-width: 100% !important;
-      margin-top: 4px;
-    }
-    .mapboxgl-ctrl-geocoder input {
       color: #c08b5c;
-      background-color: #1a1a1a;
     }
     button {
       width: 100%;
@@ -93,10 +92,10 @@
     <input type="email" id="email" placeholder="e.g. your@email.com" />
 
     <label>Pick-up Address:</label>
-    <div id="pickup"></div>
+    <div id="pickup-container"></div>
 
     <label>Drop-off Address:</label>
-    <div id="dropoff"></div>
+    <div id="dropoff-container"></div>
 
     <label for="date">Date:</label>
     <input type="date" id="date" />
@@ -113,7 +112,7 @@
   </footer>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
@@ -127,28 +126,88 @@
       dragPan: true
     });
 
+    let pickupCoords = null;
+    let dropoffCoords = null;
+
     const pickupGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: "Enter pick-up address",
+      placeholder: 'Search pickup address',
       mapboxgl: mapboxgl,
       countries: 'us',
       marker: false,
-      flyTo: false
     });
-    document.getElementById('pickup').appendChild(pickupGeocoder.onAdd(map));
 
     const dropoffGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: "Enter drop-off address",
+      placeholder: 'Search drop-off address',
       mapboxgl: mapboxgl,
       countries: 'us',
       marker: false,
-      flyTo: false
     });
-    document.getElementById('dropoff').appendChild(dropoffGeocoder.onAdd(map));
+
+    document.getElementById('pickup-container').appendChild(pickupGeocoder.onAdd(map));
+    document.getElementById('dropoff-container').appendChild(dropoffGeocoder.onAdd(map));
+
+    pickupGeocoder.on('result', (e) => {
+      pickupCoords = e.result.geometry.coordinates;
+    });
+
+    dropoffGeocoder.on('result', (e) => {
+      dropoffCoords = e.result.geometry.coordinates;
+    });
 
     function calculateRoute() {
-      alert("Route calculation will be added in the next step.");
+      if (!pickupCoords || !dropoffCoords) {
+        alert("Please select both pickup and drop-off addresses.");
+        return;
+      }
+
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${pickupCoords[0]},${pickupCoords[1]};${dropoffCoords[0]},${dropoffCoords[1]}?access_token=${mapboxgl.accessToken}`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const route = data.routes[0];
+          const distanceMiles = (route.distance / 1609.34).toFixed(2);
+          const durationMinutes = Math.ceil(route.duration / 60);
+
+          new mapboxgl.Marker({ color: "#f90" }).setLngLat(pickupCoords).addTo(map);
+          new mapboxgl.Marker({ color: "#0f0" }).setLngLat(dropoffCoords).addTo(map);
+
+          if (map.getSource('route')) {
+            map.removeLayer('route');
+            map.removeSource('route');
+          }
+
+          map.addSource('route', {
+            'type': 'geojson',
+            'data': {
+              'type': 'Feature',
+              'geometry': route.geometry
+            }
+          });
+
+          map.addLayer({
+            'id': 'route',
+            'type': 'line',
+            'source': 'route',
+            'layout': {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            'paint': {
+              'line-color': '#c08b5c',
+              'line-width': 6
+            }
+          });
+
+          map.fitBounds([
+            pickupCoords,
+            dropoffCoords
+          ], { padding: 60 });
+
+          alert(`Distance: ${distanceMiles} miles\nDuration: ${durationMinutes} minutes`);
+        });
     }
   </script>
 </body>
