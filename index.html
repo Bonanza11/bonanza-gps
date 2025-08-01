@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – Luxury GPS Quote</title>
+  <title>Bonanza Transportation – GPS Payment</title>
   <style>
     body {
       margin: 0;
@@ -32,13 +32,14 @@
       background: #111;
       padding: 20px;
       border-radius: 12px;
-      max-width: 360px;
+      max-width: 380px;
       width: 100%;
       box-shadow: 0 0 10px #c29c74aa;
     }
     label {
       font-weight: bold;
       margin-top: 10px;
+      display: block;
     }
     input {
       padding: 8px;
@@ -58,6 +59,7 @@
       width: 100%;
       border-radius: 5px;
       cursor: pointer;
+      margin-bottom: 10px;
     }
     #map {
       width: 100%;
@@ -71,7 +73,7 @@
       padding: 15px;
       border-radius: 10px;
       margin-top: 20px;
-      max-width: 360px;
+      max-width: 380px;
       text-align: left;
       font-size: 0.95em;
       line-height: 1.6;
@@ -79,26 +81,18 @@
     strong {
       color: #d8b887;
     }
-    #fleetImage {
-      margin-top: 25px;
-      max-width: 90%;
-      border-radius: 15px;
-      border: 2px solid #c29c74;
-      box-shadow: 0 0 15px #c29c74aa;
-    }
-    .section-title {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-top: 30px;
-      margin-bottom: 10px;
-      text-align: center;
+    .suv-image {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
     }
     .signature {
       text-align: center;
-      font-size: 1.4em;
-      margin-top: 30px;
+      font-size: 1.6em;
+      margin-top: 20px;
       font-weight: bold;
-      color: #c29c74;
+      text-shadow: 1px 1px 2px #000;
     }
     @media (max-width: 768px) {
       #formContainer, #infoBox {
@@ -116,13 +110,13 @@
   </header>
   <main>
     <div id="formContainer">
-      <label>First & Last Name:</label>
+      <label>Full Name:</label>
       <input id="fullname" type="text" placeholder="John Doe">
 
       <label>Phone Number:</label>
       <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567">
 
-      <label>Email Address:</label>
+      <label>Email:</label>
       <input id="email" type="email" placeholder="example@email.com">
 
       <label>Pick-up Address:</label>
@@ -139,8 +133,9 @@
 
       <label>Estimated Price:</label>
       <input id="price" type="text" readonly value="$0.00" style="background:#333;">
-      
+
       <button onclick="calculateRoute()">Calculate Price</button>
+      <button onclick="payNow()">Pay Now</button>
     </div>
 
     <div id="map"></div>
@@ -151,14 +146,11 @@
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
       <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Standard Rate Hours:</strong> 6:30 AM – 10:30 PM</div>
-      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
+      <div><strong>Hours:</strong> 6:30 AM – 10:30 PM (Outside: +$100 surcharge)</div>
     </div>
 
     <div class="signature">Bonanza Transportation</div>
-
-    <div class="section-title">Our SUVs</div>
-    <img id="fleetImage" src="IMG_4072.png" alt="Bonanza Fleet SUV">
+    <img src="IMG_4072.png" alt="Our SUVs" class="suv-image">
   </main>
 
   <script>
@@ -215,6 +207,17 @@
           alert("Could not calculate route. Please check the addresses.");
         }
       });
+    }
+
+    function payNow() {
+      const priceText = document.getElementById("price").value;
+      if (!priceText || priceText === "$0.00") {
+        alert("Please calculate the price first.");
+        return;
+      }
+
+      // Simulate Stripe redirect
+      window.location.href = "https://buy.stripe.com/test_4gw4i0aWq1xHbAsdQQ"; // Replace with dynamic Stripe Checkout URL
     }
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
