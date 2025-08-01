@@ -3,219 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – GPS Estimate</title>
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <title>Bonanza Transportation</title>
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'/>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #000;
-      color: #c29c74;
+      background-color: black;
+      color: #d17f4a;
+      font-family: 'Arial', sans-serif;
     }
-    header {
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1 {
       text-align: center;
-      padding: 20px;
+      font-size: 28px;
+      text-shadow: 1px 1px 2px #000;
     }
-    header img {
-      width: 160px;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 3px solid #c29c74;
-    }
-    main {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-    }
-    #formContainer {
-      background: #111;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 0 10px #c29c74aa;
+    .form-group {
+      margin-bottom: 15px;
     }
     label {
+      display: block;
       font-weight: bold;
-      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
     }
     input {
-      padding: 8px;
-      width: 100%;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      border: none;
-      background-color: #222;
-      color: #c29c74;
+      background-color: #1e1e1e;
+      color: white;
     }
     button {
-      background: #c29c74;
-      color: #000;
+      background-color: #d17f4a;
+      color: black;
       font-weight: bold;
-      border: none;
-      padding: 10px;
-      width: 100%;
-      border-radius: 5px;
       cursor: pointer;
       margin-top: 10px;
     }
     #map {
-      width: 100%;
-      height: 400px;
+      height: 300px;
       margin-top: 20px;
-      border-radius: 10px;
+      border-radius: 15px;
     }
-    #infoBox {
-      background: #111;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-      max-width: 400px;
-      text-align: left;
-      font-size: 0.95em;
-      line-height: 1.6;
-    }
-    strong {
-      color: #d8b887;
-    }
-    #suvImage {
-      margin-top: 20px;
-      width: 100%;
-      max-width: 500px;
-      border-radius: 12px;
-      border: 2px solid #c29c74;
-    }
-    .signature {
-      margin-top: 20px;
-      font-size: 1.5em;
-      font-weight: bold;
+    .price-box {
+      margin-top: 15px;
+      font-size: 18px;
+      background-color: #222;
+      padding: 10px;
+      border-radius: 8px;
       text-align: center;
-      color: #c29c74;
-    }
-    @media (max-width: 768px) {
-      #formContainer, #infoBox {
-        width: 100%;
-      }
-      #map {
-        height: 300px;
-      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="bonanza-logo.PNG" alt="Bonanza Logo">
-  </header>
-
-  <main>
-    <div id="formContainer">
+  <div class="container">
+    <h1>Bonanza Transportation</h1>
+    <div class="form-group">
       <label for="pickup">Pick-up Address:</label>
-      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy" />
-
+      <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy">
+    </div>
+    <div class="form-group">
       <label for="dropoff">Drop-off Address:</label>
-      <input id="dropoff" type="text" placeholder="e.g. SLC Airport" />
-
-      <button onclick="calculateRoute()">Estimate Price</button>
+      <input type="text" id="dropoff" placeholder="e.g. SLC Airport">
     </div>
-
+    <button onclick="getRoute()">Estimated Price</button>
     <div id="map"></div>
-
-    <div id="infoBox">
-      <div><strong>Distance:</strong> <span id="distance">—</span></div>
-      <div><strong>Duration:</strong> <span id="duration">—</span></div>
-      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
-      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
-      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
-      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-    </div>
-
-    <div class="signature">Bonanza Transportation</div>
-    <img id="suvImage" src="IMG_4072.png" alt="Bonanza SUV" />
-  </main>
+    <div class="price-box" id="output"></div>
+  </div>
 
   <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTExIiwiYSI6ImNsaG1zOXF6ajA3N20zdm1xbzh3a3pucWgifQ.ih5Cz4qbDAeUya43FqF2Qg';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-111.8910, 40.7769],
-      zoom: 8,
-      interactive: false
+      center: [-111.497971, 40.661324],
+      zoom: 10
     });
 
-    let pickupMarker, dropoffMarker;
+    const pickupInput = document.getElementById('pickup');
+    const dropoffInput = document.getElementById('dropoff');
+    const outputBox = document.getElementById('output');
 
-    function calculateRoute() {
-      const pickup = document.getElementById('pickup').value;
-      const dropoff = document.getElementById('dropoff').value;
+    async function getCoordinates(address) {
+      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`);
+      const data = await response.json();
+      return data.features[0]?.geometry.coordinates;
+    }
 
+    async function getRoute() {
+      const pickup = await getCoordinates(pickupInput.value);
+      const dropoff = await getCoordinates(dropoffInput.value);
       if (!pickup || !dropoff) {
-        alert('Please enter both pickup and drop-off addresses.');
+        outputBox.innerText = "Please enter valid addresses.";
         return;
       }
 
-      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(pickup)};${encodeURIComponent(dropoff)}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+      const response = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${pickup[0]},${pickup[1]};${dropoff[0]},${dropoff[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
+      const data = await response.json();
+      const route = data.routes[0];
+      const distance = (route.distance / 1609.34).toFixed(2); // miles
+      const duration = (route.duration / 60).toFixed(0); // minutes
 
-      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${pickup}.json?access_token=${mapboxgl.accessToken}`)
-        .then(res => res.json())
-        .then(data1 => {
-          const start = data1.features[0].center;
-          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${dropoff}.json?access_token=${mapboxgl.accessToken}`)
-            .then(res => res.json())
-            .then(data2 => {
-              const end = data2.features[0].center;
+      let price = 0;
+      if (distance <= 10) price = 120;
+      else if (distance <= 35) price = 190;
+      else if (distance <= 39) price = 210;
+      else if (distance <= 48) price = 230;
+      else if (distance <= 55) price = 250;
+      else price = (distance * 5.4).toFixed(2);
 
-              fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
-                .then(res => res.json())
-                .then(data => {
-                  const route = data.routes[0];
-                  const distanceMiles = route.distance / 1609.34;
-                  const durationMinutes = route.duration / 60;
+      outputBox.innerHTML = `
+        Distance: ${distance} mi<br>
+        Duration: ${duration} min<br>
+        Estimated Price: $${price}
+      `;
 
-                  document.getElementById('distance').textContent = distanceMiles.toFixed(1) + " miles";
-                  document.getElementById('duration').textContent = Math.round(durationMinutes) + " min";
+      map.flyTo({
+        center: pickup,
+        zoom: 14,
+        speed: 1.2,
+        essential: true
+      });
 
-                  let price = 0;
-                  if (distanceMiles <= 10) price = 120;
-                  else if (distanceMiles <= 35) price = 190;
-                  else if (distanceMiles <= 39) price = 210;
-                  else if (distanceMiles <= 48) price = 230;
-                  else if (distanceMiles <= 55) price = 250;
-                  else price = distanceMiles * 5.4;
-
-                  document.getElementById('price').textContent = "$" + price.toFixed(2);
-
-                  map.flyTo({ center: start, zoom: 10 });
-
-                  if (map.getSource('route')) {
-                    map.removeLayer('route');
-                    map.removeSource('route');
-                  }
-
-                  map.addSource('route', {
-                    type: 'geojson',
-                    data: {
-                      type: 'Feature',
-                      geometry: route.geometry
-                    }
-                  });
-
-                  map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: 'route',
-                    layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: {
-                      'line-color': '#c29c74',
-                      'line-width': 6
-                    }
-                  });
-                });
-            });
+      const routeLayer = map.getSource('route');
+      if (routeLayer) {
+        map.getSource('route').setData({
+          type: 'Feature',
+          geometry: route.geometry
         });
+      } else {
+        map.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: route.geometry
+          }
+        });
+        map.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#d17f4a',
+            'line-width': 5
+          }
+        });
+      }
     }
   </script>
 </body>
