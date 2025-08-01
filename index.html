@@ -92,7 +92,7 @@
     <label for="time">Time:</label>
     <input type="time" id="time" />
 
-    <button onclick="calculateRoute()">Calculate Price</button>
+    <button onclick="alert('Next: Calculate route and price.')">Calculate Price</button>
 
     <div id="map"></div>
   </main>
@@ -101,6 +101,13 @@
   </footer>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css"
+    type="text/css"
+  />
+
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
@@ -109,10 +116,32 @@
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-111.8910, 40.7608],
       zoom: 9,
-      scrollZoom: false,
       dragRotate: false,
-      dragPan: true
+      scrollZoom: false,
+      touchZoomRotate: false
     });
+
+    const pickupInput = document.getElementById('pickup');
+    const dropoffInput = document.getElementById('dropoff');
+
+    function addAutocomplete(inputElement) {
+      const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        placeholder: inputElement.placeholder,
+        mapboxgl: mapboxgl,
+        marker: false
+      });
+      const container = document.createElement('div');
+      container.style.marginTop = '5px';
+      inputElement.parentNode.insertBefore(container, inputElement.nextSibling);
+      container.appendChild(geocoder.onAdd(map));
+      geocoder.on('result', function(e) {
+        inputElement.value = e.result.place_name;
+      });
+    }
+
+    addAutocomplete(pickupInput);
+    addAutocomplete(dropoffInput);
   </script>
 </body>
 </html>
