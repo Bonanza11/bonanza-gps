@@ -1,3 +1,4 @@
+<!-- ¡CÓDIGO COMPLETO LISTO PARA PEGAR EN INDEX! -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +33,7 @@
       background: #111;
       padding: 20px;
       border-radius: 12px;
-      max-width: 400px;
+      max-width: 360px;
       width: 100%;
       box-shadow: 0 0 10px #c29c74aa;
     }
@@ -58,6 +59,7 @@
       width: 100%;
       border-radius: 5px;
       cursor: pointer;
+      margin-top: 10px;
     }
     #map {
       width: 100%;
@@ -71,28 +73,13 @@
       padding: 15px;
       border-radius: 10px;
       margin-top: 20px;
-      max-width: 400px;
+      max-width: 360px;
       text-align: left;
       font-size: 0.95em;
       line-height: 1.6;
     }
-    .signature {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 1.4em;
-      font-weight: bold;
+    strong {
       color: #d8b887;
-    }
-    .suv-image {
-      width: 100%;
-      max-width: 500px;
-      margin-top: 15px;
-      border-radius: 12px;
-    }
-    .suv-caption {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 8px;
     }
     @media (max-width: 768px) {
       #formContainer, #infoBox {
@@ -125,16 +112,17 @@
       <label>Drop-off Address:</label>
       <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
 
-      <label>Pick-up Date:</label>
+      <label>Date:</label>
       <input id="date" type="date">
 
-      <label>Pick-up Time:</label>
+      <label>Time:</label>
       <input id="time" type="time">
 
       <label>Estimated Price:</label>
       <input id="price" type="text" readonly value="$0.00" style="background:#333;">
-      
+
       <button onclick="calculateRoute()">Calculate Price</button>
+      <button onclick="payNow()">Pay Now</button>
     </div>
 
     <div id="map"></div>
@@ -145,13 +133,8 @@
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
       <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Standard Rate Hours:</strong> 6:30 AM – 10:30 PM</div>
-      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
+      <div style="text-align:center; margin-top:10px; font-size:1.3em; font-weight:bold;">Bonanza Transportation</div>
     </div>
-
-    <div class="signature">Bonanza Transportation</div>
-    <img src="IMG_4072.png" alt="SUV" class="suv-image"/>
-    <div class="suv-caption">Our SUVs</div>
   </main>
 
   <script>
@@ -160,7 +143,7 @@
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7769, lng: -111.8910 },
-        zoom: 10,
+        zoom: 9,
         disableDefaultUI: false
       });
 
@@ -209,7 +192,19 @@
         }
       });
     }
+
+    function payNow() {
+      const stripe = Stripe("pk_test_51PVXnVBXmUdXxHAAxSAMPLEPK"); // Puedes usar tu real cuando estés listo
+      stripe.redirectToCheckout({
+        lineItems: [{ price: "price_1PVXrZBXmUdXxHAAJZ7NMEPo", quantity: 1 }],
+        mode: "payment",
+        successUrl: window.location.href + "?success=true",
+        cancelUrl: window.location.href + "?canceled=true",
+      });
+    }
   </script>
+
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
