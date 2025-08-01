@@ -1,1 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bonanza Transportation – GPS Estimate</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #c29c74;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #c29c74;
+    }
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+    #formContainer {
+      background: #111;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 10px #c29c74aa;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    input {
+      padding: 8px;
+      width: 100%;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      border: none;
+      background-color: #222;
+      color: #c29c74;
+    }
+    button {
+      background: #c29c74;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 10px;
+      width: 100%;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+    #infoBox {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      max-width: 400px;
+      text-align: left;
+      font-size: 0.95em;
+      line-height: 1.6;
+    }
+    strong {
+      color: #d8b887;
+    }
+    #suvImage {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
+      border: 2px solid #c29c74;
+    }
+    .signature {
+      margin-top: 20px;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+      color: #c29c74;
+    }
+    @media (max-width: 768px) {
+      #formContainer, #infoBox {
+        width: 100%;
+      }
+      #map {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="bonanza-logo.PNG" alt="Bonanza Logo">
+  </header>
 
+  <main>
+    <div id="formContainer">
+      <label for="pickup">Pick-up Address:</label>
+      <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+
+      <label for="dropoff">Drop-off Address:</label>
+      <input id="dropoff" type="text" placeholder="e.g. SLC Airport" />
+
+      <button onclick="calculateRoute()">Estimate Price</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="infoBox">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
+    </div>
+
+    <div class="signature">Bonanza Transportation</div>
+    <img id="suvImage" src="IMG_4072.png" alt="Bonanza SUV" />
+  </main>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTExIiwiYSI6ImNsaG1zOXF6ajA3N20zdm1xbzh3a3pucWgifQ.ih5Cz4qbDAeUya43FqF2Qg';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [-111.8910, 40.7769],
+      zoom: 8,
+      interactive: false
+    });
+
+    let pickupMarker, dropoffMarker;
+
+    function calculateRoute() {
+      const pickup = document.getElementById('pickup').value;
+      const dropoff = document.getElementById('dropoff').value;
+
+      if (!pickup || !dropoff) {
+        alert('Please enter both pickup and drop-off addresses.');
+        return;
+      }
+
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${encodeURIComponent(pickup)};${encodeURIComponent(dropoff)}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${pickup}.json?access_token=${mapboxgl.accessToken}`)
+        .then(res => res.json())
+        .then(data1 => {
+          const start = data1.features[0].center;
+          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${dropoff}.json?access_token=${mapboxgl.accessToken}`)
+            .then(res => res.json())
+            .then(data2 => {
+              const end = data2.features[0].center;
+
+              fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
+                .then(res => res.json())
+                .then(data => {
+                  const route = data.routes[0];
+                  const distanceMiles = route.distance / 1609.34;
+                  const durationMinutes = route.duration / 60;
+
+                  document.getElementById('distance').textContent = distanceMiles.toFixed(1) + " miles";
+                  document.getElementById('duration').textContent = Math.round(durationMinutes) + " min";
+
+                  let price = 0;
+                  if (distanceMiles <= 10) price = 120;
+                  else if (distanceMiles <= 35) price = 190;
+                  else if (distanceMiles <= 39) price = 210;
+                  else if (distanceMiles <= 48) price = 230;
+                  else if (distanceMiles <= 55) price = 250;
+                  else price = distanceMiles * 5.4;
+
+                  document.getElementById('price').textContent = "$" + price.toFixed(2);
+
+                  map.flyTo({ center: start, zoom: 10 });
+
+                  if (map.getSource('route')) {
+                    map.removeLayer('route');
+                    map.removeSource('route');
+                  }
+
+                  map.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                      type: 'Feature',
+                      geometry: route.geometry
+                    }
+                  });
+
+                  map.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: 'route',
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: {
+                      'line-color': '#c29c74',
+                      'line-width': 6
+                    }
+                  });
+                });
+            });
+        });
+    }
+  </script>
+</body>
+</html>
