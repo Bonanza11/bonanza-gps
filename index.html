@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -82,18 +82,10 @@
     <input type="email" id="email" placeholder="e.g. your@email.com" />
 
     <label for="pickup">Pick-up Address:</label>
-    <div id="pickup-geocoder" class="geocoder"></div>
+    <div id="pickup-geocoder" style="margin-bottom:10px;"></div>
 
     <label for="dropoff">Drop-off Address:</label>
-    <div id="dropoff-geocoder" class="geocoder"></div>
-
-    <label for="date">Date:</label>
-    <input type="date" id="date" />
-
-    <label for="time">Time:</label>
-    <input type="time" id="time" />
-
-    <button onclick="calculateRoute()">Calculate Price</button>
+    <div id="dropoff-geocoder"></div>
 
     <div id="map"></div>
   </main>
@@ -102,7 +94,7 @@
   </footer>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
@@ -116,81 +108,19 @@
       dragPan: true
     });
 
-    const directionsClient = 'https://api.mapbox.com/directions/v5/mapbox/driving';
-    let pickupCoords, dropoffCoords;
-
-    const geocoderPickup = new MapboxGeocoder({
+    const pickupGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: "Pick-up address",
+      placeholder: 'Search pickup address',
       mapboxgl: mapboxgl
     });
-    geocoderPickup.addTo('#pickup-geocoder');
-    geocoderPickup.on('result', e => pickupCoords = e.result.geometry.coordinates);
-
-    const geocoderDropoff = new MapboxGeocoder({
+    const dropoffGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: "Drop-off address",
+      placeholder: 'Search drop-off address',
       mapboxgl: mapboxgl
     });
-    geocoderDropoff.addTo('#dropoff-geocoder');
-    geocoderDropoff.on('result', e => dropoffCoords = e.result.geometry.coordinates);
 
-    let directionsLayer;
-
-    function calculateRoute() {
-      if (!pickupCoords || !dropoffCoords) {
-        alert("Please enter both pick-up and drop-off addresses.");
-        return;
-      }
-
-      fetch(`${directionsClient}/${pickupCoords.join(',')};${dropoffCoords.join(',')}?geometries=geojson&access_token=${mapboxgl.accessToken}`)
-        .then(res => res.json())
-        .then(data => {
-          const route = data.routes[0];
-          const coords = route.geometry.coordinates;
-          const distanceMiles = route.distance / 1609.34;
-
-          if (directionsLayer) {
-            map.removeLayer('route');
-            map.removeSource('route');
-          }
-
-          map.addSource('route', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              geometry: {
-                type: 'LineString',
-                coordinates: coords
-              }
-            }
-          });
-
-          map.addLayer({
-            id: 'route',
-            type: 'line',
-            source: 'route',
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#c08b5c', 'line-width': 6 }
-          });
-
-          directionsLayer = true;
-
-          const bounds = coords.reduce((b, coord) => b.extend(coord), new mapboxgl.LngLatBounds(coords[0], coords[0]));
-          map.fitBounds(bounds, { padding: 60, maxZoom: 15, linear: true });
-
-          let price = 0;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
-
-          alert("Estimated price: $" + price.toFixed(2));
-        })
-        .catch(() => alert("Could not calculate route."));
-    }
+    document.getElementById('pickup-geocoder').appendChild(pickupGeocoder.onAdd(map));
+    document.getElementById('dropoff-geocoder').appendChild(dropoffGeocoder.onAdd(map));
   </script>
 </body>
 </html>
