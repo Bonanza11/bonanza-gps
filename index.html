@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -42,6 +42,17 @@
       color: #c08b5c;
       border: 1px solid #444;
       border-radius: 6px;
+    }
+    .mapboxgl-ctrl-geocoder {
+      background-color: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      max-width: 100% !important;
+      margin-top: 4px;
+    }
+    .mapboxgl-ctrl-geocoder input {
+      color: #c08b5c;
+      background-color: #1a1a1a;
     }
     button {
       width: 100%;
@@ -81,10 +92,10 @@
     <label for="email">Email Address:</label>
     <input type="email" id="email" placeholder="e.g. your@email.com" />
 
-    <label for="pickup">Pick-up Address:</label>
+    <label>Pick-up Address:</label>
     <div id="pickup"></div>
 
-    <label for="dropoff">Drop-off Address:</label>
+    <label>Drop-off Address:</label>
     <div id="dropoff"></div>
 
     <label for="date">Date:</label>
@@ -102,7 +113,7 @@
   </footer>
 
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.1.2/mapbox-gl-geocoder.min.js"></script>
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
@@ -116,35 +127,28 @@
       dragPan: true
     });
 
-    const pickup = new MapboxGeocoder({
+    const pickupGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: 'Search pick-up address',
+      placeholder: "Enter pick-up address",
       mapboxgl: mapboxgl,
       countries: 'us',
-      bbox: [-114.0522, 36.9979, -109.0416, 42.0016], // Utah only
-      proximity: {
-        longitude: -111.8910,
-        latitude: 40.7608
-      }
+      marker: false,
+      flyTo: false
     });
+    document.getElementById('pickup').appendChild(pickupGeocoder.onAdd(map));
 
-    const dropoff = new MapboxGeocoder({
+    const dropoffGeocoder = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: 'Search drop-off address',
+      placeholder: "Enter drop-off address",
       mapboxgl: mapboxgl,
       countries: 'us',
-      bbox: [-114.0522, 36.9979, -109.0416, 42.0016], // Utah only
-      proximity: {
-        longitude: -111.8910,
-        latitude: 40.7608
-      }
+      marker: false,
+      flyTo: false
     });
-
-    document.getElementById('pickup').appendChild(pickup.onAdd(map));
-    document.getElementById('dropoff').appendChild(dropoff.onAdd(map));
+    document.getElementById('dropoff').appendChild(dropoffGeocoder.onAdd(map));
 
     function calculateRoute() {
-      alert("Calculation logic will be added in the next step.");
+      alert("Route calculation will be added in the next step.");
     }
   </script>
 </body>
