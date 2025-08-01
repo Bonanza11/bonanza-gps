@@ -82,10 +82,18 @@
     <input type="email" id="email" placeholder="e.g. your@email.com" />
 
     <label for="pickup">Pick-up Address:</label>
-    <div id="pickup-geocoder" style="margin-bottom:10px;"></div>
+    <div id="pickup"></div>
 
     <label for="dropoff">Drop-off Address:</label>
-    <div id="dropoff-geocoder"></div>
+    <div id="dropoff"></div>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+
+    <label for="time">Time:</label>
+    <input type="time" id="time" />
+
+    <button onclick="calculateRoute()">Calculate Price</button>
 
     <div id="map"></div>
   </main>
@@ -108,19 +116,36 @@
       dragPan: true
     });
 
-    const pickupGeocoder = new MapboxGeocoder({
+    const pickup = new MapboxGeocoder({
       accessToken: mapboxgl.accessToken,
-      placeholder: 'Search pickup address',
-      mapboxgl: mapboxgl
-    });
-    const dropoffGeocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      placeholder: 'Search drop-off address',
-      mapboxgl: mapboxgl
+      placeholder: 'Search pick-up address',
+      mapboxgl: mapboxgl,
+      countries: 'us',
+      bbox: [-114.0522, 36.9979, -109.0416, 42.0016], // Utah only
+      proximity: {
+        longitude: -111.8910,
+        latitude: 40.7608
+      }
     });
 
-    document.getElementById('pickup-geocoder').appendChild(pickupGeocoder.onAdd(map));
-    document.getElementById('dropoff-geocoder').appendChild(dropoffGeocoder.onAdd(map));
+    const dropoff = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      placeholder: 'Search drop-off address',
+      mapboxgl: mapboxgl,
+      countries: 'us',
+      bbox: [-114.0522, 36.9979, -109.0416, 42.0016], // Utah only
+      proximity: {
+        longitude: -111.8910,
+        latitude: 40.7608
+      }
+    });
+
+    document.getElementById('pickup').appendChild(pickup.onAdd(map));
+    document.getElementById('dropoff').appendChild(dropoff.onAdd(map));
+
+    function calculateRoute() {
+      alert("Calculation logic will be added in the next step.");
+    }
   </script>
 </body>
 </html>
