@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – Luxury GPS</title>
+  <title>Bonanza Transportation – Luxury GPS Quote</title>
   <style>
     body {
       margin: 0;
@@ -21,13 +21,12 @@
       object-fit: cover;
       border-radius: 50%;
       border: 3px solid #c29c74;
-      box-shadow: 0 0 10px #c29c74aa;
     }
     main {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 15px;
+      padding: 10px;
     }
     #formContainer {
       background: #111;
@@ -40,39 +39,30 @@
     label {
       font-weight: bold;
       margin-top: 10px;
-      display: block;
-      text-shadow: 1px 1px #000;
     }
-    input, select {
-      padding: 10px;
+    input {
+      padding: 8px;
       width: 100%;
       border-radius: 5px;
-      margin-top: 5px;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       border: none;
       background-color: #222;
       color: #c29c74;
-      font-size: 1em;
     }
     button {
       background: #c29c74;
       color: #000;
       font-weight: bold;
       border: none;
-      padding: 12px;
+      padding: 10px;
       width: 100%;
       border-radius: 5px;
-      font-size: 1.1em;
       cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background: #dcb88a;
     }
     #map {
       width: 100%;
       height: 400px;
-      margin-top: 25px;
+      margin-top: 20px;
       border-radius: 10px;
       overflow: hidden;
     }
@@ -85,30 +75,24 @@
       text-align: left;
       font-size: 0.95em;
       line-height: 1.6;
-      box-shadow: 0 0 8px #c29c74aa;
     }
     strong {
-      color: #e0c18f;
+      color: #d8b887;
+    }
+    #suvImage {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 8px #c29c74aa;
     }
     .signature {
-      margin-top: 25px;
+      margin-top: 30px;
       font-size: 1.4em;
-      text-align: center;
       font-weight: bold;
-      color: #c29c74;
-      text-shadow: 2px 2px #000;
-    }
-    .suv-image {
-      width: 100%;
-      margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px #c29c74aa;
-    }
-    .suv-label {
       text-align: center;
-      margin-top: 10px;
-      font-size: 1.1em;
       color: #c29c74;
+      border-top: 1px solid #333;
+      padding-top: 20px;
     }
     @media (max-width: 768px) {
       #formContainer, #infoBox {
@@ -128,25 +112,25 @@
     <div id="formContainer">
       <label>Full Name:</label>
       <input id="fullname" type="text" placeholder="John Doe">
-      
+
       <label>Phone Number:</label>
-      <input id="phone" type="tel" placeholder="+1 385 123 4567">
-      
+      <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567">
+
       <label>Email Address:</label>
       <input id="email" type="email" placeholder="example@email.com">
-      
+
       <label>Pick-up Address:</label>
       <input id="pickup" type="text" placeholder="e.g. 13742 N Jordanelle Pkwy">
-      
+
       <label>Drop-off Address:</label>
       <input id="dropoff" type="text" placeholder="e.g. SLC Airport">
-      
-      <label>Pick-up Date:</label>
+
+      <label>Date:</label>
       <input id="date" type="date">
-      
-      <label>Pick-up Time:</label>
+
+      <label>Time:</label>
       <input id="time" type="time">
-      
+
       <label>Estimated Price:</label>
       <input id="price" type="text" readonly value="$0.00" style="background:#333;">
       
@@ -161,13 +145,13 @@
       <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
       <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small suitcases or 3 large + 4 small</div>
-      <div><strong>Standard Hours:</strong> 6:30 AM – 10:30 PM</div>
-      <div><strong>Surcharge:</strong> $100 applies outside of standard hours</div>
+      <div><strong>Standard Rate Hours:</strong> 6:30 AM – 10:30 PM</div>
+      <div><strong>Note:</strong> $100 surcharge applies outside of these hours</div>
     </div>
 
+    <img id="suvImage" src="IMG_4042.png" alt="Our SUVs">
+
     <div class="signature">Bonanza Transportation</div>
-    <img src="4042.jpeg" alt="SUV" class="suv-image">
-    <div class="suv-label">Our SUVs</div>
   </main>
 
   <script>
