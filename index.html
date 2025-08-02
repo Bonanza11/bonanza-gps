@@ -3,168 +3,272 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation</title>
+  <title>Bonanza Transportation – GPS Estimate</title>
   <style>
     body {
-      background-color: #000;
-      color: #fff;
+      margin: 0;
       font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #c08b5c;
+    }
+
+    header {
+      text-align: center;
       padding: 20px;
     }
 
-    .form-group {
-      margin-bottom: 15px;
+    header img {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 3px solid #c08b5c;
+      object-fit: cover;
+    }
+
+    main {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
     }
 
     label {
       display: block;
-      margin-bottom: 5px;
+      margin-top: 12px;
+      font-weight: bold;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #555;
-      background-color: #111;
-      color: #fff;
+      padding: 8px;
+      margin-top: 4px;
+      background: #1a1a1a;
+      color: #c08b5c;
+      border: 1px solid #444;
+      border-radius: 6px;
     }
 
-    input.valid {
-      border-color: green;
+    .valid {
+      border: 2px solid green;
     }
 
-    input.invalid {
-      border-color: red;
+    .invalid {
+      border: 2px solid red;
     }
 
-    .btn {
-      background-color: #b87333;
-      border: none;
-      padding: 15px;
-      color: white;
-      font-size: 16px;
+    .error-message {
+      color: red;
+      font-size: 0.8em;
+      display: none;
+      margin-bottom: 5px;
+    }
+
+    button {
       width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background-color: #c08b5c;
+      color: #000;
+      font-weight: bold;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
-      border-radius: 8px;
-      transition: background 0.3s ease;
+      animation: pulse 1.8s infinite;
     }
 
-    .btn:hover {
-      background-color: #d88440;
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(192,139,92, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92, 0); }
     }
 
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
+    #map {
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 10px;
     }
 
-    .logo img {
-      width: 150px;
+    #info {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 0.95em;
+    }
+
+    #info div {
+      margin-bottom: 8px;
+    }
+
+    footer img {
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
+  </header>
+  <main>
+    <label for="fullname">Full Name:</label>
+    <input type="text" id="fullname" placeholder="e.g. John Doe" />
+    <div class="error-message" id="nameError">Please enter your full name.</div>
 
-  <div class="logo">
-    <img src="bonanza-logo.PNG" alt="Bonanza Transportation Logo" />
-  </div>
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" />
+    <div class="error-message" id="phoneError">Please enter a valid phone number.</div>
 
-  <form id="ride-form">
-    <div class="form-group">
-      <label>Full Name</label>
-      <input type="text" id="name" required />
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" placeholder="e.g. your@email.com" />
+    <div class="error-message" id="emailError">Please enter a valid email address.</div>
+
+    <label for="pickup">Pick-up Address:</label>
+    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+    <div class="error-message" id="pickupError">Please enter a pick-up address.</div>
+
+    <label for="dropoff">Drop-off Address:</label>
+    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
+    <div class="error-message" id="dropoffError">Please enter a drop-off address.</div>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+    <div class="error-message" id="dateError">Please select a date.</div>
+
+    <label for="time">Time:</label>
+    <input type="time" id="time" />
+    <div class="error-message" id="timeError">Please select a time.</div>
+
+    <button onclick="calculateRoute()">Calculate Price</button>
+
+    <div id="map"></div>
+
+    <div id="info">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
     </div>
 
-    <div class="form-group">
-      <label>Phone Number</label>
-      <input type="tel" id="phone" required />
-    </div>
+    <button id="payBtn" onclick="payNow()">PAY NOW</button>
+  </main>
 
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="email" required />
-    </div>
+  <footer>
+    <img src="IMG_4072.png" alt="Bonanza SUV" />
+  </footer>
 
-    <div class="form-group">
-      <label>Pick-up Address</label>
-      <input type="text" id="pickup" required />
-    </div>
-
-    <div class="form-group">
-      <label>Drop-off Address</label>
-      <input type="text" id="dropoff" required />
-    </div>
-
-    <div class="form-group">
-      <label>Date</label>
-      <input type="date" id="date" required />
-    </div>
-
-    <div class="form-group">
-      <label>Time</label>
-      <input type="time" id="time" required />
-    </div>
-
-    <button type="button" class="btn" id="pay-now-btn">Pay Now</button>
-  </form>
-
-  <!-- Google Maps Autocomplete -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"></script>
   <script>
-    function initAutocomplete() {
-      const pickup = document.getElementById('pickup');
-      const dropoff = document.getElementById('dropoff');
-      new google.maps.places.Autocomplete(pickup);
-      new google.maps.places.Autocomplete(dropoff);
+    let map, directionsService, directionsRenderer;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7608, lng: -111.8910 },
+        zoom: 10,
+        disableDefaultUI: true,
+        draggable: false,
+        scrollwheel: false
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+      directionsRenderer.setMap(map);
+
+      new google.maps.places.Autocomplete(document.getElementById('pickup'), { componentRestrictions: { country: 'us' } });
+      new google.maps.places.Autocomplete(document.getElementById('dropoff'), { componentRestrictions: { country: 'us' } });
     }
 
-    window.onload = initAutocomplete;
-  </script>
+    function validateInputs() {
+      const fields = [
+        { id: "fullname", errorId: "nameError" },
+        { id: "phone", errorId: "phoneError" },
+        { id: "email", errorId: "emailError" },
+        { id: "pickup", errorId: "pickupError" },
+        { id: "dropoff", errorId: "dropoffError" },
+        { id: "date", errorId: "dateError" },
+        { id: "time", errorId: "timeError" }
+      ];
 
-  <!-- Validación visual de campos -->
-  <script>
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-      input.addEventListener('input', () => {
-        if (input.checkValidity()) {
-          input.classList.add('valid');
-          input.classList.remove('invalid');
+      let allValid = true;
+
+      fields.forEach(({ id, errorId }) => {
+        const input = document.getElementById(id);
+        const error = document.getElementById(errorId);
+        if (!input.value.trim()) {
+          input.classList.remove("valid");
+          input.classList.add("invalid");
+          error.style.display = "block";
+          allValid = false;
         } else {
-          input.classList.add('invalid');
-          input.classList.remove('valid');
+          input.classList.remove("invalid");
+          input.classList.add("valid");
+          error.style.display = "none";
         }
       });
-    });
-  </script>
 
-  <!-- Stripe.js -->
-  <script src="https://js.stripe.com/v3/"></script>
-  <script>
-    const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WkbwMnSmGPCQyE4MzzIufo6gM8EvLeTHC0D9RrcJrOjRCd002MQFlj0F');
+      return allValid;
+    }
 
-    document.getElementById('pay-now-btn').addEventListener('click', async () => {
-      try {
-        const response = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
+    function calculateRoute() {
+      if (!validateInputs()) return;
 
-        const data = await response.json();
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
 
-        if (data.id) {
-          const result = await stripe.redirectToCheckout({ sessionId: data.id });
-          if (result.error) {
-            alert(result.error.message);
-          }
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
+
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
+
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          document.getElementById("price").textContent = "$" + price.toFixed(2);
         } else {
-          alert('No se pudo iniciar el pago.');
+          alert("Could not calculate route. Please check the addresses.");
         }
-      } catch (error) {
-        console.error(error);
-        alert('Hubo un error al procesar el pago.');
-      }
-    });
+      });
+    }
+
+    function payNow() {
+      if (!validateInputs()) return;
+
+      fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          window.location = `https://checkout.stripe.com/pay/${data.id}`;
+        } else {
+          alert("Stripe session creation failed.");
+        }
+      })
+      .catch(err => {
+        console.error("Payment error:", err);
+        alert("An error occurred while initiating payment.");
+      });
+    }
   </script>
 
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
