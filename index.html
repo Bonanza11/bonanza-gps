@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
+      font-family: Arial, sans-serif;
       background-color: #000;
       color: #c08b5c;
-      font-family: Arial, sans-serif;
     }
     header {
       text-align: center;
@@ -57,7 +56,16 @@
       height: 400px;
       margin-top: 20px;
       border-radius: 10px;
-      overflow: hidden;
+    }
+    #info {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 0.95em;
+    }
+    #info div {
+      margin-bottom: 8px;
     }
     footer img {
       width: 100%;
@@ -95,24 +103,89 @@
     <button onclick="calculateRoute()">Calculate Price</button>
 
     <div id="map"></div>
+
+    <div id="info">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
+    </div>
+
+    <button id="payBtn" onclick="payNow()" style="margin-top: 15px;">Pay Now</button>
   </main>
+
   <footer>
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
+    let map, directionsService, directionsRenderer;
 
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-111.8910, 40.7608],
-      zoom: 9,
-      scrollZoom: false,
-      dragRotate: false,
-      dragPan: true
-    });
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7608, lng: -111.8910 },
+        zoom: 10,
+        disableDefaultUI: true,
+        draggable: false,
+        scrollwheel: false
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+      directionsRenderer.setMap(map);
+
+      const pickupInput = document.getElementById('pickup');
+      const dropoffInput = document.getElementById('dropoff');
+
+      new google.maps.places.Autocomplete(pickupInput, { componentRestrictions: { country: 'us' } });
+      new google.maps.places.Autocomplete(dropoffInput, { componentRestrictions: { country: 'us' } });
+    }
+
+    function calculateRoute() {
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
+
+      if (!pickup || !dropoff) {
+        alert("Please enter both addresses.");
+        return;
+      }
+
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
+
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
+
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          document.getElementById("price").textContent = "$" + price.toFixed(2);
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
+        }
+      });
+    }
+
+    function payNow() {
+      alert("Stripe payment integration will go here.");
+      // Replace this alert with actual Stripe Checkout redirection in production.
+    }
   </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
