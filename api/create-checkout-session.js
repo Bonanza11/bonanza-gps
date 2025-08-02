@@ -5,10 +5,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { price } = req.body;
+  const { amount } = req.body;
 
-  if (!price || typeof price !== 'number') {
-    return res.status(400).json({ error: 'Invalid or missing price' });
+  if (!amount || typeof amount !== 'number') {
+    return res.status(400).json({ error: 'Invalid or missing amount' });
   }
 
   try {
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Bonanza Transportation Ride',
             },
-            unit_amount: price,
+            unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
         },
