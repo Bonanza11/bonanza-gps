@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
-  <link rel="icon" type="image/png" href="bonanza-logo.PNG"/>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -24,7 +24,7 @@
       object-fit: cover;
     }
     main {
-      max-width: 420px;
+      max-width: 400px;
       margin: auto;
       padding: 20px;
     }
@@ -72,27 +72,27 @@
   </header>
   <main>
     <label for="fullname">Full Name:</label>
-    <input type="text" id="fullname" placeholder="e.g. John Doe" required />
+    <input type="text" id="fullname" placeholder="e.g. John Doe" />
 
     <label for="phone">Phone Number:</label>
-    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" required />
+    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" />
 
     <label for="email">Email Address:</label>
-    <input type="email" id="email" placeholder="e.g. your@email.com" required />
+    <input type="email" id="email" placeholder="e.g. your@email.com" />
 
     <label for="pickup">Pick-up Address:</label>
-    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" required />
+    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
 
     <label for="dropoff">Drop-off Address:</label>
-    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" required />
+    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
 
     <label for="date">Date:</label>
-    <input type="date" id="date" required />
+    <input type="date" id="date" />
 
     <label for="time">Time:</label>
-    <input type="time" id="time" required />
+    <input type="time" id="time" />
 
-    <button onclick="validateAndCalculate()">Calculate Price</button>
+    <button onclick="calculateRoute()">Calculate Price</button>
 
     <div id="map"></div>
   </main>
@@ -100,56 +100,19 @@
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places"></script>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script>
-    let map, directionsService, directionsRenderer;
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYm9uYW56YTEiLCJhIjoiY21kdDY3bGhzMHhlZzJsb2RpdTExbWV4eCJ9.dGYSOsvJ1tKnIKq-rvFScg';
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.7608, lng: -111.8910 },
-        zoom: 12,
-        disableDefaultUI: true,
-        gestureHandling: "none"
-      });
-
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
-      directionsRenderer.setMap(map);
-
-      new google.maps.places.Autocomplete(document.getElementById("pickup"), { componentRestrictions: { country: "us" } });
-      new google.maps.places.Autocomplete(document.getElementById("dropoff"), { componentRestrictions: { country: "us" } });
-    }
-
-    function validateAndCalculate() {
-      const fields = ["fullname", "phone", "email", "pickup", "dropoff", "date", "time"];
-      for (const id of fields) {
-        const value = document.getElementById(id).value.trim();
-        if (!value) {
-          alert("Please complete all required fields.");
-          return;
-        }
-      }
-      calculateRoute();
-    }
-
-    function calculateRoute() {
-      const pickup = document.getElementById("pickup").value;
-      const dropoff = document.getElementById("dropoff").value;
-
-      directionsService.route({
-        origin: pickup,
-        destination: dropoff,
-        travelMode: google.maps.TravelMode.DRIVING
-      }, (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-        } else {
-          alert("Could not calculate route. Please check the addresses.");
-        }
-      });
-    }
-
-    window.onload = initMap;
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [-111.8910, 40.7608],
+      zoom: 9,
+      scrollZoom: false,
+      dragRotate: false,
+      dragPan: true
+    });
   </script>
 </body>
 </html>
