@@ -6,237 +6,212 @@
   <title>Bonanza Transportation</title>
   <style>
     body {
-      background-color: #0d0d0d;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
       margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0c0c0c;
+      color: #f5f5f5;
+      padding-bottom: 100px;
     }
-    h1 {
+
+    header {
       text-align: center;
-      color: #b87333;
+      padding: 20px;
     }
-    .form-group {
-      margin-bottom: 15px;
+
+    header img {
+      max-width: 200px;
+      margin-bottom: 10px;
     }
+
+    h1 {
+      color: #d1884f;
+    }
+
+    form {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background-color: #1a1a1a;
+      border-radius: 10px;
+    }
+
     label {
       display: block;
-      margin-bottom: 5px;
-      color: #ccc;
+      margin-top: 15px;
     }
-    input, select {
+
+    input {
       width: 100%;
       padding: 10px;
-      background-color: #1c1c1c;
-      border: 1px solid #333;
-      color: #fff;
-      border-radius: 5px;
-    }
-    .valid {
-      border-color: green;
-    }
-    .invalid {
-      border-color: red;
-    }
-    #calculate-btn, #pay-button {
-      background-color: #b87333;
+      margin-top: 5px;
       border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 16px;
+      border-radius: 5px;
+      background: #333;
       color: white;
+    }
+
+    .valid::after {
+      content: '✔️';
+      margin-left: 8px;
+      color: green;
+    }
+
+    .invalid::after {
+      content: '❌';
+      margin-left: 8px;
+      color: red;
+    }
+
+    #calculateBtn, #payBtn {
+      margin-top: 20px;
+      padding: 15px;
+      width: 100%;
+      background-color: #d1884f;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-      transition: background-color 0.3s;
+      transition: background 0.3s;
     }
-    #calculate-btn:hover, #pay-button:hover {
-      background-color: #a3622b;
+
+    #calculateBtn:hover, #payBtn:hover {
+      background-color: #b36b2c;
     }
+
     #map {
-      height: 200px;
-      margin-top: 15px;
+      height: 300px;
+      margin: 20px auto;
+      max-width: 600px;
       border-radius: 10px;
     }
-    .info {
+
+    #trip-info {
+      text-align: center;
       margin-top: 20px;
-      background-color: #1a1a1a;
-      padding: 15px;
-      border-radius: 10px;
     }
-    .info strong {
-      color: #b87333;
-    }
-    img.logo {
+
+    .vehicle {
       display: block;
-      margin: 0 auto 20px;
-      max-width: 150px;
+      margin: 30px auto;
+      max-width: 300px;
     }
   </style>
 </head>
 <body>
-  <img src="bonanza-logo.PNG" alt="Bonanza Transportation" class="logo">
-  <h1>Book Your Ride</h1>
-  
-  <div class="form-group">
-    <label for="pickup">Pick-up Address:</label>
-    <input type="text" id="pickup" placeholder="Enter pick-up location">
-  </div>
+  <header>
+    <img src="bonanza-logo.PNG" alt="Bonanza Logo"/>
+    <h1>Book Your Ride</h1>
+  </header>
 
-  <div class="form-group">
-    <label for="dropoff">Drop-off Address:</label>
-    <input type="text" id="dropoff" placeholder="Enter drop-off location">
-  </div>
+  <form id="bookingForm">
+    <label>Pick-up Address:
+      <input id="pickup" type="text" placeholder="Enter pick-up location" required />
+    </label>
 
-  <div class="form-group">
-    <label for="date">Date:</label>
-    <input type="date" id="date">
-  </div>
+    <label>Drop-off Address:
+      <input id="dropoff" type="text" placeholder="Enter drop-off location" required />
+    </label>
 
-  <div class="form-group">
-    <label for="time">Time:</label>
-    <input type="time" id="time">
-  </div>
+    <label>Date:
+      <input id="date" type="date" required />
+    </label>
 
-  <button id="calculate-btn">Calculate Price</button>
+    <label>Time:
+      <input id="time" type="time" required />
+    </label>
+
+    <button id="calculateBtn" type="button">Calculate Price</button>
+    <button id="payBtn" type="button" style="display: none;">PAY NOW</button>
+  </form>
+
+  <div id="trip-info"></div>
+  <img class="vehicle" src="IMG_4072.png" alt="Suburban SUV"/>
 
   <div id="map"></div>
 
-  <div class="info" id="trip-info" style="display:none;">
-    <p><strong>Distance:</strong> <span id="distance"></span></p>
-    <p><strong>Duration:</strong> <span id="duration"></span></p>
-    <p><strong>Estimated Price:</strong> $<span id="price"></span></p>
-  </div>
-
-  <button id="pay-button" style="display:none;">PAY NOW</button>
-
   <script>
-    let map;
-    let pickupMarker;
-    let dropoffMarker;
-    let calculatedPrice = 0;
+    let price = 0;
 
-    function initAutocomplete() {
-      const pickupInput = document.getElementById('pickup');
-      const dropoffInput = document.getElementById('dropoff');
-      const pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput);
-      const dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffInput);
-
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.7608, lng: -111.8910 },
-        zoom: 10,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
-          { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] }
-        ]
-      });
-
-      pickupAutocomplete.addListener("place_changed", () => {
-        const place = pickupAutocomplete.getPlace();
-        if (place.geometry && place.geometry.location) {
-          if (pickupMarker) pickupMarker.setMap(null);
-          pickupMarker = new google.maps.Marker({
-            map: map,
-            position: place.geometry.location,
-            label: "A"
-          });
-          map.setCenter(place.geometry.location);
-          pickupInput.classList.remove("invalid");
-          pickupInput.classList.add("valid");
+    function validateInputs() {
+      document.querySelectorAll('input').forEach(input => {
+        input.classList.remove("valid", "invalid");
+        if (input.value.trim()) {
+          input.classList.add("valid");
         } else {
-          pickupInput.classList.remove("valid");
-          pickupInput.classList.add("invalid");
-        }
-      });
-
-      dropoffAutocomplete.addListener("place_changed", () => {
-        const place = dropoffAutocomplete.getPlace();
-        if (place.geometry && place.geometry.location) {
-          if (dropoffMarker) dropoffMarker.setMap(null);
-          dropoffMarker = new google.maps.Marker({
-            map: map,
-            position: place.geometry.location,
-            label: "B"
-          });
-          dropoffInput.classList.remove("invalid");
-          dropoffInput.classList.add("valid");
-        } else {
-          dropoffInput.classList.remove("valid");
-          dropoffInput.classList.add("invalid");
+          input.classList.add("invalid");
         }
       });
     }
 
-    document.getElementById("calculate-btn").addEventListener("click", async () => {
-      const pickup = document.getElementById("pickup").value;
-      const dropoff = document.getElementById("dropoff").value;
+    async function calculateRoute() {
+      validateInputs();
+      const origin = document.getElementById("pickup").value;
+      const destination = document.getElementById("dropoff").value;
 
-      if (!pickup || !dropoff) {
-        alert("Please enter both pick-up and drop-off addresses.");
-        return;
-      }
+      if (!origin || !destination) return;
 
-      const service = new google.maps.DistanceMatrixService();
-      service.getDistanceMatrix(
-        {
-          origins: [pickup],
-          destinations: [dropoff],
-          travelMode: "DRIVING",
-        },
-        (response, status) => {
-          if (status === "OK") {
-            const element = response.rows[0].elements[0];
-            const distanceText = element.distance.text;
-            const durationText = element.duration.text;
-            const distanceInMiles = parseFloat(element.distance.value / 1609.34).toFixed(1);
-            calculatedPrice = Math.round(distanceInMiles * 8 * 100); // in cents
+      const directionsService = new google.maps.DirectionsService();
+      const results = await directionsService.route({
+        origin,
+        destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+      });
 
-            document.getElementById("distance").textContent = distanceText;
-            document.getElementById("duration").textContent = durationText;
-            document.getElementById("price").textContent = (calculatedPrice / 100).toFixed(2);
-            document.getElementById("trip-info").style.display = "block";
-            document.getElementById("pay-button").style.display = "block";
-          } else {
-            alert("Error calculating distance: " + status);
-          }
-        }
-      );
-    });
+      const route = results.routes[0].legs[0];
+      const distanceText = route.distance.text;
+      const durationText = route.duration.text;
+      const distanceMiles = parseFloat(route.distance.value) / 1609;
 
-    document.getElementById("pay-button").addEventListener("click", async () => {
-      if (!calculatedPrice || calculatedPrice <= 0) {
-        alert("Please calculate the price before proceeding to payment.");
-        return;
-      }
+      price = Math.round(75 + distanceMiles * 3);
 
+      document.getElementById("trip-info").innerHTML = `
+        <h3>Distance: ${distanceText}</h3>
+        <h3>Duration: ${durationText}</h3>
+        <h2>Estimated Price: $${price}</h2>
+      `;
+
+      new google.maps.DirectionsRenderer({ map }).setDirections(results);
+      document.getElementById("payBtn").style.display = "block";
+    }
+
+    document.getElementById("calculateBtn").addEventListener("click", calculateRoute);
+
+    document.getElementById("payBtn").addEventListener("click", async () => {
       try {
-        const response = await fetch("/api/create-checkout-session", {
+        const res = await fetch("/api/create-checkout-session", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ price: calculatedPrice }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ price: price * 100 })
         });
-
-        const data = await response.json();
-
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          throw new Error("No URL returned from Stripe");
-        }
-      } catch (error) {
-        console.error("Payment initiation error:", error);
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+        else alert("Error creating payment session.");
+      } catch (err) {
         alert("An error occurred while initiating payment.");
       }
     });
+
+    let map;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7608, lng: -111.8910 },
+        zoom: 11,
+        styles: [{ elementType: "geometry", stylers: [{ color: "#1a1a1a" }] }]
+      });
+
+      const autocompleteOptions = {
+        fields: ["place_id", "geometry", "name"],
+        types: ["address"],
+      };
+      new google.maps.places.Autocomplete(document.getElementById("pickup"), autocompleteOptions);
+      new google.maps.places.Autocomplete(document.getElementById("dropoff"), autocompleteOptions);
+    }
   </script>
 
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initAutocomplete"
-    async defer>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
 </body>
 </html>
