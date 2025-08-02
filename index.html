@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
+  <link rel="icon" type="image/png" href="bonanza-logo.PNG"/>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
       background-color: #000;
       color: #c08b5c;
+      font-family: Arial, sans-serif;
     }
     header {
       text-align: center;
@@ -23,7 +24,7 @@
       object-fit: cover;
     }
     main {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
       padding: 20px;
     }
@@ -56,16 +57,7 @@
       height: 400px;
       margin-top: 20px;
       border-radius: 10px;
-    }
-    #info {
-      background: #111;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-      font-size: 0.95em;
-    }
-    #info div {
-      margin-bottom: 8px;
+      overflow: hidden;
     }
     footer img {
       width: 100%;
@@ -80,77 +72,69 @@
   </header>
   <main>
     <label for="fullname">Full Name:</label>
-    <input type="text" id="fullname" placeholder="e.g. John Doe" />
+    <input type="text" id="fullname" placeholder="e.g. John Doe" required />
 
     <label for="phone">Phone Number:</label>
-    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" />
+    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" required />
 
     <label for="email">Email Address:</label>
-    <input type="email" id="email" placeholder="e.g. your@email.com" />
+    <input type="email" id="email" placeholder="e.g. your@email.com" required />
 
     <label for="pickup">Pick-up Address:</label>
-    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" required />
 
     <label for="dropoff">Drop-off Address:</label>
-    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
+    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" required />
 
     <label for="date">Date:</label>
-    <input type="date" id="date" />
+    <input type="date" id="date" required />
 
     <label for="time">Time:</label>
-    <input type="time" id="time" />
+    <input type="time" id="time" required />
 
-    <button onclick="calculateRoute()">Calculate Price</button>
+    <button onclick="validateAndCalculate()">Calculate Price</button>
 
     <div id="map"></div>
-
-    <div id="info">
-      <div><strong>Distance:</strong> <span id="distance">—</span></div>
-      <div><strong>Duration:</strong> <span id="duration">—</span></div>
-      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
-      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
-      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
-      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
-    </div>
-
-    <button id="payBtn" onclick="payNow()" style="margin-top: 15px;">Pay Now</button>
   </main>
-
   <footer>
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places"></script>
   <script>
     let map, directionsService, directionsRenderer;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7608, lng: -111.8910 },
-        zoom: 10,
+        zoom: 12,
         disableDefaultUI: true,
-        draggable: false,
-        scrollwheel: false
+        gestureHandling: "none"
       });
 
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
       directionsRenderer.setMap(map);
 
-      const pickupInput = document.getElementById('pickup');
-      const dropoffInput = document.getElementById('dropoff');
+      new google.maps.places.Autocomplete(document.getElementById("pickup"), { componentRestrictions: { country: "us" } });
+      new google.maps.places.Autocomplete(document.getElementById("dropoff"), { componentRestrictions: { country: "us" } });
+    }
 
-      new google.maps.places.Autocomplete(pickupInput, { componentRestrictions: { country: 'us' } });
-      new google.maps.places.Autocomplete(dropoffInput, { componentRestrictions: { country: 'us' } });
+    function validateAndCalculate() {
+      const fields = ["fullname", "phone", "email", "pickup", "dropoff", "date", "time"];
+      for (const id of fields) {
+        const value = document.getElementById(id).value.trim();
+        if (!value) {
+          alert("Please complete all required fields.");
+          return;
+        }
+      }
+      calculateRoute();
     }
 
     function calculateRoute() {
       const pickup = document.getElementById("pickup").value;
       const dropoff = document.getElementById("dropoff").value;
-
-      if (!pickup || !dropoff) {
-        alert("Please enter both addresses.");
-        return;
-      }
 
       directionsService.route({
         origin: pickup,
@@ -159,33 +143,13 @@
       }, (response, status) => {
         if (status === "OK") {
           directionsRenderer.setDirections(response);
-          const route = response.routes[0].legs[0];
-          const distanceMiles = route.distance.value / 1609.34;
-          const durationText = route.duration.text;
-
-          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
-          document.getElementById("duration").textContent = durationText;
-
-          let price = 0;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
-
-          document.getElementById("price").textContent = "$" + price.toFixed(2);
         } else {
           alert("Could not calculate route. Please check the addresses.");
         }
       });
     }
 
-    function payNow() {
-      alert("Stripe payment integration will go here.");
-      // Replace this alert with actual Stripe Checkout redirection in production.
-    }
+    window.onload = initMap;
   </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
