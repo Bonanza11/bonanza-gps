@@ -43,14 +43,20 @@
     }
     button {
       width: 100%;
-      padding: 10px;
+      padding: 14px;
       margin-top: 20px;
       background-color: #c08b5c;
       color: #000;
       font-weight: bold;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      font-size: 1.2em;
+    }
+    button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 10px #c08b5c88;
     }
     #map {
       height: 400px;
@@ -71,6 +77,17 @@
       width: 100%;
       margin-top: 20px;
       border-radius: 10px;
+    }
+
+    /* Pay Now Animation */
+    #payBtn {
+      background-color: #c08b5c;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92,0.7); }
+      70% { transform: scale(1.03); box-shadow: 0 0 12px 10px rgba(192,139,92, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92,0); }
     }
   </style>
 </head>
@@ -113,7 +130,7 @@
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
     </div>
 
-    <button id="payBtn" onclick="payNow()" style="margin-top: 15px;">Pay Now</button>
+    <button id="payBtn" onclick="payNow()">Pay Now</button>
   </main>
 
   <footer>
@@ -198,7 +215,7 @@
       }
 
       alert("Stripe payment integration will go here.");
-      // Replace this alert with Stripe redirection logic.
+      // Replace with Stripe redirection logic
     }
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
