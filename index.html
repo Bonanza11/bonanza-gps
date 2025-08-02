@@ -238,7 +238,7 @@
       fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price: Math.round(calculatedPrice * 100) }) // price in cents
+        body: JSON.stringify({ amount: calculatedPrice }) // Enviar en dólares, no centavos
       })
       .then(res => res.json())
       .then(data => {
