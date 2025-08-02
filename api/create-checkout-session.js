@@ -1,8 +1,15 @@
+// /api/create-checkout-session.js
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const { price } = req.body;
+
+  if (!price || isNaN(price)) {
+    return res.status(400).json({ error: 'Invalid price' });
   }
 
   try {
@@ -15,7 +22,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Bonanza Transportation Ride',
             },
-            unit_amount: 5000, // 50 USD
+            unit_amount: Math.round(price * 100), // Convert to cents
           },
           quantity: 1,
         },
