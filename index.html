@@ -23,7 +23,7 @@
       object-fit: cover;
     }
     main {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
       padding: 20px;
     }
@@ -31,9 +31,6 @@
       display: block;
       margin-top: 12px;
       font-weight: bold;
-    }
-    .input-group {
-      position: relative;
     }
     input {
       width: 100%;
@@ -44,40 +41,42 @@
       border: 1px solid #444;
       border-radius: 6px;
     }
-    .status-icon {
-      position: absolute;
-      right: 10px;
-      top: 36px;
-      font-size: 1.2em;
+    input.valid {
+      border: 2px solid #00cc66;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Yes_Check_Circle.svg/24px-Yes_Check_Circle.svg.png');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 18px;
     }
-    .valid {
-      color: limegreen;
-    }
-    .invalid {
-      color: red;
+    input.invalid {
+      border: 2px solid #cc0000;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Error_icon.svg/24px-Error_icon.svg.png');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 18px;
     }
     .error-message {
-      font-size: 0.8em;
-      color: red;
+      color: #ff4d4d;
+      font-size: 0.85em;
+      margin-top: 2px;
       display: none;
     }
     button {
       width: 100%;
-      padding: 14px;
-      margin-top: 20px;
-      background: linear-gradient(90deg, #d4a76a, #b97c3e);
-      color: #000;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
+      padding: 12px;
+      margin-top: 18px;
       font-size: 1.1em;
+      font-weight: bold;
+      background: linear-gradient(135deg, #c08b5c, #e0b980);
+      color: #000;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      animation: pulse 2s infinite;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(192,139,92, 0.7); }
-      70% { box-shadow: 0 0 0 12px rgba(192,139,92, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(192,139,92, 0); }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 12px #c08b5c;
     }
     #map {
       height: 400px;
@@ -91,9 +90,6 @@
       margin-top: 20px;
       font-size: 0.95em;
     }
-    #info div {
-      margin-bottom: 8px;
-    }
     footer img {
       width: 100%;
       margin-top: 20px;
@@ -106,56 +102,36 @@
     <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
   </header>
   <main>
-    <div class="input-group">
-      <label for="fullname">Full Name:</label>
-      <input type="text" id="fullname" oninput="validate(this)" />
-      <div class="status-icon" id="icon-fullname"></div>
-      <div class="error-message" id="error-fullname">Name required</div>
-    </div>
+    <label for="fullname">Full Name:</label>
+    <input type="text" id="fullname" required />
+    <div class="error-message" id="error-fullname">Required</div>
 
-    <div class="input-group">
-      <label for="phone">Phone Number:</label>
-      <input type="tel" id="phone" oninput="validate(this)" />
-      <div class="status-icon" id="icon-phone"></div>
-      <div class="error-message" id="error-phone">Valid number required</div>
-    </div>
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" required />
+    <div class="error-message" id="error-phone">Required</div>
 
-    <div class="input-group">
-      <label for="email">Email Address:</label>
-      <input type="email" id="email" oninput="validate(this)" />
-      <div class="status-icon" id="icon-email"></div>
-      <div class="error-message" id="error-email">Valid email required</div>
-    </div>
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" required />
+    <div class="error-message" id="error-email">Required</div>
 
-    <div class="input-group">
-      <label for="pickup">Pick-up Address:</label>
-      <input type="text" id="pickup" oninput="validate(this)" />
-      <div class="status-icon" id="icon-pickup"></div>
-      <div class="error-message" id="error-pickup">Required</div>
-    </div>
+    <label for="pickup">Pick-up Address:</label>
+    <input type="text" id="pickup" required />
+    <div class="error-message" id="error-pickup">Required</div>
 
-    <div class="input-group">
-      <label for="dropoff">Drop-off Address:</label>
-      <input type="text" id="dropoff" oninput="validate(this)" />
-      <div class="status-icon" id="icon-dropoff"></div>
-      <div class="error-message" id="error-dropoff">Required</div>
-    </div>
+    <label for="dropoff">Drop-off Address:</label>
+    <input type="text" id="dropoff" required />
+    <div class="error-message" id="error-dropoff">Required</div>
 
-    <div class="input-group">
-      <label for="date">Date:</label>
-      <input type="date" id="date" oninput="validate(this)" />
-      <div class="status-icon" id="icon-date"></div>
-      <div class="error-message" id="error-date">Required</div>
-    </div>
+    <label for="date">Date:</label>
+    <input type="date" id="date" required />
+    <div class="error-message" id="error-date">Required</div>
 
-    <div class="input-group">
-      <label for="time">Time:</label>
-      <input type="time" id="time" oninput="validate(this)" />
-      <div class="status-icon" id="icon-time"></div>
-      <div class="error-message" id="error-time">Required</div>
-    </div>
+    <label for="time">Time:</label>
+    <input type="time" id="time" required />
+    <div class="error-message" id="error-time">Required</div>
 
-    <button onclick="validateForm()">Pay Now</button>
+    <button onclick="calculateRoute()">Calculate Price</button>
+    <button onclick="payNow()">💳 Pay Now</button>
 
     <div id="map"></div>
 
@@ -168,11 +144,11 @@
       <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
     </div>
   </main>
+
   <footer>
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
   <script>
     let map, directionsService, directionsRenderer;
 
@@ -184,54 +160,79 @@
         draggable: false,
         scrollwheel: false
       });
+
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
       directionsRenderer.setMap(map);
-      new google.maps.places.Autocomplete(document.getElementById('pickup'));
-      new google.maps.places.Autocomplete(document.getElementById('dropoff'));
+
+      const pickupInput = document.getElementById('pickup');
+      const dropoffInput = document.getElementById('dropoff');
+
+      new google.maps.places.Autocomplete(pickupInput, { componentRestrictions: { country: 'us' } });
+      new google.maps.places.Autocomplete(dropoffInput, { componentRestrictions: { country: 'us' } });
     }
 
-    function validate(input) {
-      const id = input.id;
-      const icon = document.getElementById('icon-' + id);
-      const error = document.getElementById('error-' + id);
-      let valid = false;
-
-      if (input.type === 'email') {
-        valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value);
-      } else if (input.type === 'tel') {
-        valid = /^\+?\d{7,15}$/.test(input.value);
+    function validateField(id) {
+      const field = document.getElementById(id);
+      const error = document.getElementById("error-" + id);
+      if (field.value.trim() === "") {
+        field.classList.add("invalid");
+        field.classList.remove("valid");
+        error.style.display = "block";
+        return false;
       } else {
-        valid = input.value.trim().length > 0;
-      }
-
-      if (valid) {
-        icon.textContent = '✔️';
-        icon.className = 'status-icon valid';
-        error.style.display = 'none';
-      } else {
-        icon.textContent = '❌';
-        icon.className = 'status-icon invalid';
-        error.style.display = 'block';
+        field.classList.add("valid");
+        field.classList.remove("invalid");
+        error.style.display = "none";
+        return true;
       }
     }
 
-    function validateForm() {
-      const fields = ['fullname','phone','email','pickup','dropoff','date','time'];
-      let allValid = true;
-      fields.forEach(id => {
-        const input = document.getElementById(id);
-        validate(input);
-        if (input.value.trim() === '' || document.getElementById('icon-' + id).textContent === '❌') {
-          allValid = false;
+    function validateAllFields() {
+      const fields = ["fullname", "phone", "email", "pickup", "dropoff", "date", "time"];
+      return fields.every(validateField);
+    }
+
+    function calculateRoute() {
+      if (!validateAllFields()) return;
+
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
+
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
+
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
+
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          document.getElementById("price").textContent = "$" + price.toFixed(2);
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
         }
       });
-      if (allValid) {
-        alert("Proceeding to payment or next step...");
-      } else {
-        alert("Please fill out all fields correctly.");
-      }
+    }
+
+    function payNow() {
+      if (!validateAllFields()) return;
+      alert("Stripe payment will be processed here.");
     }
   </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
