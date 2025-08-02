@@ -1,3 +1,5 @@
+// /api/create-checkout-session.js
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
@@ -8,7 +10,7 @@ export default async function handler(req, res) {
   const { price } = req.body;
 
   if (!price || typeof price !== 'number') {
-    return res.status(400).json({ error: 'Invalid or missing price.' });
+    return res.status(400).json({ error: 'Invalid or missing price' });
   }
 
   try {
@@ -21,7 +23,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Bonanza Transportation Ride',
             },
-            unit_amount: price, // already in cents
+            unit_amount: price, // Price in cents (e.g., $120.00 = 12000)
           },
           quantity: 1,
         },
