@@ -1,4 +1,3 @@
-// /api/create-checkout-session.js
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
@@ -8,8 +7,8 @@ export default async function handler(req, res) {
 
   const { price } = req.body;
 
-  if (!price || isNaN(price)) {
-    return res.status(400).json({ error: 'Invalid price' });
+  if (!price || typeof price !== 'number') {
+    return res.status(400).json({ error: 'Invalid or missing price.' });
   }
 
   try {
@@ -22,7 +21,7 @@ export default async function handler(req, res) {
             product_data: {
               name: 'Bonanza Transportation Ride',
             },
-            unit_amount: Math.round(price * 100), // Convert to cents
+            unit_amount: price, // already in cents
           },
           quantity: 1,
         },
