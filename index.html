@@ -243,9 +243,10 @@ function payNow() {
     },
     body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) }) // en centavos
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.id) {
+  .then(async res => {
+  if (!res.ok) throw new Error('Stripe backend error');
+  const data = await res.json();
+  if (data.id) {
       window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
     } else {
       alert("Stripe session creation failed.");
