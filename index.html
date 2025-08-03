@@ -230,31 +230,31 @@
     }
 
     function payNow() {
-      if (!validateInputs() || calculatedPrice <= 0) {
-        alert("Please calculate a price before proceeding to payment.");
-        return;
-      }
+  if (!validateInputs() || calculatedPrice <= 0) {
+    alert("Please calculate a price before proceeding to payment.");
+    return;
+  }
 
-      console.log('Enviando monto a Stripe:', calculatedPrice);
-      
-      fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: calculatedPrice }) // Enviar en dólares, no centavos
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert("Stripe session creation failed.");
-        }
-      })
-      .catch(err => {
-        console.error("Payment error:", err);
-        alert("An error occurred while initiating payment.");
-      });
+  console.log('Enviando monto a Stripe:', calculatedPrice);
+
+  fetch('/api/create-checkout-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: calculatedPrice })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Stripe session creation failed.");
     }
+  })
+  .catch(err => {
+    console.error("Payment error:", err);
+    alert("An error occurred while initiating payment.");
+  });
+}
   </script>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
