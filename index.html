@@ -228,32 +228,33 @@
         }
       });
     }
+function payNow() {
+  if (!validateInputs() || calculatedPrice <= 0) {
+    alert("Please calculate a price before proceeding to payment.");
+    return;
+  }
 
-    function payNow() {
-  if (!validateInputs() || calculatedPrice <= 0) {
-    alert("Please calculate a price before proceeding to payment.");
-    return;
-  }
+  console.log('Enviando monto a Stripe:', calculatedPrice);
 
-  console.log('Enviando monto a Stripe:', calculatedPrice);
-
-  fetch('/api/create-checkout-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert("Stripe session creation failed.");
-    }
-  })
-  .catch(err => {
-    console.error("Payment error:", err);
-    alert("An error occurred while initiating payment.");
-  });
+  fetch('/api/create-checkout-session', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) }) // en centavos
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.id) {
+      window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
+    } else {
+      alert("Stripe session creation failed.");
+    }
+  })
+  .catch(err => {
+    console.error("Payment error:", err);
+    alert("An error occurred while initiating payment.");
+  });
 }
   </script>
 
