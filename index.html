@@ -240,7 +240,7 @@
   fetch('/api/create-checkout-session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: calculatedPrice })
+    body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) })
   })
   .then(res => res.json())
   .then(data => {
