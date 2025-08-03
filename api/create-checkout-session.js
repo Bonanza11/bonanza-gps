@@ -6,6 +6,8 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log('BODY RECIBIDO:', req.body); // 👈 importante para depurar
+
     const { amount } = req.body;
 
     if (!amount || isNaN(amount)) {
@@ -22,7 +24,7 @@ module.exports = async (req, res) => {
             product_data: {
               name: 'Bonanza Transportation Ride',
             },
-            unit_amount: Math.round(amount), // en centavos
+            unit_amount: Math.round(amount), // ya debe venir multiplicado por 100
           },
           quantity: 1,
         },
@@ -33,7 +35,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ id: session.id });
   } catch (err) {
-    console.error('Stripe error:', err);
+    console.error('Stripe error:', err); // muestra error real
     return res.status(500).json({ error: 'Payment initiation failed' });
   }
-};// Trigger redeploy
+};
