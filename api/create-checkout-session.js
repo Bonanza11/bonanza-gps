@@ -36,4 +36,4 @@ module.exports = async (req, res) => {
     console.error('Stripe error:', err);
     return res.status(500).json({ error: 'Payment initiation failed' });
   }
-};
+};// Trigger redeploy
