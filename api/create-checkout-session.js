@@ -22,13 +22,13 @@ export default async function handler(req, res) {
           },
         ],
         mode: 'payment',
-       success_url: `${req.headers.origin}?success=true`,
-       cancel_url: `${req.headers.origin}?canceled=true`,
+        success_url: 'https://bonanza-gps.vercel.app/success',
+        cancel_url: 'https://bonanza-gps.vercel.app/cancel',
       });
 
       res.status(200).json({ id: session.id });
     } catch (err) {
-      console.error('🔥 Stripe ERROR:', err);
+      console.error('⚠️ Stripe ERROR:', err);
       res.status(500).json({ error: 'Stripe session failed' });
     }
   } else {
