@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 
-console.log('🔑 Stripe Key Loaded:', process.env.STRIPE_SECRET_KEY?.slice(0, 10));
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
       res.status(200).json({ id: session.id });
     } catch (err) {
-      console.error('Stripe error:', err);
+      console.error('🔥 Stripe ERROR:', err);
       res.status(500).json({ error: 'Stripe session failed' });
     }
   } else {
