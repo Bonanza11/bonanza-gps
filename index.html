@@ -235,28 +235,29 @@ function payNow() {
   }
 
   console.log('Enviando monto a Stripe:', calculatedPrice);
-
-  fetch('/api/create-checkout-session', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) }) // en centavos
-  })
-  .then(async res => {
+  
+fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ amount: Math.round(price * 100) })
+})
+.then(async res => {
   if (!res.ok) throw new Error('Stripe backend error');
   const data = await res.json();
   if (data.id) {
-      window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
-    } else {
-      alert("Stripe session creation failed.");
-    }
-  })
-  .catch(err => {
-    console.error("Payment error:", err);
-    alert("An error occurred while initiating payment.");
-  });
-}
+    const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF'); // ⚠️ Reemplaza con tu clave pública real
+    stripe.redirectToCheckout({ sessionId: data.id });
+  } else {
+    alert("Stripe session creation failed.");
+  }
+})
+.catch(err => {
+  console.error("Payment error:", err);
+  alert("An error occurred while initiating payment.");
+});
+  
   </script>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
