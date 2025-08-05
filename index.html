@@ -53,7 +53,7 @@
       transition: background-color 0.3s ease;
     }
     button:hover {
-      background-color: #d9a673;
+      background-color: #9a6733;
     }
     .info {
       margin-top: 16px;
@@ -68,7 +68,6 @@
     <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
     <h1>Bonanza Transportation</h1>
   </header>
-
   <main>
     <label for="origin">Pickup Location</label>
     <input id="origin" type="text" placeholder="Enter origin address" />
@@ -76,13 +75,12 @@
     <label for="destination">Drop-off Location</label>
     <input id="destination" type="text" placeholder="Enter destination address" />
 
-    <div id="map" style="width: 100%; height: 300px; margin-top: 20px; border: 1px solid #c08b5c;"></div>
     <button onclick="calculateRoute()">Calculate Price</button>
 
     <div class="info">
-      <p>Distance: <span id="distance">-</span></p>
-      <p>Estimated Time: <span id="duration">-</span></p>
-      <p>Estimated Price: <span id="price">-</span></p>
+      <p>Distance: <span id="distance"></span></p>
+      <p>Estimated Time: <span id="duration"></span></p>
+      <p>Estimated Price: <span id="price"></span></p>
     </div>
 
     <button onclick="payNow()">PAY NOW</button>
@@ -107,33 +105,36 @@
       const destination = document.getElementById('destination').value;
 
       const service = new google.maps.DistanceMatrixService();
-      service.getDistanceMatrix({
-        origins: [origin],
-        destinations: [destination],
-        travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.IMPERIAL,
-      }, (response, status) => {
-        if (status === 'OK') {
-          const distanceText = response.rows[0].elements[0].distance.text;
-          const durationText = response.rows[0].elements[0].duration.text;
-          const distanceMiles = parseFloat(distanceText.replace(/[^0-9.]/g, ''));
+      service.getDistanceMatrix(
+        {
+          origins: [origin],
+          destinations: [destination],
+          travelMode: google.maps.TravelMode.DRIVING,
+          unitSystem: google.maps.UnitSystem.IMPERIAL,
+        },
+        (response, status) => {
+          if (status === "OK") {
+            const distanceText = response.rows[0].elements[0].distance.text;
+            const durationText = response.rows[0].elements[0].duration.text;
+            const distanceMiles = parseFloat(distanceText.replace(/[^\d.]/g, ''));
 
-          let price = 0;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
+            let price = 0;
+            if (distanceMiles <= 10) price = 120;
+            else if (distanceMiles <= 35) price = 190;
+            else if (distanceMiles <= 39) price = 210;
+            else if (distanceMiles <= 48) price = 230;
+            else if (distanceMiles <= 55) price = 250;
+            else price = distanceMiles * 5.4;
 
-          calculatedPrice = price;
-          document.getElementById("distance").textContent = distanceText;
-          document.getElementById("duration").textContent = durationText;
-          document.getElementById("price").textContent = `$${price.toFixed(2)}`;
-        } else {
-          alert("Could not calculate route. Please try again.");
+            calculatedPrice = price;
+            document.getElementById("distance").textContent = distanceText;
+            document.getElementById("duration").textContent = durationText;
+            document.getElementById("price").textContent = `$${price.toFixed(2)}`;
+          } else {
+            alert("Could not calculate route. Please try again.");
+          }
         }
-      });
+      );
     }
 
     async function payNow() {
@@ -141,8 +142,6 @@
         alert("Please calculate a price before proceeding to payment.");
         return;
       }
-
-      console.log('Enviando monto a Stripe:', calculatedPrice);
 
       try {
         const res = await fetch('/api/create-checkout-session', {
@@ -156,7 +155,7 @@
         if (!res.ok) throw new Error('Stripe backend error');
 
         const data = await res.json();
-        const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkbWwMnSmGPQCyE4MzzIufo6gM8EvLeTH0jQ5Vcn2V1GY0D9RrcJr0jRCd002MQFlj0F');
+        const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WkgoT3NUZSBkbWmMsn6PDQyCe4MZZufog6MBVELtHOpSVCn2VfGO9B9rcdRj8lC82MP0Yfj8f');
 
         if (data.id) {
           stripe.redirectToCheckout({ sessionId: data.id });
@@ -168,31 +167,16 @@
         alert("An error occurred while initiating payment.");
       }
     }
+
+    function initMap() {
+      const originInput = document.getElementById('origin');
+      const destinationInput = document.getElementById('destination');
+
+      const originAutocomplete = new google.maps.places.Autocomplete(originInput);
+      const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
+    }
   </script>
-<script>
-  let map;
 
-  function initMap() {
-    const originInput = document.getElementById('origin');
-    const destinationInput = document.getElementById('destination');
-
-    const originAutocomplete = new google.maps.places.Autocomplete(originInput);
-    const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
-
-    map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: 40.6461, lng: -111.4980 }, // Park City
-      zoom: 11,
-      styles: [
-        { elementType: 'geometry', stylers: [{ color: '#1a1a1a' }] },
-        { elementType: 'labels.text.fill', stylers: [{ color: '#c08b5c' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ color: '#000000' }] },
-        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#444' }] },
-        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#2c2c2c' }] },
-        { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#2a2a2a' }] },
-      ]
-    });
-  }
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
