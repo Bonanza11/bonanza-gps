@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation – GPS Estimate</title>
-  <script src="https://js.stripe.com/v3/"></script>
   <style>
     body {
       margin: 0;
@@ -24,7 +23,7 @@
       object-fit: cover;
     }
     main {
-      max-width: 400px;
+      max-width: 500px;
       margin: auto;
       padding: 20px;
     }
@@ -38,135 +37,74 @@
       padding: 8px;
       margin-top: 4px;
       background: #1a1a1a;
-      color: #c08b5c;
+      color: #fff;
       border: 1px solid #c08b5c;
+    }
+    input.valid {
+      border-color: green;
+    }
+    input.invalid {
+      border-color: red;
     }
     button {
       width: 100%;
       padding: 12px;
-      margin-top: 16px;
+      margin-top: 20px;
       background-color: #c08b5c;
       color: black;
-      font-size: 16px;
+      font-weight: bold;
       border: none;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: transform 0.2s ease;
     }
     button:hover {
-      background-color: #9a6733;
+      transform: scale(1.05);
     }
-    .info {
-      margin-top: 16px;
-      padding: 12px;
-      background: #1a1a1a;
+    #map {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+      border: 2px solid #c08b5c;
+    }
+    #tripInfo {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #1a1a1a;
       border: 1px solid #c08b5c;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
+    <img src="https://i.ibb.co/ZLVRPHG/logo-bonanza.jpg" alt="Bonanza Logo" />
     <h1>Bonanza Transportation</h1>
   </header>
   <main>
-    <label for="origin">Pickup Location</label>
-    <input id="origin" type="text" placeholder="Enter origin address" />
+    <label for="origin">Pickup Address</label>
+    <input type="text" id="origin" placeholder="Enter pickup location" />
 
-    <label for="destination">Drop-off Location</label>
-    <input id="destination" type="text" placeholder="Enter destination address" />
+    <label for="destination">Dropoff Address</label>
+    <input type="text" id="destination" placeholder="Enter dropoff location" />
 
     <button onclick="calculateRoute()">Calculate Price</button>
 
-    <div class="info">
-      <p>Distance: <span id="distance"></span></p>
-      <p>Estimated Time: <span id="duration"></span></p>
-      <p>Estimated Price: <span id="price"></span></p>
+    <div id="map"></div>
+
+    <div id="tripInfo" style="display:none;">
+      <p><strong>Distance:</strong> <span id="distance"></span></p>
+      <p><strong>Duration:</strong> <span id="duration"></span></p>
+      <p><strong>Estimated Price:</strong> <span id="price"></span></p>
+      <p><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</p>
+      <p><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</p>
+      <p><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</p>
     </div>
 
     <button onclick="payNow()">PAY NOW</button>
   </main>
 
   <script>
+    let map, directionsService, directionsRenderer;
     let calculatedPrice = 0;
-
-    function validateInputs() {
-      const origin = document.getElementById('origin').value.trim();
-      const destination = document.getElementById('destination').value.trim();
-      return origin !== '' && destination !== '';
-    }
-
-    function calculateRoute() {
-      if (!validateInputs()) {
-        alert("Please enter both origin and destination.");
-        return;
-      }
-
-      const origin = document.getElementById('origin').value;
-      const destination = document.getElementById('destination').value;
-
-      const service = new google.maps.DistanceMatrixService();
-      service.getDistanceMatrix(
-        {
-          origins: [origin],
-          destinations: [destination],
-          travelMode: google.maps.TravelMode.DRIVING,
-          unitSystem: google.maps.UnitSystem.IMPERIAL,
-        },
-        (response, status) => {
-          if (status === "OK") {
-            const distanceText = response.rows[0].elements[0].distance.text;
-            const durationText = response.rows[0].elements[0].duration.text;
-            const distanceMiles = parseFloat(distanceText.replace(/[^\d.]/g, ''));
-
-            let price = 0;
-            if (distanceMiles <= 10) price = 120;
-            else if (distanceMiles <= 35) price = 190;
-            else if (distanceMiles <= 39) price = 210;
-            else if (distanceMiles <= 48) price = 230;
-            else if (distanceMiles <= 55) price = 250;
-            else price = distanceMiles * 5.4;
-
-            calculatedPrice = price;
-            document.getElementById("distance").textContent = distanceText;
-            document.getElementById("duration").textContent = durationText;
-            document.getElementById("price").textContent = `$${price.toFixed(2)}`;
-          } else {
-            alert("Could not calculate route. Please try again.");
-          }
-        }
-      );
-    }
-
-    async function payNow() {
-      if (!validateInputs() || calculatedPrice <= 0) {
-        alert("Please calculate a price before proceeding to payment.");
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount: Math.round(calculatedPrice * 100) }) // En centavos
-        });
-
-        if (!res.ok) throw new Error('Stripe backend error');
-
-        const data = await res.json();
-        const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WkgoT3NUZSBkbWmMsn6PDQyCe4MZZufog6MBVELtHOpSVCn2VfGO9B9rcdRj8lC82MP0Yfj8f');
-
-        if (data.id) {
-          stripe.redirectToCheckout({ sessionId: data.id });
-        } else {
-          alert("Stripe session creation failed.");
-        }
-      } catch (err) {
-        console.error("Payment error:", err);
-        alert("An error occurred while initiating payment.");
-      }
-    }
 
     function initMap() {
       const originInput = document.getElementById('origin');
@@ -174,6 +112,104 @@
 
       const originAutocomplete = new google.maps.places.Autocomplete(originInput);
       const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
+
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 40.758, lng: -111.876183 },
+        zoom: 9,
+        styles: [{ elementType: 'geometry', stylers: [{ color: '#1a1a1a' }] }]
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
+    }
+
+    function validateInputs() {
+      const origin = document.getElementById('origin');
+      const destination = document.getElementById('destination');
+      let isValid = true;
+
+      if (origin.value.trim() === '') {
+        origin.classList.add('invalid');
+        isValid = false;
+      } else {
+        origin.classList.remove('invalid');
+        origin.classList.add('valid');
+      }
+
+      if (destination.value.trim() === '') {
+        destination.classList.add('invalid');
+        isValid = false;
+      } else {
+        destination.classList.remove('invalid');
+        destination.classList.add('valid');
+      }
+
+      return isValid;
+    }
+
+    function calculateRoute() {
+      if (!validateInputs()) return;
+
+      const origin = document.getElementById('origin').value;
+      const destination = document.getElementById('destination').value;
+
+      directionsService.route({
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
+
+          let price;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          calculatedPrice = price;
+
+          document.getElementById("distance").textContent = route.distance.text;
+          document.getElementById("duration").textContent = durationText;
+          document.getElementById("price").textContent = "$" + price.toFixed(2);
+          document.getElementById("tripInfo").style.display = "block";
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
+        }
+      });
+    }
+
+    function payNow() {
+      if (!validateInputs() || calculatedPrice <= 0) {
+        alert("Please calculate a price before proceeding to payment.");
+        return;
+      }
+
+      fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) }) // en centavos
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
+        } else {
+          alert("Stripe session creation failed.");
+        }
+      })
+      .catch(err => {
+        console.error("Payment error:", err);
+        alert("An error occurred while initiating payment.");
+      });
     }
   </script>
 
