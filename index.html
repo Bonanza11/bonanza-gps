@@ -1,218 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – GPS Estimate</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #000;
-      color: #c08b5c;
-    }
-    header {
-      text-align: center;
-      padding: 20px;
-    }
-    header img {
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      border: 3px solid #c08b5c;
-      object-fit: cover;
-    }
-    main {
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-    }
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      background: #1a1a1a;
-      color: #fff;
-      border: 1px solid #c08b5c;
-    }
-    input.valid {
-      border-color: green;
-    }
-    input.invalid {
-      border-color: red;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 20px;
-      background-color: #c08b5c;
-      color: black;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-    button:hover {
-      transform: scale(1.05);
-    }
-    #map {
-      width: 100%;
-      height: 300px;
-      margin-top: 20px;
-      border: 2px solid #c08b5c;
-    }
-    #tripInfo {
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #1a1a1a;
-      border: 1px solid #c08b5c;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bonanza Transportation – GPS Estimate</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #c08b5c;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 3px solid #c08b5c;
+      object-fit: cover;
+    }
+    main {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      background: #1a1a1a;
+      color: #c08b5c;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+    .valid { border: 2px solid green; }
+    .invalid { border: 2px solid red; }
+    .error-message {
+      color: red;
+      font-size: 0.8em;
+      display: none;
+      margin-bottom: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background-color: #c08b5c;
+      color: #000;
+      font-weight: bold;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(192,139,92, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92, 0); }
+    }
+    #map {
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+    #info {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 0.95em;
+    }
+    #info div {
+      margin-bottom: 8px;
+    }
+    footer img {
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <img src="https://i.ibb.co/ZLVRPHG/logo-bonanza.jpg" alt="Bonanza Logo" />
-    <h1>Bonanza Transportation</h1>
-  </header>
-  <main>
-    <label for="origin">Pickup Address</label>
-    <input type="text" id="origin" placeholder="Enter pickup location" />
+  <header>
+    <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
+  </header>
+  <main>
+    <label for="fullname">Full Name:</label>
+    <input type="text" id="fullname" placeholder="e.g. John Doe" />
+    <div class="error-message" id="nameError">Please enter your full name.</div>
 
-    <label for="destination">Dropoff Address</label>
-    <input type="text" id="destination" placeholder="Enter dropoff location" />
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" />
+    <div class="error-message" id="phoneError">Please enter a valid phone number.</div>
 
-    <button onclick="calculateRoute()">Calculate Price</button>
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" placeholder="e.g. your@email.com" />
+    <div class="error-message" id="emailError">Please enter a valid email address.</div>
 
-    <div id="map"></div>
+    <label for="pickup">Pick-up Address:</label>
+    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+    <div class="error-message" id="pickupError">Please enter a pick-up address.</div>
 
-    <div id="tripInfo" style="display:none;">
-      <p><strong>Distance:</strong> <span id="distance"></span></p>
-      <p><strong>Duration:</strong> <span id="duration"></span></p>
-      <p><strong>Estimated Price:</strong> <span id="price"></span></p>
-      <p><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</p>
-      <p><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</p>
-      <p><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</p>
-    </div>
+    <label for="dropoff">Drop-off Address:</label>
+    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
+    <div class="error-message" id="dropoffError">Please enter a drop-off address.</div>
 
-    <button onclick="payNow()">PAY NOW</button>
-  </main>
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+    <div class="error-message" id="dateError">Please select a date.</div>
 
-  <script>
-    let map, directionsService, directionsRenderer;
-    let calculatedPrice = 0;
+    <label for="time">Time:</label>
+    <input type="time" id="time" />
+    <div class="error-message" id="timeError">Please select a time.</div>
 
-    function initMap() {
-      const originInput = document.getElementById('origin');
-      const destinationInput = document.getElementById('destination');
+    <button onclick="calculateRoute()">Calculate Price</button>
 
-      const originAutocomplete = new google.maps.places.Autocomplete(originInput);
-      const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput);
+    <div id="map"></div>
 
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 40.758, lng: -111.876183 },
-        zoom: 9,
-        styles: [{ elementType: 'geometry', stylers: [{ color: '#1a1a1a' }] }]
-      });
+    <div id="info">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
+    </div>
 
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
-    }
+    <button id="payBtn" onclick="payNow()">PAY NOW</button>
+  </main>
 
-    function validateInputs() {
-      const origin = document.getElementById('origin');
-      const destination = document.getElementById('destination');
-      let isValid = true;
+  <footer>
+    <img src="IMG_4072.png" alt="Bonanza SUV" />
+  </footer>
 
-      if (origin.value.trim() === '') {
-        origin.classList.add('invalid');
-        isValid = false;
-      } else {
-        origin.classList.remove('invalid');
-        origin.classList.add('valid');
-      }
+  <script>
+    let map, directionsService, directionsRenderer, calculatedPrice = 0;
 
-      if (destination.value.trim() === '') {
-        destination.classList.add('invalid');
-        isValid = false;
-      } else {
-        destination.classList.remove('invalid');
-        destination.classList.add('valid');
-      }
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7608, lng: -111.8910 },
+        zoom: 10,
+        disableDefaultUI: true,
+        draggable: false,
+        scrollwheel: false
+      });
 
-      return isValid;
-    }
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+      directionsRenderer.setMap(map);
 
-    function calculateRoute() {
-      if (!validateInputs()) return;
+      new google.maps.places.Autocomplete(document.getElementById('pickup'), { componentRestrictions: { country: 'us' } });
+      new google.maps.places.Autocomplete(document.getElementById('dropoff'), { componentRestrictions: { country: 'us' } });
+    }
 
-      const origin = document.getElementById('origin').value;
-      const destination = document.getElementById('destination').value;
+    function validateInputs() {
+      const fields = [
+        { id: "fullname", errorId: "nameError" },
+        { id: "phone", errorId: "phoneError" },
+        { id: "email", errorId: "emailError" },
+        { id: "pickup", errorId: "pickupError" },
+        { id: "dropoff", errorId: "dropoffError" },
+        { id: "date", errorId: "dateError" },
+        { id: "time", errorId: "timeError" }
+      ];
 
-      directionsService.route({
-        origin: origin,
-        destination: destination,
-        travelMode: google.maps.TravelMode.DRIVING
-      }, (response, status) => {
-        if (status === 'OK') {
-          directionsRenderer.setDirections(response);
-          const route = response.routes[0].legs[0];
-          const distanceMiles = route.distance.value / 1609.34;
-          const durationText = route.duration.text;
+      let allValid = true;
 
-          let price;
-          if (distanceMiles <= 10) price = 120;
-          else if (distanceMiles <= 35) price = 190;
-          else if (distanceMiles <= 39) price = 210;
-          else if (distanceMiles <= 48) price = 230;
-          else if (distanceMiles <= 55) price = 250;
-          else price = distanceMiles * 5.4;
+      fields.forEach(({ id, errorId }) => {
+        const input = document.getElementById(id);
+        const error = document.getElementById(errorId);
+        if (!input.value.trim()) {
+          input.classList.remove("valid");
+          input.classList.add("invalid");
+          error.style.display = "block";
+          allValid = false;
+        } else {
+          input.classList.remove("invalid");
+          input.classList.add("valid");
+          error.style.display = "none";
+        }
+      });
 
-          calculatedPrice = price;
+      return allValid;
+    }
 
-          document.getElementById("distance").textContent = route.distance.text;
-          document.getElementById("duration").textContent = durationText;
-          document.getElementById("price").textContent = "$" + price.toFixed(2);
-          document.getElementById("tripInfo").style.display = "block";
-        } else {
-          alert("Could not calculate route. Please check the addresses.");
-        }
-      });
-    }
+    function calculateRoute() {
+      if (!validateInputs()) return;
 
-    function payNow() {
-      if (!validateInputs() || calculatedPrice <= 0) {
-        alert("Please calculate a price before proceeding to payment.");
-        return;
-      }
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
 
-      fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount: Math.round(parseFloat(calculatedPrice) * 100) }) // en centavos
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.id) {
-          window.location.href = `https://checkout.stripe.com/pay/${data.id}`;
-        } else {
-          alert("Stripe session creation failed.");
-        }
-      })
-      .catch(err => {
-        console.error("Payment error:", err);
-        alert("An error occurred while initiating payment.");
-      });
-    }
-  </script>
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
+
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          calculatedPrice = price;
+          document.getElementById("price").textContent = "$" + price.toFixed(2);
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
+        }
+      });
+    }
+function payNow() {
+  if (!validateInputs() || calculatedPrice <= 0) {
+    alert("Please calculate a price before proceeding to payment.");
+    return;
+  }
+
+  console.log('Enviando monto a Stripe:', calculatedPrice);
+  
+fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ amount: Math.round(price * 100) })
+})
+.then(async res => {
+  if (!res.ok) throw new Error('Stripe backend error');
+  const data = await res.json();
+  if (data.id) {
+    const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF'); // ⚠️ Reemplaza con tu clave pública real
+    stripe.redirectToCheckout({ sessionId: data.id });
+  } else {
+    alert("Stripe session creation failed.");
+  }
+})
+.catch(err => {
+  console.error("Payment error:", err);
+  alert("An error occurred while initiating payment.");
+});
+  
+  </script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
-</html>
+</html>  
