@@ -1,207 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bonanza Transportation – GPS Estimate</title>
-  <style>
-    body{margin:0;font-family:Arial,sans-serif;background:#000;color:#c08b5c}
-    header{text-align:center;padding:20px}
-    header img{width:160px;height:160px;border-radius:50%;border:3px solid #c08b5c;object-fit:cover}
-    main{max-width:400px;margin:auto;padding:20px}
-    label{display:block;margin-top:12px;font-weight:bold}
-    input{width:100%;padding:8px;margin-top:4px;background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:6px}
-    .error-message{color:#ff5b5b;font-size:.8em;display:none;margin-bottom:5px}
-    button{width:100%;padding:14px;margin-top:20px;background:#c08b5c;color:#000;font-weight:bold;font-size:18px;border:none;border-radius:10px;cursor:pointer;animation:pulse 1.8s infinite}
-    @keyframes pulse{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(192,139,92,.7)}70%{transform:scale(1.05);box-shadow:0 0 0 10px rgba(192,139,92,0)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(192,139,92,0)}}
-    #map{height:400px;margin-top:20px;border-radius:10px;border:1px solid #333}
-    #info{background:#111;padding:15px;border-radius:10px;margin-top:20px;font-size:.95em}
-    #info div{margin-bottom:8px}
-    footer img{width:100%;margin-top:20px;border-radius:10px}
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bonanza Transportation – GPS Estimate</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #c08b5c;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 3px solid #c08b5c;
+      object-fit: cover;
+    }
+    main {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      background: #1a1a1a;
+      color: #c08b5c;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+    .valid { border: 2px solid green; }
+    .invalid { border: 2px solid red; }
+    .error-message {
+      color: red;
+      font-size: 0.8em;
+      display: none;
+      margin-bottom: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      background-color: #c08b5c;
+      color: #000;
+      font-weight: bold;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(192,139,92, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192,139,92, 0); }
+    }
+    #map {
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+    #info {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 0.95em;
+    }
+    #info div {
+      margin-bottom: 8px;
+    }
+    footer img {
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
-  </header>
+  <header>
+    <img src="bonanza-logo.PNG" alt="Bonanza Logo" />
+  </header>
+  <main>
+    <label for="fullname">Full Name:</label>
+    <input type="text" id="fullname" placeholder="e.g. John Doe" />
+    <div class="error-message" id="nameError">Please enter your full name.</div>
 
-  <main>
-    <label for="fullname">Full Name:</label>
-    <input type="text" id="fullname" placeholder="e.g. John Doe" />
-    <div class="error-message" id="nameError">Please enter your full name.</div>
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" />
+    <div class="error-message" id="phoneError">Please enter a valid phone number.</div>
 
-    <label for="phone">Phone Number:</label>
-    <input type="tel" id="phone" placeholder="e.g. +1 385 123 4567" />
-    <div class="error-message" id="phoneError">Please enter a valid phone number.</div>
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" placeholder="e.g. your@email.com" />
+    <div class="error-message" id="emailError">Please enter a valid email address.</div>
 
-    <label for="email">Email Address:</label>
-    <input type="email" id="email" placeholder="e.g. your@email.com" />
-    <div class="error-message" id="emailError">Please enter a valid email address.</div>
+    <label for="pickup">Pick-up Address:</label>
+    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+    <div class="error-message" id="pickupError">Please enter a pick-up address.</div>
 
-    <label for="pickup">Pick-up Address:</label>
-    <input type="text" id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
-    <div class="error-message" id="pickupError">Please enter a pick-up address.</div>
+    <label for="dropoff">Drop-off Address:</label>
+    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
+    <div class="error-message" id="dropoffError">Please enter a drop-off address.</div>
 
-    <label for="dropoff">Drop-off Address:</label>
-    <input type="text" id="dropoff" placeholder="e.g. SLC Airport" />
-    <div class="error-message" id="dropoffError">Please enter a drop-off address.</div>
+    <label for="date">Date:</label>
+    <input type="date" id="date" />
+    <div class="error-message" id="dateError">Please select a date.</div>
 
-    <label for="date">Date:</label>
-    <input type="date" id="date" />
-    <div class="error-message" id="dateError">Please select a date.</div>
+    <label for="time">Time:</label>
+    <input type="time" id="time" />
+    <div class="error-message" id="timeError">Please select a time.</div>
 
-    <label for="time">Time:</label>
-    <input type="time" id="time" />
-    <div class="error-message" id="timeError">Please select a time.</div>
+    <button onclick="calculateRoute()">Calculate Price</button>
 
-    <button id="calcBtn" onclick="calculateRoute()">Calculate Price</button>
+    <div id="map"></div>
 
-    <div id="map"></div>
+    <div id="info">
+      <div><strong>Distance:</strong> <span id="distance">—</span></div>
+      <div><strong>Duration:</strong> <span id="duration">—</span></div>
+      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
+      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
+      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
+      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
+    </div>
 
-    <div id="info">
-      <div><strong>Distance:</strong> <span id="distance">—</span></div>
-      <div><strong>Duration:</strong> <span id="duration">—</span></div>
-      <div><strong>Estimated Price:</strong> <span id="price">$0.00</span></div>
-      <div><strong>Note:</strong> Pet-Friendly Service (No Extra Charge)</div>
-      <div><strong>Vehicle:</strong> Black Suburban – 1–5 Passengers</div>
-      <div><strong>Luggage:</strong> 5 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
-    </div>
+    <button id="payBtn" onclick="payNow()">PAY NOW</button>
+  </main>
 
-    <button id="payBtn" onclick="payNow()">PAY NOW</button>
-  </main>
+  <footer>
+    <img src="IMG_4072.png" alt="Bonanza SUV" />
+  </footer>
+ <script>
+  let map, directionsService, directionsRenderer, calculatedPrice = 0;
 
-  <footer>
-    <img src="IMG_4072.png" alt="Bonanza SUV" />
-  </footer>
+   function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.646, lng: -111.498 },
+        zoom: 11,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+    });
 
-  <!-- ================= Logic ================= -->
-  <script>
-    // Globals (declarar SOLO una vez)
-    let map, directionsService, directionsRenderer, calculatedPrice = 0;
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map); // 👈 Esto es lo que faltaba
 
-    // --- Init Map & Autocomplete ---
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.646, lng: -111.498 },
-        zoom: 11,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
-      });
+    // Autocompletado para pick-up y drop-off
+    new google.maps.places.Autocomplete(document.getElementById("pickup"));
+    new google.maps.places.Autocomplete(document.getElementById("dropoff"));
+}
 
-      directionsService  = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
+window.initMap = initMap;
 
-      new google.maps.places.Autocomplete(document.getElementById("pickup"),  { componentRestrictions:{country:"us"} });
-      new google.maps.places.Autocomplete(document.getElementById("dropoff"), { componentRestrictions:{country:"us"} });
+  function validateInputs() {
+    const fields = [
+      { id: "fullname", errorId: "nameError" },
+      { id: "phone", errorId: "phoneError" },
+      { id: "email", errorId: "emailError" },
+      { id: "pickup", errorId: "pickupError" },
+      { id: "dropoff", errorId: "dropoffError" },
+      { id: "date", errorId: "dateError" },
+      { id: "time", errorId: "timeError" }
+    ];
+
+    let allValid = true;
+
+    fields.forEach(({ id, errorId }) => {
+      const input = document.getElementById(id);
+      const error = document.getElementById(errorId);
+      if (!input.value.trim()) {
+        error.textContent = "Please fill out this field.";
+        allValid = false;
+      } else {
+        error.textContent = "";
+      }
+    });
+
+    return allValid;
+  }
+</script>
+    function calculateRoute() {
+      if (!validateInputs()) return;
+
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
+
+      directionsService.route({
+        origin: pickup,
+        destination: dropoff,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const route = response.routes[0].legs[0];
+          const distanceMiles = route.distance.value / 1609.34;
+          const durationText = route.duration.text;
+
+          document.getElementById("distance").textContent = distanceMiles.toFixed(1) + " miles";
+          document.getElementById("duration").textContent = durationText;
+
+          let price = 0;
+          if (distanceMiles <= 10) price = 120;
+          else if (distanceMiles <= 35) price = 190;
+          else if (distanceMiles <= 39) price = 210;
+          else if (distanceMiles <= 48) price = 230;
+          else if (distanceMiles <= 55) price = 250;
+          else price = distanceMiles * 5.4;
+
+          calculatedPrice = price;
+          document.getElementById("price").textContent = "$" + price.toFixed(2);
+        } else {
+          alert("Could not calculate route. Please check the addresses.");
+        }
+      });
+    }
+function payNow() {
+  if (!validateInputs() || calculatedPrice <= 0) {
+    alert("Please calculate a price before proceeding to payment.");
+    return;
+  }
+
+  console.log('Enviando monto a Stripe:', calculatedPrice);
+  
+fetch('/api/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ amount: Math.round(price * 100) })
+})
+.then(async res => {
+  if (!res.ok) throw new Error('Stripe backend error');
+  const data = await res.json();
+  if (data.id) {
+    const stripe = Stripe('pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF'); // ⚠️ Reemplaza con tu clave pública real
+    stripe.redirectToCheckout({ sessionId: data.id });
+  } else {
+    alert("Stripe session creation failed.");
+  }
+})
+.catch(err => {
+  console.error("Payment error:", err);
+  alert("An error occurred while initiating payment.");
+});
+</script>
+script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+<script>
+  let directionsService, directionsRenderer, calculatedPrice = 0;
+
+  function priceFromMiles(miles){
+    if (miles <= 10) return 120;
+    if (miles <= 35) return 190;
+    if (miles <= 39) return 210;
+    if (miles <= 48) return 230;
+    if (miles <= 55) return 250;
+    return miles * 5.4;
+  }
+
+  async function calculateRoute(){
+    const origin = document.getElementById('pickup').value.trim();
+    const destination = document.getElementById('dropoff').value.trim();
+    if (!origin || !destination){
+      alert('Please enter pick-up and drop-off addresses.');
+      return;
     }
-    window.initMap = initMap;
 
-    // --- Validation (simple, como tenías) ---
-    function validateInputs() {
-      const fields = [
-        { id: "fullname", errorId: "nameError" },
-        { id: "phone",   errorId: "phoneError" },
-        { id: "email",   errorId: "emailError" },
-        { id: "pickup",  errorId: "pickupError" },
-        { id: "dropoff", errorId: "dropoffError" },
-        { id: "date",    errorId: "dateError" },
-        { id: "time",    errorId: "timeError" }
-      ];
-      let ok = true;
-      fields.forEach(({id,errorId})=>{
-        const v = document.getElementById(id).value.trim();
-        const e = document.getElementById(errorId);
-        if(!v){ e.style.display='block'; ok=false; } else { e.style.display='none'; }
-      });
-      return ok;
-    }
-
-    // --- Tabla oficial de precios ---
-    function priceFromMiles(miles){
-      if (miles <= 10) return 120;
-      if (miles <= 35) return 190;
-      if (miles <= 39) return 210;
-      if (miles <= 48) return 230;
-      if (miles <= 55) return 250;
-      return miles * 5.4;
-    }
-
-    // --- Calcular ruta y precio ---
-    function calculateRoute() {
-      if (!validateInputs()) return;
-
-      const origin      = document.getElementById('pickup').value.trim();
-      const destination = document.getElementById('dropoff').value.trim();
-
-      directionsService.route({
-        origin, destination,
-        travelMode: google.maps.TravelMode.DRIVING
-      }, (res, status) => {
-        if (status !== 'OK' || !res){
-          alert('Could not calculate route. Please check the addresses.');
-          return;
-        }
-        directionsRenderer.setDirections(res);
-
-        const leg   = res.routes[0].legs[0];
-        const miles = leg.distance.value / 1609.34;
-
-        document.getElementById('distance').textContent = miles.toFixed(1) + ' miles';
-        document.getElementById('duration').textContent = leg.duration.text;
-
-        calculatedPrice = priceFromMiles(miles);
-        document.getElementById('price').textContent = '$' + calculatedPrice.toFixed(2);
-      });
-    }
-    window.calculateRoute = calculateRoute;
-
-    // --- Stripe (placeholder: integra tu backend) ---
-    async function payNow(){
-      if (!validateInputs() || calculatedPrice <= 0){
-        alert("Please calculate a price before proceeding to payment.");
+    directionsService.route({
+      origin,
+      destination,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (res, status) => {
+      if (status !== 'OK' || !res){
+        alert('Could not calculate route. Please check the addresses.');
         return;
       }
 
-      // metadata básica
-      const meta = {
-        fullname: document.getElementById('fullname').value.trim(),
-        phone:    document.getElementById('phone').value.trim(),
-        email:    document.getElementById('email').value.trim(),
-        pickup:   document.getElementById('pickup').value.trim(),
-        dropoff:  document.getElementById('dropoff').value.trim(),
-        date:     document.getElementById('date').value,
-        time:     document.getElementById('time').value,
-        distance: document.getElementById('distance').textContent,
-        duration: document.getElementById('duration').textContent,
-        price:    calculatedPrice.toFixed(2)
-      };
+      const leg = res.routes[0].legs[0];
+      const meters = leg.distance.value;
+      const miles  = meters / 1609.34;
 
-      try{
-        const res = await fetch('/api/create-checkout-session', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            amount: Math.round(calculatedPrice * 100),
-            metadata: meta
-          })
-        });
-        if(!res.ok) throw new Error('Stripe backend error');
-        const data = await res.json();
-        if(!data.id) throw new Error('No session id');
+      document.getElementById('distance').textContent = miles.toFixed(1) + ' miles';
+      document.getElementById('duration').textContent = leg.duration.text;
 
-        const stripe = Stripe('pk_live_XXXXXXXXXXXXXXXXXXXXXXXX'); /* tu pk_live o pk_test */
-        await stripe.redirectToCheckout({ sessionId: data.id });
-      } catch(err){
-        console.error("Payment error:", err);
-        alert("An error occurred while initiating payment.");
-      }
-    }
-    window.payNow = payNow;
-  </script>
-
-  <!-- Google Maps (carga única) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+      calculatedPrice = priceFromMiles(miles);
+      document.getElementById('price').textContent = '$ ' + calculatedPrice.toFixed(2);
+    });
+  }
+window.calculateRoute = calculateRoute;
+  
+  document.getElementById('calcBtn')?.addEventListener('click', calculateRoute);
+</script>
 </body>
 </html>
