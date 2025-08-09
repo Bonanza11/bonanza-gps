@@ -11,15 +11,20 @@
 
   /* Header con logo circular + glow cobre/neón */
   header{display:flex;justify-content:center;align-items:center;padding:26px 16px;position:relative}
-  header .logo{
-    width:160px;height:160px;border-radius:50%;
-    border:3px solid #c08b5c;object-fit:cover;display:block;position:relative;
-    box-shadow:
-      0 0 0 3px rgba(192,139,92,.35) inset,     /* aro interior cobre */
-      0 8px 22px rgba(0,0,0,.6),                /* sombra realista */
-      0 0 30px rgba(192,139,92,.35);            /* glow suave externo */
-    filter: drop-shadow(0 0 18px rgba(192,139,92,.45)); /* halo adicional */
-  }
+header .logo {
+  width: 120px; /* antes 160px */
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #c08b5c;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  box-shadow:
+    0 0 3px rgba(192,139,92,.35) inset, /* aro interior cobre */
+    0 0 15px rgba(0,0,0,0.6),           /* sombra realista */
+    0 0 20px rgba(192,139,92,.45);      /* halo adicional */
+  filter: drop-shadow(0 0 10px rgba(192,139,92,.45));
+}
   /* anillo de neón más marcado */
   header .logo-wrap{position:relative}
   header .logo-wrap::after{
