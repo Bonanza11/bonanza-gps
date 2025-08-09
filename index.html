@@ -161,6 +161,7 @@
       new google.maps.places.Autocomplete(document.getElementById('pickup'), { componentRestrictions: { country: 'us' } });
       new google.maps.places.Autocomplete(document.getElementById('dropoff'), { componentRestrictions: { country: 'us' } });
     }
+    window.initMap = initMap;
 
     function validateInputs() {
       const fields = [
