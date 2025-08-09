@@ -4,46 +4,99 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation</title>
-  <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-header img {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    display: block;
-    margin: 20px auto;
-    box-shadow: 0 0 20px rgba(200, 143, 87, 0.8), /* sombra cobre */
-                0 0 40px rgba(200, 143, 87, 0.5),
-                0 0 60px rgba(200, 143, 87, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+<style>
+  /* Reset básico */
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
-header img:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 25px rgba(200, 143, 87, 1),
-                0 0 50px rgba(200, 143, 87, 0.7),
-                0 0 80px rgba(200, 143, 87, 0.5);
-} 
-    button {
-      width: 100%; padding: 15px; font-size: 16px;
-      border: none; border-radius: 5px;
-      background-color: #b87333; color: #fff;
-      cursor: pointer; transition: 0.3s;
+  /* Header con logo circular + glow cobre/neón */
+  header{display:flex;justify-content:center;align-items:center;padding:26px 16px;position:relative}
+  header .logo{
+    width:160px;height:160px;border-radius:50%;
+    border:3px solid #c08b5c;object-fit:cover;display:block;position:relative;
+    box-shadow:
+      0 0 0 3px rgba(192,139,92,.35) inset,     /* aro interior cobre */
+      0 8px 22px rgba(0,0,0,.6),                /* sombra realista */
+      0 0 30px rgba(192,139,92,.35);            /* glow suave externo */
+    filter: drop-shadow(0 0 18px rgba(192,139,92,.45)); /* halo adicional */
+  }
+  /* anillo de neón más marcado */
+  header .logo-wrap{position:relative}
+  header .logo-wrap::after{
+    content:"";position:absolute;inset:-10px;border-radius:50%;
+    box-shadow:0 0 28px 12px rgba(192,139,92,.35);
+    pointer-events:none;
+  }
+  /* Contenedor principal */
+  main{
+    max-width: 760px;        /* ancho cómodo en desktop */
+    width: 92vw;             /* respeta móviles */
+    margin: 0 auto 48px;
+    padding: 0 16px;
+  }
+
+  /* Campos: uno debajo del otro, con aire */
+  label{
+    display:block;
+    margin:12px 0 6px;
+    font-weight:700;
+  }
+  input{
+    display:block;           /* fuerza bloque para que no se apilen en fila */
+    width:100%;
+    height:44px;
+    padding:10px 12px;
+    background:#1a1a1a;
+    color:#c08b5c;
+    border:1px solid #444;
+    border-radius:8px;
+  }
+
+  /* Botones */
+  button{
+    width:100%;
+    padding:14px 16px;
+    margin-top:18px;
+    background:#c08b5c;color:#000;font-weight:700;font-size:18px;
+    border:0;border-radius:10px;cursor:pointer;
+    animation:pulse 1.8s infinite;
+  }
+  @keyframes pulse{
+    0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.7)}
+    70%{transform:scale(1.04); box-shadow:0 0 0 12px rgba(192,139,92,0)}
+    100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
+  }
+
+  /* Mapa y panel de info */
+  #map{
+    height:420px;            /* más alto, mejor lectura */
+    margin-top:20px;
+    border-radius:12px;
+    overflow:hidden;
+  }
+  #info{
+    background:#111;
+    padding:14px;
+    border-radius:12px;
+    margin-top:18px;
+    font-size:.95em;
+  }
+  #info div{margin-bottom:8px}
+
+  /* Footer imagen (si la usas) */
+  footer img{width:100%;margin-top:24px;border-radius:12px}
+
+  /* Ajustes en pantallas grandes: 2 columnas para fecha/hora si quieres */
+  @media (min-width:900px){
+    .row-2{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end;
     }
-    button:hover { background-color: #d18538; }
-    #map { height: 380px; margin: 10px 0; }
-    #info {
-      background: #111; padding: 10px; text-align: left;
-      border-radius: 5px; font-size: 14px;
-    }
-  </style>
+    .row-2 > div{min-width:0}
+  }
+</style>
+
 </head>
+   
 <body>
   <header>
     <img src="bonanza-logo.PNG" alt="Bonanza Transportation Logo"/>
