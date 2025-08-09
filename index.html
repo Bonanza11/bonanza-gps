@@ -144,22 +144,25 @@
  <script>
   let map, directionsService, directionsRenderer, calculatedPrice = 0;
 
-  function initMap() {
+   function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 40.646, lng: -111.498 },
-      zoom: 11,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false
+        center: { lat: 40.646, lng: -111.498 },
+        zoom: 11,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
     });
+
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({ map });
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map); // 👈 Esto es lo que faltaba
 
-    new google.maps.places.Autocomplete(document.getElementById("pickup"),  { componentRestrictions:{country:"us"} });
-    new google.maps.places.Autocomplete(document.getElementById("dropoff"), { componentRestrictions:{country:"us"} });
-  }
+    // Autocompletado para pick-up y drop-off
+    new google.maps.places.Autocomplete(document.getElementById("pickup"));
+    new google.maps.places.Autocomplete(document.getElementById("dropoff"));
+}
 
-  window.initMap = initMap;
+window.initMap = initMap;
 
   function validateInputs() {
     const fields = [
@@ -253,7 +256,50 @@ fetch('/api/create-checkout-session', {
   alert("An error occurred while initiating payment.");
 });
 </script>
+script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+<script>
+  let directionsService, directionsRenderer, calculatedPrice = 0;
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+  function priceFromMiles(miles){
+    if (miles <= 10) return 120;
+    if (miles <= 35) return 190;
+    if (miles <= 39) return 210;
+    if (miles <= 48) return 230;
+    if (miles <= 55) return 250;
+    return miles * 5.4;
+  }
+
+  async function calculateRoute(){
+    const origin = document.getElementById('pickup').value.trim();
+    const destination = document.getElementById('dropoff').value.trim();
+    if (!origin || !destination){
+      alert('Please enter pick-up and drop-off addresses.');
+      return;
+    }
+
+    directionsService.route({
+      origin,
+      destination,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (res, status) => {
+      if (status !== 'OK' || !res){
+        alert('Could not calculate route. Please check the addresses.');
+        return;
+      }
+
+      const leg = res.routes[0].legs[0];
+      const meters = leg.distance.value;
+      const miles  = meters / 1609.34;
+
+      document.getElementById('distance').textContent = miles.toFixed(1) + ' miles';
+      document.getElementById('duration').textContent = leg.duration.text;
+
+      calculatedPrice = priceFromMiles(miles);
+      document.getElementById('price').textContent = '$ ' + calculatedPrice.toFixed(2);
+    });
+  }
+
+  document.getElementById('calcBtn')?.addEventListener('click', calculateRoute);
+</script>
 </body>
 </html>
