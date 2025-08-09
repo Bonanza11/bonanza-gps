@@ -118,10 +118,12 @@ dropoffAutocomplete = new google.maps.places.Autocomplete(
 );
 
       directionsService  = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: false,
+        preserveViewport: false 
+      });
       directionsRenderer.setMap(map);
 
-      // Autocomplete clásico (migrar en 2025)
       new google.maps.places.Autocomplete(document.getElementById("pickup"));
       new google.maps.places.Autocomplete(document.getElementById("dropoff"));
     }
