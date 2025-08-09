@@ -141,59 +141,53 @@
   <footer>
     <img src="IMG_4072.png" alt="Bonanza SUV" />
   </footer>
+ <script>
+  let map, directionsService, directionsRenderer, calculatedPrice = 0;
 
-  <script>
-    let map, directionsService, directionsRenderer, calculatedPrice = 0;
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 40.646, lng: -111.498 },
+      zoom: 11,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({ map });
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.7608, lng: -111.8910 },
-        zoom: 10,
-        disableDefaultUI: true,
-        draggable: false,
-        scrollwheel: false
-      });
+    new google.maps.places.Autocomplete(document.getElementById("pickup"),  { componentRestrictions:{country:"us"} });
+    new google.maps.places.Autocomplete(document.getElementById("dropoff"), { componentRestrictions:{country:"us"} });
+  }
 
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
-      directionsRenderer.setMap(map);
+  window.initMap = initMap;
 
-      new google.maps.places.Autocomplete(document.getElementById('pickup'), { componentRestrictions: { country: 'us' } });
-      new google.maps.places.Autocomplete(document.getElementById('dropoff'), { componentRestrictions: { country: 'us' } });
-    }
-    window.initMap = initMap;
+  function validateInputs() {
+    const fields = [
+      { id: "fullname", errorId: "nameError" },
+      { id: "phone", errorId: "phoneError" },
+      { id: "email", errorId: "emailError" },
+      { id: "pickup", errorId: "pickupError" },
+      { id: "dropoff", errorId: "dropoffError" },
+      { id: "date", errorId: "dateError" },
+      { id: "time", errorId: "timeError" }
+    ];
 
-    function validateInputs() {
-      const fields = [
-        { id: "fullname", errorId: "nameError" },
-        { id: "phone", errorId: "phoneError" },
-        { id: "email", errorId: "emailError" },
-        { id: "pickup", errorId: "pickupError" },
-        { id: "dropoff", errorId: "dropoffError" },
-        { id: "date", errorId: "dateError" },
-        { id: "time", errorId: "timeError" }
-      ];
+    let allValid = true;
 
-      let allValid = true;
+    fields.forEach(({ id, errorId }) => {
+      const input = document.getElementById(id);
+      const error = document.getElementById(errorId);
+      if (!input.value.trim()) {
+        error.textContent = "Please fill out this field.";
+        allValid = false;
+      } else {
+        error.textContent = "";
+      }
+    });
 
-      fields.forEach(({ id, errorId }) => {
-        const input = document.getElementById(id);
-        const error = document.getElementById(errorId);
-        if (!input.value.trim()) {
-          input.classList.remove("valid");
-          input.classList.add("invalid");
-          error.style.display = "block";
-          allValid = false;
-        } else {
-          input.classList.remove("invalid");
-          input.classList.add("valid");
-          error.style.display = "none";
-        }
-      });
-
-      return allValid;
-    }
-
+    return allValid;
+  }
+</script>
     function calculateRoute() {
       if (!validateInputs()) return;
 
