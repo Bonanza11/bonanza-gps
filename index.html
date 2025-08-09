@@ -12,7 +12,7 @@
   /* Header con logo circular + glow cobre/neón */
   header{display:flex;justify-content:center;align-items:center;padding:26px 16px;position:relative}
 header .logo {
-  width: 50px; /* antes 160px */
+  width: 50px;  /* tamaño mucho más pequeño */
   height: 50px;
   border-radius: 50%;
   border: 2px solid #c08b5c;
@@ -20,11 +20,12 @@ header .logo {
   display: block;
   position: relative;
   box-shadow:
-    0 0 3px rgba(192,139,92,.35) inset, /* aro interior cobre */
-    0 0 15px rgba(0,0,0,0.6),           /* sombra realista */
-    0 0 20px rgba(192,139,92,.45);      /* halo adicional */
-  filter: drop-shadow(0 0 10px rgba(192,139,92,.45));
+    0 0 2px rgba(192,139,92,.35) inset,
+    0 0 8px rgba(0,0,0,0.6),
+    0 0 10px rgba(192,139,92,.45);
+  filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
 }
+
   /* anillo de neón más marcado */
   header .logo-wrap{position:relative}
   header .logo-wrap::after{
