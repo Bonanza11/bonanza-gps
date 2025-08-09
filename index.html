@@ -298,7 +298,8 @@ script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_
       document.getElementById('price').textContent = '$ ' + calculatedPrice.toFixed(2);
     });
   }
-
+window.calculateRoute = calculateRoute;
+  
   document.getElementById('calcBtn')?.addEventListener('click', calculateRoute);
 </script>
 </body>
