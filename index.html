@@ -1,72 +1,163 @@
-    let map, directionsService, directionsRenderer, calculatedPrice = 0;
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bonanza Transportation</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header img { width: 160px; margin: 20px auto; }
+    main { max-width: 420px; margin: auto; padding: 10px; }
+    label { display: block; margin: 10px 0 5px; text-align: left; }
+    input, select {
+      width: 100%; padding: 10px; margin-bottom: 10px;
+      border: none; border-radius: 5px;
+    }
+    button {
+      width: 100%; padding: 15px; font-size: 16px;
+      border: none; border-radius: 5px;
+      background-color: #b87333; color: #fff;
+      cursor: pointer; transition: 0.3s;
+    }
+    button:hover { background-color: #d18538; }
+    #map { height: 380px; margin: 10px 0; }
+    #info {
+      background: #111; padding: 10px; text-align: left;
+      border-radius: 5px; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="bonanza-logo.PNG" alt="Bonanza Transportation Logo"/>
+  </header>
 
-    function initMap(){
+  <main>
+    <label for="fullname">Full Name:</label>
+    <input id="fullname" placeholder="e.g. John Doe" />
+
+    <label for="phone">Phone Number:</label>
+    <input id="phone" placeholder="e.g. +1 385 123 4567" />
+
+    <label for="email">Email Address:</label>
+    <input id="email" type="email" placeholder="e.g. your@email.com" />
+
+    <label for="pickup">Pick-up Address:</label>
+    <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+
+    <label for="dropoff">Drop-off Address:</label>
+    <input id="dropoff" placeholder="e.g. SLC Airport" />
+
+    <label for="date">Date:</label>
+    <input id="date" type="date" />
+
+    <label for="time">Time:</label>
+    <input id="time" type="time" />
+
+    <button id="calculate">Calculate Price</button>
+
+    <div id="map"></div>
+    <div id="info">
+      <div><b>Distance:</b> --</div>
+      <div><b>Duration:</b> --</div>
+      <div><b>Estimated Price:</b> $0.00</div>
+      <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
+      <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
+    </div>
+
+    <button id="pay" style="display:none;">PAY NOW</button>
+  </main>
+
+  <script>
+    let map, directionsService, directionsRenderer;
+    let pickupAutocomplete, dropoffAutocomplete;
+    let distanceValue = 0;
+    let price = 0;
+
+    function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.646, lng: -111.498 },
-        zoom: 11,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
+        center: { lat: 40.7587, lng: -111.8762 },
+        zoom: 10,
       });
-
-      directionsService  = new google.maps.DirectionsService();
+      directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer();
       directionsRenderer.setMap(map);
 
-      new google.maps.places.Autocomplete(document.getElementById("pickup"));
-      new google.maps.places.Autocomplete(document.getElementById("dropoff"));
-    }
-    window.initMap = initMap;
-
-    function validateInputs(){
-      const ids = ["fullname","phone","email","pickup","dropoff","date","time"];
-      return ids.every(id => document.getElementById(id).value.trim());
-    }
-
-    function priceFromMiles(miles){
-      if (miles <= 10) return 120;
-      if (miles <= 35) return 190;
-      if (miles <= 39) return 210;
-      if (miles <= 48) return 230;
-      if (miles <= 55) return 250;
-      return miles * 5.4;
+      // AUTOCOMPLETE CLÁSICO (funciona ahora, migrar en marzo 2025)
+      pickupAutocomplete = new google.maps.places.Autocomplete(
+        document.getElementById("pickup")
+      );
+      dropoffAutocomplete = new google.maps.places.Autocomplete(
+        document.getElementById("dropoff")
+      );
     }
 
-    function calculateRoute(){
-      if (!validateInputs()) { alert("Complete all fields."); return; }
-
-      const origin      = document.getElementById("pickup").value.trim();
-      const destination = document.getElementById("dropoff").value.trim();
-
-      directionsService.route({
-        origin, destination, travelMode: google.maps.TravelMode.DRIVING
-      }, (res, status) => {
-        if (status !== "OK" || !res) { alert("Could not calculate route."); return; }
-
-        directionsRenderer.setDirections(res);
-        const leg   = res.routes[0].legs[0];
-        const miles = leg.distance.value / 1609.34;
-
-        document.getElementById("distance").textContent = miles.toFixed(1) + " miles";
-        document.getElementById("duration").textContent = leg.duration.text;
-
-        calculatedPrice = priceFromMiles(miles);
-        document.getElementById("price").textContent = "$" + calculatedPrice.toFixed(2);
-      });
+    function calculatePrice(distanceMiles) {
+      if (distanceMiles <= 10) return 120;
+      if (distanceMiles <= 35) return 190;
+      if (distanceMiles <= 39) return 210;
+      if (distanceMiles <= 48) return 230;
+      if (distanceMiles <= 55) return 250;
+      return distanceMiles * 5.4;
     }
-    window.calculateRoute = calculateRoute;
 
-    function payNow(){
-      if (!validateInputs() || calculatedPrice <= 0){
-        alert("Please calculate a price first.");
+    document.getElementById("calculate").addEventListener("click", () => {
+      const pickup = document.getElementById("pickup").value;
+      const dropoff = document.getElementById("dropoff").value;
+      if (!pickup || !dropoff) {
+        alert("Please enter both pick-up and drop-off addresses.");
         return;
       }
-      alert("Stripe vendrá aquí cuando conectes tu backend.");
-    }
-    window.payNow = payNow;
+      directionsService.route(
+        { origin: pickup, destination: dropoff, travelMode: "DRIVING" },
+        (result, status) => {
+          if (status === "OK") {
+            directionsRenderer.setDirections(result);
+            const route = result.routes[0].legs[0];
+            const distanceMiles = parseFloat(route.distance.text);
+            distanceValue = distanceMiles;
+            price = calculatePrice(distanceMiles);
+
+            document.getElementById("info").innerHTML = `
+              <div><b>Distance:</b> ${distanceMiles} miles</div>
+              <div><b>Duration:</b> ${route.duration.text}</div>
+              <div><b>Estimated Price:</b> $${price.toFixed(2)}</div>
+              <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
+              <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
+              <div><b>Luggage:</b> 6 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
+            `;
+            document.getElementById("pay").style.display = "block";
+          } else {
+            alert("Could not calculate route: " + status);
+          }
+        }
+      );
+    });
+
+    document.getElementById("pay").addEventListener("click", async () => {
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    });
   </script>
 
-  <!-- Carga ÚNICA de Google Maps (reemplaza TU_API_KEY) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap&loading=async" async defer></script>  
+  <!-- Google Maps API -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"
+    async defer>
+  </script>
 </body>
 </html>
