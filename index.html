@@ -145,54 +145,51 @@ document.getElementById("calculate").addEventListener("click", () => {
     alert("Please enter both pick-up and drop-off addresses.");
     return;
   }
-
   // Fuerza que las búsquedas sean en EE.UU.
   const toUS = (q) => {
     if (/,?\s*(usa|united states)$/i.test(q)) return q;
     return `${q}, USA`;
   };
-
-  directionsService.route(
-    {
-      origin:      toUS(pickup),
-      destination: toUS(dropoff),
-      travelMode:  google.maps.TravelMode.DRIVING
-    },
-    (result, status) => {
-      if (status !== "OK" || !result) {
-        // Mensajes más claros por tipo de error
-        const msg =
-          status === "ZERO_RESULTS" ? "No driving route found between those addresses in the U.S."
-        : status === "NOT_FOUND"    ? "One of the addresses could not be located."
-        : status === "OVER_QUERY_LIMIT" ? "Temporary limit reached. Please try again in a moment."
-        : `Could not calculate route: ${status}`;
-        alert(msg);
-        return;
-      }
-
-      directionsRenderer.setDirections(result);
-
-      const leg = result.routes[0].legs[0];
-      const distanceMiles = leg.distance.value / 1609.34;  // metros → millas
-
-      // Usa tu función de precios existente
-      price = calculatePrice(distanceMiles);
-
-      document.getElementById("info").innerHTML = `
-        <div><b>Distance:</b> ${distanceMiles.toFixed(1)} miles</div>
-        <div><b>Duration:</b> ${leg.duration.text}</div>
-        <div><b>Estimated Price:</b> $${price.toFixed(2)}</div>
-        <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
-        <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
-        <div><b>Luggage:</b> 6 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
-      `;
-
-      document.getElementById("pay").style.display = "block";
+directionsService.route(
+  { origin: pickup, destination: dropoff, travelMode: google.maps.TravelMode.DRIVING },
+  (result, status) => {
+    if (status !== "OK" || !result) {
+      alert("Could not calculate route: " + status);
+      return;
     }
-  );
-});
 
+    // 1) Pintar la ruta en el mapa
+    directionsRenderer.setDirections(result);
 
+    // 2) Ajustar el mapa a la ruta (zoom y centro automáticos)
+    const bounds = new google.maps.LatLngBounds();
+    result.routes[0].legs.forEach(leg => {
+      bounds.extend(leg.start_location);
+      bounds.extend(leg.end_location);
+    });
+    map.fitBounds(bounds);
+
+    // 3) Calcular distancia / tiempo / precio
+    const leg = result.routes[0].legs[0];
+    const distanceMiles = leg.distance.value / 1609.34;
+    const durationText  = leg.duration.text;
+    const price         = calculatePrice(distanceMiles);
+
+    // 4) Mostrar la información del viaje
+    document.getElementById("info").innerHTML = `
+      <div><b>Distance:</b> ${distanceMiles.toFixed(1)} miles</div>
+      <div><b>Duration:</b> ${durationText}</div>
+      <div><b>Estimated Price:</b> $${price.toFixed(2)}</div>
+      <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
+      <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
+      <div><b>Luggage:</b> 6 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
+    `;
+
+    // 5) Mostrar botón de pago si existe
+    const payBtn = document.getElementById("pay");
+    if (payBtn) payBtn.style.display = "block";
+  }
+);
     document.getElementById("pay").addEventListener("click", async () => {
       alert("Stripe va aquí cuando conectes tu backend.");
     });
@@ -200,7 +197,6 @@ document.getElementById("calculate").addEventListener("click", () => {
     // Exponer para callback de Google
     window.initMap = initMap;
   </script>
-
   <!-- Google Maps: UNA sola carga -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
