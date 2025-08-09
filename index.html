@@ -46,6 +46,16 @@
     #info{background:#111;padding:14px;border-radius:12px;margin-top:18px;font-size:.95em}
     #info div{margin-bottom:8px}
     footer img{width:100%;margin-top:24px;border-radius:12px}
+
+    /* Email UX */
+    .error{
+      color:#ff6b6b;font-size:.85em;margin-top:4px;
+    }
+    .hint{
+      color:#c08b5c;font-size:.85em;margin-top:4px;opacity:.9;cursor:pointer;text-decoration:underline;
+      display:none;
+    }
+    #emailError{display:none}
   </style>
 </head>
 <body>
@@ -64,7 +74,9 @@
     <input id="phone" placeholder="e.g. +1 385 123 4567" />
 
     <label for="email">Email Address:</label>
-    <input id="email" type="email" placeholder="e.g. your@email.com" />
+    <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" />
+    <div id="emailError" class="error"></div>
+    <div id="emailHint" class="hint"></div>
 
     <label for="pickup">Pick-up Address:</label>
     <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
@@ -105,14 +117,82 @@
       return distanceMiles * 5.4;
     }
 
+    // ===== Email helpers =====
+    const COMMON_DOMAINS = [
+      "gmail.com","outlook.com","hotmail.com","yahoo.com","icloud.com",
+      "proton.me","protonmail.com","aol.com"
+    ];
+    const TYPO_FIX = {
+      "gamil.com":"gmail.com","gnail.com":"gmail.com","gmail.con":"gmail.com",
+      "hotnail.com":"hotmail.com","outlok.com":"outlook.com",
+      "yaho.com":"yahoo.com","yahoo.con":"yahoo.com",
+      "icloud.con":"icloud.com","protomail.com":"protonmail.com"
+    };
+    function isValidEmailFormat(email){
+      const re = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,24}$/; // formato razonable
+      return re.test(email);
+    }
+    function getEmailSuggestion(email){
+      const [local, domainPart=""] = email.split("@");
+      if (!local) return null;
+      if (email.endsWith("@") || !domainPart) return `${local}@gmail.com`;
+      const lowerDom = domainPart.toLowerCase();
+      if (TYPO_FIX[lowerDom]) return `${local}@${TYPO_FIX[lowerDom]}`;
+      const match = COMMON_DOMAINS.find(d => d.startsWith(lowerDom) || lowerDom.startsWith(d.slice(0,3)));
+      if (match && match !== lowerDom) return `${local}@${match}`;
+      return null;
+    }
+    function showEmailError(msg){
+      const err = document.getElementById("emailError");
+      err.textContent = msg;
+      err.style.display = "block";
+    }
+    function clearEmailError(){
+      const err = document.getElementById("emailError");
+      err.textContent = "";
+      err.style.display = "none";
+    }
+    function showEmailHint(suggestion){
+      const hint = document.getElementById("emailHint");
+      if (!suggestion){ hint.style.display="none"; hint.textContent=""; hint.onclick=null; return; }
+      hint.textContent = `Did you mean ${suggestion}?`;
+      hint.style.display = "block";
+      hint.onclick = () => {
+        document.getElementById("email").value = suggestion;
+        hint.style.display = "none";
+        clearEmailError();
+      };
+    }
+    function validateEmailField(){
+      const el = document.getElementById("email");
+      const email = el.value.trim();
+      clearEmailError(); showEmailHint(null);
+      if (!email){ showEmailError("Please enter your email address."); return false; }
+      const suggestion = getEmailSuggestion(email);
+      if (suggestion && suggestion.toLowerCase() !== email.toLowerCase()){ showEmailHint(suggestion); }
+      if (!isValidEmailFormat(email)){ showEmailError("Please enter a valid email address (e.g., name@example.com)."); return false; }
+      return true;
+    }
+    // Wire up email events
+    (function wireEmail(){
+      const el = document.getElementById("email");
+      if (!el) return;
+      el.addEventListener("input", () => {
+        clearEmailError();
+        const suggestion = getEmailSuggestion(el.value.trim());
+        showEmailHint(suggestion);
+      });
+      el.addEventListener("blur", () => { validateEmailField(); });
+    })();
+
     function initMap() {
-      // ✔️ Crear el mapa (esto faltaba en tu versión)
+      // Mapa
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 40.7587, lng: -111.8762 },
         zoom: 10
       });
 
-      // ✔️ Servicios de rutas y render de direcciones
+      // Rutas
       directionsService  = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({
         suppressMarkers: false,
@@ -120,16 +200,23 @@
       });
       directionsRenderer.setMap(map);
 
-      // ✔️ Autocomplete (una sola vez, y restringido a EE.UU.)
+      // Autocomplete (restringido a EE.UU.)
       const acOpts = { componentRestrictions: { country: ["us"] } };
       new google.maps.places.Autocomplete(document.getElementById("pickup"), acOpts);
       new google.maps.places.Autocomplete(document.getElementById("dropoff"), acOpts);
     }
 
-    // ✔️ Listener correctamente cerrado
+    // Calculate
     document.getElementById("calculate").addEventListener("click", () => {
       const pickup  = document.getElementById("pickup").value.trim();
       const dropoff = document.getElementById("dropoff").value.trim();
+
+      // 🔒 valida email antes de seguir
+      if (!validateEmailField()){
+        document.getElementById("email").focus();
+        return;
+      }
+
       if (!pickup || !dropoff) {
         alert("Please enter both pick-up and drop-off addresses.");
         return;
@@ -177,10 +264,14 @@
     });
 
     document.getElementById("pay").addEventListener("click", () => {
+      // Aquí también puedes revalidar el email si quieres
+      if (!validateEmailField()){
+        document.getElementById("email").focus();
+        return;
+      }
       alert("Stripe va aquí cuando conectes tu backend.");
     });
 
-    // Exponer callback
     window.initMap = initMap;
   </script>
 
