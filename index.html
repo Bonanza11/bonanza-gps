@@ -66,77 +66,110 @@
     <img src="IMG_4072.png" alt="Bonanza SUV"/>
   </footer>
 
-  <!-- ======== Lógica (una sola vez) ======== -->
-  <script>
-    let map, directionsService, directionsRenderer, calculatedPrice = 0;
+  <!-- ================= Logic ================= -->
+<script>
+  let map, directionsService, directionsRenderer, calculatedPrice = 0;
+  let pickupAutocomplete, dropoffAutocomplete;
 
-    function initMap(){
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 40.646, lng: -111.498 },
-        zoom: 11,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
-      });
+  function initMap() {
+    // Inicializar mapa
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 40.646, lng: -111.498 },
+      zoom: 11,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
 
-      directionsService  = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
+    directionsService  = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
 
-      new google.maps.places.Autocomplete(document.getElementById("pickup"));
-      new google.maps.places.Autocomplete(document.getElementById("dropoff"));
-    }
-    window.initMap = initMap;
+    // Crear Autocomplete con el nuevo método
+    const pickupInput = document.getElementById("pickup");
+    const dropoffInput = document.getElementById("dropoff");
 
-    function validateInputs(){
-      const ids = ["fullname","phone","email","pickup","dropoff","date","time"];
-      return ids.every(id => document.getElementById(id).value.trim());
-    }
+    const pickupElement = new google.maps.places.PlaceAutocompleteElement({ inputElement: pickupInput });
+    const dropoffElement = new google.maps.places.PlaceAutocompleteElement({ inputElement: dropoffInput });
 
-    function priceFromMiles(miles){
-      if (miles <= 10) return 120;
-      if (miles <= 35) return 190;
-      if (miles <= 39) return 210;
-      if (miles <= 48) return 230;
-      if (miles <= 55) return 250;
-      return miles * 5.4;
-    }
+    pickupElement.addListener("place_changed", () => {
+      const place = pickupElement.getPlace();
+      if (!place.geometry) {
+        alert("Seleccione una dirección válida para Pick-up.");
+      }
+    });
 
-    function calculateRoute(){
-      if (!validateInputs()) { alert("Complete all fields."); return; }
+    dropoffElement.addListener("place_changed", () => {
+      const place = dropoffElement.getPlace();
+      if (!place.geometry) {
+        alert("Seleccione una dirección válida para Drop-off.");
+      }
+    });
+  }
+  window.initMap = initMap;
 
-      const origin      = document.getElementById("pickup").value.trim();
-      const destination = document.getElementById("dropoff").value.trim();
+  function priceFromMiles(miles) {
+    if (miles <= 10) return 120;
+    if (miles <= 35) return 190;
+    if (miles <= 39) return 210;
+    if (miles <= 48) return 230;
+    if (miles <= 55) return 250;
+    return miles * 5.4;
+  }
 
-      directionsService.route({
-        origin, destination, travelMode: google.maps.TravelMode.DRIVING
-      }, (res, status) => {
-        if (status !== "OK" || !res) { alert("Could not calculate route."); return; }
+  function validateInputs() {
+    const ids = ["fullname","phone","email","pickup","dropoff","date","time"];
+    let ok = true;
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      const err = document.getElementById(id.replace(/^[a-z]+/, m=>m) + "Error") || null;
+      if (!el.value.trim()) {
+        if (err) err.style.display = 'block';
+        ok = false;
+      } else {
+        if (err) err.style.display = 'none';
+      }
+    });
+    return ok;
+  }
 
-        directionsRenderer.setDirections(res);
-        const leg   = res.routes[0].legs[0];
-        const miles = leg.distance.value / 1609.34;
+  function calculateRoute() {
+    if (!validateInputs()) return;
 
-        document.getElementById("distance").textContent = miles.toFixed(1) + " miles";
-        document.getElementById("duration").textContent = leg.duration.text;
+    const origin = document.getElementById('pickup').value.trim();
+    const destination = document.getElementById('dropoff').value.trim();
 
-        calculatedPrice = priceFromMiles(miles);
-        document.getElementById("price").textContent = "$" + calculatedPrice.toFixed(2);
-      });
-    }
-    window.calculateRoute = calculateRoute;
-
-    function payNow(){
-      if (!validateInputs() || calculatedPrice <= 0){
-        alert("Please calculate a price first.");
+    directionsService.route({
+      origin, destination,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (res, status) => {
+      if (status !== 'OK' || !res) {
+        alert('Could not calculate route.');
         return;
       }
-      alert("Stripe vendrá aquí cuando conectes tu backend.");
-    }
-    window.payNow = payNow;
-  </script>
 
-  <!-- Carga ÚNICA de Google Maps (reemplaza TU_API_KEY) -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap&loading=async" async defer></script>  
-</body>
-</html>
+      directionsRenderer.setDirections(res);
+      const leg = res.routes[0].legs[0];
+      const miles = leg.distance.value / 1609.34;
+
+      document.getElementById('distance').textContent = miles.toFixed(1) + ' miles';
+      document.getElementById('duration').textContent = leg.duration.text;
+
+      calculatedPrice = priceFromMiles(miles);
+      document.getElementById('price').textContent = '$' + calculatedPrice.toFixed(2);
+    });
+  }
+  window.calculateRoute = calculateRoute;
+
+  function payNow() {
+    if (!validateInputs() || calculatedPrice <= 0) {
+      alert("Please calculate a price first.");
+      return;
+    }
+    alert("Stripe va aquí (cuando conectes tu backend).");
+  }
+  window.payNow = payNow;
+</script>
+
+<!-- Google Maps con nuevo método -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
