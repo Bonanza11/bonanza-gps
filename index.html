@@ -43,13 +43,61 @@
     }
 
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
-    #info{background:#111;padding:14px;border-radius:12px;margin-top:18px;font-size:.95em}
-    #info div{margin-bottom:8px}
-    footer img{width:100%;margin-top:24px;border-radius:12px}
+
+    /* ===== Panel LUXURY (sustituye al #info simple) ===== */
+    #info{
+      margin-top:18px;
+      border-radius:16px;
+      padding:18px;
+      background:
+        radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
+        linear-gradient(180deg, #121212, #0b0b0b);
+      border:1px solid rgba(192,139,92,.28);
+      box-shadow:
+        0 18px 40px rgba(0,0,0,.55),
+        inset 0 0 0 1px rgba(255,255,255,.02);
+      backdrop-filter: blur(6px);
+      color:#e9d5c1;
+      font-size:.95em;
+    }
+    .info-title{font-weight:800; letter-spacing:.3px; margin:0 0 4px; font-size:1.05rem}
+    .info-sub{opacity:.85; margin:0 0 12px; font-size:.9rem}
+
+    .kpis{
+      display:grid; grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px; margin:10px 0 12px;
+    }
+    .kpi{
+      background:#0e0e0e; border:1px solid rgba(192,139,92,.18);
+      border-radius:12px; padding:12px;
+    }
+    .kpi .label{font-size:.75rem; opacity:.8; margin-bottom:6px}
+    .kpi .value{font-size:1.35rem; font-weight:800; color:#f0d1ad}
+    .kpi .unit{font-size:.9rem; opacity:.7; margin-left:4px}
+    .kpi .value.price{color:#ffddae}
+
+    .breakdown{ margin:6px 0 12px; }
+    .breakdown .row{
+      display:flex; justify-content:space-between; gap:12px; padding:6px 0;
+    }
+    .breakdown .row.total{font-weight:800; color:#ffddae; font-size:1.05rem}
+    .divider{height:1px; background:linear-gradient(90deg, transparent, rgba(192,139,92,.35), transparent); margin:6px 0}
+
+    .note{opacity:.9; margin:6px 0 10px}
+    .tags{display:flex; flex-wrap:wrap; gap:8px}
+    .tag{
+      font-size:.78rem; padding:6px 10px; border-radius:999px;
+      background:#121212; border:1px solid rgba(192,139,92,.28); color:#e9d5c1;
+    }
 
     /* Email UX */
     .error{ color:#ff6b6b;font-size:.85em;margin-top:4px; display:none; }
     .hint{ color:#c08b5c;font-size:.85em;margin-top:4px;opacity:.9;cursor:pointer;text-decoration:underline; display:none; }
+
+    /* Responsive */
+    @media (max-width:520px){
+      .kpis{ grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -89,11 +137,22 @@
     <div id="map"></div>
 
     <div id="info">
-      <div><b>Distance:</b> --</div>
-      <div><b>Duration:</b> --</div>
-      <div><b>Estimated Price:</b> $0.00</div>
-      <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
-      <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
+      <h3 class="info-title">Trip Summary</h3>
+      <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Distance</div><div class="value">—</div></div>
+        <div class="kpi"><div class="label">Duration</div><div class="value">—</div></div>
+        <div class="kpi"><div class="label">Price</div><div class="value price">$0.00</div></div>
+      </div>
+      <div class="breakdown"><div class="row total"><span>Total</span><span>$0.00</span></div></div>
+      <div class="note">🧳 Luggage included</div>
+      <div class="tags">
+        <span class="tag">6 ski bags</span>
+        <span class="tag">2 large + 3 small</span>
+        <span class="tag">or 3 large + 4 small</span>
+        <span class="tag">Pet-friendly</span>
+        <span class="tag">No extra charge</span>
+      </div>
     </div>
 
     <button id="pay" style="display:none;">PAY NOW</button>
@@ -188,6 +247,56 @@
       acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
     }
 
+    /* ===== Render del panel luxury ===== */
+    function renderInfo(leg, basePrice, surcharge){
+      const miles = leg.distance.value / 1609.34;
+      const total = basePrice + (surcharge || 0);
+
+      const breakdownHtml = (surcharge && surcharge > 0)
+        ? `
+          <div class="breakdown">
+            <div class="row"><span>Base</span><span>$${basePrice.toFixed(2)}</span></div>
+            <div class="row"><span>Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>
+            <div class="divider"></div>
+            <div class="row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+          </div>`
+        : `
+          <div class="breakdown">
+            <div class="row total"><span>Total</span><span>$${basePrice.toFixed(2)}</span></div>
+          </div>`;
+
+      document.getElementById("info").innerHTML = `
+        <h3 class="info-title">Trip Summary</h3>
+        <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">Distance</div>
+            <div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div>
+          </div>
+          <div class="kpi">
+            <div class="label">Duration</div>
+            <div class="value">${leg.duration.text}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Price</div>
+            <div class="value price">$${total.toFixed(2)}</div>
+          </div>
+        </div>
+
+        ${breakdownHtml}
+
+        <div class="note">🧳 Luggage included</div>
+        <div class="tags">
+          <span class="tag">6 ski bags</span>
+          <span class="tag">2 large + 3 small</span>
+          <span class="tag">or 3 large + 4 small</span>
+          <span class="tag">Pet-friendly</span>
+          <span class="tag">No extra charge</span>
+        </div>
+      `;
+    }
+
     // ========= Calcular =========
     document.getElementById("calculate").addEventListener("click", async () => {
       const pickupTxt  = document.getElementById("pickup").value.trim();
@@ -196,7 +305,6 @@
       if (!validateEmailField()){ document.getElementById("email").focus(); return; }
       if (!pickupTxt || !dropoffTxt){ alert("Please enter both pick-up and drop-off addresses."); return; }
 
-      // Asegura selección desde el Autocomplete (para tener place_id y county)
       if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
         alert("Please select the addresses from the suggestions list (Autocomplete).");
         return;
@@ -219,7 +327,7 @@
         });
         map.fitBounds(bounds);
 
-        // 2) Precio base por distancia del viaje
+        // 2) Precio base
         const leg = trip.routes[0].legs[0];
         const miles = leg.distance.value / 1609.34;
         const basePrice = calculatePrice(miles);
@@ -230,21 +338,9 @@
           const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
           surcharge = surchargeMiles * 3; // $3 por milla
         }
-        const total = basePrice + surcharge;
 
-        // 4) Mostrar info
-        const priceRow = surcharge > 0
-          ? `<div><b>Estimated Price:</b> $${total.toFixed(2)} <small>(Base $${basePrice.toFixed(2)} + Surcharge $${surcharge.toFixed(2)})</small></div>`
-          : `<div><b>Estimated Price:</b> $${basePrice.toFixed(2)}</div>`;
-
-        document.getElementById("info").innerHTML = `
-          <div><b>Distance:</b> ${miles.toFixed(1)} miles</div>
-          <div><b>Duration:</b> ${leg.duration.text}</div>
-          ${priceRow}
-          <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
-          <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
-          <div><b>Luggage:</b> 6 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
-        `;
+        // 4) Render elegante
+        renderInfo(leg, basePrice, surcharge);
 
         document.getElementById("pay").style.display = "block";
       }catch(err){
