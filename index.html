@@ -10,27 +10,18 @@
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
-    /* Header con logo pequeño + glow cobre/neón */
-    header{
-      display:flex;justify-content:center;align-items:center;
-      padding:20px 16px;
-    }
+    /* Header con logo + glow cobre/neón */
+    header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
     .logo-wrap{ position:relative }
     .logo{
-      width:180px; height:180px;           /* <- tamaño del logo (ajústalo si quieres) */
-      border-radius:50%;
-      border:2px solid #c08b5c;
-      object-fit:cover; display:block; position:relative;
-      box-shadow:
-        0 0 2px rgba(192,139,92,.35) inset, /* aro interior */
-        0 0 8px rgba(0,0,0,.6),             /* sombra realista */
-        0 0 10px rgba(192,139,92,.45);      /* halo externo cobre */
+      width:180px;height:180px;border-radius:50%;border:2px solid #c08b5c;
+      object-fit:cover;display:block;position:relative;
+      box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
       filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
     }
     .logo-wrap::after{
-      content:""; position:absolute; inset:-8px; border-radius:50%;
-      box-shadow:0 0 22px 10px rgba(192,139,92,.35); /* anillo neón */
-      pointer-events:none;
+      content:"";position:absolute;inset:-8px;border-radius:50%;
+      box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;
     }
 
     /* Contenido */
@@ -41,9 +32,8 @@
       background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
     }
     button{
-      width:100%;padding:14px 16px;margin-top:18px;
-      background:#c08b5c;color:#000;font-weight:700;font-size:18px;
-      border:0;border-radius:10px;cursor:pointer;
+      width:100%;padding:14px 16px;margin-top:18px;background:#c08b5c;color:#000;
+      font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
       animation:pulse 1.8s infinite;
     }
     @keyframes pulse{
@@ -105,28 +95,6 @@
 
   <script>
     let map, directionsService, directionsRenderer;
-    let price = 0;
-
-    function initMap() {
-    pickupAutocomplete = new google.maps.places.Autocomplete(
-  document.getElementById("pickup"),
-  { componentRestrictions: { country: ["us"] } }
-);
-dropoffAutocomplete = new google.maps.places.Autocomplete(
-  document.getElementById("dropoff"),
-  { componentRestrictions: { country: ["us"] } }
-);
-
-      directionsService  = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: false,
-        preserveViewport: false 
-      });
-      directionsRenderer.setMap(map);
-
-      new google.maps.places.Autocomplete(document.getElementById("pickup"));
-      new google.maps.places.Autocomplete(document.getElementById("dropoff"));
-    }
 
     function calculatePrice(distanceMiles){
       if (distanceMiles <= 10) return 120;
@@ -136,67 +104,86 @@ dropoffAutocomplete = new google.maps.places.Autocomplete(
       if (distanceMiles <= 55) return 250;
       return distanceMiles * 5.4;
     }
-   // ——— Reemplaza TODO tu listener por este ———
-document.getElementById("calculate").addEventListener("click", () => {
-  const pickup  = document.getElementById("pickup").value.trim();
-  const dropoff = document.getElementById("dropoff").value.trim();
 
-  if (!pickup || !dropoff) {
-    alert("Please enter both pick-up and drop-off addresses.");
-    return;
-  }
-  // Fuerza que las búsquedas sean en EE.UU.
-  const toUS = (q) => {
-    if (/,?\s*(usa|united states)$/i.test(q)) return q;
-    return `${q}, USA`;
-  };
-directionsService.route(
-  { origin: pickup, destination: dropoff, travelMode: google.maps.TravelMode.DRIVING },
-  (result, status) => {
-    if (status !== "OK" || !result) {
-      alert("Could not calculate route: " + status);
-      return;
+    function initMap() {
+      // ✔️ Crear el mapa (esto faltaba en tu versión)
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 40.7587, lng: -111.8762 },
+        zoom: 10
+      });
+
+      // ✔️ Servicios de rutas y render de direcciones
+      directionsService  = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: false,
+        preserveViewport: false
+      });
+      directionsRenderer.setMap(map);
+
+      // ✔️ Autocomplete (una sola vez, y restringido a EE.UU.)
+      const acOpts = { componentRestrictions: { country: ["us"] } };
+      new google.maps.places.Autocomplete(document.getElementById("pickup"), acOpts);
+      new google.maps.places.Autocomplete(document.getElementById("dropoff"), acOpts);
     }
 
-    // 1) Pintar la ruta en el mapa
-    directionsRenderer.setDirections(result);
+    // ✔️ Listener correctamente cerrado
+    document.getElementById("calculate").addEventListener("click", () => {
+      const pickup  = document.getElementById("pickup").value.trim();
+      const dropoff = document.getElementById("dropoff").value.trim();
+      if (!pickup || !dropoff) {
+        alert("Please enter both pick-up and drop-off addresses.");
+        return;
+      }
 
-    // 2) Ajustar el mapa a la ruta (zoom y centro automáticos)
-    const bounds = new google.maps.LatLngBounds();
-    result.routes[0].legs.forEach(leg => {
-      bounds.extend(leg.start_location);
-      bounds.extend(leg.end_location);
+      directionsService.route(
+        { origin: pickup, destination: dropoff, travelMode: google.maps.TravelMode.DRIVING },
+        (result, status) => {
+          if (status !== "OK" || !result) {
+            alert("Could not calculate route: " + status);
+            return;
+          }
+
+          // 1) Dibujar la ruta
+          directionsRenderer.setDirections(result);
+
+          // 2) Ajustar vista del mapa a la ruta
+          const bounds = new google.maps.LatLngBounds();
+          result.routes[0].legs.forEach(leg => {
+            bounds.extend(leg.start_location);
+            bounds.extend(leg.end_location);
+          });
+          map.fitBounds(bounds);
+
+          // 3) Distancia / tiempo / precio
+          const leg = result.routes[0].legs[0];
+          const distanceMiles = leg.distance.value / 1609.34;
+          const durationText  = leg.duration.text;
+          const price         = calculatePrice(distanceMiles);
+
+          // 4) Mostrar info
+          document.getElementById("info").innerHTML = `
+            <div><b>Distance:</b> ${distanceMiles.toFixed(1)} miles</div>
+            <div><b>Duration:</b> ${durationText}</div>
+            <div><b>Estimated Price:</b> $${price.toFixed(2)}</div>
+            <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
+            <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
+            <div><b>Luggage:</b> 6 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
+          `;
+
+          // 5) Mostrar botón de pago
+          document.getElementById("pay").style.display = "block";
+        }
+      );
     });
-    map.fitBounds(bounds);
 
-    // 3) Calcular distancia / tiempo / precio
-    const leg = result.routes[0].legs[0];
-    const distanceMiles = leg.distance.value / 1609.34;
-    const durationText  = leg.duration.text;
-    const price         = calculatePrice(distanceMiles);
-
-    // 4) Mostrar la información del viaje
-    document.getElementById("info").innerHTML = `
-      <div><b>Distance:</b> ${distanceMiles.toFixed(1)} miles</div>
-      <div><b>Duration:</b> ${durationText}</div>
-      <div><b>Estimated Price:</b> $${price.toFixed(2)}</div>
-      <div><b>Note:</b> Pet-Friendly Service (No Extra Charge)</div>
-      <div><b>Vehicle:</b> Black Suburban – 1–5 Passengers</div>
-      <div><b>Luggage:</b> 6 ski bags, 2 large + 3 small or 3 large + 4 small suitcases</div>
-    `;
-
-    // 5) Mostrar botón de pago si existe
-    const payBtn = document.getElementById("pay");
-    if (payBtn) payBtn.style.display = "block";
-  }
-);
-    document.getElementById("pay").addEventListener("click", async () => {
+    document.getElementById("pay").addEventListener("click", () => {
       alert("Stripe va aquí cuando conectes tu backend.");
     });
 
-    // Exponer para callback de Google
+    // Exponer callback
     window.initMap = initMap;
   </script>
+
   <!-- Google Maps: UNA sola carga -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
