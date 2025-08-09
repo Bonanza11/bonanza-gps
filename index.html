@@ -10,8 +10,11 @@
   html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
   /* Header con logo circular + glow cobre/neón */
-  header{display:flex;justify-content:center;align-items:center;padding:26px 16px;position:relative}
-header .logo {
+<header>
+  <div class="logo-wrap">
+    <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
+  </div>
+</header>
   width: 50px;  /* tamaño mucho más pequeño */
   height: 50px;
   border-radius: 50%;
@@ -190,7 +193,7 @@ header .logo {
           if (status === "OK") {
             directionsRenderer.setDirections(result);
             const route = result.routes[0].legs[0];
-            const distanceMiles = parseFloat(route.distance.text);
+             const distanceMiles = route.distance.value / 1609.34; // metros → millas
             distanceValue = distanceMiles;
             price = calculatePrice(distanceMiles);
 
