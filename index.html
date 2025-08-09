@@ -13,12 +13,24 @@
       padding: 0;
       text-align: center;
     }
-    header img { width: 160px; margin: 20px auto; }
-    main { max-width: 420px; margin: auto; padding: 10px; }
-    label { display: block; margin: 10px 0 5px; text-align: left; }
-    input, select {
-      width: 100%; padding: 10px; margin-bottom: 10px;
-      border: none; border-radius: 5px;
+header img {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: block;
+    margin: 20px auto;
+    box-shadow: 0 0 20px rgba(200, 143, 87, 0.8), /* sombra cobre */
+                0 0 40px rgba(200, 143, 87, 0.5),
+                0 0 60px rgba(200, 143, 87, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+header img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(200, 143, 87, 1),
+                0 0 50px rgba(200, 143, 87, 0.7),
+                0 0 80px rgba(200, 143, 87, 0.5);
+} 
     }
     button {
       width: 100%; padding: 15px; font-size: 16px;
