@@ -252,7 +252,7 @@
     window.initMap = initMap;
 
     /* ===== Render panel ===== */
-    function renderInfo(leg, basePrice, surcharge, surchargeApplied){
+    function renderInfo(leg, basePrice, surcharge, surchargeLabel){
       const miles = leg.distance.value / 1609.34;
       const total = basePrice + (surcharge||0);
       const breakdown = surcharge>0
@@ -264,8 +264,8 @@
            </div>`
         : `<div class="breakdown"><div class="row total"><span>Total</span><span>$${basePrice.toFixed(2)}</span></div></div>`;
 
-      const surchargeLine = surchargeApplied
-        ? `<div class="helper" style="margin-top:6px;">⚠️ Airport pickup surcharge applied.</div>`
+      const surchargeLine = (surcharge>0 && surchargeLabel)
+        ? `<div class="helper" style="margin-top:6px;">⚠️ ${surchargeLabel}</div>`
         : ``;
 
       document.getElementById("info").innerHTML = `
@@ -351,20 +351,37 @@
         const miles = leg.distance.value/1609.34;
         const basePrice = calculatePrice(miles);
 
-        // === Regla de recargo: pickup en aeropuerto y dropoff fuera de Summit/Wasatch ===
+        // ======== NUEVAS REGLAS DE RECARGO ========
         const pickupIsAirport = isAirport(pickupPlace);
+
+        // County del pickup
+        let pickupCounty = countyFrom(pickupPlace);
+        if (!pickupCounty){ pickupCounty = await countyByPlaceId(pickupPlace.place_id); }
+        const pickupInAllowed = countyIncludesAllowed(pickupCounty);
+
+        // County del dropoff
         let dropCounty = countyFrom(dropoffPlace);
         if (!dropCounty){ dropCounty = await countyByPlaceId(dropoffPlace.place_id); }
         const dropInAllowed = countyIncludesAllowed(dropCounty);
 
         let surcharge = 0;
-        if (pickupIsAirport && !dropInAllowed){
-          const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-          surcharge = surchargeMiles * 3; // $3/mi desde Kamas a pickup
-        }
+        let surchargeLabel = "";
 
-        const surchargeApplied = pickupIsAirport && !dropInAllowed && surcharge > 0;
-        renderInfo(leg, basePrice, surcharge, surchargeApplied);
+        // Regla 3: pickup fuera de Summit/Wasatch -> $3/mi desde Kamas hasta pickup (+ base)
+        if (!pickupInAllowed){
+          const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
+          surcharge = surchargeMiles * 3;
+          surchargeLabel = "Pickup fuera de Summit/Wasatch: $3/mi desde Kamas hasta el punto de recogida.";
+        }
+        // Regla 4: pickup en aeropuerto + destino fuera de Summit/Wasatch -> $3/mi desde Kamas al aeropuerto (+ base)
+        else if (pickupIsAirport && !dropInAllowed){
+          const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
+          surcharge = surchargeMiles * 3;
+          surchargeLabel = "Airport pickup hacia destino fuera de Summit/Wasatch: $3/mi desde Kamas al aeropuerto.";
+        }
+        // Regla 1 y 2: precio regular (sin recargo) en los demás casos.
+
+        renderInfo(leg, basePrice, surcharge, surchargeLabel);
         document.getElementById("pay").style.display = "block";
       }catch(err){
         alert("Could not calculate route: " + err);
