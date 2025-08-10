@@ -8,6 +8,8 @@
   <style>
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
+
+    /* Header / Logo */
     header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
     .logo-wrap{ position:relative }
     .logo{
@@ -16,17 +18,15 @@
       box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
       filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
     }
-    .logo-wrap::after{
-      content:"";position:absolute;inset:-8px;border-radius:50%;
-      box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;
-    }
+    .logo-wrap::after{content:"";position:absolute;inset:-8px;border-radius:50%;box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;}
+
+    /* Layout */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
     input, select{
       display:block;width:100%;height:44px;padding:10px 12px;
       background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
     }
-    #flightNumber{background:#1a1a1a;color:#9af59a;border:1px solid #2b6a29;}
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:#c08b5c;color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
@@ -39,7 +39,9 @@
     }
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
+    /* Trip Summary panel */
     #info{
+      display:none;
       margin-top:18px;border-radius:16px;padding:18px;
       background:linear-gradient(180deg, #121212, #0b0b0b);
       border:1px solid rgba(192,139,92,.28);
@@ -59,22 +61,50 @@
     .breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
     .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
 
+    /* Date/Time – more visible */
     .input-row{display:grid;grid-template-columns: 1fr 1fr;gap:12px;}
     @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
     #date,#time{
-      height:52px;font-size:16px;border-radius:10px;border:1px solid rgba(192,139,92,.35);
-      background:#141414;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+      height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
+      border:2px solid #c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.18);
     }
-    .helper{font-size:.85rem;opacity:.85;margin-top:6px;color:#e9d5c1;}
-    .luggage-option{
-      background:#0e0e0e;border:1px solid rgba(192,139,92,.3);
-      border-radius:10px;padding:10px;margin-top:8px;
+    #date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator{
+      filter: invert(80%) sepia(20%) saturate(180%) hue-rotate(340deg) brightness(110%);
+      opacity:.95;cursor:pointer;
     }
+    .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
+
+    /* Flight field (green) */
+    #flightNumber{background:#1a1a1a;color:#9af59a;border:2px solid #2b6a29;border-radius:10px}
+
+    /* Luggage */
+    .luggage-option{background:#0e0e0e;border:1px solid rgba(192,139,92,.3);border-radius:10px;padding:10px;margin-top:8px;}
     .luggage-title{font-weight:bold;color:#ffddae;margin-bottom:4px;}
     .luggage-sub{font-size:0.85rem;color:#c08b5c;}
+
+    /* Turntable 3D-like SUV */
+    .turntable{
+      perspective:1000px; margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;
+    }
+    .turntable .car{
+      width:260px; height:auto; transform-style:preserve-3d;
+      animation:spinY 14s linear infinite;
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.6));
+    }
+    .turntable:hover .car{ animation-play-state:paused; }
+    .turntable .platform{
+      width:220px; height:22px; border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
+      margin-top:6px;
+    }
+    .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
+    @keyframes spinY{ from{ transform:rotateY(0deg);} to{ transform:rotateY(360deg);} }
   </style>
 </head>
 <body>
+
 <header>
   <div class="logo-wrap">
     <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
@@ -97,6 +127,7 @@
   <label for="dropoff">Drop-off Address:</label>
   <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
 
+  <!-- Flight number (hidden until pickup is Utah airport) -->
   <div id="flightContainer" style="display:none;">
     <label for="flightNumber">Flight Number:</label>
     <input id="flightNumber" placeholder="e.g. DL1234" />
@@ -106,10 +137,12 @@
     <div>
       <label for="date">Date:</label>
       <input id="date" type="date" />
+      <div id="dateHelp" class="helper"></div>
     </div>
     <div>
       <label for="time">Time:</label>
       <input id="time" type="time" step="900" />
+      <div id="timeHelp" class="helper"></div>
     </div>
   </div>
 
@@ -125,7 +158,10 @@
 
   <button id="calculate">Calculate Price</button>
   <div id="map"></div>
-  <div id="info" style="display:none;"></div>
+
+  <!-- Trip Summary -->
+  <div id="info"></div>
+
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
 <script>
@@ -136,10 +172,10 @@ const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
 
 /* ===== Operating hours ===== */
-const OPERATING_START = "06:00";
-const OPERATING_END   = "23:30";
+const OPERATING_START = "06:00"; // 6:00 AM
+const OPERATING_END   = "23:30"; // 11:30 PM
 
-/* ===== Pricing table (taxes & gratuity included) ===== */
+/* ===== Pricing (taxes & gratuity included in base) ===== */
 function calculateBase(mi){
   if (mi <= 10) return 120;
   if (mi <= 35) return 190;
@@ -149,22 +185,42 @@ function calculateBase(mi){
   return mi * 5.4;
 }
 
-/* ===== Helpers: time window ===== */
-function parseHM(hm){
-  const [h,m] = hm.split(':').map(n=>parseInt(n,10));
-  return {h: isNaN(h)?0:h, m:isNaN(m)?0:m};
-}
+/* ===== Time helpers ===== */
+function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
+function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
+function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+function parseHM(hm){ const [h,m]=hm.split(':').map(n=>parseInt(n,10)); return {h,h2:isNaN(h)?0:h, m:isNaN(m)?0:m}; }
 function isAfterHours(dateStr, timeStr){
   if(!dateStr || !timeStr) return false;
   const d = new Date(`${dateStr}T${timeStr}:00`);
-  const {h:sh,m:sm} = parseHM(OPERATING_START);
-  const {h:eh,m:em} = parseHM(OPERATING_END);
+  const [sh,sm] = OPERATING_START.split(':').map(Number);
+  const [eh,em] = OPERATING_END.split(':').map(Number);
   const start = new Date(d); start.setHours(sh, sm, 0, 0);
   const end   = new Date(d); end.setHours(eh, em, 0, 0);
   return (d < start) || (d > end);
 }
+function mountDateTime(){
+  const dateEl = document.getElementById('date');
+  const timeEl = document.getElementById('time');
+  const dateHelp = document.getElementById('dateHelp');
+  const timeHelp = document.getElementById('timeHelp');
+  const nx = nextQuarter(new Date());
+  if(dateEl && !dateEl.value) dateEl.value = localISODate(nx);
+  if(timeEl && !timeEl.value) setTimeValue(timeEl, nx.getHours(), nx.getMinutes());
+  if(dateEl) dateEl.min = localISODate(new Date());
+  function update(){
+    if(dateHelp && dateEl?.value){
+      const d = new Date(dateEl.value + 'T00:00:00');
+      dateHelp.textContent = `Selected: ${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}`;
+    }
+    if(timeHelp && timeEl?.value){ timeHelp.textContent = `Selected: ${timeEl.value}`; }
+  }
+  dateEl?.addEventListener('change', update);
+  timeEl?.addEventListener('change', update);
+  update();
+}
 
-/* ===== Airport, county, routing ===== */
+/* ===== Places / routing helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   const addr = (place?.formatted_address || "").toLowerCase();
@@ -175,131 +231,71 @@ function isAirport(place){
     "canyonlands regional airport","moab canyonlands regional airport",
     "jsx, n 2360 w st, salt lake city, ut, usa"
   ];
-  return t.includes("airport") ||
-         /airport/i.test(place?.name || place?.formatted_address || "") ||
-         extra.some(a => addr.includes(a));
+  return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "") || extra.some(a=>addr.includes(a));
 }
-function isUtah(place){
-  const addr = (place?.formatted_address || '').toLowerCase();
-  return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
-}
-function pickupIsUtahAirport(){
-  return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace);
-}
+function isUtah(place){ const addr=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr); }
+function pickupIsUtahAirport(){ return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace); }
+function countyFrom(place){ const comps=place?.address_components||[]; const c=comps.find(x=>x.types?.includes("administrative_area_level_2")); return c?.long_name||""; }
+function countyIncludesAllowed(name){ return ALLOWED_COUNTIES.some(x=>(name||"").includes(x)); }
+function routeAsync(opts){ return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
+function geocodeAsync(req){ return new Promise((res,rej)=>{ geocoder.geocode(req,(results,status)=>{ if(status==="OK"&&results?.[0]) res(results[0]); else rej(status||"GEOCODE_ERROR"); }); }); }
+async function countyByPlaceId(placeId){ try{ const r=await geocodeAsync({placeId}); const c=r.address_components.find(c=>c.types.includes("administrative_area_level_2")); return c?.long_name||""; }catch(_){ return ""; } }
+async function computeMilesFromBase(placeId){ const r=await routeAsync({origin:BASE_ADDRESS,destination:{placeId},travelMode:google.maps.TravelMode.DRIVING}); return r.routes[0].legs[0].distance.value/1609.34; }
 
-function countyFrom(place){
-  const comps = place?.address_components || [];
-  const c = comps.find(x=>x.types?.includes("administrative_area_level_2"));
-  return c?.long_name || "";
-}
-function countyIncludesAllowed(name){
-  return ALLOWED_COUNTIES.some(allowed => (name||"").includes(allowed));
-}
-function routeAsync(opts){
-  return new Promise((res,rej)=>{
-    directionsService.route(opts,(r,s)=> s==="OK" && r ? res(r) : rej(s||"ROUTE_ERROR"));
-  });
-}
-function geocodeAsync(req){
-  return new Promise((resolve,reject)=>{
-    geocoder.geocode(req,(results,status)=>{
-      if(status==="OK" && results?.[0]) resolve(results[0]);
-      else reject(status || "GEOCODE_ERROR");
-    });
-  });
-}
-async function countyByPlaceId(placeId){
-  try{
-    const result = await geocodeAsync({ placeId });
-    const comp = result.address_components.find(c=>c.types.includes("administrative_area_level_2"));
-    return comp?.long_name || "";
-  }catch(_){ return ""; }
-}
-async function computeMilesFromBase(placeId){
-  const r = await routeAsync({
-    origin: BASE_ADDRESS,
-    destination: {placeId},
-    travelMode: google.maps.TravelMode.DRIVING
-  });
-  return r.routes[0].legs[0].distance.value / 1609.34;
-}
-
-/* ===== Date/Time UX ===== */
-function nextQuarter(d){
-  const m=d.getMinutes();
-  const add=15-(m%15||15);
-  d.setMinutes(m+add,0,0);
-  return d;
-}
-function localISODate(d){
-  const off=d.getTimezoneOffset()*60000;
-  return new Date(d-off).toISOString().slice(0,10);
-}
-function setTimeValue(input, h, m){
-  if(!input) return;
-  input.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-}
-function mountDateTime(){
-  const dateEl = document.getElementById('date');
-  const timeEl = document.getElementById('time');
-  if(!dateEl || !timeEl) return;
-  const nx = nextQuarter(new Date());
-  if(!dateEl.value) dateEl.value = localISODate(nx);
-  if(!timeEl.value) setTimeValue(timeEl, nx.getHours(), nx.getMinutes());
-  dateEl.min = localISODate(new Date());
-}
-
-/* ===== Flight number validation ===== */
+/* ===== Flight number (green & validated) ===== */
 const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
 const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
-function normalizeFlight(v){
-  return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
-}
+function normalizeFlight(v){ return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-'); }
 function validateFlightValue(v){
   const m = normalizeFlight(v).match(FLIGHT_REGEX);
-  if (!m) return {ok:false, msg:'Invalid format. Use AA1234.'};
-  const code = m[1], num = m[2];
-  if (!AIRLINES.has(code)) return {ok:false, msg:'Unknown airline code.'};
-  if (/^0+$/.test(num)) return {ok:false, msg:'Invalid flight number.'};
-  return {ok:true, msg:''};
+  if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
+  const code=m[1], num=m[2];
+  if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
+  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
+  return {ok:true,msg:''};
 }
 function updateFlightVisibility(){
-  const wrap  = document.getElementById('flightContainer');
-  const input = document.getElementById('flightNumber');
-  if(!wrap || !input) return;
+  const wrap=document.getElementById('flightContainer');
+  const input=document.getElementById('flightNumber');
+  if(!wrap||!input) return;
   const show = pickupIsUtahAirport();
   wrap.style.display = show ? 'block' : 'none';
-  if (show){
-    input.style.border = "2px solid #2ecc71";
-  } else {
-    input.value = "";
-  }
+  if(!show){ input.value=""; input.setCustomValidity(""); }
 }
 function wireFlightValidation(){
-  const input = document.getElementById('flightNumber');
+  const input=document.getElementById('flightNumber');
   if(!input) return;
   input.addEventListener('input', ()=>{
-    if (!pickupIsUtahAirport()){ input.setCustomValidity(""); return; }
-    const r = validateFlightValue(input.value);
-    input.setCustomValidity(r.ok ? "" : r.msg);
+    if(!pickupIsUtahAirport()){ input.setCustomValidity(""); return; }
+    const r=validateFlightValue(input.value); input.setCustomValidity(r.ok?"":r.msg);
   });
 }
 
-/* ===== Info panel ===== */
+/* ===== Render Summary (with rotating SUV) ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.25 : 0;
   const total = base + surcharge + ahFee;
+
   const el = document.getElementById("info");
   el.style.display = "block";
   el.innerHTML = `
     <h3 class="info-title">Trip Summary</h3>
+
+    <div class="turntable">
+      <img class="car" src="suburban.png" alt="Black Chevrolet Suburban SUV" />
+      <div class="platform"></div>
+      <div class="vehicle-caption">This will be your SUV</div>
+    </div>
+
     <p class="info-sub">Private Black Suburban · 1–5 passengers</p>
+
     <div class="kpis">
       <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
       <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
       <div class="kpi"><div class="label">Price (includes taxes & gratuity)</div><div class="value price">$${total.toFixed(2)}</div></div>
     </div>
+
     <div class="divider"></div>
     <div class="breakdown">
       <div class="row"><span>Base Fare</span><span>$${base.toFixed(2)}</span></div>
@@ -328,9 +324,10 @@ function initMap(){
 }
 window.initMap = initMap;
 
-/* ===== Calculate Price ===== */
+/* ===== Calculate button ===== */
 document.getElementById("calculate").addEventListener("click", async ()=>{
-  if (!pickupPlace?.place_id || !dropoffPlace?.place_id){ alert("Select addresses from suggestions."); return; }
+  if (!pickupPlace?.place_id || !dropoffPlace?.place_id){ alert("Please select addresses from the suggestions."); return; }
+
   try{
     const trip = await routeAsync({
       origin:{placeId: pickupPlace.place_id},
@@ -338,10 +335,12 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
       travelMode: google.maps.TravelMode.DRIVING
     });
     directionsRenderer.setDirections(trip);
+
     const leg = trip.routes[0].legs[0];
-    const miles = leg.distance.value / 1609.34;
+    const miles = leg.distance.value/1609.34;
     const basePrice = calculateBase(miles);
 
+    // Distance surcharge rules (unchanged)
     let surcharge = 0;
     const pickupAir = isAirport(pickupPlace);
     let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
@@ -350,15 +349,9 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
     const dropAllowed   = countyIncludesAllowed(dropCounty);
 
     if (pickupAir){
-      if (!dropAllowed){
-        const m = await computeMilesFromBase(pickupPlace.place_id);
-        surcharge = m * 3;
-      }
+      if (!dropAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }else{
-      if (!pickupAllowed){
-        const m = await computeMilesFromBase(pickupPlace.place_id);
-        surcharge = m * 3;
-      }
+      if (!pickupAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }
 
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
