@@ -90,6 +90,32 @@
     input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator{filter: invert(66%) sepia(26%) saturate(243%) hue-rotate(340deg) brightness(92%);cursor:pointer;opacity:.95;}
     #date:focus, #time:focus{outline:none;border-color:#c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.25), inset 0 1px 0 rgba(255,255,255,.06);}
     .helper{font-size:.85rem;opacity:.85;margin-top:6px;color:#e9d5c1;}
+
+    /* ===== Equipaje (lujoso) ===== */
+    .lux-cards{ display:grid; gap:12px; grid-template-columns:1fr; margin-top:10px }
+    @media(min-width:640px){ .lux-cards{ grid-template-columns:1fr 1fr } }
+    .lux-card{
+      position:relative; padding:16px; border:1px solid #c08b5c; border-radius:14px;
+      background: linear-gradient(180deg, rgba(192,139,92,.10), rgba(0,0,0,.35));
+      box-shadow: 0 0 10px rgba(192,139,92,.18), inset 0 0 8px rgba(192,139,92,.08);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      cursor:pointer;
+    }
+    .lux-card:hover{ transform: translateY(-2px); box-shadow: 0 0 14px rgba(192,139,92,.28) }
+    .lux-card.selected{
+      border-color:#e2a877;
+      box-shadow: 0 0 16px rgba(226,168,119,.35), inset 0 0 10px rgba(226,168,119,.15);
+    }
+    .lux-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-weight:700; letter-spacing:.3px }
+    .lux-badge{ font-size:12px; padding:4px 8px; border:1px solid #c08b5c; border-radius:999px; opacity:.9 }
+    .lux-items{ margin:0; padding-left:18px; line-height:1.55 }
+    .lux-note{ margin-top:10px; font-size:.92rem; opacity:.85 }
+    .lux-icon{ width:28px; height:28px; flex:0 0 28px; filter: drop-shadow(0 0 4px rgba(192,139,92,.35)); }
+    .lux-check{
+      position:absolute; top:10px; right:10px; font-size:12px; padding:4px 8px; border-radius:999px;
+      border:1px solid #39d353; color:#39d353; background:rgba(57,211,83,.08); display:none;
+    }
+    .lux-card.selected .lux-check{ display:inline-block }
   </style>
 </head>
 <body>
@@ -146,6 +172,66 @@
       </div>
       <div class="breakdown"><div class="row total"><span>Total</span><span>$0.00</span></div></div>
     </div>
+
+    <!-- ===== Post-price extras: Luggage + Flight ===== -->
+    <section id="post-price-extras" style="display:none; margin-top:16px;">
+      <!-- Equipaje sugerido -->
+      <div id="luggage-suggest" style="padding:12px;border:1px solid #c08b5c;border-radius:12px; background:rgba(192,139,92,0.06)">
+        <h3 style="margin:0 0 4px 0;">Equipaje sugerido</h3>
+        <div class="lux-note">Selecciona la configuración que mejor describe tu equipaje (informativo, no afecta el precio):</div>
+
+        <div class="lux-cards" id="luggageCards">
+          <!-- Opción A -->
+          <div class="lux-card" data-luggage="A">
+            <span class="lux-check">Elegido</span>
+            <div class="lux-head">
+              <svg class="lux-icon" viewBox="0 0 24 24" fill="none">
+                <rect x="5" y="7" width="14" height="12" rx="2" stroke="#c08b5c"/>
+                <rect x="9" y="5" width="6" height="2" rx="1" stroke="#c08b5c"/>
+                <path d="M19 6 L22 3" stroke="#c08b5c"/>
+                <path d="M20.5 10 L22 8" stroke="#c08b5c"/>
+              </svg>
+              <div>Opción A <span class="lux-badge">Recomendada</span></div>
+            </div>
+            <ul class="lux-items">
+              <li><strong>2 maletas grandes</strong></li>
+              <li><strong>3 maletas pequeñas</strong></li>
+              <li><strong>6 ski bags / golf club</strong></li>
+            </ul>
+          </div>
+
+          <!-- Opción B -->
+          <div class="lux-card" data-luggage="B">
+            <span class="lux-check">Elegido</span>
+            <div class="lux-head">
+              <svg class="lux-icon" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="8" width="10" height="11" rx="2" stroke="#c08b5c"/>
+                <rect x="11" y="5" width="8" height="14" rx="2" stroke="#c08b5c"/>
+                <rect x="6" y="6" width="4" height="2" rx="1" stroke="#c08b5c"/>
+                <rect x="13" y="3" width="4" height="2" rx="1" stroke="#c08b5c"/>
+              </svg>
+              <div>Opción B</div>
+            </div>
+            <ul class="lux-items">
+              <li><strong>3 maletas grandes</strong></li>
+              <li><strong>5 maletas pequeñas</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <input type="hidden" id="selectedLuggage" name="selectedLuggage" value="">
+      </div>
+
+      <!-- Campo Vuelo (sólo si pick-up es aeropuerto de Utah) -->
+      <div id="flight-wrap" style="display:none; margin-top:12px;">
+        <label for="flightNumber" style="display:block; margin-bottom:6px;">Número de vuelo (obligatorio si la recogida es en un aeropuerto de Utah)</label>
+        <input id="flightNumber" type="text" inputmode="latin" autocomplete="off" placeholder="Ej: DL1234, WN 987, B6-120"
+          style="width:100%; padding:10px 12px; border:1px solid #c08b5c; border-radius:8px; background:#000; color:#c08b5c; outline:none;">
+        <small id="flightHelp" style="display:block; margin-top:6px; opacity:.85;">
+          Formato válido: <code>AA1234</code>, <code>B6 120</code>, <code>WN-987</code>.
+        </small>
+      </div>
+    </section>
 
     <button id="pay" style="display:none;">PAY NOW</button>
   </main>
@@ -249,6 +335,15 @@
       }catch(_){ return ""; }
     }
 
+    /* ===== Extra helpers para vuelo (UT airports) ===== */
+    function isUtah(place){
+      const addr = (place?.formatted_address || '').toLowerCase();
+      return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
+    }
+    function pickupIsUtahAirport(){
+      return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace);
+    }
+
     /* ===== initMap (Google callback) ===== */
     function initMap(){
       map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
@@ -261,7 +356,10 @@
       const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), acOpts);
       const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), acOpts);
 
-      acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; });
+      acPickup.addListener("place_changed", ()=>{ 
+        pickupPlace = acPickup.getPlace() || null; 
+        updateFlightVisibility();
+      });
       acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
     }
     window.initMap = initMap;
@@ -353,6 +451,55 @@
       timeEl.addEventListener('change', ()=>{ updateHelpers(); ensureFutureTime(); });
     })();
 
+    /* ===== Equipaje: selección visual ===== */
+    (function luggageCardsSetup(){
+      const cards = document.querySelectorAll('#luggageCards .lux-card');
+      const hidden = document.getElementById('selectedLuggage');
+      function selectCard(card){
+        cards.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        hidden.value = card.dataset.luggage || '';
+      }
+      cards.forEach(card=>{ card.addEventListener('click', ()=> selectCard(card)); });
+      const defaultCard = document.querySelector('#luggageCards .lux-card[data-luggage="A"]');
+      if(defaultCard){ selectCard(defaultCard); }
+    })();
+
+    /* ===== Validación de número de vuelo ===== */
+    const AIRLINES = new Set([
+      'AA','DL','UA','WN','AS','B6','F9','NK','HA','AC','AM','AF','BA','KL','LH','VS','IB','TK','QR','EK','CM','AV','QF','CX','AZ','SK','LA','AR','TS','WS','DY','NH','JL','KE'
+    ]);
+    AIRLINES.add('XE'); // JSX histórico
+    const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
+    function normalizeFlight(value){
+      return (value || '').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
+    }
+    function validateFlight(value){
+      const v = normalizeFlight(value);
+      const m = v.match(FLIGHT_REGEX);
+      if (!m) return { ok:false, msg:'Formato inválido. Usa AA1234 o B6 120.' };
+      const code = m[1], num = m[2];
+      if (!AIRLINES.has(code)) return { ok:false, msg:'Código de aerolínea no reconocido.' };
+      if (/^0+$/.test(num)) return { ok:false, msg:'Número de vuelo inválido.' };
+      return { ok:true, msg:'' };
+    }
+    function setFlightValidity(ok, msg){
+      const input = document.getElementById('flightNumber');
+      const help  = document.getElementById('flightHelp');
+      if (!input) return;
+      input.setCustomValidity(ok ? '' : (msg || 'Número de vuelo inválido'));
+      input.style.borderColor = ok ? '#39d353' : '#ff4d4f';
+      if (help) help.textContent = ok ? 'Formato correcto.' : (msg || '');
+    }
+    function updateFlightVisibility(){
+      const wrap  = document.getElementById('flight-wrap');
+      const input = document.getElementById('flightNumber');
+      if (!wrap) return;
+      const show = pickupIsUtahAirport();
+      wrap.style.display = show ? 'block' : 'none';
+      if (!show && input){ setFlightValidity(true, ''); input.value=''; }
+    }
+
     /* ===== Calculate ===== */
     document.getElementById("calculate").addEventListener("click", async ()=>{
       const pickupTxt  = document.getElementById("pickup").value.trim();
@@ -382,7 +529,7 @@
         const basePrice = calculatePrice(miles);
 
         // ===== Pricing rules & surcharge logic =====
-        const pickupIsAirport = isAirport(pickupPlace);
+        const pickupIsAirportFlag = isAirport(pickupPlace);
 
         let pickupCounty = countyFrom(pickupPlace);
         if (!pickupCounty){ pickupCounty = await countyByPlaceId(pickupPlace.place_id); }
@@ -396,7 +543,7 @@
         let surcharge = 0;
         let surchargeApplied = false;
 
-        if (pickupIsAirport) {
+        if (pickupIsAirportFlag) {
           // Airport → Summit/Wasatch = NO surcharge
           // Airport → outside Summit/Wasatch = $3/mi from BASE to the airport
           if (!dropInAllowed) {
@@ -414,15 +561,32 @@
         }
 
         renderInfo(leg, basePrice, surcharge, surchargeApplied);
+
+        // Mostrar extras (equipaje + vuelo) y validar visibilidad de vuelo
+        document.getElementById("post-price-extras").style.display = "block";
+        updateFlightVisibility();
+
         document.getElementById("pay").style.display = "block";
       }catch(err){
         alert("Could not calculate route: " + err);
       }
     });
 
+    // Validación en tiempo real del número de vuelo
+    (function(){
+      const input = document.getElementById('flightNumber');
+      if (!input) return;
+      input.addEventListener('input', ()=>{
+        if (!pickupIsUtahAirport()){ setFlightValidity(true, ''); return; }
+        const r = validateFlight(input.value);
+        setFlightValidity(r.ok, r.msg);
+      });
+    })();
+
     document.getElementById("pay").addEventListener("click", ()=>{
       if (!validateEmailField()){ document.getElementById("email").focus(); return; }
-      alert("Stripe checkout goes here once your backend is connected.");
+      // (sin Stripe por ahora)
+      alert("Great! Please proceed to checkout (to be connected).");
     });
   </script>
 
