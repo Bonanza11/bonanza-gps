@@ -34,12 +34,11 @@
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
-      animation:pulse 2.5s infinite ease-in-out;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    @keyframes pulse{
-      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.5)}
-      50%{transform:scale(1.02); box-shadow:0 0 0 8px rgba(192,139,92,0)}
-      100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
+    button:hover{
+      transform: scale(1.02);
+      box-shadow:0 0 10px rgba(192,139,92,0.4);
     }
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
@@ -92,7 +91,8 @@
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{
       width:260px; height:auto;
-      filter: drop-shadow(0 12px 18px rgba(0,0,0,.6));
+      border-radius:12px;
+      box-shadow:0 12px 20px rgba(0,0,0,0.6);
     }
     .turntable .platform{
       width:220px; height:22px; border-radius:50%;
@@ -161,18 +161,16 @@
 
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
+
 <script>
-/* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
 
-/* ===== Operating hours ===== */
-const OPERATING_START = "06:00"; // 6:00 AM
-const OPERATING_END   = "23:30"; // 11:30 PM
+const OPERATING_START = "06:00";
+const OPERATING_END   = "23:30";
 
-/* ===== Pricing (taxes & gratuity included in base) ===== */
 function calculateBase(mi){
   if (mi <= 10) return 120;
   if (mi <= 35) return 190;
@@ -181,8 +179,7 @@ function calculateBase(mi){
   if (mi <= 55) return 250;
   return mi * 5.4;
 }
-
-/* ===== Time helpers ===== */
+  /* ===== Time helpers ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
 function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
