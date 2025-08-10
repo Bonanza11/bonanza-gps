@@ -6,11 +6,11 @@
   <title>Bonanza Transportation</title>
 
   <style>
-    /* Reset y base */
+    /* Reset & base */
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
-    /* Header con logo + glow cobre/neón */
+    /* Header with logo + copper/neon glow */
     header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
     .logo-wrap{ position:relative }
     .logo{
@@ -24,7 +24,7 @@
       box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;
     }
 
-    /* Contenido */
+    /* Content */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
     input{
@@ -44,7 +44,7 @@
 
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
-    /* ===== Panel LUXURY ===== */
+    /* ===== Luxury Panel ===== */
     #info{
       margin-top:18px;border-radius:16px;padding:18px;
       background:
@@ -72,6 +72,11 @@
     .error{ color:#ff6b6b;font-size:.85em;margin-top:4px; display:none; }
     .hint{ color:#c08b5c;font-size:.85em;margin-top:4px;opacity:.9;cursor:pointer;text-decoration:underline; display:none; }
 
+    /* ===== Rate badge ===== */
+    .badge{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:999px;font-size:.8rem;font-weight:700}
+    .badge--ok{background:#173b16;color:#9af59a;border:1px solid #2b6a29}
+    .badge--warn{background:#3b1a1a;color:#ffc0c0;border:1px solid #7a2a2a}
+
     /* ===== Inputs Date/Time ===== */
     .input-row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
     @media (max-width:520px){ .input-row{ grid-template-columns: 1fr; } }
@@ -85,8 +90,6 @@
     input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator{filter: invert(66%) sepia(26%) saturate(243%) hue-rotate(340deg) brightness(92%);cursor:pointer;opacity:.95;}
     #date:focus, #time:focus{outline:none;border-color:#c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.25), inset 0 1px 0 rgba(255,255,255,.06);}
     .helper{font-size:.85rem;opacity:.85;margin-top:6px;color:#e9d5c1;}
-
-    @media (max-width:520px){.kpis{ grid-template-columns: 1fr 1fr; }}
   </style>
 </head>
 <body>
@@ -115,7 +118,7 @@
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. SLC Airport" />
 
-    <!-- Bloque Date/Time -->
+    <!-- Date/Time block -->
     <div class="input-row">
       <div>
         <label for="date">Date:</label>
@@ -217,7 +220,7 @@
       return r.routes[0].legs[0].distance.value / 1609.34;
     }
 
-    // Geocoder helpers (fallback para county)
+    // Geocoder helpers (fallback for county)
     function geocodeAsync(req){
       return new Promise((resolve,reject)=>{
         geocoder.geocode(req,(results,status)=>{
@@ -234,7 +237,7 @@
       }catch(_){ return ""; }
     }
 
-    /* ===== initMap (callback requerido por Google) ===== */
+    /* ===== initMap (Google callback) ===== */
     function initMap(){
       map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
       directionsService  = new google.maps.DirectionsService();
@@ -252,9 +255,10 @@
     window.initMap = initMap;
 
     /* ===== Render panel ===== */
-    function renderInfo(leg, basePrice, surcharge, surchargeLabel){
+    function renderInfo(leg, basePrice, surcharge, surchargeApplied){
       const miles = leg.distance.value / 1609.34;
       const total = basePrice + (surcharge||0);
+
       const breakdown = surcharge>0
         ? `<div class="breakdown">
              <div class="row"><span>Base</span><span>$${basePrice.toFixed(2)}</span></div>
@@ -264,20 +268,34 @@
            </div>`
         : `<div class="breakdown"><div class="row total"><span>Total</span><span>$${basePrice.toFixed(2)}</span></div></div>`;
 
-      const surchargeLine = (surcharge>0 && surchargeLabel)
-        ? `<div class="helper" style="margin-top:6px;">⚠️ ${surchargeLabel}</div>`
-        : ``;
+      const noteLine = surchargeApplied
+        ? `<div class="helper" style="margin-top:6px;">⚠️ Pickup surcharge applied.</div>`
+        : `<div class="helper" style="margin-top:6px;">✅ No surcharge — regular rate applies.</div>`;
+
+      const badge = surchargeApplied
+        ? `<div class="badge badge--warn">Surcharge</div>`
+        : `<div class="badge badge--ok">Regular rate</div>`;
 
       document.getElementById("info").innerHTML = `
         <h3 class="info-title">Trip Summary</h3>
         <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
         <div class="kpis">
-          <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
-          <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
-          <div class="kpi"><div class="label">Price</div><div class="value price">$${total.toFixed(2)}</div></div>
+          <div class="kpi">
+            <div class="label">Distance</div>
+            <div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div>
+          </div>
+          <div class="kpi">
+            <div class="label">Duration</div>
+            <div class="value">${leg.duration.text}</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Price</div>
+            <div class="value price">$${total.toFixed(2)}</div>
+            ${badge}
+          </div>
         </div>
         ${breakdown}
-        ${surchargeLine}
+        ${noteLine}
       `;
     }
 
@@ -323,7 +341,7 @@
       timeEl.addEventListener('change', ()=>{ updateHelpers(); ensureFutureTime(); });
     })();
 
-    /* ===== Calcular ===== */
+    /* ===== Calculate ===== */
     document.getElementById("calculate").addEventListener("click", async ()=>{
       const pickupTxt  = document.getElementById("pickup").value.trim();
       const dropoffTxt = document.getElementById("dropoff").value.trim();
@@ -351,37 +369,40 @@
         const miles = leg.distance.value/1609.34;
         const basePrice = calculatePrice(miles);
 
-        // ======== NUEVAS REGLAS DE RECARGO ========
+        // ===== Pricing rules & surcharge logic =====
         const pickupIsAirport = isAirport(pickupPlace);
 
-        // County del pickup
         let pickupCounty = countyFrom(pickupPlace);
         if (!pickupCounty){ pickupCounty = await countyByPlaceId(pickupPlace.place_id); }
-        const pickupInAllowed = countyIncludesAllowed(pickupCounty);
 
-        // County del dropoff
         let dropCounty = countyFrom(dropoffPlace);
         if (!dropCounty){ dropCounty = await countyByPlaceId(dropoffPlace.place_id); }
-        const dropInAllowed = countyIncludesAllowed(dropCounty);
+
+        const pickupInAllowed = countyIncludesAllowed(pickupCounty); // Summit/Wasatch
+        const dropInAllowed   = countyIncludesAllowed(dropCounty);   // Summit/Wasatch
 
         let surcharge = 0;
-        let surchargeLabel = "";
+        let surchargeApplied = false;
 
-        // Regla 3: pickup fuera de Summit/Wasatch -> $3/mi desde Kamas hasta pickup (+ base)
-        if (!pickupInAllowed){
-          const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-          surcharge = surchargeMiles * 3;
-          surchargeLabel = "Pickup fuera de Summit/Wasatch: $3/mi desde Kamas hasta el punto de recogida.";
+        if (pickupIsAirport) {
+          // Airport → Summit/Wasatch = NO surcharge (official table only)
+          // Airport → outside Summit/Wasatch = $3/mi from BASE to the airport
+          if (!dropInAllowed) {
+            const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
+            surcharge = surchargeMiles * 3;
+            surchargeApplied = true;
+          }
+        } else {
+          // Pickup within Summit/Wasatch → NO surcharge
+          // Pickup outside Summit/Wasatch → $3/mi from BASE to pickup
+          if (!pickupInAllowed) {
+            const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
+            surcharge = surchargeMiles * 3;
+            surchargeApplied = true;
+          }
         }
-        // Regla 4: pickup en aeropuerto + destino fuera de Summit/Wasatch -> $3/mi desde Kamas al aeropuerto (+ base)
-        else if (pickupIsAirport && !dropInAllowed){
-          const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-          surcharge = surchargeMiles * 3;
-          surchargeLabel = "Airport pickup hacia destino fuera de Summit/Wasatch: $3/mi desde Kamas al aeropuerto.";
-        }
-        // Regla 1 y 2: precio regular (sin recargo) en los demás casos.
 
-        renderInfo(leg, basePrice, surcharge, surchargeLabel);
+        renderInfo(leg, basePrice, surcharge, surchargeApplied);
         document.getElementById("pay").style.display = "block";
       }catch(err){
         alert("Could not calculate route: " + err);
@@ -390,11 +411,11 @@
 
     document.getElementById("pay").addEventListener("click", ()=>{
       if (!validateEmailField()){ document.getElementById("email").focus(); return; }
-      alert("Stripe va aquí cuando conectes tu backend.");
+      alert("Stripe checkout goes here once your backend is connected.");
     });
   </script>
 
-  <!-- Google Maps: una sola carga -->
+  <!-- Google Maps: single load -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
