@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation</title>
-
   <style>
     /* Reset & base */
     *{box-sizing:border-box}
@@ -24,10 +23,9 @@
       box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;
     }
 
-    /* Content */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
-    input{
+    input, select{
       display:block;width:100%;height:44px;padding:10px 12px;
       background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
     }
@@ -44,12 +42,11 @@
 
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
-    /* ===== Luxury Panel ===== */
+    /* Luxury Info Panel */
     #info{
       margin-top:18px;border-radius:16px;padding:18px;
-      background:
-        radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
-        linear-gradient(180deg, #121212, #0b0b0b);
+      background:radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
+                 linear-gradient(180deg, #121212, #0b0b0b);
       border:1px solid rgba(192,139,92,.28);
       box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.02);
       backdrop-filter: blur(6px);
@@ -63,534 +60,372 @@
     .kpi .value{font-size:1.35rem; font-weight:800; color:#f0d1ad}
     .kpi .unit{font-size:.9rem; opacity:.7; margin-left:4px}
     .kpi .value.price{color:#ffddae}
-    .breakdown{ margin:6px 0 12px; }
-    .breakdown .row{display:flex; justify-content:space-between; gap:12px; padding:6px 0;}
-    .breakdown .row.total{font-weight:800; color:#ffddae; font-size:1.05rem}
-    .divider{height:1px; background:linear-gradient(90deg, transparent, rgba(192,139,92,.35), transparent); margin:6px 0}
 
-    /* Email UX */
-    .error{ color:#ff6b6b;font-size:.85em;margin-top:4px; display:none; }
-    .hint{ color:#c08b5c;font-size:.85em;margin-top:4px;opacity:.9;cursor:pointer;text-decoration:underline; display:none; }
+    /* Luggage section */
+    #luggage-section{
+      margin-top:18px;padding:16px;border:1px solid rgba(192,139,92,.3);
+      border-radius:12px;background:rgba(0,0,0,0.4);
+    }
+    .luggage-option{
+      padding:10px;margin-bottom:12px;border:1px solid rgba(192,139,92,.2);
+      border-radius:10px;background:rgba(20,20,20,0.6);
+    }
+    .luggage-option strong{color:#ffddae;font-size:1rem;}
+    .luggage-option small{display:block;margin-top:4px;color:#c08b5c;font-size:.85rem;}
 
-    /* ===== Rate badge ===== */
-    .badge{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:999px;font-size:.8rem;font-weight:700}
-    .badge--ok{background:#173b16;color:#9af59a;border:1px solid #2b6a29}
-    .badge--warn{background:#3b1a1a;color:#ffc0c0;border:1px solid #7a2a2a}
+    /* Flight number */
+    #flight-container{
+      margin-top:16px;display:none;
+    }
+    #flightError{color:#ff6b6b;font-size:.85em;margin-top:4px;display:none;}
 
-    /* ===== Inputs Date/Time ===== */
-    .input-row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    @media (max-width:520px){ .input-row{ grid-template-columns: 1fr; } }
-    #date, #time{
-      height:52px;font-size:16px;border-radius:10px;border:1px solid rgba(192,139,92,.35);
-      background:radial-gradient(600px 200px at 20% -30%, rgba(192,139,92,.12), transparent 40%),#141414;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 16px rgba(0,0,0,.35);
-    }
-    #date{padding-left:42px;background-image:url("data:image/svg+xml,%3Csvg width='22' height='22' viewBox='0 0 24 24' fill='%23c08b5c' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2h2v2h6V2h2v2h3a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1h3V2zm13 7H4v10h16V9z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px 50%;background-size:20px;}
-    #time{padding-left:42px;background-image:url("data:image/svg+xml,%3Csvg width='22' height='22' viewBox='0 0 24 24' fill='%23c08b5c' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 22a10 10 0 110-20 10 10 0 010 20zm1-10.6l3.6 2.16-.8 1.28L11 12V6h2v5.4z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px 50%;background-size:20px;}
-    input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator{filter: invert(66%) sepia(26%) saturate(243%) hue-rotate(340deg) brightness(92%);cursor:pointer;opacity:.95;}
-    #date:focus, #time:focus{outline:none;border-color:#c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.25), inset 0 1px 0 rgba(255,255,255,.06);}
-    .helper{font-size:.85rem;opacity:.85;margin-top:6px;color:#e9d5c1;}
-
-    /* ===== Equipaje (lujoso) ===== */
-    .lux-cards{ display:grid; gap:12px; grid-template-columns:1fr; margin-top:10px }
-    @media(min-width:640px){ .lux-cards{ grid-template-columns:1fr 1fr } }
-    .lux-card{
-      position:relative; padding:16px; border:1px solid #c08b5c; border-radius:14px;
-      background: linear-gradient(180deg, rgba(192,139,92,.10), rgba(0,0,0,.35));
-      box-shadow: 0 0 10px rgba(192,139,92,.18), inset 0 0 8px rgba(192,139,92,.08);
-      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-      cursor:pointer;
-    }
-    .lux-card:hover{ transform: translateY(-2px); box-shadow: 0 0 14px rgba(192,139,92,.28) }
-    .lux-card.selected{
-      border-color:#e2a877;
-      box-shadow: 0 0 16px rgba(226,168,119,.35), inset 0 0 10px rgba(226,168,119,.15);
-    }
-    .lux-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-weight:700; letter-spacing:.3px }
-    .lux-badge{ font-size:12px; padding:4px 8px; border:1px solid #c08b5c; border-radius:999px; opacity:.9 }
-    .lux-items{ margin:0; padding-left:18px; line-height:1.55 }
-    .lux-note{ margin-top:10px; font-size:.92rem; opacity:.85 }
-    .lux-icon{ width:28px; height:28px; flex:0 0 28px; filter: drop-shadow(0 0 4px rgba(192,139,92,.35)); }
-    .lux-check{
-      position:absolute; top:10px; right:10px; font-size:12px; padding:4px 8px; border-radius:999px;
-      border:1px solid #39d353; color:#39d353; background:rgba(57,211,83,.08); display:none;
-    }
-    .lux-card.selected .lux-check{ display:inline-block }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="logo-wrap">
-      <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
+<header>
+  <div class="logo-wrap">
+    <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
+  </div>
+</header>
+
+<main>
+  <!-- Form fields -->
+  <label for="fullname">Full Name:</label>
+  <input id="fullname" placeholder="e.g. John Doe" />
+
+  <label for="phone">Phone Number:</label>
+  <input id="phone" placeholder="e.g. +1 385 123 4567" />
+
+  <label for="email">Email Address:</label>
+  <input id="email" type="email" placeholder="you@example.com" />
+
+  <label for="pickup">Pick-up Address:</label>
+  <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+
+  <label for="dropoff">Drop-off Address:</label>
+  <input id="dropoff" placeholder="e.g. SLC Airport" />
+
+  <label for="date">Date:</label>
+  <input id="date" type="date" />
+
+  <label for="time">Time:</label>
+  <input id="time" type="time" step="900" />
+
+  <button id="calculate">Calculate Price</button>
+
+  <div id="map"></div>
+
+  <!-- Trip summary -->
+  <div id="info">
+    <h3 class="info-title">Trip Summary</h3>
+    <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+  </div>
+
+  <!-- Luggage section -->
+  <div id="luggage-section" style="display:none;">
+    <label><strong>Select Luggage Option:</strong></label>
+    <div class="luggage-option">
+      <strong>2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs</strong>
+      <small>1–5 passengers</small>
     </div>
-  </header>
-
-  <main>
-    <label for="fullname">Full Name:</label>
-    <input id="fullname" placeholder="e.g. John Doe" />
-
-    <label for="phone">Phone Number:</label>
-    <input id="phone" placeholder="e.g. +1 385 123 4567" />
-
-    <label for="email">Email Address:</label>
-    <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" />
-    <div id="emailError" class="error"></div>
-    <div id="emailHint" class="hint"></div>
-
-    <label for="pickup">Pick-up Address:</label>
-    <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
-
-    <label for="dropoff">Drop-off Address:</label>
-    <input id="dropoff" placeholder="e.g. SLC Airport" />
-
-    <!-- Date/Time block -->
-    <div class="input-row">
-      <div>
-        <label for="date">Date:</label>
-        <input id="date" type="date" />
-        <div id="dateHelp" class="helper"></div>
-      </div>
-      <div>
-        <label for="time">Time:</label>
-        <input id="time" type="time" step="900" />
-        <div id="timeHelp" class="helper"></div>
-      </div>
+    <div class="luggage-option">
+      <strong>3 Large Suitcases + 5 Small Bags</strong>
+      <small>1–5 passengers</small>
     </div>
+  </div>
 
-    <button id="calculate">Calculate Price</button>
+  <!-- Flight number -->
+  <div id="flight-container">
+    <label for="flightNumber">Flight Number:</label>
+    <input id="flightNumber" placeholder="e.g. DL1234" />
+    <div id="flightError">Please enter a valid flight number (e.g., DL1234).</div>
+  </div>
 
-    <div id="map"></div>
+  <button id="pay" style="display:none;">PAY NOW</button>
+</main>
+<!-- === Flight input success/error styles === -->
+<style>
+  #flightNumber.valid {
+    border: 2px solid #4CAF50; /* green */
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+  }
+  #flightNumber.invalid {
+    border: 2px solid #ff6b6b; /* red */
+    box-shadow: 0 0 6px rgba(255, 107, 107, 0.5);
+  }
+</style>
 
-    <div id="info">
-      <h3 class="info-title">Trip Summary</h3>
-      <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
-      <div class="kpis">
-        <div class="kpi"><div class="label">Distance</div><div class="value">—</div></div>
-        <div class="kpi"><div class="label">Duration</div><div class="value">—</div></div>
-        <div class="kpi"><div class="label">Price</div><div class="value price">$0.00</div></div>
-      </div>
-      <div class="breakdown"><div class="row total"><span>Total</span><span>$0.00</span></div></div>
-    </div>
+<script>
+/* ========= Globals ========= */
+let map, directionsService, directionsRenderer, geocoder;
+const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
+const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"]; // for surcharge rules
+let pickupPlace = null, dropoffPlace = null;
 
-    <!-- ===== Post-price extras: Luggage + Flight ===== -->
-    <section id="post-price-extras" style="display:none; margin-top:16px;">
-      <!-- Equipaje sugerido -->
-      <div id="luggage-suggest" style="padding:12px;border:1px solid #c08b5c;border-radius:12px; background:rgba(192,139,92,0.06)">
-        <h3 style="margin:0 0 4px 0;">Equipaje sugerido</h3>
-        <div class="lux-note">Selecciona la configuración que mejor describe tu equipaje (informativo, no afecta el precio):</div>
+/* ========= Pricing ========= */
+function calculatePrice(mi){
+  if (mi <= 10) return 120;
+  if (mi <= 35) return 190;
+  if (mi <= 39) return 210;
+  if (mi <= 48) return 230;
+  if (mi <= 55) return 250;
+  return mi * 5.4;
+}
 
-        <div class="lux-cards" id="luggageCards">
-          <!-- Opción A -->
-          <div class="lux-card" data-luggage="A">
-            <span class="lux-check">Elegido</span>
-            <div class="lux-head">
-              <svg class="lux-icon" viewBox="0 0 24 24" fill="none">
-                <rect x="5" y="7" width="14" height="12" rx="2" stroke="#c08b5c"/>
-                <rect x="9" y="5" width="6" height="2" rx="1" stroke="#c08b5c"/>
-                <path d="M19 6 L22 3" stroke="#c08b5c"/>
-                <path d="M20.5 10 L22 8" stroke="#c08b5c"/>
-              </svg>
-              <div>Opción A <span class="lux-badge">Recomendada</span></div>
-            </div>
-            <ul class="lux-items">
-              <li><strong>2 maletas grandes</strong></li>
-              <li><strong>3 maletas pequeñas</strong></li>
-              <li><strong>6 ski bags / golf club</strong></li>
-            </ul>
-          </div>
+/* ========= Airport / county helpers ========= */
+function isAirport(place){
+  const t = place?.types || [];
+  const addr = (place?.formatted_address || "").toLowerCase();
+  const extraAirports = [
+    "salt lake city international airport","slc airport",
+    "provo municipal airport","ogden-hinckley airport",
+    "st. george regional airport","cedar city regional airport",
+    "canyonlands regional airport","moab canyonlands regional airport",
+    "jsx, n 2360 w st, salt lake city, ut, usa"
+  ];
+  return t.includes("airport") ||
+         /airport/i.test(place?.name || place?.formatted_address || "") ||
+         extraAirports.some(a => addr.includes(a));
+}
+function isUtah(place){
+  const addr = (place?.formatted_address || '').toLowerCase();
+  return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
+}
+function pickupIsUtahAirport(){
+  return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace);
+}
+function countyFrom(place){
+  const comps = place?.address_components || [];
+  const c = comps.find(x=>x.types?.includes("administrative_area_level_2"));
+  return c?.long_name || "";
+}
+function countyIncludesAllowed(countyName){
+  return ALLOWED_COUNTIES.some(allowed => countyName.includes(allowed));
+}
 
-          <!-- Opción B -->
-          <div class="lux-card" data-luggage="B">
-            <span class="lux-check">Elegido</span>
-            <div class="lux-head">
-              <svg class="lux-icon" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="8" width="10" height="11" rx="2" stroke="#c08b5c"/>
-                <rect x="11" y="5" width="8" height="14" rx="2" stroke="#c08b5c"/>
-                <rect x="6" y="6" width="4" height="2" rx="1" stroke="#c08b5c"/>
-                <rect x="13" y="3" width="4" height="2" rx="1" stroke="#c08b5c"/>
-              </svg>
-              <div>Opción B</div>
-            </div>
-            <ul class="lux-items">
-              <li><strong>3 maletas grandes</strong></li>
-              <li><strong>5 maletas pequeñas</strong></li>
-            </ul>
-          </div>
-        </div>
-
-        <input type="hidden" id="selectedLuggage" name="selectedLuggage" value="">
-      </div>
-
-      <!-- Campo Vuelo (sólo si pick-up es aeropuerto de Utah) -->
-      <div id="flight-wrap" style="display:none; margin-top:12px;">
-        <label for="flightNumber" style="display:block; margin-bottom:6px;">Número de vuelo (obligatorio si la recogida es en un aeropuerto de Utah)</label>
-        <input id="flightNumber" type="text" inputmode="latin" autocomplete="off" placeholder="Ej: DL1234, WN 987, B6-120"
-          style="width:100%; padding:10px 12px; border:1px solid #c08b5c; border-radius:8px; background:#000; color:#c08b5c; outline:none;">
-        <small id="flightHelp" style="display:block; margin-top:6px; opacity:.85;">
-          Formato válido: <code>AA1234</code>, <code>B6 120</code>, <code>WN-987</code>.
-        </small>
-      </div>
-    </section>
-
-    <button id="pay" style="display:none;">PAY NOW</button>
-  </main>
-
-  <!-- === JS APP === -->
-  <script>
-    /* ===== Globals ===== */
-    let map, directionsService, directionsRenderer, geocoder;
-    const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
-    const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
-    let pickupPlace = null, dropoffPlace = null;
-
-    /* ===== Pricing ===== */
-    function calculatePrice(mi){
-      if (mi <= 10) return 120;
-      if (mi <= 35) return 190;
-      if (mi <= 39) return 210;
-      if (mi <= 48) return 230;
-      if (mi <= 55) return 250;
-      return mi * 5.4;
-    }
-
-    /* ===== Email helpers ===== */
-    const COMMON_DOMAINS = ["gmail.com","outlook.com","hotmail.com","yahoo.com","icloud.com","proton.me","protonmail.com","aol.com"];
-    const TYPO_FIX = {"gamil.com":"gmail.com","gnail.com":"gmail.com","gmail.con":"gmail.com","hotnail.com":"hotmail.com","outlok.com":"outlook.com","yaho.com":"yahoo.com","yahoo.con":"yahoo.com","icloud.con":"icloud.com","protomail.com":"protonmail.com"};
-    function isValidEmailFormat(e){ return /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,24}$/.test(e); }
-    function getEmailSuggestion(e){
-      const [local, dom=""] = e.split("@"); if(!local) return null;
-      if (e.endsWith("@") || !dom) return `${local}@gmail.com`;
-      const d = dom.toLowerCase(); if (TYPO_FIX[d]) return `${local}@${TYPO_FIX[d]}`;
-      const match = COMMON_DOMAINS.find(x=>x.startsWith(d) || d.startsWith(x.slice(0,3)));
-      return match && match!==d ? `${local}@${match}` : null;
-    }
-    function showEmailError(m){ const el=document.getElementById("emailError"); el.textContent=m; el.style.display="block"; }
-    function clearEmailError(){ const el=document.getElementById("emailError"); el.textContent=""; el.style.display="none"; }
-    function showEmailHint(s){ const h=document.getElementById("emailHint"); if(!s){h.style.display="none";h.textContent="";h.onclick=null;return;} h.textContent=`Did you mean ${s}?`; h.style.display="block"; h.onclick=()=>{document.getElementById("email").value=s; h.style.display="none"; clearEmailError();}; }
-    function validateEmailField(){
-      const el=document.getElementById("email"); const v=el.value.trim();
-      clearEmailError(); showEmailHint(null);
-      if(!v){ showEmailError("Please enter your email address."); return false; }
-      const sug=getEmailSuggestion(v); if(sug && sug.toLowerCase()!==v.toLowerCase()) showEmailHint(sug);
-      if(!isValidEmailFormat(v)){ showEmailError("Please enter a valid email address (e.g., name@example.com)."); return false; }
-      return true;
-    }
-    (function wireEmail(){
-      const el=document.getElementById("email"); if(!el) return;
-      el.addEventListener("input", ()=>{ clearEmailError(); showEmailHint(getEmailSuggestion(el.value.trim())); });
-      el.addEventListener("blur", ()=>{ validateEmailField(); });
-    })();
-
-    /* ===== Places / county utils ===== */
-    function isAirport(place){
-      const t = place?.types || [];
-      const name = (place?.name || "").toLowerCase();
-      const addr = (place?.formatted_address || "").toLowerCase();
-
-      // Extra airports (ej. JSX SLC) que a veces no vienen con type "airport"
-      const extraAirports = [
-        "jsx, n 2360 w st, salt lake city, ut, usa"
-      ];
-
-      return (
-        t.includes("airport") ||
-        /airport/i.test(place?.name || place?.formatted_address || "") ||
-        extraAirports.some(a => addr.includes(a))
-      );
-    }
-    function countyFrom(place){
-      const comps = place?.address_components || [];
-      const c = comps.find(x=>x.types?.includes("administrative_area_level_2"));
-      return c?.long_name || "";
-    }
-    function countyIncludesAllowed(countyName){
-      return ALLOWED_COUNTIES.some(allowed => countyName.includes(allowed));
-    }
-
-    function routeAsync(opts){
-      return new Promise((res,rej)=> {
-        directionsService.route(opts,(r,s)=> s==="OK" && r ? res(r) : rej(s||"ROUTE_ERROR"));
-      });
-    }
-    async function computePickupSurchargeMiles(placeId){
-      const r = await routeAsync({ origin: BASE_ADDRESS, destination: {placeId: placeId}, travelMode: google.maps.TravelMode.DRIVING });
-      return r.routes[0].legs[0].distance.value / 1609.34;
-    }
-
-    // Geocoder helpers (fallback for county)
-    function geocodeAsync(req){
-      return new Promise((resolve,reject)=>{
-        geocoder.geocode(req,(results,status)=>{
-          if(status==="OK" && results?.[0]) resolve(results[0]);
-          else reject(status || "GEOCODE_ERROR");
-        });
-      });
-    }
-    async function countyByPlaceId(placeId){
-      try{
-        const result = await geocodeAsync({ placeId });
-        const comp = result.address_components.find(c=>c.types.includes("administrative_area_level_2"));
-        return comp?.long_name || "";
-      }catch(_){ return ""; }
-    }
-
-    /* ===== Extra helpers para vuelo (UT airports) ===== */
-    function isUtah(place){
-      const addr = (place?.formatted_address || '').toLowerCase();
-      return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
-    }
-    function pickupIsUtahAirport(){
-      return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace);
-    }
-
-    /* ===== initMap (Google callback) ===== */
-    function initMap(){
-      map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
-      directionsService  = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ preserveViewport:false });
-      directionsRenderer.setMap(map);
-      geocoder = new google.maps.Geocoder();
-
-      const acOpts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
-      const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), acOpts);
-      const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), acOpts);
-
-      acPickup.addListener("place_changed", ()=>{ 
-        pickupPlace = acPickup.getPlace() || null; 
-        updateFlightVisibility();
-      });
-      acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
-    }
-    window.initMap = initMap;
-
-    /* ===== Render panel ===== */
-    function renderInfo(leg, basePrice, surcharge, surchargeApplied){
-      const miles = leg.distance.value / 1609.34;
-      const total = basePrice + (surcharge||0);
-
-      const breakdown = surcharge>0
-        ? `<div class="breakdown">
-             <div class="row"><span>Base</span><span>$${basePrice.toFixed(2)}</span></div>
-             <div class="row"><span>Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>
-             <div class="divider"></div>
-             <div class="row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
-           </div>`
-        : `<div class="breakdown"><div class="row total"><span>Total</span><span>$${basePrice.toFixed(2)}</span></div></div>`;
-
-      const noteLine = surchargeApplied
-        ? `<div class="helper" style="margin-top:6px;">⚠️ Pickup surcharge applied.</div>`
-        : `<div class="helper" style="margin-top:6px;">✅ No surcharge — regular rate applies.</div>`;
-
-      const badge = surchargeApplied
-        ? `<div class="badge badge--warn">Surcharge</div>`
-        : `<div class="badge badge--ok">Regular rate</div>`;
-
-      document.getElementById("info").innerHTML = `
-        <h3 class="info-title">Trip Summary</h3>
-        <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
-        <div class="kpis">
-          <div class="kpi">
-            <div class="label">Distance</div>
-            <div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div>
-          </div>
-          <div class="kpi">
-            <div class="label">Duration</div>
-            <div class="value">${leg.duration.text}</div>
-          </div>
-          <div class="kpi">
-            <div class="label">Price</div>
-            <div class="value price">$${total.toFixed(2)}</div>
-            ${badge}
-          </div>
-        </div>
-        ${breakdown}
-        ${noteLine}
-      `;
-    }
-
-    /* ===== UX Date/Time ===== */
-    (function enhanceDateTime(){
-      const dateEl = document.getElementById('date');
-      const timeEl = document.getElementById('time');
-      const dateHelp = document.getElementById('dateHelp');
-      const timeHelp = document.getElementById('timeHelp');
-
-      const now = new Date();
-      const tzOffsetMs = now.getTimezoneOffset()*60000;
-      const todayLocal = new Date(Date.now()-tzOffsetMs).toISOString().slice(0,10);
-      dateEl.min = todayLocal;
-
-      function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
-      const nxt = nextQuarter(new Date());
-      const hh = String(nxt.getHours()).padStart(2,'0');
-      const mm = String(nxt.getMinutes()).padStart(2,'0');
-      if (!timeEl.value) timeEl.value = `${hh}:${mm}`;
-
-      function fmtDate(d){ return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
-      function updateHelpers(){
-        const d = dateEl.value ? new Date(dateEl.value + 'T00:00:00') : null;
-        dateHelp.textContent = d ? `Selected: ${fmtDate(d)}` : 'Select your travel date';
-        timeHelp.textContent = timeEl.value ? `Selected: ${timeEl.value}` : 'Select your pickup time';
-      }
-      updateHelpers();
-
-      function ensureFutureTime(){
-        if (!dateEl.value || !timeEl.value) return;
-        const now = new Date();
-        const chosen = new Date(dateEl.value + 'T' + timeEl.value + ':00');
-        const tzOffsetMs = now.getTimezoneOffset()*60000;
-        const todayLocal = new Date(Date.now()-tzOffsetMs).toISOString().slice(0,10);
-        if (dateEl.value === todayLocal && chosen < now){
-          const nx = nextQuarter(new Date());
-          timeEl.value = `${String(nx.getHours()).padStart(2,'0')}:${String(nx.getMinutes()).padStart(2,'0')}`;
-          timeHelp.textContent = `Adjusted to next available: ${timeEl.value}`;
-        }
-      }
-      dateEl.addEventListener('change', ()=>{ updateHelpers(); ensureFutureTime(); });
-      timeEl.addEventListener('change', ()=>{ updateHelpers(); ensureFutureTime(); });
-    })();
-
-    /* ===== Equipaje: selección visual ===== */
-    (function luggageCardsSetup(){
-      const cards = document.querySelectorAll('#luggageCards .lux-card');
-      const hidden = document.getElementById('selectedLuggage');
-      function selectCard(card){
-        cards.forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        hidden.value = card.dataset.luggage || '';
-      }
-      cards.forEach(card=>{ card.addEventListener('click', ()=> selectCard(card)); });
-      const defaultCard = document.querySelector('#luggageCards .lux-card[data-luggage="A"]');
-      if(defaultCard){ selectCard(defaultCard); }
-    })();
-
-    /* ===== Validación de número de vuelo ===== */
-    const AIRLINES = new Set([
-      'AA','DL','UA','WN','AS','B6','F9','NK','HA','AC','AM','AF','BA','KL','LH','VS','IB','TK','QR','EK','CM','AV','QF','CX','AZ','SK','LA','AR','TS','WS','DY','NH','JL','KE'
-    ]);
-    AIRLINES.add('XE'); // JSX histórico
-    const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
-    function normalizeFlight(value){
-      return (value || '').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
-    }
-    function validateFlight(value){
-      const v = normalizeFlight(value);
-      const m = v.match(FLIGHT_REGEX);
-      if (!m) return { ok:false, msg:'Formato inválido. Usa AA1234 o B6 120.' };
-      const code = m[1], num = m[2];
-      if (!AIRLINES.has(code)) return { ok:false, msg:'Código de aerolínea no reconocido.' };
-      if (/^0+$/.test(num)) return { ok:false, msg:'Número de vuelo inválido.' };
-      return { ok:true, msg:'' };
-    }
-    function setFlightValidity(ok, msg){
-      const input = document.getElementById('flightNumber');
-      const help  = document.getElementById('flightHelp');
-      if (!input) return;
-      input.setCustomValidity(ok ? '' : (msg || 'Número de vuelo inválido'));
-      input.style.borderColor = ok ? '#39d353' : '#ff4d4f';
-      if (help) help.textContent = ok ? 'Formato correcto.' : (msg || '');
-    }
-    function updateFlightVisibility(){
-      const wrap  = document.getElementById('flight-wrap');
-      const input = document.getElementById('flightNumber');
-      if (!wrap) return;
-      const show = pickupIsUtahAirport();
-      wrap.style.display = show ? 'block' : 'none';
-      if (!show && input){ setFlightValidity(true, ''); input.value=''; }
-    }
-
-    /* ===== Calculate ===== */
-    document.getElementById("calculate").addEventListener("click", async ()=>{
-      const pickupTxt  = document.getElementById("pickup").value.trim();
-      const dropoffTxt = document.getElementById("dropoff").value.trim();
-
-      if (!validateEmailField()){ document.getElementById("email").focus(); return; }
-      if (!pickupTxt || !dropoffTxt){ alert("Please enter both pick-up and drop-off addresses."); return; }
-      if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
-        alert("Please select the addresses from the suggestions list (Autocomplete).");
-        return;
-      }
-
-      try{
-        const trip = await routeAsync({
-          origin:{placeId: pickupPlace.place_id},
-          destination:{placeId: dropoffPlace.place_id},
-          travelMode: google.maps.TravelMode.DRIVING
-        });
-        directionsRenderer.setDirections(trip);
-
-        const bounds = new google.maps.LatLngBounds();
-        trip.routes[0].legs.forEach(leg=>{ bounds.extend(leg.start_location); bounds.extend(leg.end_location); });
-        map.fitBounds(bounds);
-
-        const leg = trip.routes[0].legs[0];
-        const miles = leg.distance.value/1609.34;
-        const basePrice = calculatePrice(miles);
-
-        // ===== Pricing rules & surcharge logic =====
-        const pickupIsAirportFlag = isAirport(pickupPlace);
-
-        let pickupCounty = countyFrom(pickupPlace);
-        if (!pickupCounty){ pickupCounty = await countyByPlaceId(pickupPlace.place_id); }
-
-        let dropCounty = countyFrom(dropoffPlace);
-        if (!dropCounty){ dropCounty = await countyByPlaceId(dropoffPlace.place_id); }
-
-        const pickupInAllowed = countyIncludesAllowed(pickupCounty); // Summit/Wasatch
-        const dropInAllowed   = countyIncludesAllowed(dropCounty);   // Summit/Wasatch
-
-        let surcharge = 0;
-        let surchargeApplied = false;
-
-        if (pickupIsAirportFlag) {
-          // Airport → Summit/Wasatch = NO surcharge
-          // Airport → outside Summit/Wasatch = $3/mi from BASE to the airport
-          if (!dropInAllowed) {
-            const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-            surcharge = surchargeMiles * 3;
-            surchargeApplied = true;
-          }
-        } else {
-          // Pickup outside Summit/Wasatch → $3/mi from BASE to pickup
-          if (!pickupInAllowed) {
-            const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-            surcharge = surchargeMiles * 3;
-            surchargeApplied = true;
-          }
-        }
-
-        renderInfo(leg, basePrice, surcharge, surchargeApplied);
-
-        // Mostrar extras (equipaje + vuelo) y validar visibilidad de vuelo
-        document.getElementById("post-price-extras").style.display = "block";
-        updateFlightVisibility();
-
-        document.getElementById("pay").style.display = "block";
-      }catch(err){
-        alert("Could not calculate route: " + err);
-      }
+/* ========= Maps / Routing ========= */
+function routeAsync(opts){
+  return new Promise((res,rej)=> {
+    directionsService.route(opts,(r,s)=> s==="OK" && r ? res(r) : rej(s||"ROUTE_ERROR"));
+  });
+}
+async function geocodeAsync(req){
+  return new Promise((resolve,reject)=>{
+    geocoder.geocode(req,(results,status)=>{
+      if(status==="OK" && results?.[0]) resolve(results[0]);
+      else reject(status || "GEOCODE_ERROR");
     });
+  });
+}
+async function countyByPlaceId(placeId){
+  try{
+    const result = await geocodeAsync({ placeId });
+    const comp = result.address_components.find(c=>c.types.includes("administrative_area_level_2"));
+    return comp?.long_name || "";
+  }catch(_){ return ""; }
+}
+async function computePickupSurchargeMiles(placeId){
+  const r = await routeAsync({
+    origin: BASE_ADDRESS,
+    destination: {placeId},
+    travelMode: google.maps.TravelMode.DRIVING
+  });
+  return r.routes[0].legs[0].distance.value / 1609.34;
+}
 
-    // Validación en tiempo real del número de vuelo
-    (function(){
-      const input = document.getElementById('flightNumber');
-      if (!input) return;
-      input.addEventListener('input', ()=>{
-        if (!pickupIsUtahAirport()){ setFlightValidity(true, ''); return; }
-        const r = validateFlight(input.value);
-        setFlightValidity(r.ok, r.msg);
-      });
-    })();
+/* ========= UI: Trip Summary ========= */
+function renderInfo(leg, basePrice, surcharge, surchargeApplied){
+  const miles = leg.distance.value / 1609.34;
+  const total = basePrice + (surcharge||0);
 
-    document.getElementById("pay").addEventListener("click", ()=>{
-      if (!validateEmailField()){ document.getElementById("email").focus(); return; }
-      // (sin Stripe por ahora)
-      alert("Great! Please proceed to checkout (to be connected).");
+  const breakdown = surcharge>0
+    ? `<div class="breakdown">
+         <div class="row"><span>Base</span><span>$${basePrice.toFixed(2)}</span></div>
+         <div class="row"><span>Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>
+         <div class="divider"></div>
+         <div class="row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+       </div>`
+    : `<div class="breakdown"><div class="row total"><span>Total</span><span>$${basePrice.toFixed(2)}</span></div></div>`;
+
+  document.getElementById("info").innerHTML = `
+    <h3 class="info-title">Trip Summary</h3>
+    <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
+      <div class="kpi"><div class="label">Price</div><div class="value price">$${total.toFixed(2)}</div></div>
+    </div>
+    ${breakdown}
+  `;
+}
+
+/* ========= Luggage selection ========= */
+let selectedLuggage = "A"; // default
+function wireLuggage(){
+  const section = document.getElementById('luggage-section');
+  const options = Array.from(section.querySelectorAll('.luggage-option'));
+  options.forEach((opt, idx)=>{
+    opt.style.cursor = 'pointer';
+    opt.addEventListener('click', ()=>{
+      options.forEach(o=>{ o.style.borderColor='rgba(192,139,92,.2)'; o.style.boxShadow='none'; });
+      opt.style.borderColor = '#e2a877';
+      opt.style.boxShadow = '0 0 12px rgba(226,168,119,.25)';
+      selectedLuggage = idx === 0 ? "A" : "B";
     });
-  </script>
+  });
+  // Select first by default
+  if (options[0]) options[0].click();
+}
 
-  <!-- Google Maps: single load -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
-</body>
-</html>
+/* ========= Flight number validation (placeholder + colors) ========= */
+const AIRLINES = new Set([
+  'AA','DL','UA','WN','AS','B6','F9','NK','HA','AC','AM','AF','BA','KL','LH','VS','IB','TK','QR','EK','CM','AV','QF','CX','AZ','SK','LA','AR','TS','WS','DY','NH','JL','KE','XE'
+]);
+const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
+
+function normalizeFlight(v){
+  return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
+}
+function validateFlightValue(v){
+  const m = normalizeFlight(v).match(FLIGHT_REGEX);
+  if (!m) return {ok:false, msg:'Invalid format. Use AA1234 or B6 120.'};
+  const code = m[1], num = m[2];
+  if (!AIRLINES.has(code)) return {ok:false, msg:'Unknown airline code.'};
+  if (/^0+$/.test(num)) return {ok:false, msg:'Invalid flight number.'};
+  return {ok:true, msg:''};
+}
+
+function updateFlightVisibility(){
+  const box  = document.getElementById('flight-container');
+  const input= document.getElementById('flightNumber');
+  const err  = document.getElementById('flightError');
+  const show = pickupIsUtahAirport();
+  box.style.display = show ? 'block' : 'none';
+  if (!show){
+    input.value = '';
+    input.classList.remove('valid', 'invalid');
+    input.setCustomValidity('');
+    err.style.display = 'none';
+  }
+}
+
+function wireFlightValidation(){
+  const input= document.getElementById('flightNumber');
+  const err  = document.getElementById('flightError');
+  input.placeholder = "e.g., AA1234 or WN 987"; // Updated placeholder
+
+  input.addEventListener('input', ()=>{
+    if (!pickupIsUtahAirport()){
+      input.classList.remove('valid','invalid');
+      input.setCustomValidity('');
+      err.style.display = 'none';
+      return;
+    }
+    const r = validateFlightValue(input.value);
+    input.setCustomValidity(r.ok ? '' : r.msg);
+    err.textContent = r.ok ? '' : r.msg;
+    err.style.display = r.ok ? 'none' : 'block';
+    input.classList.toggle('valid', r.ok);
+    input.classList.toggle('invalid', !r.ok && input.value.trim() !== '');
+  });
+}
+
+/* ========= Init Maps & Autocomplete ========= */
+function initMap(){
+  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  directionsService  = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({ preserveViewport:false });
+  directionsRenderer.setMap(map);
+  geocoder = new google.maps.Geocoder();
+
+  const acOpts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
+  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), acOpts);
+  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), acOpts);
+
+  acPickup.addListener("place_changed", ()=>{
+    pickupPlace = acPickup.getPlace() || null;
+    updateFlightVisibility();
+  });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
+}
+window.initMap = initMap;
+
+/* ========= Calculate button ========= */
+document.getElementById("calculate").addEventListener("click", async ()=>{
+  const pickupTxt  = document.getElementById("pickup").value.trim();
+  const dropoffTxt = document.getElementById("dropoff").value.trim();
+
+  if (!pickupTxt || !dropoffTxt){ alert("Please enter both pick-up and drop-off addresses."); return; }
+  if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
+    alert("Please select addresses from the autocomplete suggestions."); return;
+  }
+
+  try{
+    const trip = await routeAsync({
+      origin:{placeId: pickupPlace.place_id},
+      destination:{placeId: dropoffPlace.place_id},
+      travelMode: google.maps.TravelMode.DRIVING
+    });
+    directionsRenderer.setDirections(trip);
+
+    const bounds = new google.maps.LatLngBounds();
+    trip.routes[0].legs.forEach(leg=>{ bounds.extend(leg.start_location); bounds.extend(leg.end_location); });
+    map.fitBounds(bounds);
+
+    const leg = trip.routes[0].legs[0];
+    const miles = leg.distance.value/1609.34;
+    const basePrice = calculatePrice(miles);
+
+    // ===== Surcharge logic (Summit/Wasatch allowed) =====
+    const pickupIsAir = isAirport(pickupPlace);
+
+    let pickupCounty = countyFrom(pickupPlace);
+    if (!pickupCounty){ pickupCounty = await countyByPlaceId(pickupPlace.place_id); }
+
+    let dropCounty = countyFrom(dropoffPlace);
+    if (!dropCounty){ dropCounty = await countyByPlaceId(dropoffPlace.place_id); }
+
+    const pickupInAllowed = countyIncludesAllowed(pickupCounty);
+    const dropInAllowed   = countyIncludesAllowed(dropCounty);
+
+    let surcharge = 0;
+    let surchargeApplied = false;
+
+    if (pickupIsAir) {
+      // Airport → Summit/Wasatch = NO surcharge
+      // Airport → outside Summit/Wasatch = $3/mi from BASE to the airport
+      if (!dropInAllowed) {
+        const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
+        surcharge = surchargeMiles * 3;
+        surchargeApplied = true;
+      }
+    } else {
+      // Pickup outside Summit/Wasatch → $3/mi from BASE to pickup
+      if (!pickupInAllowed) {
+        const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
+        surcharge = surchargeMiles * 3;
+        surchargeApplied = true;
+      }
+    }
+
+    renderInfo(leg, basePrice, surcharge, surchargeApplied);
+
+    // Show luggage + flight UI
+    document.getElementById("luggage-section").style.display = "block";
+    wireLuggage();
+    updateFlightVisibility();
+
+    // Show PAY button (placeholder)
+    document.getElementById("pay").style.display = "block";
+  }catch(err){
+    alert("Could not calculate route: " + err);
+  }
+});
+
+/* ========= Wire flight input once ========= */
+wireFlightValidation();
+</script>
+
+<!-- Google Maps loader (keep this after the script above) -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
