@@ -6,13 +6,12 @@
   <title>Bonanza Transportation</title>
 
   <style>
-    /* Reset & base */
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
-    /* Header */
+    /* Logo */
     header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
-    .logo-wrap{position:relative}
+    .logo-wrap{ position:relative }
     .logo{
       width:180px;height:180px;border-radius:50%;border:2px solid #c08b5c;
       object-fit:cover;display:block;position:relative;
@@ -24,16 +23,13 @@
       box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;
     }
 
-    /* Layout */
+    /* Form */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
-    input,select{
+    input, select{
       display:block;width:100%;height:44px;padding:10px 12px;
       background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
     }
-    .helper{font-size:.85rem;opacity:.85;margin-top:6px;color:#e9d5c1;}
-
-    /* Button */
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:#c08b5c;color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
@@ -48,12 +44,11 @@
     /* Map */
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
-    /* Info panel */
+    /* Info Panel */
     #info{
       margin-top:18px;border-radius:16px;padding:18px;
-      background:
-        radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
-        linear-gradient(180deg, #121212, #0b0b0b);
+      background:radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
+                 linear-gradient(180deg, #121212, #0b0b0b);
       border:1px solid rgba(192,139,92,.28);
       box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.02);
       backdrop-filter: blur(6px);
@@ -67,100 +62,113 @@
     .kpi .value{font-size:1.35rem; font-weight:800; color:#f0d1ad}
     .kpi .unit{font-size:.9rem; opacity:.7; margin-left:4px}
     .kpi .value.price{color:#ffddae}
+    .breakdown{ margin:6px 0 12px; }
+    .breakdown .row{display:flex; justify-content:space-between; gap:12px; padding:6px 0;}
+    .breakdown .row.total{font-weight:800; color:#ffddae; font-size:1.05rem}
+    .divider{height:1px; background:linear-gradient(90deg, transparent, rgba(192,139,92,.35), transparent); margin:6px 0}
+    .helper{font-size:.85rem;opacity:.85;margin-top:6px;color:#e9d5c1;}
 
-    /* Date & Time UX (no quick buttons) */
-    #date, #time {
+    /* Email error */
+    .error{ color:#ff6b6b;font-size:.85em;margin-top:4px; display:none; }
+    .hint{ color:#c08b5c;font-size:.85em;margin-top:4px;opacity:.9;cursor:pointer;text-decoration:underline; display:none; }
+
+    /* Date/Time friendlier + hide quick picks */
+    .input-row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width:520px){ .input-row{ grid-template-columns: 1fr; } }
+    input[type="date"], input[type="time"]{
       height:52px;font-size:16px;border-radius:10px;
       border:1px solid rgba(192,139,92,.35);
       background:radial-gradient(600px 200px at 20% -30%, rgba(192,139,92,.12), transparent 40%),#141414;
-      color:#fff;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 16px rgba(0,0,0,.35);
     }
-    #date:focus, #time:focus {
-      outline:none;border-color:#c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.25);
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.85;}
+    input[type="date"]:focus, input[type="time"]:focus{
+      outline:none;border-color:#c08b5c;
+      box-shadow:0 0 0 3px rgba(192,139,92,.25), inset 0 1px 0 rgba(255,255,255,.06);
     }
+    /* Remove quick pick suggestions */
+    input::-webkit-datetime-edit-fields-wrapper { display:flex; }
+    input::-webkit-calendar-picker-indicator:after,
+    input::-webkit-clear-button,
+    input::-webkit-inner-spin-button { display:none !important; }
 
-    /* Flight field (green frame when visible) */
-    #flightNumber {
-      border: 2px solid #2ecc71;
-    }
-
-    /* Luggage */
-    .luggage-option {
-      border:1px solid rgba(192,139,92,.4);
-      padding:10px;border-radius:8px;margin-top:6px;
-      background:#111;
-    }
-    .luggage-passengers {
-      font-size:0.85rem; opacity:0.8; color:#e9d5c1;
-    }
+    /* Flight field green */
+    #flightNumber{border:2px solid #2ecc71;}
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="logo-wrap">
-      <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
+<header>
+  <div class="logo-wrap">
+    <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
+  </div>
+</header>
+
+<main>
+  <label for="fullname">Full Name:</label>
+  <input id="fullname" placeholder="e.g. John Doe" />
+
+  <label for="phone">Phone Number:</label>
+  <input id="phone" placeholder="e.g. +1 385 123 4567" />
+
+  <label for="email">Email Address:</label>
+  <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" />
+  <div id="emailError" class="error"></div>
+  <div id="emailHint" class="hint"></div>
+
+  <label for="pickup">Pick-up Address:</label>
+  <input id="pickup" placeholder="e.g. Montage Deer Valley" />
+
+  <label for="dropoff">Drop-off Address:</label>
+  <input id="dropoff" placeholder="e.g. SLC Airport" />
+
+  <!-- Flight number (hidden by default) -->
+  <div id="flightContainer" style="display:none;">
+    <label for="flightNumber">Flight Number:</label>
+    <input id="flightNumber" placeholder="e.g. DL1234" />
+    <div id="flightError" class="error"></div>
+  </div>
+
+  <!-- Date/Time -->
+  <div class="input-row">
+    <div>
+      <label for="date">Date:</label>
+      <input id="date" type="date" />
+      <div id="dateHelp" class="helper"></div>
     </div>
-  </header>
-
-  <main>
-    <label for="fullname">Full Name:</label>
-    <input id="fullname" placeholder="e.g. John Doe" />
-
-    <label for="phone">Phone Number:</label>
-    <input id="phone" placeholder="e.g. +1 385 123 4567" />
-
-    <label for="email">Email Address:</label>
-    <input id="email" type="email" placeholder="you@example.com" />
-
-    <label for="pickup">Pick-up Address:</label>
-    <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
-
-    <label for="dropoff">Drop-off Address:</label>
-    <input id="dropoff" placeholder="e.g. SLC Airport" />
-
-    <!-- Flight number (only for Utah airports pickup) -->
-    <div id="flightContainer" style="display:none;">
-      <label for="flightNumber">Flight Number:</label>
-      <input id="flightNumber" placeholder="e.g., AA1234 or WN 987" />
-      <div id="flightError" class="helper" style="color:#ff6b6b; display:none;"></div>
+    <div>
+      <label for="time">Time:</label>
+      <input id="time" type="time" step="900" />
+      <div id="timeHelp" class="helper"></div>
     </div>
+  </div>
 
-    <!-- Date / Time -->
-    <label for="date">Date:</label>
-    <input id="date" type="date" />
-    <div id="dateHelp" class="helper"></div>
+  <!-- Luggage options -->
+  <label for="luggage">Luggage Options:</label>
+  <select id="luggage">
+    <option value="">Select...</option>
+    <option value="option1">2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs — 1–5 passengers</option>
+    <option value="option2">3 Large Suitcases + 5 Small Bags — 1–5 passengers</option>
+  </select>
 
-    <label for="time">Time:</label>
-    <input id="time" type="time" step="900" />
-    <div id="timeHelp" class="helper"></div>
+  <button id="calculate">Calculate Price</button>
+  <div id="map"></div>
 
-    <!-- Luggage -->
-    <label>Luggage Options:</label>
-    <div class="luggage-option">
-      2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs
-      <div class="luggage-passengers">1–5 passengers</div>
+  <div id="info">
+    <h3 class="info-title">Trip Summary</h3>
+    <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Distance</div><div class="value">—</div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">—</div></div>
+      <div class="kpi"><div class="label">Price</div><div class="value price">$0.00</div></div>
     </div>
-    <div class="luggage-option">
-      3 Large Suitcases + 5 Small Bags
-      <div class="luggage-passengers">1–5 passengers</div>
-    </div>
+    <div class="breakdown"><div class="row total"><span>Total</span><span>$0.00</span></div></div>
+    <div class="helper">Price includes taxes and gratuity</div>
+  </div>
 
-    <button id="calculate">Calculate Price</button>
-    <div id="map"></div>
-
-    <div id="info">
-      <h3 class="info-title">Trip Summary</h3>
-      <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
-      <div class="kpis">
-        <div class="kpi"><div class="label">Distance</div><div class="value">—</div></div>
-        <div class="kpi"><div class="label">Duration</div><div class="value">—</div></div>
-        <div class="kpi"><div class="label">Price (includes taxes & gratuity)</div><div class="value price">$0.00</div></div>
-      </div>
-    </div>
-
-    <button id="pay" style="display:none;">PAY NOW</button>
-  </main>
+  <button id="pay" style="display:none;">PAY NOW</button>
+</main>
 <script>
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
@@ -197,9 +205,8 @@ function isUtah(place){
   const addr = (place?.formatted_address || '').toLowerCase();
   return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
 }
-function pickupIsUtahAirport(){
-  return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace);
-}
+function pickupIsUtahAirport(){ return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace); }
+
 function countyFrom(place){
   const comps = place?.address_components || [];
   const c = comps.find(x=>x.types?.includes("administrative_area_level_2"));
@@ -208,6 +215,7 @@ function countyFrom(place){
 function countyIncludesAllowed(name){
   return ALLOWED_COUNTIES.some(allowed => (name||"").includes(allowed));
 }
+
 function routeAsync(opts){
   return new Promise((res,rej)=> {
     directionsService.route(opts,(r,s)=> s==="OK" && r ? res(r) : rej(s||"ROUTE_ERROR"));
@@ -237,10 +245,11 @@ async function computeMilesFromBase(placeId){
   return r.routes[0].legs[0].distance.value / 1609.34;
 }
 
-/* ===== Date/Time UX (sin quick buttons) ===== */
+/* ===== Date/Time UX (sin quick buttons, con ayuda) ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
 function setTimeValue(input, h, m){ if(!input) return; input.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+
 function mountDateTime(){
   const dateEl = document.getElementById('date');
   const timeEl = document.getElementById('time');
@@ -273,7 +282,7 @@ function mountDateTime(){
   timeEl.addEventListener('change', ()=>{ updateHelpers(); ensureFuture(); });
 }
 
-/* ===== Flight number validation (English, green visible) ===== */
+/* ===== Flight number validation (English, green when visible) ===== */
 const AIRLINES = new Set([
   'AA','DL','UA','WN','AS','B6','F9','NK','HA','AC','AM','AF','BA','KL','LH','VS','IB','TK','QR','EK','CM','AV','QF','CX','AZ','SK','LA','AR','TS','WS','DY','NH','JL','KE','XE'
 ]);
@@ -291,7 +300,7 @@ function updateFlightVisibility(){
   const wrap  = document.getElementById('flightContainer');
   const input = document.getElementById('flightNumber');
   const err   = document.getElementById('flightError');
-  if(!wrap || !input) return;
+  if(!wrap || !input) return; // evita errores si no existe el nodo
   const show = pickupIsUtahAirport();
   wrap.style.display = show ? 'block' : 'none';
   if (show){
@@ -392,7 +401,7 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
     const miles = leg.distance.value/1609.34;
     const basePrice = calculateBase(miles);
 
-    // Surcharge rules (kept same as antes)
+    // Surcharge rules
     const pickupAir = isAirport(pickupPlace);
     let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
     let dropCounty   = countyFrom(dropoffPlace) || await countyByPlaceId(dropoffPlace.place_id);
@@ -401,11 +410,13 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
 
     let surcharge = 0;
     if (pickupAir){
+      // Airport → Summit/Wasatch = NO surcharge; Airport → outside = $3/mi from BASE to airport
       if (!dropAllowed){
         const m = await computeMilesFromBase(pickupPlace.place_id);
         surcharge = m * 3;
       }
     }else{
+      // Pickup outside Summit/Wasatch → $3/mi from BASE to pickup
       if (!pickupAllowed){
         const m = await computeMilesFromBase(pickupPlace.place_id);
         surcharge = m * 3;
