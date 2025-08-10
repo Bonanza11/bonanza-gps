@@ -34,11 +34,12 @@
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      animation:pulse 2.5s infinite ease-in-out;
     }
-    button:hover{
-      transform: scale(1.02);
-      box-shadow:0 0 10px rgba(192,139,92,0.4);
+    @keyframes pulse{
+      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.5)}
+      50%{transform:scale(1.02); box-shadow:0 0 0 8px rgba(192,139,92,0)}
+      100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
     }
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
@@ -91,8 +92,12 @@
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{
       width:260px; height:auto;
-      border-radius:12px;
-      box-shadow:0 12px 20px rgba(0,0,0,0.6);
+      border-radius:14px;                /* redondea esquinas para integrarse al fondo */
+      mix-blend-mode:screen;             /* se funde sutil con el panel */
+      box-shadow:
+        0 10px 28px rgba(0,0,0,.55),
+        inset 0 0 0 1px rgba(255,255,255,.02);
+      outline: 1px solid rgba(168,116,79,.15); /* borde suave cobre */
     }
     .turntable .platform{
       width:220px; height:22px; border-radius:50%;
@@ -100,6 +105,10 @@
       margin-top:6px;
     }
     .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
+
+    /* Inline error for phone */
+    .error-inline{font-size:.82rem;color:#ff8080;margin-top:4px;display:none;}
+    .ok-inline{font-size:.82rem;color:#9af59a;margin-top:4px;display:none;}
   </style>
 </head>
 <body>
@@ -114,8 +123,16 @@
   <label for="fullname">Full Name:</label>
   <input id="fullname" placeholder="e.g. John Doe" />
 
-  <label for="phone">Phone Number:</label>
-  <input id="phone" placeholder="e.g. +1 385 123 4567" />
+  <label for="phone">Phone Number (US only):</label>
+  <input id="phone"
+         name="phone"
+         placeholder="3851234567"
+         inputmode="numeric"
+         pattern="^\d{10}$"
+         title="Enter a valid 10-digit US phone number"
+         required />
+  <div id="phoneErr" class="error-inline">Phone must be exactly 10 digits (US).</div>
+  <div id="phoneOk" class="ok-inline">Looks good.</div>
 
   <label for="email">Email Address:</label>
   <input id="email" type="email" placeholder="you@example.com" />
@@ -161,16 +178,18 @@
 
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
-
 <script>
+/* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
 
-const OPERATING_START = "06:00";
-const OPERATING_END   = "23:30";
+/* ===== Operating hours ===== */
+const OPERATING_START = "06:00"; // 6:00 AM
+const OPERATING_END   = "23:30"; // 11:30 PM
 
+/* ===== Pricing (taxes & gratuity included in base) ===== */
 function calculateBase(mi){
   if (mi <= 10) return 120;
   if (mi <= 35) return 190;
@@ -179,7 +198,29 @@ function calculateBase(mi){
   if (mi <= 55) return 250;
   return mi * 5.4;
 }
-  /* ===== Time helpers ===== */
+
+/* ===== Phone (US-only, 10 digits) ===== */
+(function wirePhone(){
+  const phone = document.getElementById('phone');
+  const err = document.getElementById('phoneErr');
+  const ok = document.getElementById('phoneOk');
+  if(!phone) return;
+  const show = (el)=>{ if(el){ el.style.display='block'; } };
+  const hide = (el)=>{ if(el){ el.style.display='none'; } };
+  phone.addEventListener('input', function(){
+    // Keep only digits
+    this.value = this.value.replace(/\D/g,'').slice(0,10);
+    if(this.value.length === 10){
+      this.setCustomValidity('');
+      hide(err); show(ok);
+    }else{
+      this.setCustomValidity('Phone must be exactly 10 digits (US).');
+      show(err); hide(ok);
+    }
+  });
+})();
+
+/* ===== Time helpers ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
 function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
@@ -319,6 +360,14 @@ window.initMap = initMap;
 
 /* ===== Calculate button ===== */
 document.getElementById("calculate").addEventListener("click", async ()=>{
+  // Phone hard check
+  const phone = document.getElementById('phone');
+  if(!phone || phone.value.replace(/\D/g,'').length !== 10){
+    phone?.focus();
+    alert('Please enter a valid 10-digit US phone number.');
+    return;
+  }
+
   if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
     alert("Please select addresses from the suggestions.");
     return;
