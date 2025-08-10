@@ -6,14 +6,18 @@
   <title>Bonanza Transportation</title>
 
   <style>
+    :root {
+      --copper: #a8744f; /* Cobre más oscuro */
+    }
+
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
+    html,body{margin:0;padding:0;background:#000;color:var(--copper);font-family:Arial,sans-serif}
 
     /* Header / Logo */
     header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
     .logo-wrap{ position:relative }
     .logo{
-      width:180px;height:180px;border-radius:50%;border:2px solid #c08b5c;
+      width:180px;height:180px;border-radius:50%;border:2px solid var(--copper);
       object-fit:cover;display:block;position:relative;
       box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
       filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
@@ -25,16 +29,16 @@
     label{display:block;margin:12px 0 6px;font-weight:700}
     input, select{
       display:block;width:100%;height:44px;padding:10px 12px;
-      background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
+      background:#1a1a1a;color:var(--copper);border:1px solid #444;border-radius:8px;
     }
     button{
-      width:100%;padding:14px 16px;margin-top:18px;background:#c08b5c;color:#000;
+      width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
-      animation:pulse 1.8s infinite;
+      animation:pulse 2.5s infinite ease-in-out;
     }
     @keyframes pulse{
-      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.7)}
-      70%{transform:scale(1.04); box-shadow:0 0 0 12px rgba(192,139,92,0)}
+      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.5)}
+      50%{transform:scale(1.02); box-shadow:0 0 0 8px rgba(192,139,92,0)}
       100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
     }
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
@@ -66,7 +70,7 @@
     @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
     #date,#time{
       height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
-      border:2px solid #c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.18);
+      border:2px solid var(--copper);box-shadow:0 0 0 3px rgba(192,139,92,.18);
     }
     #date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
     input[type="date"]::-webkit-calendar-picker-indicator,
@@ -82,27 +86,20 @@
     /* Luggage */
     .luggage-option{background:#0e0e0e;border:1px solid rgba(192,139,92,.3);border-radius:10px;padding:10px;margin-top:8px;}
     .luggage-title{font-weight:bold;color:#ffddae;margin-bottom:4px;}
-    .luggage-sub{font-size:0.85rem;color:#c08b5c;}
+    .luggage-sub{font-size:0.85rem;color:var(--copper);}
 
-    /* SUV estática y centrada */
-    .turntable{
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      margin:10px 0 6px;
-    }
+    /* SUV static */
+    .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{
-      width:260px; height:auto; transform-style:flat;
+      width:260px; height:auto;
       filter: drop-shadow(0 12px 18px rgba(0,0,0,.6));
-      display:block; margin:0 auto;
-      animation:none;
     }
     .turntable .platform{
       width:220px; height:22px; border-radius:50%;
       background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
       margin-top:6px;
     }
-    .vehicle-caption{
-      font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;text-align:center;
-    }
+    .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
   </style>
 </head>
 <body>
@@ -270,7 +267,7 @@ function wireFlightValidation(){
   });
 }
 
-/* ===== Render Summary (SUV estática y centrada) ===== */
+/* ===== Render Summary (SUV estática) ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.25 : 0;
@@ -371,3 +368,5 @@ wireFlightValidation();
 
 <!-- Google Maps loader -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>
