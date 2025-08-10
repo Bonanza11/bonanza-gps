@@ -199,19 +199,7 @@
     /* ===== Places / county utils ===== */
     function isAirport(place){
       const t = place?.types || [];
-      const name = (place?.name || "").toLowerCase();
-      const addr = (place?.formatted_address || "").toLowerCase();
-
-      // Extra airports (ej. JSX SLC) que a veces no vienen con type "airport"
-      const extraAirports = [
-        "jsx, n 2360 w st, salt lake city, ut, usa"
-      ];
-
-      return (
-        t.includes("airport") ||
-        /airport/i.test(place?.name || place?.formatted_address || "") ||
-        extraAirports.some(a => addr.includes(a))
-      );
+      return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
     }
     function countyFrom(place){
       const comps = place?.address_components || [];
@@ -397,7 +385,7 @@
         let surchargeApplied = false;
 
         if (pickupIsAirport) {
-          // Airport → Summit/Wasatch = NO surcharge
+          // Airport → Summit/Wasatch = NO surcharge (official table only)
           // Airport → outside Summit/Wasatch = $3/mi from BASE to the airport
           if (!dropInAllowed) {
             const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
@@ -405,6 +393,7 @@
             surchargeApplied = true;
           }
         } else {
+          // Pickup within Summit/Wasatch → NO surcharge
           // Pickup outside Summit/Wasatch → $3/mi from BASE to pickup
           if (!pickupInAllowed) {
             const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
