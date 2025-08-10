@@ -6,209 +6,371 @@
   <title>Bonanza Transportation</title>
 
   <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #c08b5c;
-      font-family: Arial, sans-serif;
-    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
-    header {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px 16px;
+    /* Header / Logo */
+    header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
+    .logo-wrap{ position:relative }
+    .logo{
+      width:180px;height:180px;border-radius:50%;border:2px solid #c08b5c;
+      object-fit:cover;display:block;position:relative;
+      box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
+      filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
     }
-    .logo-wrap { position: relative; }
-    .logo {
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      border: 2px solid #c08b5c;
-      object-fit: cover;
-      display: block;
-      position: relative;
-      box-shadow: 0 0 2px rgba(192,139,92,.35) inset,
-                  0 0 8px rgba(0,0,0,.6),
-                  0 0 10px rgba(192,139,92,.45);
-      filter: drop-shadow(0 0 5px rgba(192,139,92,.8));
-    }
+    .logo-wrap::after{content:"";position:absolute;inset:-8px;border-radius:50%;box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;}
 
-    h1, h2, h3, label { color: #c08b5c; }
+    /* Layout */
+    main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
+    label{display:block;margin:12px 0 6px;font-weight:700}
+    input, select{
+      display:block;width:100%;height:44px;padding:10px 12px;
+      background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
+    }
+    button{
+      width:100%;padding:14px 16px;margin-top:18px;background:#c08b5c;color:#000;
+      font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
+      animation:pulse 1.8s infinite;
+    }
+    @keyframes pulse{
+      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.7)}
+      70%{transform:scale(1.04); box-shadow:0 0 0 12px rgba(192,139,92,0)}
+      100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
+    }
+    #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
-    input, select {
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #c08b5c;
-      margin-bottom: 10px;
-      width: 100%;
-      background: #111;
-      color: #fff;
+    /* Trip Summary panel */
+    #info{
+      display:none;
+      margin-top:18px;border-radius:16px;padding:18px;
+      background:linear-gradient(180deg, #121212, #0b0b0b);
+      border:1px solid rgba(192,139,92,.28);
+      box-shadow:0 18px 40px rgba(0,0,0,.55);
+      color:#e9d5c1;font-size:.95em;
     }
-    input[type="datetime-local"] {
-      background: #222;
-      color: #fff;
-      border: 1px solid #c08b5c;
-      font-size: 16px;
-    }
+    .info-title{font-weight:800;margin:0 0 4px;font-size:1.05rem}
+    .info-sub{opacity:.85;margin:0 0 12px;font-size:.9rem}
+    .kpis{display:grid;grid-template-columns: repeat(3, 1fr);gap:12px;margin:10px 0 12px;}
+    .kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:12px;}
+    .kpi .label{font-size:.75rem;opacity:.8;margin-bottom:6px}
+    .kpi .value{font-size:1.35rem;font-weight:800;color:#f0d1ad}
+    .kpi .unit{font-size:.9rem;opacity:.7;margin-left:4px}
+    .kpi .value.price{color:#ffddae}
+    .breakdown{margin:6px 0 12px;}
+    .breakdown .row{display:flex;justify-content:space-between;padding:6px 0;}
+    .breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
+    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
 
-    button {
-      background: #c08b5c;
-      color: #000;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
+    /* Date/Time – more visible */
+    .input-row{display:grid;grid-template-columns: 1fr 1fr;gap:12px;}
+    @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
+    #date,#time{
+      height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
+      border:2px solid #c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.18);
     }
-    button:hover { background: #d09c6c; }
+    #date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator{
+      filter: invert(80%) sepia(20%) saturate(180%) hue-rotate(340deg) brightness(110%);
+      opacity:.95;cursor:pointer;
+    }
+    .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
 
-    #map {
-      height: 300px;
-      width: 100%;
-      margin-bottom: 15px;
-    }
+    /* Flight field (green) */
+    #flightNumber{background:#1a1a1a;color:#9af59a;border:2px solid #2b6a29;border-radius:10px}
 
-    .trip-summary {
-      background: #111;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      border: 1px solid #c08b5c;
+    /* Luggage */
+    .luggage-option{background:#0e0e0e;border:1px solid rgba(192,139,92,.3);border-radius:10px;padding:10px;margin-top:8px;}
+    .luggage-title{font-weight:bold;color:#ffddae;margin-bottom:4px;}
+    .luggage-sub{font-size:0.85rem;color:#c08b5c;}
+
+    /* Turntable 3D-like SUV */
+    .turntable{
+      perspective:1000px; margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;
     }
-    .trip-summary h3 {
-      margin-top: 0;
+    .turntable .car{
+      width:260px; height:auto; transform-style:preserve-3d;
+      animation:spinY 14s linear infinite;
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,.6));
     }
-    .trip-vehicle {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 10px;
+    .turntable:hover .car{ animation-play-state:paused; }
+    .turntable .platform{
+      width:220px; height:22px; border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
+      margin-top:6px;
     }
-    .trip-vehicle img {
-      width: 120px;
-      border-radius: 8px;
-    }
+    .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
+    @keyframes spinY{ from{ transform:rotateY(0deg);} to{ transform:rotateY(360deg);} }
   </style>
 </head>
 <body>
+
 <header>
   <div class="logo-wrap">
-    <img src="bonanza-logo.PNG" alt="Bonanza Transportation Logo" class="logo">
+    <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
   </div>
 </header>
+
 <main>
-<section>
-  <label for="pickup">Pickup Location</label>
-  <input type="text" id="pickup" placeholder="Enter pickup location">
+  <label for="fullname">Full Name:</label>
+  <input id="fullname" placeholder="e.g. John Doe" />
 
-  <label for="dropoff">Drop-off Location</label>
-  <input type="text" id="dropoff" placeholder="Enter drop-off location">
+  <label for="phone">Phone Number:</label>
+  <input id="phone" placeholder="e.g. +1 385 123 4567" />
 
-  <label for="pickupDate">Pickup Date & Time</label>
-  <input type="datetime-local" id="pickupDate">
+  <label for="email">Email Address:</label>
+  <input id="email" type="email" placeholder="you@example.com" />
 
-  <label for="flightNumber">Flight Number</label>
-  <input type="text" id="flightNumber" placeholder="Enter flight number" style="background-color:#004d00;">
+  <label for="pickup">Pick-up Address:</label>
+  <input id="pickup" placeholder="e.g. SLC Airport" />
 
-  <div id="map"></div>
+  <label for="dropoff">Drop-off Address:</label>
+  <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
 
-  <button id="calculatePrice">Calculate Price</button>
-</section>
+  <!-- Flight number (hidden until pickup is Utah airport) -->
+  <div id="flightContainer" style="display:none;">
+    <label for="flightNumber">Flight Number:</label>
+    <input id="flightNumber" placeholder="e.g. DL1234" />
+  </div>
 
-<section class="trip-summary" id="tripSummary" style="display:none;">
-  <h3>Trip Summary</h3>
-  <div class="trip-vehicle">
-    <img src="images/suburban.png" alt="Black Chevrolet Suburban SUV">
+  <div class="input-row">
     <div>
-      <strong>This will be your SUV</strong><br>
-      Black Suburban – 1–5 passengers<br>
-      5 Ski Bags/Golf Clubs
+      <label for="date">Date:</label>
+      <input id="date" type="date" />
+      <div id="dateHelp" class="helper"></div>
+    </div>
+    <div>
+      <label for="time">Time:</label>
+      <input id="time" type="time" step="900" />
+      <div id="timeHelp" class="helper"></div>
     </div>
   </div>
-  <p><strong>Distance:</strong> <span id="distance"></span></p>
-  <p><strong>Duration:</strong> <span id="duration"></span></p>
-  <p><strong>Price (includes taxes & gratuity):</strong> <span id="price"></span></p>
-  <button id="payNow">PAY NOW</button>
-</section>
+
+  <label>Luggage Options:</label>
+  <div class="luggage-option">
+    <div class="luggage-title">2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs</div>
+    <div class="luggage-sub">1–5 passengers</div>
+  </div>
+  <div class="luggage-option">
+    <div class="luggage-title">3 Large Suitcases + 5 Small Bags</div>
+    <div class="luggage-sub">1–5 passengers</div>
+  </div>
+
+  <button id="calculate">Calculate Price</button>
+  <div id="map"></div>
+
+  <!-- Trip Summary -->
+  <div id="info"></div>
+
+  <button id="pay" style="display:none;">PAY NOW</button>
+</main>
 <script>
-  let map, directionsService, directionsRenderer;
+/* ===== Globals ===== */
+let map, directionsService, directionsRenderer, geocoder;
+const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
+const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
+let pickupPlace = null, dropoffPlace = null;
 
-  function initMap() {
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 40.7608, lng: -111.8910 },
-      zoom: 8
-    });
-    directionsRenderer.setMap(map);
+/* ===== Operating hours ===== */
+const OPERATING_START = "06:00"; // 6:00 AM
+const OPERATING_END   = "23:30"; // 11:30 PM
+
+/* ===== Pricing (taxes & gratuity included in base) ===== */
+function calculateBase(mi){
+  if (mi <= 10) return 120;
+  if (mi <= 35) return 190;
+  if (mi <= 39) return 210;
+  if (mi <= 48) return 230;
+  if (mi <= 55) return 250;
+  return mi * 5.4;
+}
+
+/* ===== Time helpers ===== */
+function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
+function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
+function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+function isAfterHours(dateStr, timeStr){
+  if(!dateStr || !timeStr) return false;
+  const d = new Date(`${dateStr}T${timeStr}:00`);
+  const [sh,sm] = OPERATING_START.split(':').map(Number);
+  const [eh,em] = OPERATING_END.split(':').map(Number);
+  const start = new Date(d); start.setHours(sh, sm, 0, 0);
+  const end   = new Date(d); end.setHours(eh, em, 0, 0);
+  return (d < start) || (d > end);
+}
+function mountDateTime(){
+  const dateEl = document.getElementById('date');
+  const timeEl = document.getElementById('time');
+  const dateHelp = document.getElementById('dateHelp');
+  const timeHelp = document.getElementById('timeHelp');
+  const nx = nextQuarter(new Date());
+  if(dateEl && !dateEl.value) dateEl.value = localISODate(nx);
+  if(timeEl && !timeEl.value) setTimeValue(timeEl, nx.getHours(), nx.getMinutes());
+  if(dateEl) dateEl.min = localISODate(new Date());
+  function update(){
+    if(dateHelp && dateEl?.value){
+      const d = new Date(dateEl.value + 'T00:00:00');
+      dateHelp.textContent = `Selected: ${d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}`;
+    }
+    if(timeHelp && timeEl?.value){ timeHelp.textContent = `Selected: ${timeEl.value}`; }
   }
+  dateEl?.addEventListener('change', update);
+  timeEl?.addEventListener('change', update);
+  update();
+}
 
-  document.getElementById('calculatePrice').addEventListener('click', () => {
-    const pickup = document.getElementById('pickup').value;
-    const dropoff = document.getElementById('dropoff').value;
-    if (!pickup || !dropoff) {
-      alert('Please enter pickup and drop-off locations.');
-      return;
+/* ===== Places / routing helpers ===== */
+function isAirport(place){
+  const t = place?.types || [];
+  const addr = (place?.formatted_address || "").toLowerCase();
+  const extra = [
+    "salt lake city international airport","slc airport",
+    "provo municipal airport","ogden-hinckley airport",
+    "st. george regional airport","cedar city regional airport",
+    "canyonlands regional airport","moab canyonlands regional airport",
+    "jsx, n 2360 w st, salt lake city, ut, usa"
+  ];
+  return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "") || extra.some(a=>addr.includes(a));
+}
+function isUtah(place){ const addr=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr); }
+function pickupIsUtahAirport(){ return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace); }
+function countyFrom(place){ const comps=place?.address_components||[]; const c=comps.find(x=>x.types?.includes("administrative_area_level_2")); return c?.long_name||""; }
+function countyIncludesAllowed(name){ return ALLOWED_COUNTIES.some(x=>(name||"").includes(x)); }
+function routeAsync(opts){ return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
+function geocodeAsync(req){ return new Promise((res,rej)=>{ geocoder.geocode(req,(results,status)=>{ if(status==="OK"&&results?.[0]) res(results[0]); else rej(status||"GEOCODE_ERROR"); }); }); }
+async function countyByPlaceId(placeId){ try{ const r=await geocodeAsync({placeId}); const c=r.address_components.find(c=>c.types.includes("administrative_area_level_2")); return c?.long_name||""; }catch(_){ return ""; } }
+async function computeMilesFromBase(placeId){ const r=await routeAsync({origin:BASE_ADDRESS,destination:{placeId},travelMode:google.maps.TravelMode.DRIVING}); return r.routes[0].legs[0].distance.value/1609.34; }
+
+/* ===== Flight number (green & validated) ===== */
+const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
+const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
+function normalizeFlight(v){ return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-'); }
+function validateFlightValue(v){
+  const m = normalizeFlight(v).match(FLIGHT_REGEX);
+  if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
+  const code=m[1], num=m[2];
+  if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
+  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
+  return {ok:true,msg:''};
+}
+function updateFlightVisibility(){
+  const wrap=document.getElementById('flightContainer');
+  const input=document.getElementById('flightNumber');
+  if(!wrap||!input) return;
+  const show = pickupIsUtahAirport();
+  wrap.style.display = show ? 'block' : 'none';
+  if(!show){ input.value=""; input.setCustomValidity(""); }
+}
+function wireFlightValidation(){
+  const input=document.getElementById('flightNumber');
+  if(!input) return;
+  input.addEventListener('input', ()=>{
+    if(!pickupIsUtahAirport()){ input.setCustomValidity(""); return; }
+    const r=validateFlightValue(input.value); input.setCustomValidity(r.ok?"":r.msg);
+  });
+}
+
+/* ===== Render Summary (with rotating SUV) ===== */
+function renderInfo(leg, base, surcharge, afterHours){
+  const miles = leg.distance.value / 1609.34;
+  const ahFee = afterHours ? (base + surcharge) * 0.25 : 0;
+  const total = base + surcharge + ahFee;
+
+  const el = document.getElementById("info");
+  el.style.display = "block";
+  el.innerHTML = `
+    <h3 class="info-title">Trip Summary</h3>
+
+    <div class="turntable">
+      <img class="car"
+           src="/images/suburban.png"
+           alt="Black Chevrolet Suburban SUV"
+           onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,\
+<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22140%22 viewBox=%220 0 260 140%22><rect width=%22260%22 height=%22140%22 rx=%2212%22 fill=%22#0d0d0d%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22#ffddae%22 font-family=%22Arial%22 font-size=%2214%22>This will be your SUV</text></svg>';" />
+      <div class="platform"></div>
+      <div class="vehicle-caption">This will be your SUV</div>
+    </div>
+
+    <p class="info-sub">Private Black Suburban · 1–5 passengers</p>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
+      <div class="kpi"><div class="label">Price (includes taxes & gratuity)</div><div class="value price">$${total.toFixed(2)}</div></div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="breakdown">
+      <div class="row"><span>Base Fare</span><span>$${base.toFixed(2)}</span></div>
+      ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ""}
+      ${ahFee>0 ? `<div class="row"><span>Off-Hours Fee (25%)</span><span>$${ahFee.toFixed(2)}</span></div>` : ""}
+      <div class="divider"></div>
+      <div class="row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+    </div>
+  `;
+}
+
+/* ===== Init Google Maps ===== */
+function initMap(){
+  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  directionsService  = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer();
+  directionsRenderer.setMap(map);
+  geocoder = new google.maps.Geocoder();
+
+  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
+  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
+  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
+
+  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
+}
+window.initMap = initMap;
+
+/* ===== Calculate button ===== */
+document.getElementById("calculate").addEventListener("click", async ()=>{
+  if (!pickupPlace?.place_id || !dropoffPlace?.place_id){ alert("Please select addresses from the suggestions."); return; }
+
+  try{
+    const trip = await routeAsync({
+      origin:{placeId: pickupPlace.place_id},
+      destination:{placeId: dropoffPlace.place_id},
+      travelMode: google.maps.TravelMode.DRIVING
+    });
+    directionsRenderer.setDirections(trip);
+
+    const leg = trip.routes[0].legs[0];
+    const miles = leg.distance.value/1609.34;
+    const basePrice = calculateBase(miles);
+
+    // Distance surcharge rules
+    let surcharge = 0;
+    const pickupAir = isAirport(pickupPlace);
+    let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
+    let dropCounty   = countyFrom(dropoffPlace) || await countyByPlaceId(dropoffPlace.place_id);
+    const pickupAllowed = countyIncludesAllowed(pickupCounty);
+    const dropAllowed   = countyIncludesAllowed(dropCounty);
+
+    if (pickupAir){
+      if (!dropAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
+    }else{
+      if (!pickupAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }
 
-    const request = {
-      origin: pickup,
-      destination: dropoff,
-      travelMode: 'DRIVING'
-    };
+    const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
+    renderInfo(leg, basePrice, surcharge, afterHours);
+    document.getElementById("pay").style.display = "block";
+  }catch(err){
+    alert("Could not calculate route: " + err);
+  }
+});
 
-    directionsService.route(request, (result, status) => {
-      if (status === 'OK') {
-        directionsRenderer.setDirections(result);
-        const distanceInMiles = result.routes[0].legs[0].distance.value / 1609.34;
-        const durationText = result.routes[0].legs[0].duration.text;
-
-        document.getElementById('distance').innerText = distanceInMiles.toFixed(1) + " mi";
-        document.getElementById('duration').innerText = durationText;
-        
-        let price = 0;
-        if (distanceInMiles <= 10) price = 120;
-        else if (distanceInMiles <= 35) price = 190;
-        else if (distanceInMiles <= 39) price = 210;
-        else if (distanceInMiles <= 48) price = 230;
-        else if (distanceInMiles <= 55) price = 250;
-        else price = distanceInMiles * 5.4;
-
-        const pickupTime = new Date(document.getElementById('pickupDate').value);
-        const hour = pickupTime.getHours();
-        if (hour < 6 || hour >= 23.5) {
-          price = price * 1.25;
-        }
-
-        document.getElementById('price').innerText = `$${price.toFixed(2)}`;
-        document.getElementById('tripSummary').style.display = 'block';
-      }
-    });
-  });
-
-  document.getElementById('payNow').addEventListener('click', () => {
-    fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        price: parseFloat(document.getElementById('price').innerText.replace('$', ''))
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    });
-  });
+/* ===== On load ===== */
+mountDateTime();
+wireFlightValidation();
 </script>
+<!-- Google Maps loader -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap">
-</script>
-</main>
 </body>
 </html>
