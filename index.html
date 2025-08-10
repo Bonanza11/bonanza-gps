@@ -4,14 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation</title>
+
   <style>
     /* Reset & base */
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:#c08b5c;font-family:Arial,sans-serif}
 
-    /* Header with logo + copper/neon glow */
+    /* Header */
     header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
-    .logo-wrap{ position:relative }
+    .logo-wrap{position:relative}
     .logo{
       width:180px;height:180px;border-radius:50%;border:2px solid #c08b5c;
       object-fit:cover;display:block;position:relative;
@@ -23,12 +24,15 @@
       box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;
     }
 
+    /* Form */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
-    input, select{
+    input,select{
       display:block;width:100%;height:44px;padding:10px 12px;
       background:#1a1a1a;color:#c08b5c;border:1px solid #444;border-radius:8px;
     }
+
+    /* Buttons */
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:#c08b5c;color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
@@ -40,13 +44,15 @@
       100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
     }
 
+    /* Map */
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
-    /* Luxury Info Panel */
+    /* Info panel */
     #info{
       margin-top:18px;border-radius:16px;padding:18px;
-      background:radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
-                 linear-gradient(180deg, #121212, #0b0b0b);
+      background:
+        radial-gradient(1200px 400px at 20% -10%, rgba(192,139,92,.18), transparent 40%),
+        linear-gradient(180deg, #121212, #0b0b0b);
       border:1px solid rgba(192,139,92,.28);
       box-shadow:0 18px 40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.02);
       backdrop-filter: blur(6px);
@@ -61,130 +67,111 @@
     .kpi .unit{font-size:.9rem; opacity:.7; margin-left:4px}
     .kpi .value.price{color:#ffddae}
 
-    /* Luggage section */
-    #luggage-section{
-      margin-top:18px;padding:16px;border:1px solid rgba(192,139,92,.3);
-      border-radius:12px;background:rgba(0,0,0,0.4);
+    /* Flight field */
+    #flightNumber {
+      border: 2px solid #2ecc71; /* green */
     }
-    .luggage-option{
-      padding:10px;margin-bottom:12px;border:1px solid rgba(192,139,92,.2);
-      border-radius:10px;background:rgba(20,20,20,0.6);
-    }
-    .luggage-option strong{color:#ffddae;font-size:1rem;}
-    .luggage-option small{display:block;margin-top:4px;color:#c08b5c;font-size:.85rem;}
 
-    /* Flight number */
-    #flight-container{
-      margin-top:16px;display:none;
+    /* Date & Time better UX */
+    #date, #time {
+      height:52px;font-size:16px;border-radius:10px;
+      border:1px solid rgba(192,139,92,.35);
+      background:radial-gradient(600px 200px at 20% -30%, rgba(192,139,92,.12), transparent 40%),#141414;
+      color:#fff;
     }
-    #flightError{color:#ff6b6b;font-size:.85em;margin-top:4px;display:none;}
+    #date:focus, #time:focus {
+      outline:none;border-color:#c08b5c;box-shadow:0 0 0 3px rgba(192,139,92,.25);
+    }
 
+    /* Luggage options */
+    .luggage-option {
+      border:1px solid rgba(192,139,92,.4);
+      padding:10px;border-radius:8px;margin-top:6px;
+      background:#111;
+    }
+    .luggage-passengers {
+      font-size:0.85rem;
+      opacity:0.8;
+      color:#e9d5c1;
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="logo-wrap">
-    <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
-  </div>
-</header>
+  <header>
+    <div class="logo-wrap">
+      <img class="logo" src="bonanza-logo.PNG" alt="Bonanza Transportation Logo">
+    </div>
+  </header>
 
-<main>
-  <!-- Form fields -->
-  <label for="fullname">Full Name:</label>
-  <input id="fullname" placeholder="e.g. John Doe" />
+  <main>
+    <label for="fullname">Full Name:</label>
+    <input id="fullname" placeholder="e.g. John Doe" />
 
-  <label for="phone">Phone Number:</label>
-  <input id="phone" placeholder="e.g. +1 385 123 4567" />
+    <label for="phone">Phone Number:</label>
+    <input id="phone" placeholder="e.g. +1 385 123 4567" />
 
-  <label for="email">Email Address:</label>
-  <input id="email" type="email" placeholder="you@example.com" />
+    <label for="email">Email Address:</label>
+    <input id="email" type="email" placeholder="you@example.com" />
 
-  <label for="pickup">Pick-up Address:</label>
-  <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
+    <label for="pickup">Pick-up Address:</label>
+    <input id="pickup" placeholder="e.g. 13742 N Jordanelle Pkwy" />
 
-  <label for="dropoff">Drop-off Address:</label>
-  <input id="dropoff" placeholder="e.g. SLC Airport" />
+    <label for="dropoff">Drop-off Address:</label>
+    <input id="dropoff" placeholder="e.g. SLC Airport" />
 
-  <label for="date">Date:</label>
-  <input id="date" type="date" />
+    <!-- Flight number -->
+    <div id="flightContainer" style="display:none;">
+      <label for="flightNumber">Flight Number:</label>
+      <input id="flightNumber" placeholder="e.g. DL1234" />
+    </div>
 
-  <label for="time">Time:</label>
-  <input id="time" type="time" step="900" />
+    <!-- Date / Time -->
+    <label for="date">Date:</label>
+    <input id="date" type="date" />
 
-  <button id="calculate">Calculate Price</button>
+    <label for="time">Time:</label>
+    <input id="time" type="time" step="900" />
 
-  <div id="map"></div>
-
-  <!-- Trip summary -->
-  <div id="info">
-    <h3 class="info-title">Trip Summary</h3>
-    <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
-  </div>
-
-  <!-- Luggage section -->
-  <div id="luggage-section" style="display:none;">
-    <label><strong>Select Luggage Option:</strong></label>
+    <!-- Luggage -->
+    <label>Luggage Options:</label>
     <div class="luggage-option">
-      <strong>2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs</strong>
-      <small>1–5 passengers</small>
+      2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs
+      <div class="luggage-passengers">1–5 passengers</div>
     </div>
     <div class="luggage-option">
-      <strong>3 Large Suitcases + 5 Small Bags</strong>
-      <small>1–5 passengers</small>
+      3 Large Suitcases + 5 Small Bags
+      <div class="luggage-passengers">1–5 passengers</div>
     </div>
-  </div>
 
-  <!-- Flight number -->
-  <div id="flight-container">
-    <label for="flightNumber">Flight Number:</label>
-    <input id="flightNumber" placeholder="e.g. DL1234" />
-    <div id="flightError">Please enter a valid flight number (e.g., DL1234).</div>
-  </div>
-<!-- === Styles added/updated (flight green + time quick picks) === -->
-<style>
-  /* Flight input visual states */
-  #flightNumber.visible {
-    border: 2px solid #4CAF50;
-    box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
-  }
-  #flightNumber.valid {
-    border: 2px solid #4CAF50;
-    box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
-  }
-  #flightNumber.invalid {
-    border: 2px solid #ff6b6b;
-    box-shadow: 0 0 6px rgba(255, 107, 107, 0.5);
-  }
+    <button id="calculate">Calculate Price</button>
+    <div id="map"></div>
 
-  /* Quick picks for time/date */
-  .quick-picks { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-  .qp-btn {
-    background: #0e0e0e; color:#e9d5c1; border:1px solid rgba(192,139,92,.35);
-    border-radius:999px; padding:6px 10px; font-size:.85rem; cursor:pointer;
-  }
-  .qp-btn:hover { border-color:#c08b5c; box-shadow: 0 0 8px rgba(192,139,92,.25); }
+    <div id="info">
+      <h3 class="info-title">Trip Summary</h3>
+      <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Distance</div><div class="value">—</div></div>
+        <div class="kpi"><div class="label">Duration</div><div class="value">—</div></div>
+        <div class="kpi"><div class="label">Price (includes gratuity & taxes)</div><div class="value price">$0.00</div></div>
+      </div>
+    </div>
 
-  /* Breakdown rows (if your Part 1 already has these classes, perfecto) */
-  .breakdown { margin:6px 0 12px; }
-  .breakdown .row{display:flex; justify-content:space-between; gap:12px; padding:6px 0;}
-  .breakdown .row.total{font-weight:800; color:#ffddae; font-size:1.05rem}
-  .divider{height:1px; background:linear-gradient(90deg, transparent, rgba(192,139,92,.35), transparent); margin:6px 0}
-</style>
-
+    <button id="pay" style="display:none;">PAY NOW</button>
+  </main>
 <script>
-/* ========= Config (rates) ========= */
-const GRATUITY_RATE = 0.20; // 20% gratuity
-const TAX_RATE = 0.00;      // 0% taxes (adjust if needed)
+/* ===== Config (gratuity & taxes) ===== */
+const GRATUITY_RATE = 0.20; // 20%
+const TAX_RATE = 0.00;      // 0% (ajústalo si lo necesitas)
 
-/* ========= Globals ========= */
+/* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
 
-/* ========= Pricing ========= */
-function calculatePrice(mi){
+/* ===== Pricing ===== */
+function calculateBase(mi){
   if (mi <= 10) return 120;
   if (mi <= 35) return 190;
   if (mi <= 39) return 210;
@@ -193,11 +180,11 @@ function calculatePrice(mi){
   return mi * 5.4;
 }
 
-/* ========= Airport / county helpers ========= */
+/* ===== Helpers: airport, county, routing ===== */
 function isAirport(place){
   const t = place?.types || [];
   const addr = (place?.formatted_address || "").toLowerCase();
-  const extraAirports = [
+  const extra = [
     "salt lake city international airport","slc airport",
     "provo municipal airport","ogden-hinckley airport",
     "st. george regional airport","cedar city regional airport",
@@ -206,7 +193,7 @@ function isAirport(place){
   ];
   return t.includes("airport") ||
          /airport/i.test(place?.name || place?.formatted_address || "") ||
-         extraAirports.some(a => addr.includes(a));
+         extra.some(a => addr.includes(a));
 }
 function isUtah(place){
   const addr = (place?.formatted_address || '').toLowerCase();
@@ -220,17 +207,15 @@ function countyFrom(place){
   const c = comps.find(x=>x.types?.includes("administrative_area_level_2"));
   return c?.long_name || "";
 }
-function countyIncludesAllowed(countyName){
-  return ALLOWED_COUNTIES.some(allowed => countyName.includes(allowed));
+function countyIncludesAllowed(name){
+  return ALLOWED_COUNTIES.some(allowed => (name||"").includes(allowed));
 }
-
-/* ========= Maps / Routing ========= */
 function routeAsync(opts){
   return new Promise((res,rej)=> {
     directionsService.route(opts,(r,s)=> s==="OK" && r ? res(r) : rej(s||"ROUTE_ERROR"));
   });
 }
-async function geocodeAsync(req){
+function geocodeAsync(req){
   return new Promise((resolve,reject)=>{
     geocoder.geocode(req,(results,status)=>{
       if(status==="OK" && results?.[0]) resolve(results[0]);
@@ -245,7 +230,7 @@ async function countyByPlaceId(placeId){
     return comp?.long_name || "";
   }catch(_){ return ""; }
 }
-async function computePickupSurchargeMiles(placeId){
+async function computeMilesFromBase(placeId){
   const r = await routeAsync({
     origin: BASE_ADDRESS,
     destination: {placeId},
@@ -254,141 +239,43 @@ async function computePickupSurchargeMiles(placeId){
   return r.routes[0].legs[0].distance.value / 1609.34;
 }
 
-/* ========= Date/Time UX Helpers ========= */
+/* ===== Date/Time UX ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
-function fmtDateHuman(d){
-  return d.toLocaleString(undefined, { weekday:'short', month:'short', day:'numeric' });
-}
-function toLocalISODate(d){
-  const tzOffsetMs = d.getTimezoneOffset()*60000;
-  return new Date(d - tzOffsetMs).toISOString().slice(0,10);
-}
-function setTimeInput(timeEl, h, m){
-  timeEl.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-}
-function ensureFuture(dateEl, timeEl){
-  if (!dateEl.value || !timeEl.value) return;
-  const now = new Date();
-  const chosen = new Date(`${dateEl.value}T${timeEl.value}:00`);
-  if (chosen < now){
-    const nx = nextQuarter(new Date());
-    dateEl.value = toLocalISODate(nx);
-    setTimeInput(timeEl, nx.getHours(), nx.getMinutes());
-  }
-}
-function mountQuickPicks(){
+function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
+function setTimeValue(input, h, m){ if(!input) return; input.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+function mountDateTimeUX(){
   const dateEl = document.getElementById('date');
   const timeEl = document.getElementById('time');
-  const dateHelp = document.getElementById('dateHelp');
-  const timeHelp = document.getElementById('timeHelp');
+  if(!dateEl || !timeEl) return;
 
-  // Min today & default to next quarter-hour
-  const now = new Date();
-  dateEl.min = toLocalISODate(now);
   const nx = nextQuarter(new Date());
-  if (!timeEl.value) setTimeInput(timeEl, nx.getHours(), nx.getMinutes());
-  if (!dateEl.value) dateEl.value = toLocalISODate(nx);
+  if(!dateEl.value) dateEl.value = localISODate(nx);
+  if(!timeEl.value) setTimeValue(timeEl, nx.getHours(), nx.getMinutes());
+  dateEl.min = localISODate(new Date());
 
-  function updateHelpers(){
-    const d = dateEl.value ? new Date(dateEl.value + 'T00:00:00') : null;
-    dateHelp.textContent = d ? `Selected: ${fmtDateHuman(d)}` : 'Select your travel date';
-    timeHelp.textContent = timeEl.value ? `Selected: ${timeEl.value}` : 'Select your pickup time';
-  }
-  updateHelpers();
-
-  dateEl.addEventListener('change', ()=>{ updateHelpers(); ensureFuture(dateEl,timeEl); });
-  timeEl.addEventListener('change', ()=>{ updateHelpers(); ensureFuture(dateEl,timeEl); });
-
-  // Quick picks container (created dynamically)
+  // Quick picks
   const container = document.createElement('div');
   container.className = 'quick-picks';
-  timeEl.parentElement.appendChild(container);
-
-  function addQP(label, fn){
+  const addQP = (label, getDateFn)=>{
     const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'qp-btn';
-    b.textContent = label;
-    b.addEventListener('click', ()=>{
-      const d = fn(new Date());
-      dateEl.value = toLocalISODate(d);
-      setTimeInput(timeEl, d.getHours(), d.getMinutes());
-      updateHelpers();
-    });
+    b.type='button'; b.className='qp-btn'; b.textContent = label;
+    b.onclick = ()=>{
+      const d = getDateFn(new Date());
+      dateEl.value = localISODate(d);
+      setTimeValue(timeEl, d.getHours(), d.getMinutes());
+    };
     container.appendChild(b);
-  }
+  };
+  addQP('+15 min', (base)=> nextQuarter(base));
+  addQP('+30 min', (base)=> nextQuarter(new Date(base.getTime()+30*60000)));
+  addQP('Tonight 7:00 PM', (base)=>{ const d=new Date(base); d.setHours(19,0,0,0); if(d<base)d.setDate(d.getDate()+1); return d; });
+  addQP('Tomorrow 8:00 AM', (base)=>{ const d=new Date(base); d.setDate(d.getDate()+1); d.setHours(8,0,0,0); return d; });
 
-  addQP('+15 min', (base)=> nextQuarter(base)); // already rounds
-  addQP('+30 min', (base)=> { base.setMinutes(base.getMinutes()+30); return nextQuarter(base); });
-  addQP('Tonight 7:00 PM', (base)=>{
-    const d = new Date(base);
-    d.setHours(19,0,0,0);
-    if (d < base) d.setDate(d.getDate()+1);
-    return d;
-  });
-  addQP('Tomorrow 8:00 AM', (base)=>{
-    const d = new Date(base);
-    d.setDate(d.getDate()+1); d.setHours(8,0,0,0);
-    return d;
-  });
-
-  // Optional datalist of common times (improves mobile UX)
-  const dl = document.createElement('datalist');
-  dl.id = 'time-suggestions';
-  ['06:00','07:00','08:00','09:00','12:00','15:00','17:00','19:00','21:00'].forEach(v=>{
-    const o = document.createElement('option'); o.value = v; dl.appendChild(o);
-  });
-  document.body.appendChild(dl);
-  timeEl.setAttribute('list','time-suggestions');
+  // Append under time input
+  timeEl.parentElement && timeEl.parentElement.appendChild(container);
 }
 
-/* ========= UI: Trip Summary (now with gratuity & taxes) ========= */
-function renderInfo(leg, basePrice, surcharge){
-  const miles = leg.distance.value / 1609.34;
-  const subtotal = basePrice + (surcharge||0);
-  const gratuity = subtotal * GRATUITY_RATE;
-  const taxes = subtotal * TAX_RATE;
-  const total = subtotal + gratuity + taxes;
-
-  document.getElementById("info").innerHTML = `
-    <h3 class="info-title">Trip Summary</h3>
-    <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
-    <div class="kpis">
-      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
-      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
-      <div class="kpi"><div class="label">Total (All-In)</div><div class="value price">$${total.toFixed(2)}</div></div>
-    </div>
-
-    <div class="breakdown">
-      <div class="row"><span>Base Fare</span><span>$${basePrice.toFixed(2)}</span></div>
-      ${surcharge>0 ? `<div class="row"><span>Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
-      <div class="row"><span>Gratuity (${Math.round(GRATUITY_RATE*100)}%)</span><span>$${gratuity.toFixed(2)}</span></div>
-      <div class="row"><span>Taxes (${Math.round(TAX_RATE*100)}%)</span><span>$${taxes.toFixed(2)}</span></div>
-      <div class="divider"></div>
-      <div class="row total"><span>Total (All-In)</span><span>$${total.toFixed(2)}</span></div>
-    </div>
-    <div class="helper">All prices include gratuity and taxes.</div>
-  `;
-}
-
-/* ========= Luggage selection ========= */
-let selectedLuggage = "A"; // default
-function wireLuggage(){
-  const section = document.getElementById('luggage-section');
-  const options = Array.from(section.querySelectorAll('.luggage-option'));
-  options.forEach((opt, idx)=>{
-    opt.style.cursor = 'pointer';
-    opt.addEventListener('click', ()=>{
-      options.forEach(o=>{ o.style.borderColor='rgba(192,139,92,.2)'; o.style.boxShadow='none'; });
-      opt.style.borderColor = '#e2a877';
-      opt.style.boxShadow = '0 0 12px rgba(226,168,119,.25)';
-      selectedLuggage = idx === 0 ? "A" : "B";
-    });
-  });
-  if (options[0]) options[0].click();
-}
-
-/* ========= Flight number validation ========= */
+/* ===== Flight number validation ===== */
 const AIRLINES = new Set([
   'AA','DL','UA','WN','AS','B6','F9','NK','HA','AC','AM','AF','BA','KL','LH','VS','IB','TK','QR','EK','CM','AV','QF','CX','AZ','SK','LA','AR','TS','WS','DY','NH','JL','KE','XE'
 ]);
@@ -396,48 +283,75 @@ const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
 function normalizeFlight(v){ return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-'); }
 function validateFlightValue(v){
   const m = normalizeFlight(v).match(FLIGHT_REGEX);
-  if (!m) return {ok:false, msg:'Invalid format. Use AA1234 or B6 120.'};
+  if (!m) return {ok:false, msg:'Invalid format. Use AA1234 or WN 987.'};
   const code = m[1], num = m[2];
   if (!AIRLINES.has(code)) return {ok:false, msg:'Unknown airline code.'};
   if (/^0+$/.test(num)) return {ok:false, msg:'Invalid flight number.'};
   return {ok:true, msg:''};
 }
 function updateFlightVisibility(){
-  const box  = document.getElementById('flight-container');
-  const input= document.getElementById('flightNumber');
-  const err  = document.getElementById('flightError');
+  const wrap  = document.getElementById('flightContainer'); // NOTE: matches Part 1 id
+  const input = document.getElementById('flightNumber');
+  if(!wrap || !input) return;            // ← evita "reading 'style'"
   const show = pickupIsUtahAirport();
-  box.style.display = show ? 'block' : 'none';
+  wrap.style.display = show ? 'block' : 'none';
   if (show){
-    input.classList.add('visible');
-  }else{
-    input.value = '';
-    input.classList.remove('visible','valid','invalid');
-    input.setCustomValidity('');
-    err.style.display = 'none';
+    input.placeholder = "e.g., AA1234 or WN 987";
+    input.style.border = "2px solid #2ecc71";          // verde al mostrarse
+    input.style.boxShadow = "0 0 6px rgba(46,204,113,.45)";
+  } else {
+    input.value = "";
+    input.setCustomValidity("");
+    input.style.boxShadow = "none";
   }
 }
 function wireFlightValidation(){
-  const input= document.getElementById('flightNumber');
-  const err  = document.getElementById('flightError');
-  input.placeholder = "e.g., AA1234 or WN 987";
+  const input = document.getElementById('flightNumber');
+  if(!input) return;
   input.addEventListener('input', ()=>{
     if (!pickupIsUtahAirport()){
-      input.classList.remove('valid','invalid');
-      input.setCustomValidity('');
-      err.style.display = 'none';
+      input.setCustomValidity("");
+      input.style.borderColor = "#2ecc71";
+      input.style.boxShadow = "0 0 6px rgba(46,204,113,.45)";
       return;
     }
     const r = validateFlightValue(input.value);
-    input.setCustomValidity(r.ok ? '' : r.msg);
-    err.textContent = r.ok ? '' : r.msg;
-    err.style.display = r.ok ? 'none' : 'block';
-    input.classList.toggle('valid', r.ok);
-    input.classList.toggle('invalid', !r.ok && input.value.trim() !== '');
+    input.setCustomValidity(r.ok ? "" : r.msg);
+    input.style.borderColor = r.ok ? "#2ecc71" : "#ff6b6b";
+    input.style.boxShadow = r.ok ? "0 0 6px rgba(46,204,113,.45)" : "0 0 6px rgba(255,107,107,.5)";
   });
 }
 
-/* ========= Init Maps & Autocomplete ========= */
+/* ===== Info panel (with gratuity & taxes included) ===== */
+function renderInfo(leg, base, surcharge){
+  const miles = leg.distance.value / 1609.34;
+  const subtotal = base + (surcharge||0);
+  const gratuity = subtotal * GRATUITY_RATE;
+  const taxes    = subtotal * TAX_RATE;
+  const total    = subtotal + gratuity + taxes;
+
+  const el = document.getElementById("info");
+  if(!el) return;
+  el.innerHTML = `
+    <h3 class="info-title">Trip Summary</h3>
+    <p class="info-sub">Black Suburban · Private · 1–5 passengers</p>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
+      <div class="kpi"><div class="label">Price (includes gratuity & taxes)</div><div class="value price">$${total.toFixed(2)}</div></div>
+    </div>
+    <div class="breakdown">
+      <div class="row"><span>Base Fare</span><span>$${base.toFixed(2)}</span></div>
+      ${surcharge>0 ? `<div class="row"><span>Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
+      <div class="row"><span>Gratuity (${Math.round(GRATUITY_RATE*100)}%)</span><span>$${gratuity.toFixed(2)}</span></div>
+      <div class="row"><span>Taxes (${Math.round(TAX_RATE*100)}%)</span><span>$${taxes.toFixed(2)}</span></div>
+      <div class="divider"></div>
+      <div class="row total"><span>Total (All-In)</span><span>$${total.toFixed(2)}</span></div>
+    </div>
+  `;
+}
+
+/* ===== Init Google Maps & Autocomplete ===== */
 function initMap(){
   map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
   directionsService  = new google.maps.DirectionsService();
@@ -453,11 +367,13 @@ function initMap(){
     pickupPlace = acPickup.getPlace() || null;
     updateFlightVisibility();
   });
-  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
+  acDropoff.addListener("place_changed", ()=>{
+    dropoffPlace = acDropoff.getPlace() || null;
+  });
 }
 window.initMap = initMap;
 
-/* ========= Calculate ========= */
+/* ===== Calculate button ===== */
 document.getElementById("calculate").addEventListener("click", async ()=>{
   const pickupTxt  = document.getElementById("pickup").value.trim();
   const dropoffTxt = document.getElementById("dropoff").value.trim();
@@ -481,52 +397,44 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
 
     const leg = trip.routes[0].legs[0];
     const miles = leg.distance.value/1609.34;
-    const basePrice = calculatePrice(miles);
+    const basePrice = calculateBase(miles);
 
-    // Surcharge logic
-    const pickupIsAir = isAirport(pickupPlace);
-
-    let pickupCounty = countyFrom(pickupPlace);
-    if (!pickupCounty){ pickupCounty = await countyByPlaceId(pickupPlace.place_id); }
-
-    let dropCounty = countyFrom(dropoffPlace);
-    if (!dropCounty){ dropCounty = await countyByPlaceId(dropoffPlace.place_id); }
-
-    const pickupInAllowed = countyIncludesAllowed(pickupCounty);
-    const dropInAllowed   = countyIncludesAllowed(dropCounty);
+    // Surcharge rules
+    const pickupAir = isAirport(pickupPlace);
+    let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
+    let dropCounty   = countyFrom(dropoffPlace) || await countyByPlaceId(dropoffPlace.place_id);
+    const pickupAllowed = countyIncludesAllowed(pickupCounty);
+    const dropAllowed   = countyIncludesAllowed(dropCounty);
 
     let surcharge = 0;
-    if (pickupIsAir) {
-      if (!dropInAllowed) {
-        const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-        surcharge = surchargeMiles * 3;
+    if (pickupAir){
+      if (!dropAllowed){
+        const m = await computeMilesFromBase(pickupPlace.place_id);
+        surcharge = m * 3;
       }
-    } else {
-      if (!pickupInAllowed) {
-        const surchargeMiles = await computePickupSurchargeMiles(pickupPlace.place_id);
-        surcharge = surchargeMiles * 3;
+    }else{
+      if (!pickupAllowed){
+        const m = await computeMilesFromBase(pickupPlace.place_id);
+        surcharge = m * 3;
       }
     }
 
     renderInfo(leg, basePrice, surcharge);
+    updateFlightVisibility(); // decide si mostrar el campo vuelo
 
-    // Show luggage + flight UI
-    document.getElementById("luggage-section").style.display = "block";
-    wireLuggage();
-    updateFlightVisibility();
-
-    document.getElementById("pay").style.display = "block";
+    const payBtn = document.getElementById("pay");
+    if (payBtn) payBtn.style.display = "block";
   }catch(err){
     alert("Could not calculate route: " + err);
   }
 });
 
-/* ========= Wire on load ========= */
-mountQuickPicks();
+/* ===== On load ===== */
+mountDateTimeUX();
 wireFlightValidation();
 </script>
-
-<!-- Google Maps loader (keep this after the script above) -->
+<!-- === Google Maps loader === -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 
-  
+</body>
+</html>
