@@ -70,6 +70,41 @@
     .note{opacity:.9; margin:6px 0 10px}
     .tags{display:flex; flex-wrap:wrap; gap:8px}
     .tag{font-size:.78rem; padding:6px 10px; border-radius:999px; background:#121212; border:1px solid rgba(192,139,92,.28); color:#e9d5c1;}
+    .tag--alert{ border-color:#e6b98e !important; box-shadow:0 0 12px rgba(192,139,92,.25) inset; }
+
+    /* ===== Capacity (Luxury Card) ===== */
+    .capacity-card{
+      margin-top:16px; padding:14px; border-radius:12px;
+      background:
+        radial-gradient(900px 300px at 15% -20%, rgba(192,139,92,.16), transparent 40%),
+        linear-gradient(180deg, #121212, #0b0b0b);
+      border:1px solid rgba(192,139,92,.28);
+      box-shadow:0 12px 28px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.02);
+      color:#e9d5c1;
+    }
+    .capacity-title{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; letter-spacing:.3px; margin:0 0 8px; font-size:1.02rem;
+    }
+    .capacity-title .dot{
+      width:8px; height:8px; border-radius:50%;
+      background: linear-gradient(180deg,#c08b5c,#a47347);
+      box-shadow:0 0 8px rgba(192,139,92,.5);
+    }
+    .capacity-sub{ opacity:.9; margin:0 0 12px; font-size:.9rem }
+    .cap-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width:520px){ .cap-grid{ grid-template-columns:1fr; } }
+    .cap-box{
+      background:#0f0f0f; border:1px solid rgba(192,139,92,.22);
+      border-radius:12px; padding:12px;
+    }
+    .cap-head{ font-weight:700; margin-bottom:8px; color:#ffddae; }
+    .cap-list{ margin:0; padding-left:18px; }
+    .cap-list li{ margin:4px 0; }
+    .capacity-foot{
+      margin-top:10px; font-size:.86rem; opacity:.85;
+      border-top:1px dashed rgba(192,139,92,.28); padding-top:10px;
+    }
 
     /* Email UX */
     .error{ color:#ff6b6b;font-size:.85em;margin-top:4px; display:none; }
@@ -284,14 +319,34 @@
           <div class="kpi"><div class="label">Price</div><div class="value price">$${total.toFixed(2)}</div></div>
         </div>
         ${breakdown}
-        <div class="note">🧳 Luggage included</div>
+
+        <!-- Luxury Capacity Card -->
+        <div class="capacity-card">
+          <div class="capacity-title"><span class="dot"></span> Luggage Capacity (informative)</div>
+          <p class="capacity-sub">For 1–5 passengers, choose the configuration that best fits your party:</p>
+          <div class="cap-grid">
+            <div class="cap-box">
+              <div class="cap-head">Option 1</div>
+              <ul class="cap-list">
+                <li>2 large suitcases + 3 small suitcases</li>
+                <li>Up to 5 ski bags <em>or</em> 5 golf clubs</li>
+              </ul>
+            </div>
+            <div class="cap-box">
+              <div class="cap-head">Option 2</div>
+              <ul class="cap-list">
+                <li>3 large suitcases</li>
+                <li>+ 5 carry-on bags</li>
+              </ul>
+            </div>
+          </div>
+          <div class="capacity-foot">Actual capacity may vary based on bag size, gear, and passenger load.</div>
+        </div>
+
         <div class="tags">
-          <span class="tag">6 ski bags</span>
-          <span class="tag">2 large + 3 small</span>
-          <span class="tag">or 3 large + 4 small</span>
           <span class="tag">Pet-friendly</span>
           <span class="tag">No extra charge</span>
-          ${surchargeApplied ? `<span class="tag">⚠️ Airport pickup surcharge</span>` : ``}
+          ${surchargeApplied ? `<span class="tag tag--alert">⚠️ Airport pickup surcharge</span>` : ``}
         </div>`;
     }
 
