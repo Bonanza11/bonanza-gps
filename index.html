@@ -189,6 +189,7 @@ function calculateBase(mi){
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
 function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+function parseHM(hm){ const [h,m]=hm.split(':').map(n=>parseInt(n,10)); return {h,h2:isNaN(h)?0:h, m:isNaN(m)?0:m}; }
 function isAfterHours(dateStr, timeStr){
   if(!dateStr || !timeStr) return false;
   const d = new Date(`${dateStr}T${timeStr}:00`);
@@ -282,11 +283,7 @@ function renderInfo(leg, base, surcharge, afterHours){
     <h3 class="info-title">Trip Summary</h3>
 
     <div class="turntable">
-      <img class="car"
-           src="/images/suburban.png"
-           alt="Black Chevrolet Suburban SUV"
-           onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,\
-<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22260%22 height=%22140%22 viewBox=%220 0 260 140%22><rect width=%22260%22 height=%22140%22 rx=%2212%22 fill=%22#0d0d0d%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22#ffddae%22 font-family=%22Arial%22 font-size=%2214%22>This will be your SUV</text></svg>';" />
+      <img class="car" src="suburban.png" alt="Black Chevrolet Suburban SUV" />
       <div class="platform"></div>
       <div class="vehicle-caption">This will be your SUV</div>
     </div>
@@ -343,7 +340,7 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
     const miles = leg.distance.value/1609.34;
     const basePrice = calculateBase(miles);
 
-    // Distance surcharge rules
+    // Distance surcharge rules (unchanged)
     let surcharge = 0;
     const pickupAir = isAirport(pickupPlace);
     let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
