@@ -79,14 +79,6 @@
     }
     .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
 
-    /* Flight field (green) */
-    #flightNumber{background:#1a1a1a;color:#9af59a;border:2px solid #2b6a29;border-radius:10px}
-
-    /* Luggage */
-    .luggage-option{background:#0e0e0e;border:1px solid rgba(192,139,92,.3);border-radius:10px;padding:10px;margin-top:8px;}
-    .luggage-title{font-weight:bold;color:#ffddae;margin-bottom:4px;}
-    .luggage-sub{font-size:.85rem;color:var(--copper);}
-
     /* Vehicle visual */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
@@ -107,10 +99,23 @@
       background:var(--copper);color:#000;border-color:var(--copper);
       box-shadow:0 0 0 3px rgba(168,116,79,.25)
     }
+
+    /* Terms box */
+    .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:12px;background:#0e0e0e}
+    .terms-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
+    .terms-summary .chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s}
+    .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
+    .terms-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.5}
+    .terms-box.open .terms-body{display:block}
+    .mini-accept{
+      display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid var(--copper);
+      background:linear-gradient(180deg,#cda07a,#a8744f);color:#000;font-weight:700;cursor:pointer
+    }
+    .mini-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+    .mini-checkbox{accent-color:#a8744f}
   </style>
 </head>
 <body>
-
 <header>
   <div class="logo-wrap">
     <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo">
@@ -160,8 +165,24 @@
       <button type="button" class="veh-btn" data-type="van" aria-pressed="false">Van (up to 12)</button>
     </div>
 
-    <!-- Sprinter capacity (only when VAN is selected) -->
-    <div id="van-luggage" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
+    <!-- Vehicle photo switches with selection -->
+    <div class="turntable">
+      <img class="car" id="vehicle-photo" src="/images/suburban.png" alt="Vehicle" />
+      <div class="platform"></div>
+      <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
+    </div>
+
+    <!-- SUV capacity (shown when SUV) -->
+    <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
+      <strong>SUV – Capacity Guide (1–5 passengers)</strong>
+      <ul style="margin:8px 0 0 18px">
+        <li>2 Large (28–32”) + 3 Small + 5 Ski/Golf, <em>or</em></li>
+        <li>3 Large (28–32”) + 5 Small</li>
+      </ul>
+    </div>
+
+    <!-- Sprinter capacity (shown when VAN) -->
+    <div id="van-luggage" style="display:none;margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
       <strong>Sprinter Van – Capacity Guide (12 passengers)</strong>
       <div style="margin-top:8px">
         <em>Option 1 – With Sports Equipment</em>
@@ -179,44 +200,30 @@
     </div>
   </div>
 
-  <label>Luggage Options:</label>
-  <div class="luggage-option">
-    <div class="luggage-title">2 Large Suitcases + 3 Small Bags + 5 Ski Bags/Golf Clubs</div>
-    <div class="luggage-sub">1–5 passengers</div>
-  </div>
-  <div class="luggage-option">
-    <div class="luggage-title">3 Large Suitcases + 5 Small Bags</div>
-    <div class="luggage-sub">1–5 passengers</div>
-  </div>
+  <!-- Eliminado: Luggage Options antiguo -->
 
   <button id="calculate">Calculate Price</button>
   <div id="map"></div>
 
   <div id="info"></div>
 
-  <!-- Terms acceptance -->
-  <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px">
-    <input type="checkbox" id="accept-terms" style="margin-top:3px">
-    <span>
-      I have read and accept the
-      <a href="#" id="open-terms" style="color:#a8744f;text-decoration:underline">Terms and Conditions</a>.
-      <br>
-      <small style="color:#a8744f;">Includes booking, rescheduling, and luggage policies.</small>
-    </span>
-  </label>
-
-  <!-- Terms Modal -->
-  <div id="terms-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center;padding:16px">
-    <div style="max-width:860px;max-height:80vh;overflow:auto;background:#111;border:1px solid #a8744f;border-radius:10px;padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <h2 style="margin:0;color:#a8744f">Terms and Conditions</h2>
-        <button id="close-terms" style="background:#222;border:1px solid #a8744f;color:#a8744f;border-radius:6px;padding:6px 10px;cursor:pointer">Close</button>
+  <!-- Terms 2-líneas + expandible -->
+  <div class="terms-box" id="termsBox">
+    <div class="terms-summary" id="toggleTerms">
+      <span class="chev"></span>
+      <div>
+        <div style="font-weight:700;color:#ffddae">Terms & Conditions</div>
+        <div style="opacity:.85;font-size:.9rem">By booking you accept our reschedule/cancel policy, luggage rules and client data responsibility.</div>
       </div>
-      <div id="terms-content" style="margin-top:12px;color:#e9d5c1;font-size:.95rem;line-height:1.5">
+    </div>
+    <div class="terms-body" id="termsBody">
+      <div id="terms-content">
         <!-- Pega aquí el texto completo aprobado (EN/ES). -->
       </div>
-      <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px">
-        <button id="agree-terms" style="background:#a8744f;border:none;color:#000;border-radius:6px;padding:8px 12px;cursor:pointer">I Agree</button>
+      <div class="mini-row">
+        <input type="checkbox" id="accept-terms" class="mini-checkbox">
+        <label for="accept-terms" style="margin:0">I have read and accept</label>
+        <button id="agree-terms" class="mini-accept" type="button">Accept</button>
       </div>
     </div>
   </div>
@@ -224,13 +231,15 @@
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
 <script>
+/* ===== Config ===== */
+const SUV_IMG = "/images/suburban.png";
+const VAN_IMG = "/images/van-sprinter.jpg"; // ← CAMBIA esta ruta a tu foto real
+
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
-
-/* Vehicle selector */
 let selectedVehicle = 'suv';
 
 /* ===== Operating hours ===== */
@@ -347,11 +356,15 @@ function wireFlightValidation(){
   });
 }
 
-/* ===== Vehicle selector wiring ===== */
+/* ===== Vehicle selector wiring + photo & guides ===== */
 (function wireVehicleSelector(){
   const suv = document.querySelector('.veh-btn[data-type="suv"]');
   const van = document.querySelector('.veh-btn[data-type="van"]');
-  const card = document.getElementById('van-luggage');
+  const vanGuide = document.getElementById('van-luggage');
+  const suvGuide = document.getElementById('suv-luggage');
+  const photo = document.getElementById('vehicle-photo');
+  const caption = document.getElementById('vehicle-caption');
+
   function setVehicle(type){
     selectedVehicle = type;
     [suv,van].forEach(b=>{
@@ -359,7 +372,11 @@ function wireFlightValidation(){
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', String(on));
     });
-    if(card) card.style.display = (type==='van'?'block':'none');
+    const isVan = (type==='van');
+    if(vanGuide) vanGuide.style.display = isVan ? 'block' : 'none';
+    if(suvGuide) suvGuide.style.display = isVan ? 'none' : 'block';
+    if(photo) photo.src = isVan ? VAN_IMG : SUV_IMG;
+    if(caption) caption.textContent = isVan ? 'This will be your Van' : 'This will be your SUV';
     recalcFromCache();
   }
   suv?.addEventListener('click', ()=> setVehicle('suv'));
@@ -371,10 +388,8 @@ function wireFlightValidation(){
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
 
-  // Desactivamos fee fuera de horario según política actual
-  const ahFee = 0;
+  const ahFee = 0; // sin off-hours
 
-  // cache para recálculos (SUV/VAN)
   window.__lastBase = base;
   window.__lastSurcharge = surcharge;
   window.__lastAhFee = ahFee;
@@ -385,12 +400,6 @@ function renderInfo(leg, base, surcharge, afterHours){
   el.style.display = "block";
   el.innerHTML = `
     <h3 class="info-title">Trip Summary</h3>
-    <div class="turntable">
-      <img class="car" src="/images/suburban.png" alt="Black Chevrolet Suburban SUV" />
-      <div class="platform"></div>
-      <div class="vehicle-caption">${selectedVehicle==='van'?'This will be your Van':'This will be your SUV'}</div>
-    </div>
-    <p class="info-sub">${selectedVehicle==='van'?'Sprinter Van · up to 12 passengers':'Private Black Suburban · 1–5 passengers'}</p>
     <div class="kpis">
       <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
       <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
@@ -458,28 +467,35 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
     renderInfo(leg, basePrice, surcharge, afterHours);
     document.getElementById("pay").style.display = "block";
+    syncPayBtn();
   }catch(err){
     alert("Could not calculate route: " + err);
   }
 });
 
-/* ===== Terms modal & gating ===== */
-const openTerms = document.getElementById('open-terms');
-const termsModal = document.getElementById('terms-modal');
-const closeTerms = document.getElementById('close-terms');
-const agreeTerms = document.getElementById('agree-terms');
+/* ===== Terms box (2 líneas) & gating ===== */
+const termsBox = document.getElementById('termsBox');
+const toggleTerms = document.getElementById('toggleTerms');
+const termsBody = document.getElementById('termsBody');
 const acceptTerms = document.getElementById('accept-terms');
+const agreeTerms = document.getElementById('agree-terms');
 const payBtn = document.getElementById('pay');
 
 function syncPayBtn(){
   if (!payBtn) return;
-  payBtn.disabled = !acceptTerms.checked;
-  payBtn.style.opacity = payBtn.disabled ? .5 : 1;
-  payBtn.style.cursor = payBtn.disabled ? 'not-allowed' : 'pointer';
+  const ready = !!window.__lastQuotedTotal && acceptTerms?.checked;
+  payBtn.disabled = !ready;
+  payBtn.style.opacity = ready ? 1 : .5;
+  payBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
 }
-openTerms?.addEventListener('click', (e)=>{ e.preventDefault(); termsModal.style.display='flex'; });
-closeTerms?.addEventListener('click', ()=> termsModal.style.display='none');
-agreeTerms?.addEventListener('click', ()=> { acceptTerms.checked = true; syncPayBtn(); termsModal.style.display='none'; });
+toggleTerms?.addEventListener('click', ()=>{
+  termsBox.classList.toggle('open');
+  syncPayBtn();
+});
+agreeTerms?.addEventListener('click', ()=>{
+  if(acceptTerms){ acceptTerms.checked = true; }
+  syncPayBtn();
+});
 acceptTerms?.addEventListener('change', syncPayBtn);
 
 /* ===== Confirmation number + PAY handler (stub) ===== */
