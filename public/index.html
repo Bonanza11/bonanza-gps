@@ -6,9 +6,7 @@
   <title>Bonanza Transportation</title>
 
   <style>
-    :root {
-      --copper: #a8744f; /* Cobre más oscuro */
-    }
+    :root{ --copper:#a8744f; }
 
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:var(--copper);font-family:Arial,sans-serif}
@@ -27,20 +25,12 @@
     /* Layout */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
-    input, select{
+    input,select{
       display:block;width:100%;height:44px;padding:10px 12px;
       background:#1a1a1a;color:var(--copper);border:1px solid #444;border-radius:8px;
     }
-    /* Campos Full Name y Email con mismo estilo */
-    input[type="text"],
-    input[type="email"] {
-      background: #1a1a1a;
-      color: var(--copper);
-    }
-    input:valid {
-      background: #1a1a1a;
-      color: var(--copper);
-    }
+    input[type="text"],input[type="email"]{background:#1a1a1a;color:var(--copper)}
+    input:valid{background:#1a1a1a;color:var(--copper)}
 
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
@@ -54,18 +44,16 @@
     }
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
 
-    /* Trip Summary panel */
+    /* Trip Summary */
     #info{
-      display:none;
-      margin-top:18px;border-radius:16px;padding:18px;
-      background:linear-gradient(180deg, #121212, #0b0b0b);
-      border:1px solid rgba(192,139,92,.28);
-      box-shadow:0 18px 40px rgba(0,0,0,.55);
+      display:none;margin-top:18px;border-radius:16px;padding:18px;
+      background:linear-gradient(180deg,#121212,#0b0b0b);
+      border:1px solid rgba(192,139,92,.28);box-shadow:0 18px 40px rgba(0,0,0,.55);
       color:#e9d5c1;font-size:.95em;
     }
     .info-title{font-weight:800;margin:0 0 4px;font-size:1.05rem}
     .info-sub{opacity:.85;margin:0 0 12px;font-size:.9rem}
-    .kpis{display:grid;grid-template-columns: repeat(3, 1fr);gap:12px;margin:10px 0 12px;}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 12px;}
     .kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:12px;}
     .kpi .label{font-size:.75rem;opacity:.8;margin-bottom:6px}
     .kpi .value{font-size:1.35rem;font-weight:800;color:#f0d1ad}
@@ -76,8 +64,8 @@
     .breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
     .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
 
-    /* Date/Time – more visible */
-    .input-row{display:grid;grid-template-columns: 1fr 1fr;gap:12px;}
+    /* Date/Time */
+    .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
     #date,#time{
       height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
@@ -86,7 +74,7 @@
     #date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="time"]::-webkit-calendar-picker-indicator{
-      filter: invert(80%) sepia(20%) saturate(180%) hue-rotate(340deg) brightness(110%);
+      filter:invert(80%) sepia(20%) saturate(180%) hue-rotate(340deg) brightness(110%);
       opacity:.95;cursor:pointer;
     }
     .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
@@ -97,20 +85,28 @@
     /* Luggage */
     .luggage-option{background:#0e0e0e;border:1px solid rgba(192,139,92,.3);border-radius:10px;padding:10px;margin-top:8px;}
     .luggage-title{font-weight:bold;color:#ffddae;margin-bottom:4px;}
-    .luggage-sub{font-size:0.85rem;color:var(--copper);}
+    .luggage-sub{font-size:.85rem;color:var(--copper);}
 
-    /* SUV static */
+    /* Vehicle visual */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
-    .turntable .car{
-      width:260px; height:auto;
-      filter: drop-shadow(0 12px 18px rgba(0,0,0,.6));
-    }
+    .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
     .turntable .platform{
-      width:220px; height:22px; border-radius:50%;
+      width:220px;height:22px;border-radius:50%;
       background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
       margin-top:6px;
     }
     .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
+
+    /* Vehicle selector */
+    .veh-toggle{display:flex;gap:8px;margin:10px 0}
+    .veh-btn{
+      flex:1 1 0;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);
+      color:var(--copper);padding:12px;border-radius:10px;cursor:pointer;font-weight:700
+    }
+    .veh-btn.active{
+      background:var(--copper);color:#000;border-color:var(--copper);
+      box-shadow:0 0 0 3px rgba(168,116,79,.25)
+    }
   </style>
 </head>
 <body>
@@ -120,13 +116,14 @@
     <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo">
   </div>
 </header>
-
 <main>
   <label for="fullname">Full Name:</label>
   <input id="fullname" type="text" placeholder="e.g. John Doe" required />
 
   <label for="phone">Phone Number:</label>
-  <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567" pattern="^\+?1\s?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$" title="Enter a valid US phone number" required />
+  <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567"
+         pattern="^\+?1\s?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$"
+         title="Enter a valid US phone number" required />
 
   <label for="email">Email Address:</label>
   <input id="email" type="email" placeholder="you@example.com" required />
@@ -136,7 +133,8 @@
 
   <label for="dropoff">Drop-off Address:</label>
   <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
-    <div id="flightContainer" style="display:none;">
+
+  <div id="flightContainer" style="display:none;">
     <label for="flightNumber">Flight Number:</label>
     <input id="flightNumber" placeholder="e.g. DL1234" />
   </div>
@@ -151,6 +149,33 @@
       <label for="time">Time:</label>
       <input id="time" type="time" step="900" />
       <div id="timeHelp" class="helper"></div>
+    </div>
+  </div>
+
+  <!-- Vehicle Type -->
+  <div id="vehicle-type">
+    <label style="display:block;margin:12px 0 6px;font-weight:700">Vehicle</label>
+    <div class="veh-toggle">
+      <button type="button" class="veh-btn active" data-type="suv" aria-pressed="true">SUV (1–5)</button>
+      <button type="button" class="veh-btn" data-type="van" aria-pressed="false">Van (up to 12)</button>
+    </div>
+
+    <!-- Sprinter capacity (only when VAN is selected) -->
+    <div id="van-luggage" style="display:none;margin-top:12px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
+      <strong>Sprinter Van – Capacity Guide (12 passengers)</strong>
+      <div style="margin-top:8px">
+        <em>Option 1 – With Sports Equipment</em>
+        <ul style="margin:6px 0 10px 18px">
+          <li>8 sports equipment items (ski bags or golf bags)</li>
+          <li>8 large suitcases (28–32”)</li>
+          <li>Carry-on: 1 per passenger (backpack or small bag)</li>
+        </ul>
+        <em>Option 2 – Without Sports Equipment</em>
+        <ul style="margin:6px 0 0 18px">
+          <li>12–14 large suitcases (28–32”)</li>
+          <li>Carry-on: 1 per passenger (backpack or small bag)</li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -169,15 +194,44 @@
 
   <div id="info"></div>
 
+  <!-- Terms acceptance -->
+  <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px">
+    <input type="checkbox" id="accept-terms" style="margin-top:3px">
+    <span>
+      I have read and accept the
+      <a href="#" id="open-terms" style="color:#a8744f;text-decoration:underline">Terms and Conditions</a>.
+      <br>
+      <small style="color:#a8744f;">Includes booking, rescheduling, and luggage policies.</small>
+    </span>
+  </label>
+
+  <!-- Terms Modal -->
+  <div id="terms-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="max-width:860px;max-height:80vh;overflow:auto;background:#111;border:1px solid #a8744f;border-radius:10px;padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h2 style="margin:0;color:#a8744f">Terms and Conditions</h2>
+        <button id="close-terms" style="background:#222;border:1px solid #a8744f;color:#a8744f;border-radius:6px;padding:6px 10px;cursor:pointer">Close</button>
+      </div>
+      <div id="terms-content" style="margin-top:12px;color:#e9d5c1;font-size:.95rem;line-height:1.5">
+        <!-- Pega aquí el texto completo aprobado (EN/ES). -->
+      </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px">
+        <button id="agree-terms" style="background:#a8744f;border:none;color:#000;border-radius:6px;padding:8px 12px;cursor:pointer">I Agree</button>
+      </div>
+    </div>
+  </div>
+
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
-
 <script>
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
+
+/* Vehicle selector */
+let selectedVehicle = 'suv';
 
 /* ===== Operating hours ===== */
 const OPERATING_START = "06:00";
@@ -191,6 +245,21 @@ function calculateBase(mi){
   if (mi <= 48) return 230;
   if (mi <= 55) return 250;
   return mi * 5.4;
+}
+function applyVehicleMultiplier(total){
+  return (selectedVehicle === 'van') ? Math.round(total * 1.30) : total;
+}
+function recalcFromCache(){
+  const el = document.getElementById('info');
+  if (!el || window.__lastBase == null) return;
+  const base = window.__lastBase, surcharge = window.__lastSurcharge||0, ahFee = window.__lastAhFee||0;
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+  const priceEl = el.querySelector('.kpi .value.price');
+  const totalEl = el.querySelector('.row.total span:last-child');
+  if (priceEl) priceEl.textContent = `$${finalTotal.toFixed(2)}`;
+  if (totalEl) totalEl.textContent = `$${finalTotal.toFixed(2)}`;
+  window.__lastQuotedTotal = finalTotal;
+  window.__vehicleType = selectedVehicle;
 }
 
 /* ===== Time helpers ===== */
@@ -278,11 +347,39 @@ function wireFlightValidation(){
   });
 }
 
+/* ===== Vehicle selector wiring ===== */
+(function wireVehicleSelector(){
+  const suv = document.querySelector('.veh-btn[data-type="suv"]');
+  const van = document.querySelector('.veh-btn[data-type="van"]');
+  const card = document.getElementById('van-luggage');
+  function setVehicle(type){
+    selectedVehicle = type;
+    [suv,van].forEach(b=>{
+      const on = b.dataset.type===type;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    if(card) card.style.display = (type==='van'?'block':'none');
+    recalcFromCache();
+  }
+  suv?.addEventListener('click', ()=> setVehicle('suv'));
+  van?.addEventListener('click', ()=> setVehicle('van'));
+  setVehicle('suv');
+})();
+
 /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
-  const ahFee = afterHours ? (base + surcharge) * 0.25 : 0;
-  const total = base + surcharge + ahFee;
+
+  // Desactivamos fee fuera de horario según política actual
+  const ahFee = 0;
+
+  // cache para recálculos (SUV/VAN)
+  window.__lastBase = base;
+  window.__lastSurcharge = surcharge;
+  window.__lastAhFee = ahFee;
+
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
 
   const el = document.getElementById("info");
   el.style.display = "block";
@@ -291,23 +388,26 @@ function renderInfo(leg, base, surcharge, afterHours){
     <div class="turntable">
       <img class="car" src="/images/suburban.png" alt="Black Chevrolet Suburban SUV" />
       <div class="platform"></div>
-      <div class="vehicle-caption">This will be your SUV</div>
+      <div class="vehicle-caption">${selectedVehicle==='van'?'This will be your Van':'This will be your SUV'}</div>
     </div>
-    <p class="info-sub">Private Black Suburban · 1–5 passengers</p>
+    <p class="info-sub">${selectedVehicle==='van'?'Sprinter Van · up to 12 passengers':'Private Black Suburban · 1–5 passengers'}</p>
     <div class="kpis">
       <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
       <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
-      <div class="kpi"><div class="label">Price</div><div class="value price">$${total.toFixed(2)}</div></div>
+      <div class="kpi"><div class="label">Price</div><div class="value price">$${finalTotal.toFixed(2)}</div></div>
     </div>
     <div class="divider"></div>
     <div class="breakdown">
       <div class="row"><span>Base Fare</span><span>$${base.toFixed(2)}</span></div>
       ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ""}
-      ${ahFee>0 ? `<div class="row"><span>Off-Hours Fee (25%)</span><span>$${ahFee.toFixed(2)}</span></div>` : ""}
       <div class="divider"></div>
-      <div class="row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+      <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
     </div>
   `;
+
+  window.__lastQuotedTotal = finalTotal;
+  window.__lastDistanceMiles = miles;
+  window.__vehicleType = selectedVehicle;
 }
 
 /* ===== Init Google Maps ===== */
@@ -342,16 +442,19 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
     const miles = leg.distance.value/1609.34;
     const basePrice = calculateBase(miles);
     let surcharge = 0;
+
     const pickupAir = isAirport(pickupPlace);
     let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
     let dropCounty   = countyFrom(dropoffPlace) || await countyByPlaceId(dropoffPlace.place_id);
     const pickupAllowed = countyIncludesAllowed(pickupCounty);
     const dropAllowed   = countyIncludesAllowed(dropCounty);
+
     if (pickupAir){
       if (!dropAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }else{
       if (!pickupAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }
+
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
     renderInfo(leg, basePrice, surcharge, afterHours);
     document.getElementById("pay").style.display = "block";
@@ -360,9 +463,57 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
   }
 });
 
+/* ===== Terms modal & gating ===== */
+const openTerms = document.getElementById('open-terms');
+const termsModal = document.getElementById('terms-modal');
+const closeTerms = document.getElementById('close-terms');
+const agreeTerms = document.getElementById('agree-terms');
+const acceptTerms = document.getElementById('accept-terms');
+const payBtn = document.getElementById('pay');
+
+function syncPayBtn(){
+  if (!payBtn) return;
+  payBtn.disabled = !acceptTerms.checked;
+  payBtn.style.opacity = payBtn.disabled ? .5 : 1;
+  payBtn.style.cursor = payBtn.disabled ? 'not-allowed' : 'pointer';
+}
+openTerms?.addEventListener('click', (e)=>{ e.preventDefault(); termsModal.style.display='flex'; });
+closeTerms?.addEventListener('click', ()=> termsModal.style.display='none');
+agreeTerms?.addEventListener('click', ()=> { acceptTerms.checked = true; syncPayBtn(); termsModal.style.display='none'; });
+acceptTerms?.addEventListener('change', syncPayBtn);
+
+/* ===== Confirmation number + PAY handler (stub) ===== */
+function generateConfirmationNumber(){
+  const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  const rand=Math.random().toString(36).slice(2,6).toUpperCase();
+  return `BZ-${y}${m}${day}-${rand}`;
+}
+payBtn?.addEventListener('click', async ()=>{
+  if(!acceptTerms.checked){ alert('Please accept Terms to proceed.'); return; }
+  const payload = {
+    fullname: document.getElementById('fullname').value,
+    phone: document.getElementById('phone').value,
+    email: document.getElementById('email').value,
+    pickup: document.getElementById('pickup').value,
+    dropoff: document.getElementById('dropoff').value,
+    date: document.getElementById('date').value,
+    time: document.getElementById('time').value,
+    flightNumber: document.getElementById('flightNumber').value || null,
+    vehicleType: window.__vehicleType || selectedVehicle || 'suv',
+    distanceMiles: window.__lastDistanceMiles || null,
+    quotedTotal: window.__lastQuotedTotal || null,
+    confirmationNumber: generateConfirmationNumber(),
+    acceptedTermsAt: new Date().toISOString()
+  };
+  console.log('PAYLOAD →', payload);
+  alert(`Your confirmation number is ${payload.confirmationNumber}`);
+  // TODO: integrar con /api/create-checkout-session
+});
+
 /* ===== On load ===== */
 mountDateTime();
 wireFlightValidation();
+syncPayBtn();
 </script>
 
 <!-- Google Maps loader -->
