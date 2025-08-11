@@ -101,18 +101,19 @@
     }
 
     /* Terms box */
-    .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:12px;background:#0e0e0e}
+    .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .terms-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
     .terms-summary .chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s}
     .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
     .terms-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.5}
     .terms-box.open .terms-body{display:block}
     .mini-accept{
-      display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid var(--copper);
-      background:linear-gradient(180deg,#cda07a,#a8744f);color:#000;font-weight:700;cursor:pointer
+      display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--copper);
+      background:linear-gradient(180deg,#cda07a,#a8744f);color:#000;font-weight:700;cursor:pointer;font-size:.85rem
     }
     .mini-row{display:flex;align-items:center;gap:10px;margin-top:10px}
-    .mini-checkbox{accent-color:#a8744f}
+    .mini-checkbox{width:16px;height:16px;accent-color:#a8744f}
+    small.note{display:block;margin-top:6px;color:#ffddae;opacity:.9}
   </style>
 </head>
 <body>
@@ -172,16 +173,25 @@
       <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
     </div>
 
-    <!-- SUV capacity (shown when SUV) -->
+    <!-- SUV capacity (Option 1 / Option 2) -->
     <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
       <strong>SUV – Capacity Guide (1–5 passengers)</strong>
-      <ul style="margin:8px 0 0 18px">
-        <li>2 Large (28–32”) + 3 Small + 5 Ski/Golf, <em>or</em></li>
-        <li>3 Large (28–32”) + 5 Small</li>
-      </ul>
+      <div style="margin-top:8px">
+        <em>Option 1 – With Sports Equipment</em>
+        <ul style="margin:6px 0 10px 18px">
+          <li>2 large suitcases (28–32”)</li>
+          <li>3 small bags</li>
+          <li>Up to 5 ski bags or golf bags</li>
+        </ul>
+        <em>Option 2 – Without Sports Equipment</em>
+        <ul style="margin:6px 0 0 18px">
+          <li>3 large suitcases (28–32”)</li>
+          <li>5 small bags</li>
+        </ul>
+      </div>
     </div>
 
-    <!-- Sprinter capacity (shown when VAN) -->
+    <!-- Sprinter capacity -->
     <div id="van-luggage" style="display:none;margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
       <strong>Sprinter Van – Capacity Guide (12 passengers)</strong>
       <div style="margin-top:8px">
@@ -198,42 +208,40 @@
         </ul>
       </div>
     </div>
-  </div>
 
-  <!-- Eliminado: Luggage Options antiguo -->
+    <!-- Terms 2 líneas justo debajo del caption -->
+    <div class="terms-box" id="termsBox">
+      <div class="terms-summary" id="toggleTerms">
+        <span class="chev"></span>
+        <div>
+          <div style="font-weight:700;color:#ffddae">Terms & Conditions</div>
+          <div style="opacity:.85;font-size:.9rem">Please review our reschedule/cancel policy and luggage rules. Tick the box to proceed.</div>
+        </div>
+      </div>
+      <div class="terms-body" id="termsBody">
+        <div id="terms-content">
+          <!-- Pega aquí el texto completo aprobado (EN/ES). -->
+        </div>
+        <div class="mini-row">
+          <input type="checkbox" id="accept-terms" class="mini-checkbox" checked>
+          <label for="accept-terms" style="margin:0">I have read and accept</label>
+          <button id="agree-terms" class="mini-accept" type="button">Accept</button>
+        </div>
+        <small class="note">You must keep the box checked to pay.</small>
+      </div>
+    </div>
+  </div>
 
   <button id="calculate">Calculate Price</button>
   <div id="map"></div>
-
   <div id="info"></div>
-
-  <!-- Terms 2-líneas + expandible -->
-  <div class="terms-box" id="termsBox">
-    <div class="terms-summary" id="toggleTerms">
-      <span class="chev"></span>
-      <div>
-        <div style="font-weight:700;color:#ffddae">Terms & Conditions</div>
-        <div style="opacity:.85;font-size:.9rem">By booking you accept our reschedule/cancel policy, luggage rules and client data responsibility.</div>
-      </div>
-    </div>
-    <div class="terms-body" id="termsBody">
-      <div id="terms-content">
-        <!-- Pega aquí el texto completo aprobado (EN/ES). -->
-      </div>
-      <div class="mini-row">
-        <input type="checkbox" id="accept-terms" class="mini-checkbox">
-        <label for="accept-terms" style="margin:0">I have read and accept</label>
-        <button id="agree-terms" class="mini-accept" type="button">Accept</button>
-      </div>
-    </div>
-  </div>
-
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
+
 <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
-const VAN_IMG = "/images/van-sprinter.jpg"; // ← CAMBIA esta ruta a tu foto real
+const VAN_IMG = "/images/van-sprinter.png"; // ← tu archivo real
 
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
@@ -387,7 +395,6 @@ function wireFlightValidation(){
 /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
-
   const ahFee = 0; // sin off-hours
 
   window.__lastBase = base;
@@ -413,7 +420,6 @@ function renderInfo(leg, base, surcharge, afterHours){
       <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
     </div>
   `;
-
   window.__lastQuotedTotal = finalTotal;
   window.__lastDistanceMiles = miles;
   window.__vehicleType = selectedVehicle;
@@ -464,8 +470,7 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
       if (!pickupAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }
 
-    const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
-    renderInfo(leg, basePrice, surcharge, afterHours);
+    renderInfo(leg, basePrice, surcharge, false);
     document.getElementById("pay").style.display = "block";
     syncPayBtn();
   }catch(err){
@@ -476,7 +481,6 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
 /* ===== Terms box (2 líneas) & gating ===== */
 const termsBox = document.getElementById('termsBox');
 const toggleTerms = document.getElementById('toggleTerms');
-const termsBody = document.getElementById('termsBody');
 const acceptTerms = document.getElementById('accept-terms');
 const agreeTerms = document.getElementById('agree-terms');
 const payBtn = document.getElementById('pay');
@@ -488,14 +492,8 @@ function syncPayBtn(){
   payBtn.style.opacity = ready ? 1 : .5;
   payBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
 }
-toggleTerms?.addEventListener('click', ()=>{
-  termsBox.classList.toggle('open');
-  syncPayBtn();
-});
-agreeTerms?.addEventListener('click', ()=>{
-  if(acceptTerms){ acceptTerms.checked = true; }
-  syncPayBtn();
-});
+toggleTerms?.addEventListener('click', ()=> termsBox.classList.toggle('open'));
+agreeTerms?.addEventListener('click', ()=>{ acceptTerms.checked = true; syncPayBtn(); });
 acceptTerms?.addEventListener('change', syncPayBtn);
 
 /* ===== Confirmation number + PAY handler (stub) ===== */
