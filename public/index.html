@@ -37,6 +37,10 @@
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
       animation:pulse 2.5s infinite ease-in-out;
     }
+    button:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
     @keyframes pulse{
       0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.5)}
       50%{transform:scale(1.02); box-shadow:0 0 0 8px rgba(192,139,92,0)}
@@ -77,8 +81,7 @@
       opacity:.95;cursor:pointer;
     }
     .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
-
-    /* Vehicle visual */
+        /* Vehicle visual */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
     .turntable .platform{
@@ -101,15 +104,20 @@
 
     /* Terms compact box (en el formulario) */
     .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
-    .terms-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
-    .terms-summary .chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s}
+    .terms-summary{
+      display:flex;align-items:center;gap:10px;cursor:pointer;
+    }
+    .terms-summary .chev{
+      width:10px;height:10px;border-right:2px solid var(--copper);
+      border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto;
+    }
     .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
     .terms-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.5}
     .terms-box.open .terms-body{display:block}
 
-    /* Switch reutilizable */
+    /* Switch reutilizable (único switch, a la izquierda del texto) */
     .accept-pill{
-      margin-left:auto;min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
+      min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
       display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
     }
     .accept-dot{
@@ -125,26 +133,9 @@
     .hint.warn{color:var(--warn)}
     .hint.err{color:var(--err)}
     .hint.ok{color:var(--ok)}
-
-    /* Botón flotante top-left */
-    #termsFloating{
-      position:fixed;top:10px;left:10px;z-index:9999;
-      background:#0e0e0e;border:1px solid rgba(168,116,79,.45);
-      border-radius:12px;padding:6px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;
-      box-shadow:0 8px 18px rgba(0,0,0,.45);
-    }
-    #termsFloating .label{font-size:.85rem;color:#ffddae}
   </style>
 </head>
 <body>
-  <!-- Botón flotante de Términos (esquina superior izquierda) -->
-  <div id="termsFloating" title="Terms & Conditions">
-    <span class="label">Terms & Conditions</span>
-    <div id="acceptPillFloating" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0">
-      <div class="accept-dot"></div>
-    </div>
-  </div>
-
   <header>
     <div class="logo-wrap">
       <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo">
@@ -243,23 +234,20 @@
       <!-- Terms compact line (en el formulario) -->
       <div class="terms-box" id="termsBox">
         <div class="terms-summary" id="toggleTerms">
-          <span class="chev"></span>
-          <div>
-            <div style="font-weight:700;color:#ffddae">Terms & Conditions</div>
-            <div style="opacity:.85;font-size:.9rem;max-height:2.8em;overflow:hidden">
-              By booking you accept our reschedule/cancel policy, luggage rules and data responsibility.
-            </div>
-          </div>
-          <!-- Switch de aceptación principal -->
+          <!-- ÚNICO SWITCH A LA IZQUIERDA DEL TEXTO -->
           <div id="acceptPill" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0" title="Tap to accept">
             <div class="accept-dot"></div>
           </div>
+
+          <div class="accept-label">Terms & Conditions</div>
+          <span class="chev"></span>
         </div>
+
         <div class="terms-body" id="termsBody">
           <div id="terms-content">
             <strong>Terms and Conditions</strong><br>
             Bonanza Transportation<br>
-            Last updated: [Date]<br><br>
+            Last updated: 2024<br><br>
             <hr>
             <h4>1. Introduction and Acceptance</h4>
             <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
@@ -311,8 +299,7 @@
         </div>
       </div>
     </div> <!-- /vehicle-type -->
-
-    <button id="calculate">Calculate Price</button>
+        <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <div id="info"></div>
     <button id="pay" style="display:none;">PAY NOW</button>
@@ -391,8 +378,7 @@ function mountDateTime(){
   timeEl?.addEventListener('change', update);
   update();
 }
-
-/* ===== Places ===== */
+    /* ===== Places ===== */
 function isAirport(place){
   const t = place?.types || [];
   const addr = (place?.formatted_address || "").toLowerCase();
@@ -509,7 +495,7 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__lastQuotedTotal = finalTotal;
   window.__lastDistanceMiles = miles;
   window.__vehicleType = selectedVehicle;
-  syncPayBtn();
+  syncButtons();
 }
 
 /* ===== Init Google Maps ===== */
@@ -527,50 +513,33 @@ function initMap(){
 }
 window.initMap = initMap;
 
-/* ===== Aceptación de términos: sincronizar 2 switches (flotante y en caja) ===== */
-const termsBox = document.getElementById('termsBox');
-const toggleTerms = document.getElementById('toggleTerms');
-const acceptPill  = document.getElementById('acceptPill');            // en el formulario
-const acceptPillFloating = document.getElementById('acceptPillFloating'); // flotante top-left
+/* ===== Aceptación de términos ===== */
+const acceptPill  = document.getElementById('acceptPill'); 
+const calcBtn = document.getElementById('calculate');
 const payBtn = document.getElementById('pay');
 
 function setAcceptedState(on){
-  [acceptPill, acceptPillFloating].forEach(p=>{
-    if(!p) return;
-    p.classList.toggle('on', on);
-    p.setAttribute('aria-checked', on ? 'true' : 'false');
-  });
-  syncPayBtn();
+  if(!acceptPill) return;
+  acceptPill.classList.toggle('on', on);
+  acceptPill.setAttribute('aria-checked', on ? 'true' : 'false');
+  syncButtons();
 }
-function isAccepted(){ return acceptPill?.classList.contains('on') || acceptPillFloating?.classList.contains('on'); }
-
-toggleTerms?.addEventListener('click', (e)=>{
-  if(e.target.closest('#acceptPill')) return; // no interferir con clic al switch
-  termsBox.classList.toggle('open');
-});
+function isAccepted(){ return acceptPill?.classList.contains('on'); }
+function syncButtons(){
+  const accepted = isAccepted();
+  calcBtn.disabled = !accepted;
+  const readyPay = !!window.__lastQuotedTotal && accepted;
+  payBtn.disabled = !readyPay;
+  payBtn.style.opacity = readyPay ? 1 : .5;
+  payBtn.style.cursor = readyPay ? 'pointer' : 'not-allowed';
+}
 acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
 acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
-acceptPillFloating?.addEventListener('click', (e)=>{
-  if(!termsBox.classList.contains('open')) termsBox.classList.add('open'); // al tocar el flotante, abre los términos
-  setAcceptedState(!isAccepted());
-});
-acceptPillFloating?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
-
-/* ===== Gating de botones ===== */
-function syncPayBtn(){
-  const accepted = isAccepted();
-  const ready = !!window.__lastQuotedTotal && accepted;
-  payBtn.disabled = !ready;
-  payBtn.style.opacity = ready ? 1 : .5;
-  payBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
-}
 
 /* ===== Calculate button ===== */
-document.getElementById("calculate").addEventListener("click", async ()=>{
+calcBtn.addEventListener("click", async ()=>{
   if (!isAccepted()){
     alert("Please accept Terms & Conditions first.");
-    // asegura que el usuario vea la caja de términos
-    termsBox?.classList.add('open');
     return;
   }
   if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
@@ -603,7 +572,7 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
 
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
     renderInfo(leg, basePrice, surcharge, afterHours);
-    document.getElementById("pay").style.display = "block";
+    payBtn.style.display = "block";
   }catch(err){
     alert("Could not calculate route: " + err);
   }
@@ -654,7 +623,7 @@ function generateConfirmationNumber(){
   const rand=Math.random().toString(36).slice(2,6).toUpperCase();
   return `BZ-${y}${m}${day}-${rand}`;
 }
-document.getElementById('pay')?.addEventListener('click', async ()=>{
+payBtn?.addEventListener('click', async ()=>{
   if(!isAccepted()){ alert('Please accept Terms to proceed.'); return; }
   const payload = {
     fullname: document.getElementById('fullname').value,
@@ -679,13 +648,7 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
 /* ===== On load ===== */
 mountDateTime();
 wireFlightValidation();
-syncPayBtn();
-
-/* ===== Scroll al tocar el contenedor flotante (abre términos) ===== */
-document.getElementById('termsFloating')?.addEventListener('click', ()=>{
-  termsBox?.classList.add('open');
-  document.getElementById('termsBox')?.scrollIntoView({behavior:'smooth', block:'center'});
-});
+syncButtons();
 </script>
 <!-- Google Maps loader -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
