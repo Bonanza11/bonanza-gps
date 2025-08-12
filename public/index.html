@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
   <title>Bonanza Transportation</title>
 
   <style>
-    :root{ --copper:#a8744f; }
+    :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
 
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:#000;color:var(--copper);font-family:Arial,sans-serif}
@@ -52,7 +52,6 @@
       color:#e9d5c1;font-size:.95em;
     }
     .info-title{font-weight:800;margin:0 0 4px;font-size:1.05rem}
-    .info-sub{opacity:.85;margin:0 0 12px;font-size:.9rem}
     .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 12px;}
     .kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:12px;}
     .kpi .label{font-size:.75rem;opacity:.8;margin-bottom:6px}
@@ -100,36 +99,48 @@
       box-shadow:0 0 0 3px rgba(168,116,79,.25)
     }
 
-    /* Terms box */
+    /* Terms compact box */
     .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .terms-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
     .terms-summary .chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s}
     .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
     .terms-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.5}
     .terms-box.open .terms-body{display:block}
-    .mini-accept{
-      display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--copper);
-      background:linear-gradient(180deg,#cda07a,#a8744f);color:#000;font-weight:700;cursor:pointer;font-size:.85rem
+
+    /* Accept pill (a la derecha de “Terms”) */
+    .accept-pill{
+      margin-left:auto;min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
+      display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
     }
-    .mini-row{display:flex;align-items:center;gap:10px;margin-top:10px}
-    .mini-checkbox{width:16px;height:16px;accent-color:#a8744f}
-    small.note{display:block;margin-top:6px;color:#ffddae;opacity:.9}
+    .accept-dot{
+      width:14px;height:14px;border-radius:50%;background:#333;transition:.2s;
+      border:1px solid #555;
+    }
+    .accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
+    .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
+    .accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
+
+    /* Hints */
+    .hint{font-size:.85rem;margin-top:6px}
+    .hint.warn{color:var(--warn)}
+    .hint.err{color:var(--err)}
+    .hint.ok{color:var(--ok)}
   </style>
-</head>
-<body>
+  <body>
 <header>
   <div class="logo-wrap">
     <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo">
   </div>
 </header>
+
 <main>
   <label for="fullname">Full Name:</label>
   <input id="fullname" type="text" placeholder="e.g. John Doe" required />
 
-  <label for="phone">Phone Number:</label>
-  <input id="phone" type="tel" placeholder="e.g. +1 385 123 4567"
-         pattern="^\+?1\s?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$"
-         title="Enter a valid US phone number" required />
+  <label for="phone">Phone Number (US):</label>
+  <input id="phone" type="tel" inputmode="numeric" autocomplete="tel"
+         placeholder="(555) 123-4567" required />
+  <div id="phoneHelp" class="hint"></div>
 
   <label for="email">Email Address:</label>
   <input id="email" type="email" placeholder="you@example.com" required />
@@ -143,6 +154,9 @@
   <div id="flightContainer" style="display:none;">
     <label for="flightNumber">Flight Number:</label>
     <input id="flightNumber" placeholder="e.g. DL1234" />
+    <div id="flightHint" class="hint warn" style="display:none">
+      ✈️ Please double-check your flight number for typos.
+    </div>
   </div>
 
   <div class="input-row">
@@ -172,8 +186,7 @@
       <div class="platform"></div>
       <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
     </div>
-
-    <!-- SUV capacity (Option 1 / Option 2) -->
+        <!-- SUV capacity -->
     <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
       <strong>SUV – Capacity Guide (1–5 passengers)</strong>
       <div style="margin-top:8px">
@@ -209,39 +222,87 @@
       </div>
     </div>
 
-    <!-- Terms 2 líneas justo debajo del caption -->
+    <!-- Terms compact line -->
     <div class="terms-box" id="termsBox">
       <div class="terms-summary" id="toggleTerms">
         <span class="chev"></span>
         <div>
           <div style="font-weight:700;color:#ffddae">Terms & Conditions</div>
-          <div style="opacity:.85;font-size:.9rem">Please review our reschedule/cancel policy and luggage rules. Tick the box to proceed.</div>
+          <div style="opacity:.85;font-size:.9rem;max-height:2.8em;overflow:hidden">
+            By booking you accept our reschedule/cancel policy, luggage rules and data responsibility.
+          </div>
+        </div>
+        <!-- Cajita a la derecha -->
+        <div id="acceptPill" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0" title="Tap to accept">
+          <div class="accept-dot"></div>
         </div>
       </div>
       <div class="terms-body" id="termsBody">
         <div id="terms-content">
-          <!-- Pega aquí el texto completo aprobado (EN/ES). -->
+          <strong>Terms and Conditions</strong><br>
+          Bonanza Transportation<br>
+          Last updated: [Date]<br><br>
+          <hr>
+          <h4>1. Introduction and Acceptance</h4>
+          <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
+          <h4>2. Definitions</h4>
+          <ul>
+            <li><em>Client</em>: The individual or entity booking services from Bonanza Transportation.</li>
+            <li><em>Service</em>: Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
+            <li><em>Booking</em>: A confirmed service agreement with Bonanza Transportation.</li>
+            <li><em>Cancellation</em>: Termination of a confirmed booking.</li>
+            <li><em>Fare</em>: The agreed price for the contracted service.</li>
+          </ul>
+          <h4>3. Bookings and Payments</h4>
+          <ul>
+            <li>Bookings must be made in advance via our website, mobile app, text message, phone, or email.</li>
+            <li>Payments may be made by credit/debit card or secure platforms such as Stripe.</li>
+            <li>Bonanza Transportation may require partial or full payment at the time of booking confirmation.</li>
+            <li>All fares are quoted in U.S. Dollars (USD) and include applicable taxes unless otherwise stated.</li>
+            <li>All information provided by the client is their sole responsibility. Bonanza Transportation will only interpret and honor the details exactly as they are written in the booking; we are not responsible for any errors or omissions caused by typos or incorrect information submitted by the client.</li>
+          </ul>
+          <h4>4. Cancellation and Rescheduling Policy</h4>
+          <ul>
+            <li>More than 24 hours before service: the client may reschedule at no additional cost, subject to availability.</li>
+            <li>Within 24 hours before service: the client may reschedule, but a 50% fee of the agreed fare will apply.</li>
+            <li>Rescheduling must be confirmed directly with Bonanza Transportation via phone or email.</li>
+          </ul>
+          <h4>5. No-Show and Waiting Times</h4>
+          <ul>
+            <li>A “No-Show” will be considered if the client does not arrive at the agreed location and time without prior notice.</li>
+            <li>Non-airport: up to 20 minutes free of charge.</li>
+            <li>Airport pickups: up to 1 hour after landing if the flight is on time.</li>
+          </ul>
+          <h4>6. Flight Delays</h4>
+          <p>We monitor flights to adjust pickup times. If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</p>
+          <h4>7. Luggage and Personal Belongings</h4>
+          <p>The client must inform luggage details at booking time. We are not liable for items left in the vehicle.</p>
+          <h4>8. Client Conduct</h4>
+          <p>No smoking, alcohol, or illegal substances. The driver may refuse service for unsafe behavior.</p>
+          <h4>9. Limitation of Liability</h4>
+          <p>No liability for delays or losses due to traffic, weather, accidents, or force majeure. No consequential damages.</p>
+          <h4>10. Insurance</h4>
+          <p>Covered by commercial insurance in accordance with Utah law.</p>
+          <h4>11. Privacy and Personal Data</h4>
+          <p>Personal information is confidential and used solely to provide the service, per our Privacy Policy.</p>
+          <h4>12. Jurisdiction</h4>
+          <p>Utah, USA. Disputes subject to Utah courts.</p>
+          <p><strong>Contact</strong><br>
+          📞 (786) 683-5128 · 📧 bonanzatransportation1@outlook.com · 📍 Park City, Utah – USA</p>
         </div>
-        <div class="mini-row">
-          <input type="checkbox" id="accept-terms" class="mini-checkbox" checked>
-          <label for="accept-terms" style="margin:0">I have read and accept</label>
-          <button id="agree-terms" class="mini-accept" type="button">Accept</button>
-        </div>
-        <small class="note">You must keep the box checked to pay.</small>
       </div>
     </div>
-  </div>
+  </div> <!-- /vehicle-type -->
 
   <button id="calculate">Calculate Price</button>
   <div id="map"></div>
   <div id="info"></div>
   <button id="pay" style="display:none;">PAY NOW</button>
 </main>
-
-<script>
+    <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
-const VAN_IMG = "/images/van-sprinter.png"; // ← tu archivo real
+const VAN_IMG = "/images/van-sprinter.png"; // ajusta si tu archivo tiene otro nombre
 
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
@@ -353,18 +414,21 @@ function updateFlightVisibility(){
   if(!wrap||!input) return;
   const show = pickupIsUtahAirport();
   wrap.style.display = show ? 'block' : 'none';
-  if(!show){ input.value=""; input.setCustomValidity(""); }
+  if(!show){ input.value=""; input.setCustomValidity(""); document.getElementById('flightHint').style.display='none'; }
 }
 function wireFlightValidation(){
   const input=document.getElementById('flightNumber');
+  const hint=document.getElementById('flightHint');
   if(!input) return;
   input.addEventListener('input', ()=>{
-    if(!pickupIsUtahAirport()){ input.setCustomValidity(""); return; }
-    const r=validateFlightValue(input.value); input.setCustomValidity(r.ok?"":r.msg);
+    if(!pickupIsUtahAirport()){ input.setCustomValidity(""); hint.style.display='none'; return; }
+    const r=validateFlightValue(input.value);
+    input.setCustomValidity(r.ok?"":r.msg);
+    hint.style.display = input.value.trim().length ? 'block' : 'none';
   });
 }
 
-/* ===== Vehicle selector wiring + photo & guides ===== */
+/* ===== Vehicle selector + photo & guides ===== */
 (function wireVehicleSelector(){
   const suv = document.querySelector('.veh-btn[data-type="suv"]');
   const van = document.querySelector('.veh-btn[data-type="van"]');
@@ -395,8 +459,6 @@ function wireFlightValidation(){
 /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
-
-  // 20% fuera del horario (sobre base + surcharge)
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
 
   window.__lastBase = base;
@@ -404,8 +466,7 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__lastAhFee = ahFee;
 
   const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
-
-  const hasExtra = (surcharge > 0) || (ahFee > 0); // mostramos desglose solo si hay extra
+  const hasExtra = (surcharge > 0) || (ahFee > 0);
 
   const el = document.getElementById("info");
   el.style.display = "block";
@@ -430,6 +491,7 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__lastQuotedTotal = finalTotal;
   window.__lastDistanceMiles = miles;
   window.__vehicleType = selectedVehicle;
+  syncPayBtn();
 }
 
 /* ===== Init Google Maps ===== */
@@ -480,38 +542,92 @@ document.getElementById("calculate").addEventListener("click", async ()=>{
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
     renderInfo(leg, basePrice, surcharge, afterHours);
     document.getElementById("pay").style.display = "block";
-    syncPayBtn();
   }catch(err){
     alert("Could not calculate route: " + err);
   }
 });
 
-/* ===== Terms box (2 líneas) & gating ===== */
+/* ===== Terms compact toggle & gating ===== */
 const termsBox = document.getElementById('termsBox');
 const toggleTerms = document.getElementById('toggleTerms');
-const acceptTerms = document.getElementById('accept-terms');
-const agreeTerms = document.getElementById('agree-terms');
+const acceptPill  = document.getElementById('acceptPill');
 const payBtn = document.getElementById('pay');
 
+function pillSet(on){
+  acceptPill.classList.toggle('on', on);
+  acceptPill.setAttribute('aria-checked', on ? 'true' : 'false');
+  syncPayBtn();
+}
+toggleTerms?.addEventListener('click', (e)=>{
+  // abrir/cerrar texto sin tocar aceptación
+  if(e.target.closest('#acceptPill')) return;
+  termsBox.classList.toggle('open');
+});
+acceptPill?.addEventListener('click', ()=> pillSet(!acceptPill.classList.contains('on')));
+acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); pillSet(!acceptPill.classList.contains('on')); }});
+
 function syncPayBtn(){
-  if (!payBtn) return;
-  const ready = !!window.__lastQuotedTotal && acceptTerms?.checked;
+  const accepted = acceptPill?.classList.contains('on');
+  const ready = !!window.__lastQuotedTotal && accepted;
   payBtn.disabled = !ready;
   payBtn.style.opacity = ready ? 1 : .5;
   payBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
 }
-toggleTerms?.addEventListener('click', ()=> termsBox.classList.toggle('open'));
-agreeTerms?.addEventListener('click', ()=>{ acceptTerms.checked = true; syncPayBtn(); });
-acceptTerms?.addEventListener('change', syncPayBtn);
 
-/* ===== Confirmation number + PAY handler (stub) ===== */
+/* ===== US Phone mask + NANP validation ===== */
+(function wirePhone(){
+  const input = document.getElementById('phone');
+  const help  = document.getElementById('phoneHelp');
+  if(!input) return;
+
+  function formatUS(digits){
+    // allow leading 1; keep 10 core digits
+    if(digits.startsWith('1')) digits = digits.slice(1);
+    digits = digits.slice(0,10);
+    const a = digits.slice(0,3), b = digits.slice(3,6), c = digits.slice(6,10);
+    if(digits.length > 6) return `(${a}) ${b}-${c}`;
+    if(digits.length > 3) return `(${a}) ${b}`;
+    if(digits.length > 0) return `(${a}`;
+    return '';
+  }
+  function validateNANP(digits){
+    // Accept either 10 digits or 11 with leading 1
+    if(digits.length===11 && digits.startsWith('1')) digits = digits.slice(1);
+    if(digits.length!==10) return {ok:false,msg:'Enter a 10-digit US number'};
+    const area = parseInt(digits.slice(0,3),10);
+    const exch = parseInt(digits.slice(3,6),10);
+    if(!/^[2-9]/.test(digits[0])) return {ok:false,msg:'Area code must start 2–9'};
+    if(!/^[2-9]/.test(digits[3])) return {ok:false,msg:'Exchange must start 2–9'};
+    return {ok:true,msg:'Looks good'};
+  }
+
+  input.addEventListener('input', ()=>{
+    const digits = input.value.replace(/\D/g,'').slice(0,11);
+    input.value = formatUS(digits);
+    const v = validateNANP(digits);
+    input.setCustomValidity(v.ok ? '' : v.msg);
+    help.textContent = v.ok ? 'Valid US number' : v.msg;
+    help.className = 'hint ' + (v.ok ? 'ok' : 'err');
+  });
+
+  input.addEventListener('blur', ()=> {
+    // force validation message styling
+    if(!input.checkValidity()){
+      help.className = 'hint err';
+    }
+  });
+})();
+
+/* ===== Flight message already wired in wireFlightValidation() ===== */
+
+/* ===== PAY (stub) ===== */
 function generateConfirmationNumber(){
   const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
   const rand=Math.random().toString(36).slice(2,6).toUpperCase();
   return `BZ-${y}${m}${day}-${rand}`;
 }
 payBtn?.addEventListener('click', async ()=>{
-  if(!acceptTerms.checked){ alert('Please accept Terms to proceed.'); return; }
+  if(!(acceptPill?.classList.contains('on'))){ alert('Please accept Terms to proceed.'); return; }
   const payload = {
     fullname: document.getElementById('fullname').value,
     phone: document.getElementById('phone').value,
@@ -529,7 +645,7 @@ payBtn?.addEventListener('click', async ()=>{
   };
   console.log('PAYLOAD →', payload);
   alert(`Your confirmation number is ${payload.confirmationNumber}`);
-  // TODO: integrar con /api/create-checkout-session
+  // TODO: POST to /api/create-checkout-session
 });
 
 /* ===== On load ===== */
@@ -542,3 +658,4 @@ syncPayBtn();
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
+</head>
