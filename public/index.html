@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,104 +76,138 @@
     .breakdown .row{display:flex;justify-content:space-between;padding:6px 0;}
     .breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
     .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
-        /* Ayudas / mensajes */
-    .hint{font-size:.8rem;margin-top:3px;display:block}
-    .hint.ok{color:var(--ok)}
-    .hint.warn{color:var(--warn)}
-    .hint.err{color:var(--err)}
+
+    /* Date/Time */
+    .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
+    #date,#time{
+      height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
+      border:2px solid var(--copper);box-shadow:0 0 0 3px rgba(192,139,92,.18);
+    }
+    #date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator{
+      filter:invert(80%) sepia(20%) saturate(180%) hue-rotate(340deg) brightness(110%);
+      opacity:.95;cursor:pointer;
+    }
+    .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
+        /* Vehicle visual */
+    .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
+    .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
+    .turntable .platform{
+      width:220px;height:22px;border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
+      margin-top:6px;
+    }
+    .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
 
     /* Vehicle selector */
-    .veh-toggle{display:flex;gap:8px;margin:12px 0}
+    .veh-toggle{display:flex;gap:8px;margin:10px 0}
     .veh-btn{
-      flex:1;padding:10px;border-radius:8px;border:1px solid #444;
-      background:#1a1a1a;color:var(--copper);cursor:pointer;
+      flex:1 1 0;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);
+      color:var(--copper);padding:12px;border-radius:10px;cursor:pointer;font-weight:700
     }
-    .veh-btn.active{border-color:var(--copper);background:#2a2a2a}
+    .veh-btn.active{
+      background:var(--copper);color:#000;border-color:var(--copper);
+      box-shadow:0 0 0 3px rgba(168,116,79,.25)
+    }
 
-    /* Terms box */
-    .terms-box{margin:20px 0;border-radius:10px;border:1px solid rgba(192,139,92,.4);background:#111}
-    .terms-summary{display:flex;align-items:center;padding:10px;cursor:pointer}
+    /* Terms compact box */
+    .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
+    .terms-summary{
+      display:flex;align-items:center;gap:10px;cursor:pointer;
+    }
+    .terms-summary .chev{
+      width:10px;height:10px;border-right:2px solid var(--copper);
+      border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto;
+    }
+    .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
+
+    /* Switch (único) */
     .accept-pill{
-      width:38px;height:20px;border-radius:10px;background:#333;margin-right:10px;
-      position:relative;transition:background .2s;
+      min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
+      display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
     }
-    .accept-pill.on{background:var(--ok)}
     .accept-dot{
-      position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
-      background:#fff;transition:left .2s;
+      width:14px;height:14px;border-radius:50%;background:#333;transition:.2s;
+      border:1px solid #555;
     }
-    .accept-pill.on .accept-dot{left:20px}
-    .accept-label{flex:1}
-    .chev{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
-      border-top:6px solid var(--copper);}
-    .terms-body{padding:10px}
-    .terms-content{max-height:120px;overflow:hidden;transition:max-height .3s}
-    .terms-content.clamped{max-height:120px}
+    .accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
+    .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
+    .accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
+
+    /* Read-more (2 líneas + degradado) */
+    .terms-body{margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
+    .terms-content.clamped{
+      display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+      overflow:hidden;position:relative;
+    }
+    .terms-content.clamped::after{
+      content:""; position:absolute; left:0; right:0; bottom:0; height:2.2em;
+      background:linear-gradient(180deg, rgba(14,14,14,0), rgba(14,14,14,1));
+      pointer-events:none;
+    }
     .readmore-btn{
-      margin-top:8px;background:none;border:none;color:var(--copper);cursor:pointer;
-      text-decoration:underline;padding:0
+      display:inline-block;margin-top:8px;padding:6px 10px;border:1px solid rgba(168,116,79,.55);
+      border-radius:8px;background:#1a1a1a;color:#ffddae;font-weight:700;font-size:.85rem;cursor:pointer;
     }
 
-    /* Vehicle photo + caption */
-    .turntable{position:relative;display:flex;flex-direction:column;align-items:center;margin:10px 0}
-    .car{max-width:100%;border-radius:8px}
-    .vehicle-caption{margin-top:6px;font-size:.85rem;opacity:.8}
-    .helper{font-size:.85rem;opacity:.85;margin-top:4px}
-
+    /* Hints */
+    .hint{font-size:.85rem;margin-top:6px}
+    .hint.warn{color:var(--warn)}
+    .hint.err{color:var(--err)}
+    .hint.ok{color:var(--ok)}
   </style>
 </head>
 <body>
-
   <header>
     <div class="logo-wrap">
-      <img src="/images/logo.png" alt="Bonanza Transportation" class="logo" />
+      <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo">
     </div>
   </header>
 
   <main>
-    <!-- Nombre -->
-    <label for="fullname">Full Name</label>
-    <input type="text" id="fullname" placeholder="Enter your full name" required />
+    <label for="fullname">Full Name:</label>
+    <input id="fullname" type="text" placeholder="e.g. John Doe" autocomplete="name" required />
 
-    <!-- Teléfono -->
-    <label for="phone">Phone</label>
-    <input type="tel" id="phone" placeholder="(555) 555-5555" required />
-    <span id="phoneHelp" class="hint"></span>
+    <label for="phone">Phone Number (US):</label>
+    <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" required />
+    <div id="phoneHelp" class="hint"></div>
 
-    <!-- Email -->
-    <label for="email">Email</label>
-    <input type="email" id="email" placeholder="your@email.com" required />
-    <span id="emailHelp" class="hint"></span>
+    <label for="email">Email Address:</label>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+    <div id="emailHelp" class="hint"></div>
 
-    <!-- Pickup -->
-    <label for="pickup">Pickup Location</label>
-    <input type="text" id="pickup" placeholder="Enter pickup address" required />
+    <label for="pickup">Pick-up Address:</label>
+    <input id="pickup" placeholder="e.g. SLC Airport" required />
 
-    <!-- Dropoff -->
-    <label for="dropoff">Dropoff Location</label>
-    <input type="text" id="dropoff" placeholder="Enter dropoff address" required />
+    <label for="dropoff">Drop-off Address:</label>
+    <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
 
-    <!-- Fecha -->
-    <label for="date">Pickup Date</label>
-    <input type="date" id="date" required />
-    <span id="dateHelp" class="hint"></span>
+    <div id="flightContainer" style="display:none;">
+      <label for="flightNumber">Flight Number:</label>
+      <input id="flightNumber" placeholder="e.g. DL1234" />
+      <div id="flightHint" class="hint warn" style="display:none">
+        ✈️ Double check your flight number. Make sure you put your correct flight number.
+      </div>
 
-    <!-- Hora -->
-    <label for="time">Pickup Time</label>
-    <input type="time" id="time" required />
-    <span id="timeHelp" class="hint"></span>
+      <!-- Campo de ciudad de origen -->
+      <label for="flightOrigin" style="margin-top:12px;">Flight Origin City:</label>
+      <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
+      <div id="originHelp" class="hint" style="display:none"></div>
+    </div>
 
-    <!-- Flight -->
-    <div id="flightContainer" style="display:none">
-      <label for="flightNumber">Flight Number</label>
-      <input type="text" id="flightNumber" placeholder="e.g., AA1234" />
-      <span id="flightHint" class="hint warn" style="display:none">
-        ✈️ Double-check your flight number to guarantee precise pickup arrangements.
-      </span>
-
-      <label for="flightOrigin">Flight Origin City</label>
-      <input type="text" id="flightOrigin" placeholder="e.g., Miami (MIA)" />
-      <span id="originHelp" class="hint" style="display:none"></span>
+    <div class="input-row">
+      <div>
+        <label for="date">Date:</label>
+        <input id="date" type="date" />
+        <div id="dateHelp" class="helper"></div>
+      </div>
+      <div>
+        <label for="time">Time:</label>
+        <input id="time" type="time" step="900" />
+        <div id="timeHelp" class="helper"></div>
+      </div>
     </div>
         <!-- Selector de vehículo -->
     <label>Vehicle Type:</label>
