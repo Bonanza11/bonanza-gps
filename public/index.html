@@ -434,8 +434,7 @@
            📍 Park City, Utah – USA</p>
       </div>
     </div>
-  </div>
-    <script>
+  </div>  <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -508,7 +507,7 @@ function mountDateTime(){
   timeEl?.addEventListener('change', update);
   update();
 }
-      /* ===== Google Places helpers ===== */
+    /* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -944,8 +943,7 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     const open = acc.classList.toggle('open');
     acc.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
-})();
-      /* ===== Modal Wiring (mínimo) ===== */
+})();/* ===== Modal Wiring (mínimo) ===== */
 (function wireTermsModal(){
   const modal = document.getElementById('termsModal');
   const openBtn = document.getElementById('openTermsModal');
