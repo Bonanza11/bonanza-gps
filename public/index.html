@@ -81,7 +81,8 @@
       opacity:.95;cursor:pointer;
     }
     .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
-        /* Vehicle visual */
+
+    /* Vehicle visual */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
     .turntable .platform{
@@ -166,19 +167,24 @@
 
     <label for="email">Email Address:</label>
     <input id="email" type="email" placeholder="you@example.com" required />
+    <div id="emailHelp" class="hint"></div>
 
     <label for="pickup">Pick-up Address:</label>
     <input id="pickup" placeholder="e.g. SLC Airport" required />
 
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
-
-    <div id="flightContainer" style="display:none;">
+        <div id="flightContainer" style="display:none;">
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" />
       <div id="flightHint" class="hint warn" style="display:none">
         ✈️ Please double-check your flight number for typos.
       </div>
+
+      <!-- NUEVO: Flight Origin (From) con autocompletado híbrido -->
+      <label for="flightOrigin" style="margin-top:10px;">Flight Origin (From):</label>
+      <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX) or Chicago O'Hare" />
+      <div id="flightOriginHelp" class="hint" style="margin-top:6px;opacity:.9"></div>
     </div>
 
     <div class="input-row">
@@ -208,7 +214,8 @@
         <div class="platform"></div>
         <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
       </div>
-            <!-- SUV capacity -->
+
+      <!-- SUV capacity -->
       <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
         <strong>SUV – Capacity Guide (1–5 passengers)</strong>
         <div style="margin-top:8px">
@@ -250,7 +257,7 @@
           <div id="acceptPill" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0" title="Tap to accept">
             <div class="accept-dot"></div>
           </div>
-          <div class="accept-label">Terms & Conditions</div>
+          <div class="accept-label">I accept the Terms & Conditions</div>
           <span class="chev"></span>
         </div>
 
@@ -358,6 +365,11 @@
           <button id="readMoreBtn" class="readmore-btn" type="button" aria-expanded="false" aria-controls="terms-content">Read More</button>
         </div>
       </div> <!-- /terms-box -->
+
+      <!-- Mensaje rojo si no aceptan términos -->
+      <div id="termsError" class="hint err" style="display:none;margin-top:8px;">
+        You must accept the Terms & Conditions to calculate the price.
+      </div>
     </div> <!-- /vehicle-type -->
 
     <button id="calculate" disabled>Calculate Price</button>
@@ -477,10 +489,16 @@ function validateFlightValue(v){
 function updateFlightVisibility(){
   const wrap=document.getElementById('flightContainer');
   const input=document.getElementById('flightNumber');
+  const origin=document.getElementById('flightOrigin');
   if(!wrap||!input) return;
   const show = pickupIsUtahAirport();
   wrap.style.display = show ? 'block' : 'none';
-  if(!show){ input.value=""; input.setCustomValidity(""); document.getElementById('flightHint').style.display='none'; }
+  if(!show){
+    input.value = "";
+    input.setCustomValidity("");
+    document.getElementById('flightHint').style.display='none';
+    if(origin){ origin.value=""; document.getElementById('flightOriginHelp').textContent=""; }
+  }
 }
 function wireFlightValidation(){
   const input=document.getElementById('flightNumber');
@@ -494,7 +512,72 @@ function wireFlightValidation(){
   });
 }
 
-/* ===== Vehicle selector + photo & guides ===== */
+/* ===== Flight Origin — Autocomplete híbrido (ciudades + aeropuertos) ===== */
+function initFlightOriginAutocomplete(){
+  const input = document.getElementById('flightOrigin');
+  const help  = document.getElementById('flightOriginHelp');
+  if(!input || !window.google?.maps?.places) return;
+
+  // Autocomplete sin restricción de tipo: permitirá ciudades y aeropuertos.
+  const ac = new google.maps.places.Autocomplete(input, {
+    // sin "types" para aceptar ambos; si quieres limitar por país: componentRestrictions:{ country: ['us'] }
+    fields: ['name','formatted_address','types']
+  });
+
+  ac.addListener('place_changed', ()=>{
+    const place = ac.getPlace();
+    if(!place){ help.textContent=''; return; }
+    const types = place.types || [];
+    const isCity = types.includes('locality') || types.includes('administrative_area_level_3') || types.includes('administrative_area_level_2') || types.includes('administrative_area_level_1');
+    const isAirport = types.includes('airport') || /airport/i.test(place.name||'') || /airport/i.test(place.formatted_address||'');
+
+    let label = place.name || '';
+    if(place.formatted_address && (!label || !place.formatted_address.startsWith(label))){
+      label = `${label ? label+' — ' : ''}${place.formatted_address}`;
+    }
+
+    if(isAirport){
+      help.className = 'hint ok';
+      help.textContent = `Airport selected: ${label}`;
+    }else if(isCity){
+      help.className = 'hint ok';
+      help.textContent = `City selected: ${label}`;
+    }else{
+      help.className = 'hint warn';
+      help.textContent = `Please enter a city or airport (detected: ${label})`;
+    }
+  });
+
+  input.addEventListener('input', ()=>{
+    if(help) help.textContent='';
+  });
+}
+
+/* ===== Email live validation ===== */
+(function wireEmail(){
+  const input = document.getElementById('email');
+  const help  = document.getElementById('emailHelp');
+  if(!input || !help) return;
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
+  const badDomains = new Set(['example.com','test.com','invalid','fake.com']);
+
+  function render(){
+    const val = (input.value||'').trim();
+    let ok = EMAIL_REGEX.test(val);
+    let msg = ok ? 'Email looks good' : 'Enter a valid email like name@domain.com';
+    if(ok){
+      const domain = val.split('@')[1]?.toLowerCase() || '';
+      if(badDomains.has(domain)){ ok=false; msg='Please use a real email domain'; }
+    }
+    input.setCustomValidity(ok ? '' : msg);
+    help.textContent = msg;
+    help.className = 'hint ' + (ok ? 'ok' : 'err');
+  }
+  input.addEventListener('input', render);
+  input.addEventListener('blur', render);
+})();
+      /* ===== Vehicle selector + photo & guides ===== */
 (function wireVehicleSelector(){
   const suv = document.querySelector('.veh-btn[data-type="suv"]');
   const van = document.querySelector('.veh-btn[data-type="van"]');
@@ -522,60 +605,7 @@ function wireFlightValidation(){
   setVehicle('suv');
 })();
 
-/* ===== Render Summary ===== */
-function renderInfo(leg, base, surcharge, afterHours){
-  const miles = leg.distance.value / 1609.34;
-  const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
-
-  window.__lastBase = base;
-  window.__lastSurcharge = surcharge;
-  window.__lastAhFee = ahFee;
-
-  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
-  const hasExtra = (surcharge > 0) || (ahFee > 0);
-
-  const el = document.getElementById("info");
-  el.style.display = "block";
-  el.innerHTML = `
-    <h3 class="info-title">Trip Summary</h3>
-    <div class="kpis">
-      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
-      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
-      <div class="kpi"><div class="label">Price</div><div class="value price">$${finalTotal.toFixed(2)}</div></div>
-    </div>
-    ${hasExtra ? `
-      <div class="divider"></div>
-      <div class="breakdown">
-        ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
-        ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
-        <div class="divider"></div>
-        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
-      </div>
-    ` : ``}
-  `;
-
-  window.__lastQuotedTotal = finalTotal;
-  window.__lastDistanceMiles = miles;
-  window.__vehicleType = selectedVehicle;
-  syncButtons();
-}
-
-/* ===== Init Google Maps ===== */
-function initMap(){
-  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
-  directionsService  = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer();
-  directionsRenderer.setMap(map);
-  geocoder = new google.maps.Geocoder();
-  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
-  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
-  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
-  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
-  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
-}
-window.initMap = initMap;
-
-/* ===== Terms: Read More / Read Less ===== */
+/* ===== Terms Read More / Less ===== */
 (function wireReadMore(){
   const content = document.getElementById('terms-content');
   const btn = document.getElementById('readMoreBtn');
@@ -597,6 +627,8 @@ function setAcceptedState(on){
   if(!acceptPill) return;
   acceptPill.classList.toggle('on', on);
   acceptPill.setAttribute('aria-checked', on ? 'true' : 'false');
+  const tErr = document.getElementById('termsError');
+  if (tErr && on) tErr.style.display = 'none';
   syncButtons();
 }
 function isAccepted(){ return acceptPill?.classList.contains('on'); }
@@ -614,8 +646,9 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
 /* ===== Calculate button ===== */
 calcBtn.addEventListener("click", async ()=>{
   if (!isAccepted()){
-    alert("Please accept Terms & Conditions first.");
-    return;
+    const tErr = document.getElementById('termsError');
+    if (tErr){ tErr.style.display = 'block'; }
+    return; // no alert
   }
   if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
     alert("Please select addresses from the suggestions.");
@@ -692,33 +725,24 @@ calcBtn.addEventListener("click", async ()=>{
   });
 })();
 
-/* ===== PAY (stub) ===== */
-function generateConfirmationNumber(){
-  const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-  const rand=Math.random().toString(36).slice(2,6).toUpperCase();
-  return `BZ-${y}${m}${day}-${rand}`;
+/* ===== Init Google Maps + Places ===== */
+function initMap(){
+  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  directionsService  = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer();
+  directionsRenderer.setMap(map);
+  geocoder = new google.maps.Geocoder();
+
+  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
+  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
+  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
+  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
+
+  // Autocompletado híbrido para Flight Origin
+  initFlightOriginAutocomplete();
 }
-document.getElementById('pay')?.addEventListener('click', async ()=>{
-  if(!isAccepted()){ alert('Please accept Terms to proceed.'); return; }
-  const payload = {
-    fullname: document.getElementById('fullname').value,
-    phone: document.getElementById('phone').value,
-    email: document.getElementById('email').value,
-    pickup: document.getElementById('pickup').value,
-    dropoff: document.getElementById('dropoff').value,
-    date: document.getElementById('date').value,
-    time: document.getElementById('time').value,
-    flightNumber: document.getElementById('flightNumber').value || null,
-    vehicleType: window.__vehicleType || selectedVehicle || 'suv',
-    distanceMiles: window.__lastDistanceMiles || null,
-    quotedTotal: window.__lastQuotedTotal || null,
-    confirmationNumber: generateConfirmationNumber(),
-    acceptedTermsAt: new Date().toISOString()
-  };
-  console.log('PAYLOAD →', payload);
-  alert(`Your confirmation number is ${payload.confirmationNumber}`);
-  // TODO: POST to /api/create-checkout-session
-});
+window.initMap = initMap;
 
 /* ===== On load ===== */
 mountDateTime();
