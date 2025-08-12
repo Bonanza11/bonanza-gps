@@ -47,17 +47,11 @@
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
-      animation:pulse 2.5s infinite ease-in-out;
     }
     button:disabled{opacity:0.5;cursor:not-allowed;}
-    @keyframes pulse{
-      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.5)}
-      50%{transform:scale(1.02); box-shadow:0 0 0 8px rgba(192,139,92,0)}
-      100%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,0)}
-    }
+    
     #map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
-
-    /* Trip Summary */
+        /* Trip Summary */
     #info{
       display:none;margin-top:18px;border-radius:16px;padding:18px;
       background:linear-gradient(180deg,#121212,#0b0b0b);
@@ -134,8 +128,7 @@
     .accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
     .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
     .accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
-
-    /* Read-more (2 líneas + degradado) */
+        /* Read-more (2 líneas + degradado) */
     .terms-body{margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
     .terms-content.clamped{
       display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
@@ -156,7 +149,8 @@
     .hint.warn{color:var(--warn)}
     .hint.err{color:var(--err)}
     .hint.ok{color:var(--ok)}
-        /* === Added: Luggage Accordion (discreto, mismo estilo) === */
+
+    /* === Added: Luggage Accordion (discreto, mismo estilo) === */
     .luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
     .luggage-title{font-weight:700}
@@ -203,9 +197,7 @@
       <label for="flightOrigin" style="margin-top:12px;">Flight Origin City:</label>
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
-    </div>
-
-    <!-- === NUEVO: Private Jet (FBO) — solo si es aeropuerto privado en Utah === -->
+    </div>    <!-- === NUEVO: Private Jet (FBO) — solo si es aeropuerto privado en Utah === -->
     <div id="privateFlightContainer" style="display:none;">
       <label for="tailNumber">Jet Tail Number (N‑Number):</label>
       <input id="tailNumber" placeholder="e.g., N123AB" />
@@ -215,7 +207,8 @@
       <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
       <div id="pvtOriginHelp" class="hint" style="display:none"></div>
     </div>
-        <div class="input-row">
+
+    <div class="input-row">
       <div>
         <label for="date">Date:</label>
         <input id="date" type="date" />
@@ -306,12 +299,15 @@
         </div>
         <button type="button" id="readMoreBtn" class="readmore-btn" aria-expanded="false">Read More</button>
       </div>
-    </div>    <!-- Botones -->
+    </div>
+        <!-- Botones -->
     <button id="calculate" disabled>Calculate Price</button>
-    <button id="pay" disabled style="display:none">PAY NOW</button>
 
     <!-- Mapa -->
     <div id="map"></div>
+
+    <!-- PAY NOW movido debajo del mapa -->
+    <button id="pay" disabled style="display:none">PAY NOW</button>
 
     <!-- Resumen -->
     <div id="info"></div>
@@ -355,8 +351,7 @@ function recalcFromCache(){
   window.__lastQuotedTotal = finalTotal;
   window.__vehicleType = selectedVehicle;
 }
-
-/* ===== Time helpers ===== */
+    /* ===== Time helpers ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
 function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
@@ -388,7 +383,9 @@ function mountDateTime(){
   dateEl?.addEventListener('change', update);
   timeEl?.addEventListener('change', update);
   update();
-}/* ===== Google Places helpers ===== */
+}
+
+/* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -575,7 +572,8 @@ function wireFlightValidation(){
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
-    /* ===== Render Summary ===== */
+
+/* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
@@ -612,8 +610,7 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__vehicleType = selectedVehicle;
   syncButtons();
 }
-
-/* ===== Init Google Maps ===== */
+    /* ===== Init Google Maps ===== */
 function initMap(){
   map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
   directionsService  = new google.maps.DirectionsService();
