@@ -187,6 +187,16 @@
 
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
+        <!-- NUEVO: Special Instructions (debajo de Drop-off) -->
+    <label for="specialInstructions">Special Instructions:</label>
+    <textarea
+      id="specialInstructions"
+      placeholder="Add any important details for your driver (e.g., gate code, extra luggage, pickup location)."
+      style="display:block;width:100%;height:60px;padding:10px 12px;background:#1a1a1a;color:#a8744f;border:1px solid #444;border-radius:8px;outline:none;resize:none;"
+      onfocus="this.style.borderColor='#a8744f'; this.style.boxShadow='0 0 0 3px rgba(168,116,79,.18)';"
+      onblur="this.style.borderColor='#444'; this.style.boxShadow='none';"
+    ></textarea>
+
     <div id="flightContainer" style="display:none;">
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" />
@@ -219,9 +229,7 @@
         <input id="time" type="time" step="900" />
         <div id="timeHelp" class="helper"></div>
       </div>
-    </div>
-
-    <!-- Vehicle selector -->
+    </div>    <!-- Vehicle selector -->
     <label>Vehicle Type:</label>
     <div class="veh-toggle">
       <button type="button" class="veh-btn active" data-type="suv" aria-pressed="true">
@@ -281,8 +289,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Terms -->
+        <!-- Terms -->
     <div class="terms-box" id="terms-box">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
@@ -384,8 +391,7 @@ function mountDateTime(){
   timeEl?.addEventListener('change', update);
   update();
 }
-
-/* ===== Google Places helpers ===== */
+    /* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -572,8 +578,7 @@ function wireFlightValidation(){
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
-
-/* ===== Render Summary ===== */
+    /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
@@ -695,8 +700,7 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
     }
   });
 })();
-
-/* ===== Teléfono US ===== */
+    /* ===== Teléfono US ===== */
 (function wirePhone(){
   const input = document.getElementById('phone');
   const help  = document.getElementById('phoneHelp');
@@ -795,6 +799,7 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     email: document.getElementById('email').value,
     pickup: document.getElementById('pickup').value,
     dropoff: document.getElementById('dropoff').value,
+    specialInstructions: document.getElementById('specialInstructions')?.value || null,
     date: document.getElementById('date').value,
     time: document.getElementById('time').value,
     flightNumber: document.getElementById('flightNumber').value || null,
