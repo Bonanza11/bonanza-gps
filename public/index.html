@@ -102,7 +102,7 @@
       box-shadow:0 0 0 3px rgba(168,116,79,.25)
     }
 
-    /* Terms compact box (en el formulario) */
+    /* Terms compact box */
     .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .terms-summary{
       display:flex;align-items:center;gap:10px;cursor:pointer;
@@ -112,10 +112,8 @@
       border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto;
     }
     .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
-    .terms-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.5}
-    .terms-box.open .terms-body{display:block}
 
-    /* Switch reutilizable (único switch, a la izquierda del texto) */
+    /* Switch (único) */
     .accept-pill{
       min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
       display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
@@ -127,6 +125,22 @@
     .accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
     .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
     .accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
+
+    /* Read-more (2 líneas + degradado) */
+    .terms-body{margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
+    .terms-content.clamped{
+      display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+      overflow:hidden;position:relative;
+    }
+    .terms-content.clamped::after{
+      content:""; position:absolute; left:0; right:0; bottom:0; height:2.2em;
+      background:linear-gradient(180deg, rgba(14,14,14,0), rgba(14,14,14,1));
+      pointer-events:none;
+    }
+    .readmore-btn{
+      display:inline-block;margin-top:8px;padding:6px 10px;border:1px solid rgba(168,116,79,.55);
+      border-radius:8px;background:#1a1a1a;color:#ffddae;font-weight:700;font-size:.85rem;cursor:pointer;
+    }
 
     /* Hints */
     .hint{font-size:.85rem;margin-top:6px}
@@ -194,8 +208,7 @@
         <div class="platform"></div>
         <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
       </div>
-
-      <!-- SUV capacity -->
+            <!-- SUV capacity -->
       <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
         <strong>SUV – Capacity Guide (1–5 passengers)</strong>
         <div style="margin-top:8px">
@@ -231,34 +244,37 @@
         </div>
       </div>
 
-      <!-- Terms compact line (en el formulario) -->
+      <!-- Terms compact line -->
       <div class="terms-box" id="termsBox">
         <div class="terms-summary" id="toggleTerms">
-          <!-- ÚNICO SWITCH A LA IZQUIERDA DEL TEXTO -->
           <div id="acceptPill" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0" title="Tap to accept">
             <div class="accept-dot"></div>
           </div>
-
           <div class="accept-label">Terms & Conditions</div>
           <span class="chev"></span>
         </div>
 
-        <div class="terms-body" id="termsBody">
-          <div id="terms-content">
-            <strong>Terms and Conditions</strong><br>
-            Bonanza Transportation<br>
-            Last updated: 2024<br><br>
+        <div class="terms-body">
+          <!-- CONTENIDO con clamp 2 líneas + degradado -->
+          <div id="terms-content" class="terms-content clamped" aria-live="polite">
+            <p><strong>Terms and Conditions</strong></p>
+            <p>Bonanza Transportation<br>Last updated: 2024</p>
             <hr>
+
             <h4>1. Introduction and Acceptance</h4>
             <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
+            <hr>
+
             <h4>2. Definitions</h4>
             <ul>
-              <li><em>Client</em>: The individual or entity booking services from Bonanza Transportation.</li>
-              <li><em>Service</em>: Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
-              <li><em>Booking</em>: A confirmed service agreement with Bonanza Transportation.</li>
-              <li><em>Cancellation</em>: Termination of a confirmed booking.</li>
-              <li><em>Fare</em>: The agreed price for the contracted service.</li>
+              <li><strong>Client</strong>: The individual or entity booking services from Bonanza Transportation.</li>
+              <li><strong>Service</strong>: Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
+              <li><strong>Booking</strong>: A confirmed service agreement with Bonanza Transportation.</li>
+              <li><strong>Cancellation</strong>: Termination of a confirmed booking.</li>
+              <li><strong>Fare</strong>: The agreed price for the contracted service.</li>
             </ul>
+            <hr>
+
             <h4>3. Bookings and Payments</h4>
             <ul>
               <li>Bookings must be made in advance via our website, mobile app, text message, phone, or email.</li>
@@ -267,44 +283,89 @@
               <li>All fares are quoted in U.S. Dollars (USD) and include applicable taxes unless otherwise stated.</li>
               <li>All information provided by the client is their sole responsibility. Bonanza Transportation will only interpret and honor the details exactly as they are written in the booking; we are not responsible for any errors or omissions caused by typos or incorrect information submitted by the client.</li>
             </ul>
+            <hr>
+
             <h4>4. Cancellation and Rescheduling Policy</h4>
             <ul>
               <li>More than 24 hours before service: the client may reschedule at no additional cost, subject to availability.</li>
               <li>Within 24 hours before service: the client may reschedule, but a 50% fee of the agreed fare will apply.</li>
               <li>Rescheduling must be confirmed directly with Bonanza Transportation via phone or email.</li>
             </ul>
+            <hr>
+
             <h4>5. No-Show and Waiting Times</h4>
             <ul>
               <li>A “No-Show” will be considered if the client does not arrive at the agreed location and time without prior notice.</li>
-              <li>Non-airport: up to 20 minutes free of charge.</li>
+              <li>Included waiting time:</li>
+              <li>Non-airport locations: up to 20 minutes free of charge.</li>
               <li>Airport pickups: up to 1 hour after landing if the flight is on time.</li>
+              <li>After this period, additional waiting charges will apply.</li>
             </ul>
+            <hr>
+
             <h4>6. Flight Delays</h4>
-            <p>We monitor flights to adjust pickup times. If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</p>
+            <ul>
+              <li>We monitor flights to adjust pickup times.</li>
+              <li>If the flight is delayed, we will make every effort to pick up the client at the new arrival time.</li>
+              <li>If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</li>
+            </ul>
+            <hr>
+
             <h4>7. Luggage and Personal Belongings</h4>
-            <p>The client must inform luggage details at booking time. We are not liable for items left in the vehicle.</p>
+            <ul>
+              <li>The client is responsible for informing us at the time of booking about the quantity and size of luggage.</li>
+              <li>Bonanza Transportation is not liable for damage or loss of personal belongings left in the vehicle.</li>
+            </ul>
+            <hr>
+
             <h4>8. Client Conduct</h4>
-            <p>No smoking, alcohol, or illegal substances. The driver may refuse service for unsafe behavior.</p>
+            <ul>
+              <li>Smoking, drinking alcohol, or using illegal substances inside the vehicles is prohibited.</li>
+              <li>Respect towards the driver and vehicle is required.</li>
+              <li>The driver may refuse service if the client exhibits aggressive, unsafe, or unlawful behavior.</li>
+            </ul>
+            <hr>
+
             <h4>9. Limitation of Liability</h4>
-            <p>No liability for delays or losses due to traffic, weather, accidents, or force majeure. No consequential damages.</p>
+            <ul>
+              <li>Bonanza Transportation will not be liable for delays, losses, or damages caused by circumstances beyond our control, such as traffic, weather conditions, accidents, or force majeure events.</li>
+              <li>Claims for indirect losses, loss of income, or consequential damages will not be accepted.</li>
+            </ul>
+            <hr>
+
             <h4>10. Insurance</h4>
-            <p>Covered by commercial insurance in accordance with Utah law.</p>
+            <p>All our services are covered by commercial insurance in accordance with the laws of the State of Utah.</p>
+            <hr>
+
             <h4>11. Privacy and Personal Data</h4>
-            <p>Personal information is confidential and used solely to provide the service, per our Privacy Policy.</p>
+            <p>Personal information provided by the client will be treated confidentially and used solely for purposes related to the provision of the service, in accordance with our Privacy Policy.</p>
+            <hr>
+
             <h4>12. Jurisdiction</h4>
-            <p>Utah, USA. Disputes subject to Utah courts.</p>
+            <ul>
+              <li>These terms are governed by the laws of the State of Utah, USA.</li>
+              <li>Any dispute will be submitted to the competent courts of Utah.</li>
+            </ul>
+            <hr>
+
             <p><strong>Contact</strong><br>
-            📞 (786) 683-5128 · 📧 bonanzatransportation1@outlook.com · 📍 Park City, Utah – USA</p>
+              📞 Phone: (786) 683-5128<br>
+              📧 Email: bonanzatransportation1@outlook.com<br>
+              📍 Park City, Utah – USA
+            </p>
           </div>
+
+          <button id="readMoreBtn" class="readmore-btn" type="button" aria-expanded="false" aria-controls="terms-content">Read More</button>
         </div>
-      </div>
+      </div> <!-- /terms-box -->
     </div> <!-- /vehicle-type -->
-        <button id="calculate" disabled>Calculate Price</button>
+
+    <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <div id="info"></div>
     <button id="pay" style="display:none;">PAY NOW</button>
   </main>
-  <script>
+    <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -378,7 +439,8 @@ function mountDateTime(){
   timeEl?.addEventListener('change', update);
   update();
 }
-    /* ===== Places ===== */
+
+/* ===== Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   const addr = (place?.formatted_address || "").toLowerCase();
@@ -394,7 +456,7 @@ function isAirport(place){
 function isUtah(place){ const addr=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr); }
 function pickupIsUtahAirport(){ return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace); }
 function countyFrom(place){ const comps=place?.address_components||[]; const c=comps.find(x=>x.types?.includes("administrative_area_level_2")); return c?.long_name||""; }
-function countyIncludesAllowed(name){ return ALLOWED_COUNTIES.some(x=>(name||"").includes(x)); }
+function countyIncludesAllowed(name){ return ["Summit County","Wasatch County"].some(x=>(name||"").includes(x)); }
 function routeAsync(opts){ return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
 function geocodeAsync(req){ return new Promise((res,rej)=>{ geocoder.geocode(req,(results,status)=>{ if(status==="OK"&&results?.[0]) res(results[0]); else rej(status||"GEOCODE_ERROR"); }); }); }
 async function countyByPlaceId(placeId){ try{ const r=await geocodeAsync({placeId}); const c=r.address_components.find(c=>c.types.includes("administrative_area_level_2")); return c?.long_name||""; }catch(_){ return ""; } }
@@ -513,6 +575,19 @@ function initMap(){
 }
 window.initMap = initMap;
 
+/* ===== Terms: Read More / Read Less ===== */
+(function wireReadMore(){
+  const content = document.getElementById('terms-content');
+  const btn = document.getElementById('readMoreBtn');
+  if(!content || !btn) return;
+  btn.addEventListener('click', ()=>{
+    const clamped = content.classList.toggle('clamped');
+    const expanded = !clamped;
+    btn.textContent = expanded ? 'Read Less' : 'Read More';
+    btn.setAttribute('aria-expanded', String(expanded));
+  });
+})();
+
 /* ===== Aceptación de términos ===== */
 const acceptPill  = document.getElementById('acceptPill'); 
 const calcBtn = document.getElementById('calculate');
@@ -598,7 +673,7 @@ calcBtn.addEventListener("click", async ()=>{
     if(digits.length!==10) return {ok:false,msg:'Enter a 10-digit US number'};
     if(!/^[2-9]/.test(digits[0])) return {ok:false,msg:'Area code must start 2–9'};
     if(!/^[2-9]/.test(digits[3])) return {ok:false,msg:'Exchange must start 2–9'};
-    return {ok:true,msg:'Looks good'};
+    return {ok:true,msg:'Valid US number'};
   }
 
   input.addEventListener('input', ()=>{
@@ -623,7 +698,7 @@ function generateConfirmationNumber(){
   const rand=Math.random().toString(36).slice(2,6).toUpperCase();
   return `BZ-${y}${m}${day}-${rand}`;
 }
-payBtn?.addEventListener('click', async ()=>{
+document.getElementById('pay')?.addEventListener('click', async ()=>{
   if(!isAccepted()){ alert('Please accept Terms to proceed.'); return; }
   const payload = {
     fullname: document.getElementById('fullname').value,
@@ -649,8 +724,9 @@ payBtn?.addEventListener('click', async ()=>{
 mountDateTime();
 wireFlightValidation();
 syncButtons();
-</script>
-<!-- Google Maps loader -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+  </script>
+
+  <!-- Google Maps loader -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
