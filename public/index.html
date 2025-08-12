@@ -161,6 +161,15 @@
     .lug-section h4{margin:6px 0 4px;color:#ffddae}
     .lug-note{opacity:.9;margin:2px 0 8px}
     .lug-list{margin:0 0 10px 18px}
+
+    /* ===== Modal (mínimo y ligero) ===== */
+    .modal-backdrop{position:fixed;inset:0;display:none;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:16px;z-index:9999}
+    .modal-backdrop.open{display:flex}
+    .modal{max-width:860px;width:100%;max-height:86vh;background:#0e0e0e;border:1px solid rgba(168,116,79,.45);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(168,116,79,.28);background:#101010}
+    .modal-title{font-weight:800;color:#ffddae}
+    .modal-body{padding:14px 16px 18px;overflow:auto;color:#e9d5c1;line-height:1.6}
+    .close-btn{background:#1a1a1a;border:1px solid rgba(168,116,79,.45);color:#ffddae;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
   </style>
 </head>
 <body>
@@ -187,7 +196,8 @@
 
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
-        <!-- NUEVO: Special Instructions (debajo de Drop-off) -->
+
+    <!-- NUEVO: Special Instructions (debajo de Drop-off) -->
     <label for="specialInstructions">Special Instructions:</label>
     <textarea
       id="specialInstructions"
@@ -207,7 +217,9 @@
       <label for="flightOrigin" style="margin-top:12px;">Flight Origin City:</label>
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
-    </div>    <!-- === NUEVO: Private Jet (FBO) — solo si es aeropuerto privado en Utah === -->
+    </div>
+
+    <!-- === NUEVO: Private Jet (FBO) — solo si es aeropuerto privado en Utah === -->
     <div id="privateFlightContainer" style="display:none;">
       <label for="tailNumber">Jet Tail Number (N‑Number):</label>
       <input id="tailNumber" placeholder="e.g., N123AB" />
@@ -229,7 +241,9 @@
         <input id="time" type="time" step="900" />
         <div id="timeHelp" class="helper"></div>
       </div>
-    </div>    <!-- Vehicle selector -->
+    </div>
+
+    <!-- Vehicle selector -->
     <label>Vehicle Type:</label>
     <div class="veh-toggle">
       <button type="button" class="veh-btn active" data-type="suv" aria-pressed="true">
@@ -248,8 +262,7 @@
 
     <div id="suv-luggage" class="helper">SUV: Fits up to 5 passengers, 5 large bags, 5 carry-ons</div>
     <div id="van-luggage" class="helper" style="display:none">Van: Fits up to 12 passengers, 12 large bags, 8 carry-ons</div>
-
-    <!-- Detailed Luggage Guide (accordion) -->
+        <!-- Detailed Luggage Guide (accordion) -->
     <div id="luggageAccordion" class="luggage-accordion" aria-expanded="false">
       <div class="luggage-summary" id="luggageSummary">
         <span class="luggage-title">Detailed Luggage Guide</span>
@@ -289,7 +302,8 @@
         </div>
       </div>
     </div>
-        <!-- Terms -->
+
+    <!-- Terms -->
     <div class="terms-box" id="terms-box">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
@@ -305,9 +319,12 @@
           reserves the right to modify or cancel reservations if conditions warrant. Full terms are available upon request.
         </div>
         <button type="button" id="readMoreBtn" class="readmore-btn" aria-expanded="false">Read More</button>
+        <!-- agregado: botón para abrir el modal (ligero) -->
+        <button type="button" id="openTermsModal" class="readmore-btn">View Full Terms</button>
       </div>
     </div>
-        <!-- Botones -->
+
+    <!-- Botones -->
     <button id="calculate" disabled>Calculate Price</button>
 
     <!-- Mapa -->
@@ -319,7 +336,106 @@
     <!-- Resumen -->
     <div id="info"></div>
   </main>
-  <script>
+    <!-- Modal de Términos (ligero, fuera de <main>) -->
+  <div id="termsModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="termsTitle">Terms and Conditions — Bonanza Transportation</div>
+        <button type="button" id="closeTerms" class="close-btn">Close</button>
+      </div>
+      <div class="modal-body" id="termsBody">
+        <p><strong>Last updated:</strong> 2024</p>
+        <hr style="border:0;border-top:1px solid rgba(168,116,79,.28);margin:8px 0 14px"/>
+
+        <h3>1. Introduction and Acceptance</h3>
+        <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
+
+        <h3>2. Definitions</h3>
+        <ul>
+          <li><strong>Client:</strong> The individual or entity booking services from Bonanza Transportation.</li>
+          <li><strong>Service:</strong> Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
+          <li><strong>Booking:</strong> A confirmed service agreement with Bonanza Transportation.</li>
+          <li><strong>Cancellation:</strong> Termination of a confirmed booking.</li>
+          <li><strong>Fare:</strong> The agreed price for the contracted service.</li>
+        </ul>
+
+        <h3>3. Bookings and Payments</h3>
+        <ul>
+          <li>Bookings must be made in advance via our website, mobile app, text message, phone, or email.</li>
+          <li>Payments may be made by credit/debit card or secure platforms such as Stripe.</li>
+          <li>Bonanza Transportation may require partial or full payment at the time of booking confirmation.</li>
+          <li>All fares are quoted in U.S. Dollars (USD) and include applicable taxes unless otherwise stated.</li>
+          <li>All information provided by the client is their sole responsibility. Bonanza Transportation will only interpret and honor the details exactly as they are written in the booking; we are not responsible for any errors or omissions caused by typos or incorrect information submitted by the client.</li>
+        </ul>
+
+        <h3>4. Cancellation and Rescheduling Policy</h3>
+        <ul>
+          <li>More than 24 hours before service: the client may reschedule at no additional cost, subject to availability.</li>
+          <li>Within 24 hours before service: the client may reschedule, but a 50% fee of the agreed fare will apply.</li>
+          <li>Rescheduling must be confirmed directly with Bonanza Transportation via phone or email.</li>
+        </ul>
+
+        <h3>5. No-Show and Waiting Times</h3>
+        <ul>
+          <li>A “No-Show” will be considered if the client does not arrive at the agreed location and time without prior notice.</li>
+          <li><strong>Included waiting time:</strong></li>
+          <ul>
+            <li>Non-airport locations: up to 20 minutes free of charge.</li>
+            <li>Airport pickups: up to 1 hour after landing if the flight is on time.</li>
+          </ul>
+          <li>After this period, additional waiting charges will apply.</li>
+        </ul>
+
+        <h3>6. Flight Delays</h3>
+        <ul>
+          <li>We monitor flights to adjust pickup times.</li>
+          <li>If the flight is delayed, we will make every effort to pick up the client at the new arrival time.</li>
+          <li>If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</li>
+        </ul>
+
+        <h3>7. Luggage and Personal Belongings</h3>
+        <ul>
+          <li>The client is responsible for informing us at the time of booking about the quantity and size of luggage.</li>
+          <li>Bonanza Transportation is not liable for damage or loss of personal belongings left in the vehicle.</li>
+        </ul>
+
+        <h3>8. Client Conduct</h3>
+        <ul>
+          <li>Smoking, drinking alcohol, or using illegal substances inside the vehicles is prohibited.</li>
+          <li>Respect towards the driver and vehicle is required.</li>
+          <li>The driver may refuse service if the client exhibits aggressive, unsafe, or unlawful behavior.</li>
+        </ul>
+
+        <h3>9. Limitation of Liability</h3>
+        <ul>
+          <li>Bonanza Transportation will not be liable for delays, losses, or damages caused by circumstances beyond our control, such as traffic, weather conditions, accidents, or force majeure events.</li>
+          <li>Claims for indirect losses, loss of income, or consequential damages will not be accepted.</li>
+        </ul>
+
+        <h3>10. Insurance</h3>
+        <ul>
+          <li>All our services are covered by commercial insurance in accordance with the laws of the State of Utah.</li>
+        </ul>
+
+        <h3>11. Privacy and Personal Data</h3>
+        <ul>
+          <li>Personal information provided by the client will be treated confidentially and used solely for purposes related to the provision of the service, in accordance with our Privacy Policy.</li>
+        </ul>
+
+        <h3>12. Jurisdiction</h3>
+        <ul>
+          <li>These terms are governed by the laws of the State of Utah, USA.</li>
+          <li>Any dispute will be submitted to the competent courts of Utah.</li>
+        </ul>
+
+        <h3>Contact</h3>
+        <p>📞 Phone: (786) 683-5128<br/>
+           📧 Email: bonanzatransportation1@outlook.com<br/>
+           📍 Park City, Utah – USA</p>
+      </div>
+    </div>
+  </div>
+    <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -358,7 +474,8 @@ function recalcFromCache(){
   window.__lastQuotedTotal = finalTotal;
   window.__vehicleType = selectedVehicle;
 }
-    /* ===== Time helpers ===== */
+
+/* ===== Time helpers ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
 function setTimeValue(el,h,m){ if(el) el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
@@ -391,7 +508,7 @@ function mountDateTime(){
   timeEl?.addEventListener('change', update);
   update();
 }
-    /* ===== Google Places helpers ===== */
+      /* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -577,8 +694,7 @@ function wireFlightValidation(){
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
-})();
-    /* ===== Render Summary ===== */
+})();/* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
@@ -700,7 +816,8 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
     }
   });
 })();
-    /* ===== Teléfono US ===== */
+
+/* ===== Teléfono US ===== */
 (function wirePhone(){
   const input = document.getElementById('phone');
   const help  = document.getElementById('phoneHelp');
@@ -827,6 +944,33 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     const open = acc.classList.toggle('open');
     acc.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+})();
+      /* ===== Modal Wiring (mínimo) ===== */
+(function wireTermsModal(){
+  const modal = document.getElementById('termsModal');
+  const openBtn = document.getElementById('openTermsModal');
+  const closeBtn = document.getElementById('closeTerms');
+
+  function openModal(){
+    if(!modal) return;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    closeBtn?.focus();
+  }
+  function closeModal(){
+    if(!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    openBtn?.focus();
+  }
+
+  openBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+
+  modal?.addEventListener('click', (e)=> { if(e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && modal?.classList.contains('open')) closeModal(); });
 })();
 
 /* ===== On load ===== */
