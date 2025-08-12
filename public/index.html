@@ -25,22 +25,31 @@
     /* Layout */
     main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
     label{display:block;margin:12px 0 6px;font-weight:700}
+
+    /* Inputs: oscuros en todos (incl. autofill) */
     input,select{
       display:block;width:100%;height:44px;padding:10px 12px;
       background:#1a1a1a;color:var(--copper);border:1px solid #444;border-radius:8px;
+      outline:none;
     }
-    input[type="text"],input[type="email"]{background:#1a1a1a;color:var(--copper)}
-    input:valid{background:#1a1a1a;color:var(--copper)}
+    input:focus,select:focus{border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18)}
+    ::placeholder{color:#cba686;opacity:.65}
+
+    /* Fuerza oscuro también cuando el navegador autocompleta */
+    input:-webkit-autofill,
+    input:-webkit-autofill:focus{
+      -webkit-text-fill-color: var(--copper);
+      transition: background-color 50000s ease-in-out 0s;
+      box-shadow: 0 0 0 1000px #1a1a1a inset;
+      border:1px solid #444;
+    }
 
     button{
       width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
       font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
       animation:pulse 2.5s infinite ease-in-out;
     }
-    button:disabled{
-      opacity:0.5;
-      cursor:not-allowed;
-    }
+    button:disabled{opacity:0.5;cursor:not-allowed;}
     @keyframes pulse{
       0%{transform:scale(1); box-shadow:0 0 0 0 rgba(192,139,92,.5)}
       50%{transform:scale(1.02); box-shadow:0 0 0 8px rgba(192,139,92,0)}
@@ -158,14 +167,15 @@
 
   <main>
     <label for="fullname">Full Name:</label>
-    <input id="fullname" type="text" placeholder="e.g. John Doe" required />
+    <input id="fullname" type="text" placeholder="e.g. John Doe" autocomplete="name" required />
 
     <label for="phone">Phone Number (US):</label>
     <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" required />
     <div id="phoneHelp" class="hint"></div>
 
     <label for="email">Email Address:</label>
-    <input id="email" type="email" placeholder="you@example.com" required />
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+    <div id="emailHelp" class="hint"></div>
 
     <label for="pickup">Pick-up Address:</label>
     <input id="pickup" placeholder="e.g. SLC Airport" required />
@@ -177,8 +187,13 @@
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" />
       <div id="flightHint" class="hint warn" style="display:none">
-        ✈️ Please double-check your flight number for typos.
+        ✈️ Double check your flight number. Make sure you put your correct flight number.
       </div>
+
+      <!-- NUEVO: Ciudad de origen del vuelo -->
+      <label for="flightOrigin" style="margin-top:12px;">Flight Origin City:</label>
+      <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
+      <div id="originHelp" class="hint" style="display:none"></div>
     </div>
 
     <div class="input-row">
@@ -193,8 +208,7 @@
         <div id="timeHelp" class="helper"></div>
       </div>
     </div>
-
-    <!-- Vehicle Type -->
+        <!-- Vehicle Type -->
     <div id="vehicle-type">
       <label style="display:block;margin:12px 0 6px;font-weight:700">Vehicle</label>
       <div class="veh-toggle">
@@ -208,7 +222,8 @@
         <div class="platform"></div>
         <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
       </div>
-            <!-- SUV capacity -->
+
+      <!-- SUV capacity -->
       <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
         <strong>SUV – Capacity Guide (1–5 passengers)</strong>
         <div style="margin-top:8px">
@@ -255,7 +270,6 @@
         </div>
 
         <div class="terms-body">
-          <!-- CONTENIDO con clamp 2 líneas + degradado -->
           <div id="terms-content" class="terms-content clamped" aria-live="polite">
             <p><strong>Terms and Conditions</strong></p>
             <p>Bonanza Transportation<br>Last updated: 2024</p>
@@ -477,21 +491,48 @@ function validateFlightValue(v){
 function updateFlightVisibility(){
   const wrap=document.getElementById('flightContainer');
   const input=document.getElementById('flightNumber');
+  const origin=document.getElementById('flightOrigin');
+  const hint=document.getElementById('flightHint');
   if(!wrap||!input) return;
   const show = pickupIsUtahAirport();
   wrap.style.display = show ? 'block' : 'none';
-  if(!show){ input.value=""; input.setCustomValidity(""); document.getElementById('flightHint').style.display='none'; }
+  if(!show){
+    input.value=""; input.setCustomValidity("");
+    if(hint) hint.style.display='none';
+    if(origin){ origin.value=""; origin.setCustomValidity(""); document.getElementById('originHelp').style.display='none'; }
+  }
 }
 function wireFlightValidation(){
   const input=document.getElementById('flightNumber');
   const hint=document.getElementById('flightHint');
   if(!input) return;
   input.addEventListener('input', ()=>{
-    if(!pickupIsUtahAirport()){ input.setCustomValidity(""); hint.style.display='none'; return; }
+    if(!pickupIsUtahAirport()){ input.setCustomValidity(""); if(hint) hint.style.display='none'; return; }
     const r=validateFlightValue(input.value);
     input.setCustomValidity(r.ok?"":r.msg);
-    hint.style.display = input.value.trim().length ? 'block' : 'none';
+    if(hint) hint.style.display = input.value.trim().length ? 'block' : 'none';
   });
+
+  // Validación Ciudad de Origen
+  const origin = document.getElementById('flightOrigin');
+  const originHelp = document.getElementById('originHelp');
+  function validateOrigin(v){
+    const val=(v||"").trim();
+    if(!val) return {ok:false,msg:'Please enter the city your flight departs from (e.g., Miami or Miami (MIA)).'};
+    // Letras, espacios, coma y código opcional entre paréntesis
+    const ok = /^[A-Za-z .,'-]{2,}( \([A-Z]{3}\))?$/.test(val);
+    return ok ? {ok:true,msg:'Looks good.'} : {ok:false,msg:'Use letters and optional airport code, e.g., Miami (MIA).'};
+  }
+  if(origin){
+    origin.addEventListener('input', ()=>{
+      if(!pickupIsUtahAirport()){ origin.setCustomValidity(""); originHelp.style.display='none'; return; }
+      const r = validateOrigin(origin.value);
+      origin.setCustomValidity(r.ok?"":r.msg);
+      originHelp.textContent = r.ok ? 'Origin city captured.' : r.msg;
+      originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+      originHelp.style.display='block';
+    });
+  }
 }
 
 /* ===== Vehicle selector + photo & guides ===== */
@@ -611,6 +652,75 @@ function syncButtons(){
 acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
 acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
 
+/* ===== Email validation (profesional) ===== */
+(function wireEmail(){
+  const input = document.getElementById('email');
+  const help  = document.getElementById('emailHelp');
+  if(!input) return;
+
+  function validateEmail(v){
+    const val = (v||'').trim();
+    const basic = /^[^\s@]+@[^\s@]+\.[^\s@]{2,24}$/.test(val);
+    if(!basic) return {ok:false,msg:'Please enter a valid email, e.g., name@domain.com'};
+    if(/\.\./.test(val)) return {ok:false,msg:'Email cannot contain consecutive dots'};
+    const typos = [/@gmal\.com$/i, /@gmial\.com$/i, /@hotnail\.com$/i, /@yaho\.com$/i];
+    if(typos.some(rx=>rx.test(val))) return {ok:false,msg:'Please correct the domain spelling (e.g., @gmail.com)'};
+    return {ok:true,msg:'Email looks good'};
+  }
+
+  input.addEventListener('input', ()=>{
+    const r = validateEmail(input.value);
+    input.setCustomValidity(r.ok ? '' : r.msg);
+    help.textContent = r.ok ? 'Valid email' : r.msg;
+    help.className = 'hint ' + (r.ok ? 'ok' : 'err');
+  });
+
+  input.addEventListener('blur', ()=>{
+    if(!input.checkValidity()){
+      help.className = 'hint err';
+    }
+  });
+})();
+
+/* ===== US Phone mask + NANP validation ===== */
+(function wirePhone(){
+  const input = document.getElementById('phone');
+  const help  = document.getElementById('phoneHelp');
+  if(!input) return;
+
+  function formatUS(digits){
+    if(digits.startsWith('1')) digits = digits.slice(1);
+    digits = digits.slice(0,10);
+    const a = digits.slice(0,3), b = digits.slice(3,6), c = digits.slice(6,10);
+    if(digits.length > 6) return `(${a}) ${b}-${c}`;
+    if(digits.length > 3) return `(${a}) ${b}`;
+    if(digits.length > 0) return `(${a}`;
+    return '';
+  }
+  function validateNANP(digits){
+    if(digits.length===11 && digits.startsWith('1')) digits = digits.slice(1);
+    if(digits.length!==10) return {ok:false,msg:'Enter a 10-digit US number'};
+    if(!/^[2-9]/.test(digits[0])) return {ok:false,msg:'Area code must start 2–9'};
+    if(!/^[2-9]/.test(digits[3])) return {ok:false,msg:'Exchange must start 2–9'};
+    return {ok:true,msg:'Valid US number'};
+  }
+
+  input.addEventListener('input', ()=>{
+    const digits = input.value.replace(/\D/g,'').slice(0,11);
+    input.value = formatUS(digits);
+    const v = validateNANP(digits);
+    input.setCustomValidity(v.ok ? '' : v.msg);
+    help.textContent = v.ok ? 'Valid US number' : v.msg;
+    help.className = 'hint ' + (v.ok ? 'ok' : 'err');
+  });
+
+  input.addEventListener('blur', ()=> {
+    if(!input.checkValidity()){
+      help.className = 'hint err';
+    }
+  });
+})();
+
 /* ===== Calculate button ===== */
 calcBtn.addEventListener("click", async ()=>{
   if (!isAccepted()){
@@ -653,45 +763,6 @@ calcBtn.addEventListener("click", async ()=>{
   }
 });
 
-/* ===== US Phone mask + NANP validation ===== */
-(function wirePhone(){
-  const input = document.getElementById('phone');
-  const help  = document.getElementById('phoneHelp');
-  if(!input) return;
-
-  function formatUS(digits){
-    if(digits.startsWith('1')) digits = digits.slice(1);
-    digits = digits.slice(0,10);
-    const a = digits.slice(0,3), b = digits.slice(3,6), c = digits.slice(6,10);
-    if(digits.length > 6) return `(${a}) ${b}-${c}`;
-    if(digits.length > 3) return `(${a}) ${b}`;
-    if(digits.length > 0) return `(${a}`;
-    return '';
-  }
-  function validateNANP(digits){
-    if(digits.length===11 && digits.startsWith('1')) digits = digits.slice(1);
-    if(digits.length!==10) return {ok:false,msg:'Enter a 10-digit US number'};
-    if(!/^[2-9]/.test(digits[0])) return {ok:false,msg:'Area code must start 2–9'};
-    if(!/^[2-9]/.test(digits[3])) return {ok:false,msg:'Exchange must start 2–9'};
-    return {ok:true,msg:'Valid US number'};
-  }
-
-  input.addEventListener('input', ()=>{
-    const digits = input.value.replace(/\D/g,'').slice(0,11);
-    input.value = formatUS(digits);
-    const v = validateNANP(digits);
-    input.setCustomValidity(v.ok ? '' : v.msg);
-    help.textContent = v.ok ? 'Valid US number' : v.msg;
-    help.className = 'hint ' + (v.ok ? 'ok' : 'err');
-  });
-
-  input.addEventListener('blur', ()=> {
-    if(!input.checkValidity()){
-      help.className = 'hint err';
-    }
-  });
-})();
-
 /* ===== PAY (stub) ===== */
 function generateConfirmationNumber(){
   const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
@@ -700,6 +771,7 @@ function generateConfirmationNumber(){
 }
 document.getElementById('pay')?.addEventListener('click', async ()=>{
   if(!isAccepted()){ alert('Please accept Terms to proceed.'); return; }
+
   const payload = {
     fullname: document.getElementById('fullname').value,
     phone: document.getElementById('phone').value,
@@ -709,6 +781,7 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     date: document.getElementById('date').value,
     time: document.getElementById('time').value,
     flightNumber: document.getElementById('flightNumber').value || null,
+    flightOriginCity: document.getElementById('flightOrigin').value || null,
     vehicleType: window.__vehicleType || selectedVehicle || 'suv',
     distanceMiles: window.__lastDistanceMiles || null,
     quotedTotal: window.__lastQuotedTotal || null,
