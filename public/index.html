@@ -190,7 +190,7 @@
         ✈️ Double check your flight number. Make sure you put your correct flight number.
       </div>
 
-      <!-- NUEVO: Ciudad de origen del vuelo -->
+      <!-- Campo de ciudad de origen -->
       <label for="flightOrigin" style="margin-top:12px;">Flight Origin City:</label>
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
@@ -208,176 +208,54 @@
         <div id="timeHelp" class="helper"></div>
       </div>
     </div>
-        <!-- Vehicle Type -->
-    <div id="vehicle-type">
-      <label style="display:block;margin:12px 0 6px;font-weight:700">Vehicle</label>
-      <div class="veh-toggle">
-        <button type="button" class="veh-btn active" data-type="suv" aria-pressed="true">SUV (1–5)</button>
-        <button type="button" class="veh-btn" data-type="van" aria-pressed="false">Van (up to 12)</button>
-      </div>
+        <!-- Selector de vehículo -->
+    <label>Vehicle Type:</label>
+    <div class="veh-toggle">
+      <button type="button" class="veh-btn active" data-type="suv" aria-pressed="true">
+        SUV – 1 to 5 Passengers
+      </button>
+      <button type="button" class="veh-btn" data-type="van" aria-pressed="false">
+        Van – Up to 12 Passengers
+      </button>
+    </div>
 
-      <!-- Vehicle photo switches with selection -->
-      <div class="turntable">
-        <img class="car" id="vehicle-photo" src="/images/suburban.png" alt="Vehicle" />
-        <div class="platform"></div>
-        <div class="vehicle-caption" id="vehicle-caption">This will be your SUV</div>
-      </div>
+    <div class="turntable">
+      <img id="vehicle-photo" class="car" src="/images/suburban.png" alt="Vehicle">
+      <div class="platform"></div>
+      <div id="vehicle-caption" class="vehicle-caption">This will be your SUV</div>
+    </div>
 
-      <!-- SUV capacity -->
-      <div id="suv-luggage" style="margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
-        <strong>SUV – Capacity Guide (1–5 passengers)</strong>
-        <div style="margin-top:8px">
-          <em>Option 1 – With Sports Equipment</em>
-          <ul style="margin:6px 0 10px 18px">
-            <li>2 large suitcases (28–32”)</li>
-            <li>3 small bags</li>
-            <li>Up to 5 ski bags or golf bags</li>
-          </ul>
-          <em>Option 2 – Without Sports Equipment</em>
-          <ul style="margin:6px 0 0 18px">
-            <li>3 large suitcases (28–32”)</li>
-            <li>5 small bags</li>
-          </ul>
+    <div id="suv-luggage" class="helper">SUV: Fits up to 5 passengers, 5 large bags, 5 carry-ons</div>
+    <div id="van-luggage" class="helper" style="display:none">Van: Fits up to 12 passengers, 12 large bags, 8 carry-ons</div>
+
+    <!-- Terms -->
+    <div class="terms-box" id="terms-box">
+      <div class="terms-summary">
+        <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
+          <div class="accept-dot"></div>
         </div>
+        <div class="accept-label">I accept the Terms & Conditions</div>
+        <div class="chev"></div>
       </div>
-
-      <!-- Sprinter capacity -->
-      <div id="van-luggage" style="display:none;margin-top:10px;padding:12px;border:1px solid var(--copper);border-radius:10px;background:#0e0e0e">
-        <strong>Sprinter Van – Capacity Guide (12 passengers)</strong>
-        <div style="margin-top:8px">
-          <em>Option 1 – With Sports Equipment</em>
-          <ul style="margin:6px 0 10px 18px">
-            <li>8 sports equipment items (ski bags or golf bags)</li>
-            <li>8 large suitcases (28–32”)</li>
-            <li>Carry-on: 1 per passenger (backpack or small bag)</li>
-          </ul>
-          <em>Option 2 – Without Sports Equipment</em>
-          <ul style="margin:6px 0 0 18px">
-            <li>12–14 large suitcases (28–32”)</li>
-            <li>Carry-on: 1 per passenger (backpack or small bag)</li>
-          </ul>
+      <div class="terms-body">
+        <div id="terms-content" class="terms-content clamped">
+          By booking with Bonanza Transportation, you agree to our policies including but not limited to payment terms,
+          cancellation policy, and liability limits. Please read carefully before proceeding. Bonanza Transportation
+          reserves the right to modify or cancel reservations if conditions warrant. Full terms are available upon request.
         </div>
+        <button type="button" id="readMoreBtn" class="readmore-btn" aria-expanded="false">Read More</button>
       </div>
+    </div>
 
-      <!-- Terms compact line -->
-      <div class="terms-box" id="termsBox">
-        <div class="terms-summary" id="toggleTerms">
-          <div id="acceptPill" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0" title="Tap to accept">
-            <div class="accept-dot"></div>
-          </div>
-          <div class="accept-label">Terms & Conditions</div>
-          <span class="chev"></span>
-        </div>
-
-        <div class="terms-body">
-          <div id="terms-content" class="terms-content clamped" aria-live="polite">
-            <p><strong>Terms and Conditions</strong></p>
-            <p>Bonanza Transportation<br>Last updated: 2024</p>
-            <hr>
-
-            <h4>1. Introduction and Acceptance</h4>
-            <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
-            <hr>
-
-            <h4>2. Definitions</h4>
-            <ul>
-              <li><strong>Client</strong>: The individual or entity booking services from Bonanza Transportation.</li>
-              <li><strong>Service</strong>: Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
-              <li><strong>Booking</strong>: A confirmed service agreement with Bonanza Transportation.</li>
-              <li><strong>Cancellation</strong>: Termination of a confirmed booking.</li>
-              <li><strong>Fare</strong>: The agreed price for the contracted service.</li>
-            </ul>
-            <hr>
-
-            <h4>3. Bookings and Payments</h4>
-            <ul>
-              <li>Bookings must be made in advance via our website, mobile app, text message, phone, or email.</li>
-              <li>Payments may be made by credit/debit card or secure platforms such as Stripe.</li>
-              <li>Bonanza Transportation may require partial or full payment at the time of booking confirmation.</li>
-              <li>All fares are quoted in U.S. Dollars (USD) and include applicable taxes unless otherwise stated.</li>
-              <li>All information provided by the client is their sole responsibility. Bonanza Transportation will only interpret and honor the details exactly as they are written in the booking; we are not responsible for any errors or omissions caused by typos or incorrect information submitted by the client.</li>
-            </ul>
-            <hr>
-
-            <h4>4. Cancellation and Rescheduling Policy</h4>
-            <ul>
-              <li>More than 24 hours before service: the client may reschedule at no additional cost, subject to availability.</li>
-              <li>Within 24 hours before service: the client may reschedule, but a 50% fee of the agreed fare will apply.</li>
-              <li>Rescheduling must be confirmed directly with Bonanza Transportation via phone or email.</li>
-            </ul>
-            <hr>
-
-            <h4>5. No-Show and Waiting Times</h4>
-            <ul>
-              <li>A “No-Show” will be considered if the client does not arrive at the agreed location and time without prior notice.</li>
-              <li>Included waiting time:</li>
-              <li>Non-airport locations: up to 20 minutes free of charge.</li>
-              <li>Airport pickups: up to 1 hour after landing if the flight is on time.</li>
-              <li>After this period, additional waiting charges will apply.</li>
-            </ul>
-            <hr>
-
-            <h4>6. Flight Delays</h4>
-            <ul>
-              <li>We monitor flights to adjust pickup times.</li>
-              <li>If the flight is delayed, we will make every effort to pick up the client at the new arrival time.</li>
-              <li>If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</li>
-            </ul>
-            <hr>
-
-            <h4>7. Luggage and Personal Belongings</h4>
-            <ul>
-              <li>The client is responsible for informing us at the time of booking about the quantity and size of luggage.</li>
-              <li>Bonanza Transportation is not liable for damage or loss of personal belongings left in the vehicle.</li>
-            </ul>
-            <hr>
-
-            <h4>8. Client Conduct</h4>
-            <ul>
-              <li>Smoking, drinking alcohol, or using illegal substances inside the vehicles is prohibited.</li>
-              <li>Respect towards the driver and vehicle is required.</li>
-              <li>The driver may refuse service if the client exhibits aggressive, unsafe, or unlawful behavior.</li>
-            </ul>
-            <hr>
-
-            <h4>9. Limitation of Liability</h4>
-            <ul>
-              <li>Bonanza Transportation will not be liable for delays, losses, or damages caused by circumstances beyond our control, such as traffic, weather conditions, accidents, or force majeure events.</li>
-              <li>Claims for indirect losses, loss of income, or consequential damages will not be accepted.</li>
-            </ul>
-            <hr>
-
-            <h4>10. Insurance</h4>
-            <p>All our services are covered by commercial insurance in accordance with the laws of the State of Utah.</p>
-            <hr>
-
-            <h4>11. Privacy and Personal Data</h4>
-            <p>Personal information provided by the client will be treated confidentially and used solely for purposes related to the provision of the service, in accordance with our Privacy Policy.</p>
-            <hr>
-
-            <h4>12. Jurisdiction</h4>
-            <ul>
-              <li>These terms are governed by the laws of the State of Utah, USA.</li>
-              <li>Any dispute will be submitted to the competent courts of Utah.</li>
-            </ul>
-            <hr>
-
-            <p><strong>Contact</strong><br>
-              📞 Phone: (786) 683-5128<br>
-              📧 Email: bonanzatransportation1@outlook.com<br>
-              📍 Park City, Utah – USA
-            </p>
-          </div>
-
-          <button id="readMoreBtn" class="readmore-btn" type="button" aria-expanded="false" aria-controls="terms-content">Read More</button>
-        </div>
-      </div> <!-- /terms-box -->
-    </div> <!-- /vehicle-type -->
-
+    <!-- Botones -->
     <button id="calculate" disabled>Calculate Price</button>
+    <button id="pay" disabled style="display:none">PAY NOW</button>
+
+    <!-- Mapa -->
     <div id="map"></div>
+
+    <!-- Resumen -->
     <div id="info"></div>
-    <button id="pay" style="display:none;">PAY NOW</button>
   </main>
     <script>
 /* ===== Config ===== */
@@ -387,7 +265,6 @@ const VAN_IMG = "/images/van-sprinter.png";
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
-const ALLOWED_COUNTIES = ["Summit County", "Wasatch County"];
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
 
@@ -395,7 +272,7 @@ let selectedVehicle = 'suv';
 const OPERATING_START = "06:00";
 const OPERATING_END   = "23:00";
 
-/* ===== Pricing ===== */
+/* ===== Pricing (tabla oficial) ===== */
 function calculateBase(mi){
   if (mi <= 10) return 120;
   if (mi <= 35) return 190;
@@ -454,23 +331,21 @@ function mountDateTime(){
   update();
 }
 
-/* ===== Places helpers ===== */
+/* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
-  const addr = (place?.formatted_address || "").toLowerCase();
-  const extra = [
-    "salt lake city international airport","slc airport",
-    "provo municipal airport","ogden-hinckley airport",
-    "st. george regional airport","cedar city regional airport",
-    "canyonlands regional airport","moab canyonlands regional airport",
-    "jsx, n 2360 w st, salt lake city, ut, usa"
-  ];
-  return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "") || extra.some(a=>addr.includes(a));
+  return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
 }
-function isUtah(place){ const addr=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr); }
+function isUtah(place){
+  const addr=(place?.formatted_address||'').toLowerCase();
+  return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
+}
 function pickupIsUtahAirport(){ return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace); }
-function countyFrom(place){ const comps=place?.address_components||[]; const c=comps.find(x=>x.types?.includes("administrative_area_level_2")); return c?.long_name||""; }
-function countyIncludesAllowed(name){ return ["Summit County","Wasatch County"].some(x=>(name||"").includes(x)); }
+function countyFrom(place){
+  const comps=place?.address_components||[];
+  const c=comps.find(x=>x.types?.includes("administrative_area_level_2"));
+  return c?.long_name||"";
+}
 function routeAsync(opts){ return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
 function geocodeAsync(req){ return new Promise((res,rej)=>{ geocoder.geocode(req,(results,status)=>{ if(status==="OK"&&results?.[0]) res(results[0]); else rej(status||"GEOCODE_ERROR"); }); }); }
 async function countyByPlaceId(placeId){ try{ const r=await geocodeAsync({placeId}); const c=r.address_components.find(c=>c.types.includes("administrative_area_level_2")); return c?.long_name||""; }catch(_){ return ""; } }
@@ -499,7 +374,7 @@ function updateFlightVisibility(){
   if(!show){
     input.value=""; input.setCustomValidity("");
     if(hint) hint.style.display='none';
-    if(origin){ origin.value=""; origin.setCustomValidity(""); document.getElementById('originHelp').style.display='none'; }
+    if(origin){ origin.value=""; origin.setCustomValidity(""); const oh=document.getElementById('originHelp'); if(oh) oh.style.display='none'; }
   }
 }
 function wireFlightValidation(){
@@ -519,18 +394,19 @@ function wireFlightValidation(){
   function validateOrigin(v){
     const val=(v||"").trim();
     if(!val) return {ok:false,msg:'Please enter the city your flight departs from (e.g., Miami or Miami (MIA)).'};
-    // Letras, espacios, coma y código opcional entre paréntesis
     const ok = /^[A-Za-z .,'-]{2,}( \([A-Z]{3}\))?$/.test(val);
-    return ok ? {ok:true,msg:'Looks good.'} : {ok:false,msg:'Use letters and optional airport code, e.g., Miami (MIA).'};
+    return ok ? {ok:true,msg:'Origin city captured.'} : {ok:false,msg:'Use letters and optional airport code, e.g., Miami (MIA).'};
   }
   if(origin){
     origin.addEventListener('input', ()=>{
-      if(!pickupIsUtahAirport()){ origin.setCustomValidity(""); originHelp.style.display='none'; return; }
+      if(!pickupIsUtahAirport()){ origin.setCustomValidity(""); if(originHelp) originHelp.style.display='none'; return; }
       const r = validateOrigin(origin.value);
       origin.setCustomValidity(r.ok?"":r.msg);
-      originHelp.textContent = r.ok ? 'Origin city captured.' : r.msg;
-      originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
-      originHelp.style.display='block';
+      if(originHelp){
+        originHelp.textContent = r.msg || 'Origin city captured.';
+        originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+        originHelp.style.display='block';
+      }
     });
   }
 }
@@ -547,7 +423,8 @@ function wireFlightValidation(){
   function setVehicle(type){
     selectedVehicle = type;
     [suv,van].forEach(b=>{
-      const on = b.dataset.type===type;
+      const on = b && b.dataset.type===type;
+      if(!b) return;
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', String(on));
     });
@@ -630,7 +507,7 @@ window.initMap = initMap;
 })();
 
 /* ===== Aceptación de términos ===== */
-const acceptPill  = document.getElementById('acceptPill'); 
+const acceptPill  = document.getElementById('acceptPill');
 const calcBtn = document.getElementById('calculate');
 const payBtn = document.getElementById('pay');
 
@@ -643,11 +520,14 @@ function setAcceptedState(on){
 function isAccepted(){ return acceptPill?.classList.contains('on'); }
 function syncButtons(){
   const accepted = isAccepted();
-  calcBtn.disabled = !accepted;
+  if(calcBtn) calcBtn.disabled = !accepted;
   const readyPay = !!window.__lastQuotedTotal && accepted;
-  payBtn.disabled = !readyPay;
-  payBtn.style.opacity = readyPay ? 1 : .5;
-  payBtn.style.cursor = readyPay ? 'pointer' : 'not-allowed';
+  if(payBtn){
+    payBtn.disabled = !readyPay;
+    payBtn.style.display = 'block';
+    payBtn.style.opacity = readyPay ? 1 : .5;
+    payBtn.style.cursor = readyPay ? 'pointer' : 'not-allowed';
+  }
 }
 acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
 acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
@@ -671,12 +551,14 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
   input.addEventListener('input', ()=>{
     const r = validateEmail(input.value);
     input.setCustomValidity(r.ok ? '' : r.msg);
-    help.textContent = r.ok ? 'Valid email' : r.msg;
-    help.className = 'hint ' + (r.ok ? 'ok' : 'err');
+    if(help){
+      help.textContent = r.ok ? 'Valid email' : r.msg;
+      help.className = 'hint ' + (r.ok ? 'ok' : 'err');
+    }
   });
 
-  input.addEventListener('blur', ()=>{
-    if(!input.checkValidity()){
+  input.addEventListener('blur', ()=> {
+    if(!input.checkValidity() && help){
       help.className = 'hint err';
     }
   });
@@ -710,19 +592,21 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
     input.value = formatUS(digits);
     const v = validateNANP(digits);
     input.setCustomValidity(v.ok ? '' : v.msg);
-    help.textContent = v.ok ? 'Valid US number' : v.msg;
-    help.className = 'hint ' + (v.ok ? 'ok' : 'err');
+    if(help){
+      help.textContent = v.ok ? 'Valid US number' : v.msg;
+      help.className = 'hint ' + (v.ok ? 'ok' : 'err');
+    }
   });
 
   input.addEventListener('blur', ()=> {
-    if(!input.checkValidity()){
+    if(!input.checkValidity() && help){
       help.className = 'hint err';
     }
   });
 })();
 
 /* ===== Calculate button ===== */
-calcBtn.addEventListener("click", async ()=>{
+calcBtn?.addEventListener("click", async ()=>{
   if (!isAccepted()){
     alert("Please accept Terms & Conditions first.");
     return;
@@ -746,8 +630,8 @@ calcBtn.addEventListener("click", async ()=>{
     const pickupAir = isAirport(pickupPlace);
     let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
     let dropCounty   = countyFrom(dropoffPlace) || await countyByPlaceId(dropoffPlace.place_id);
-    const pickupAllowed = countyIncludesAllowed(pickupCounty);
-    const dropAllowed   = countyIncludesAllowed(dropCounty);
+    const pickupAllowed = /Summit County|Wasatch County/.test(pickupCounty||"");
+    const dropAllowed   = /Summit County|Wasatch County/.test(dropCounty||"");
 
     if (pickupAir){
       if (!dropAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
@@ -757,7 +641,8 @@ calcBtn.addEventListener("click", async ()=>{
 
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
     renderInfo(leg, basePrice, surcharge, afterHours);
-    payBtn.style.display = "block";
+    if(payBtn) payBtn.style.display = "block";
+    syncButtons();
   }catch(err){
     alert("Could not calculate route: " + err);
   }
