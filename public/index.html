@@ -68,7 +68,7 @@
     .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 12px;}
     .kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:12px;}
     .kpi .label{font-size:.75rem;opacity:.8;margin-bottom:6px}
-    .kpi .value{font-size:1.35rem;font-weight:800;color:#f0d1ad}
+        .kpi .value{font-size:1.35rem;font-weight:800;color:#f0d1ad}
     .kpi .unit{font-size:.9rem;opacity:.7;margin-left:4px}
     .kpi .value.price{color:#ffddae}
     .breakdown{margin:6px 0 12px;}
@@ -156,6 +156,18 @@
     .hint.warn{color:var(--warn)}
     .hint.err{color:var(--err)}
     .hint.ok{color:var(--ok)}
+
+    /* === Added: Luggage Accordion (discreto, mismo estilo) === */
+    .luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
+    .luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
+    .luggage-title{font-weight:700}
+    .luggage-chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto}
+    .luggage-accordion.open .luggage-chev{transform:rotate(45deg)}
+    .luggage-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
+    .luggage-accordion.open .luggage-body{display:block}
+    .lug-section h4{margin:6px 0 4px;color:#ffddae}
+    .lug-note{opacity:.9;margin:2px 0 8px}
+    .lug-list{margin:0 0 10px 18px}
   </style>
 </head>
 <body>
@@ -182,8 +194,7 @@
 
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
-
-    <div id="flightContainer" style="display:none;">
+        <div id="flightContainer" style="display:none;">
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" />
       <div id="flightHint" class="hint warn" style="display:none">
@@ -228,7 +239,47 @@
     <div id="suv-luggage" class="helper">SUV: Fits up to 5 passengers, 5 large bags, 5 carry-ons</div>
     <div id="van-luggage" class="helper" style="display:none">Van: Fits up to 12 passengers, 12 large bags, 8 carry-ons</div>
 
-    <!-- Terms -->
+    <!-- === Added: Detailed Luggage Guide (acordeón) === -->
+    <div id="luggageAccordion" class="luggage-accordion" aria-expanded="false">
+      <div class="luggage-summary" id="luggageSummary">
+        <span class="luggage-title">Detailed Luggage Guide</span>
+        <div class="luggage-chev"></div>
+      </div>
+      <div class="luggage-body" id="luggageBody">
+        <!-- SUV details -->
+        <div id="lug-suv" class="lug-section">
+          <h4>🚙 SUV – 1 to 5 Passengers</h4>
+          <div class="lug-note"><em>Option 1 – With Sports Equipment (Ski bags or golf bags)</em></div>
+          <ul class="lug-list">
+            <li>5 sports equipment items (ski bags or golf bags)</li>
+            <li>3 large suitcases (28–32”)</li>
+            <li>3 small suitcases (20–24”)</li>
+          </ul>
+          <div class="lug-note"><em>Option 2 – Without Sports Equipment (Only suitcases and handbags)</em></div>
+          <ul class="lug-list">
+            <li>4 large suitcases (28–32”)</li>
+            <li>4 small suitcases (20–24”)</li>
+          </ul>
+        </div>
+
+        <!-- VAN details -->
+        <div id="lug-van" class="lug-section" style="display:none">
+          <h4>🚐 Van – Up to 12 Passengers</h4>
+          <div class="lug-note"><em>Option 1 – With Sports Equipment (Ski bags or golf bags)</em></div>
+          <ul class="lug-list">
+            <li>8 sports equipment items (ski bags or golf bags)</li>
+            <li>8 large suitcases (28–32”)</li>
+            <li>Carry-on: 1 per passenger (backpack or small bag)</li>
+          </ul>
+          <div class="lug-note"><em>Option 2 – Without Sports Equipment (Only suitcases and handbags)</em></div>
+          <ul class="lug-list">
+            <li>12–14 large suitcases (28–32”)</li>
+            <li>Carry-on: 1 per passenger (backpack or small bag)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+        <!-- Terms -->
     <div class="terms-box" id="terms-box">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
@@ -420,6 +471,10 @@ function wireFlightValidation(){
   const photo = document.getElementById('vehicle-photo');
   const caption = document.getElementById('vehicle-caption');
 
+  // Added: refs for luggage accordion visibility by vehicle
+  const lugSUV = document.getElementById('lug-suv');
+  const lugVAN = document.getElementById('lug-van');
+
   function setVehicle(type){
     selectedVehicle = type;
     [suv,van].forEach(b=>{
@@ -433,6 +488,9 @@ function wireFlightValidation(){
     if(suvGuide) suvGuide.style.display = isVan ? 'none' : 'block';
     if(photo) photo.src = isVan ? VAN_IMG : SUV_IMG;
     if(caption) caption.textContent = isVan ? 'This will be your Van' : 'This will be your SUV';
+    // NEW: show detailed guide for selected vehicle
+    if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
+    if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
     recalcFromCache();
   }
   suv?.addEventListener('click', ()=> setVehicle('suv'));
@@ -677,6 +735,17 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
   alert(`Your confirmation number is ${payload.confirmationNumber}`);
   // TODO: POST to /api/create-checkout-session
 });
+
+/* ===== Luggage Accordion wiring ===== */
+(function wireLuggageAccordion(){
+  const acc = document.getElementById('luggageAccordion');
+  const sum = document.getElementById('luggageSummary');
+  if(!acc || !sum) return;
+  sum.addEventListener('click', ()=>{
+    const open = acc.classList.toggle('open');
+    acc.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+})();
 
 /* ===== On load ===== */
 mountDateTime();
