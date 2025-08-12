@@ -75,13 +75,12 @@
     .breakdown .row{display:flex;justify-content:space-between;padding:6px 0;}
     .breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
     .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
-
-    /* Date/Time */
+        /* Date/Time */
     .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
     #date,#time{
       height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
-      border:2px solid var(--copper);box-shadow:0 0 0 3px rgba(192,139,92,.18);
+      border:2px solid var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18);
     }
     #date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
     input[type="date"]::-webkit-calendar-picker-indicator,
@@ -157,8 +156,7 @@
     .hint.warn{color:var(--warn)}
     .hint.err{color:var(--err)}
     .hint.ok{color:var(--ok)}
-
-    /* === Added: Luggage Accordion (discreto, mismo estilo) === */
+        /* === Added: Luggage Accordion (discreto, mismo estilo) === */
     .luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
     .luggage-title{font-weight:700}
@@ -195,7 +193,7 @@
 
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
-        <div id="flightContainer" style="display:none;">
+    <div id="flightContainer" style="display:none;">
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" />
       <div id="flightHint" class="hint warn" style="display:none">
@@ -217,8 +215,7 @@
       <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
       <div id="pvtOriginHelp" class="hint" style="display:none"></div>
     </div>
-
-    <div class="input-row">
+        <div class="input-row">
       <div>
         <label for="date">Date:</label>
         <input id="date" type="date" />
@@ -299,7 +296,7 @@
           <div class="accept-dot"></div>
         </div>
         <div class="accept-label">I accept the Terms & Conditions</div>
-        <div class="chev"></div>
+        <!-- flecha eliminada -->
       </div>
       <div class="terms-body">
         <div id="terms-content" class="terms-content clamped">
@@ -309,9 +306,7 @@
         </div>
         <button type="button" id="readMoreBtn" class="readmore-btn" aria-expanded="false">Read More</button>
       </div>
-    </div>
-
-    <!-- Botones -->
+    </div>    <!-- Botones -->
     <button id="calculate" disabled>Calculate Price</button>
     <button id="pay" disabled style="display:none">PAY NOW</button>
 
@@ -321,7 +316,7 @@
     <!-- Resumen -->
     <div id="info"></div>
   </main>
-    <script>
+  <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -393,9 +388,7 @@ function mountDateTime(){
   dateEl?.addEventListener('change', update);
   timeEl?.addEventListener('change', update);
   update();
-}
-
-/* ===== Google Places helpers ===== */
+}/* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -438,7 +431,7 @@ function validateFlightValue(v){
 }
 
 /* ===== NUEVO: Validaciones Private Jet ===== */
-const N_NUMBER_REGEX = /^N[1-9]\d{0,4}([A-HJ-NP-Z]{1,2})?$/i; // N + 1–5 dígitos + 0–2 letras (sin I/O)
+const N_NUMBER_REGEX = /^N[1-9]\d{0,4}([A-HJ-NP-Z]{1,2})?$/i;
 function validateNNumber(v){
   const val=(v||"").toUpperCase().trim();
   if(!val) return {ok:false,msg:"Please enter the aircraft tail number (e.g., N123AB)."};
@@ -451,7 +444,6 @@ function validateCityLike(v, label="origin city"){
   const ok = /^[A-Za-z .,'-]{2,}( \([A-Z]{3}\))?$/.test(val);
   return ok ? {ok:true,msg:`${label[0].toUpperCase()+label.slice(1)} captured.`} : {ok:false,msg:`Use letters and optional airport code, e.g., Van Nuys (VNY).`};
 }
-      /* ===== Visibilidad: comercial vs privado ===== */
 function updateFlightVisibility(){
   const commWrap=document.getElementById('flightContainer');
   const commNum=document.getElementById('flightNumber');
@@ -468,7 +460,6 @@ function updateFlightVisibility(){
   const isUTA = pickupIsUtahAirport();
   const isPvt = isPrivateUtahAirport(pickupPlace);
 
-  // Comercial visible solo si es aeropuerto de Utah y NO es FBO
   if(commWrap){
     const showComm = isUTA && !isPvt;
     commWrap.style.display = showComm ? 'block' : 'none';
@@ -480,7 +471,6 @@ function updateFlightVisibility(){
     }
   }
 
-  // Privado visible si es FBO en Utah
   if(pvtWrap){
     const showPvt = isUTA && isPvt;
     pvtWrap.style.display = showPvt ? 'block' : 'none';
@@ -495,7 +485,6 @@ function updateFlightVisibility(){
 
 /* ===== Wire validations (comercial & privado) ===== */
 function wireFlightValidation(){
-  // Comercial
   const input=document.getElementById('flightNumber');
   const hint=document.getElementById('flightHint');
   const origin = document.getElementById('flightOrigin');
@@ -522,7 +511,6 @@ function wireFlightValidation(){
     });
   }
 
-  // Privado
   const tail = document.getElementById('tailNumber');
   const tailHelp = document.getElementById('tailHelp');
   const pvtOrigin = document.getElementById('pvtOrigin');
@@ -554,7 +542,7 @@ function wireFlightValidation(){
   }
 }
 
-/* ===== Vehicle selector + photo & guides (sin cambios) ===== */
+/* ===== Vehicle selector + photo & guides ===== */
 (function wireVehicleSelector(){
   const suv = document.querySelector('.veh-btn[data-type="suv"]');
   const van = document.querySelector('.veh-btn[data-type="van"]');
@@ -587,8 +575,7 @@ function wireFlightValidation(){
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
-
-/* ===== Render Summary (sin cambios) ===== */
+    /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
@@ -626,7 +613,7 @@ function renderInfo(leg, base, surcharge, afterHours){
   syncButtons();
 }
 
-/* ===== Init Google Maps (sin cambios, solo llama updateFlightVisibility) ===== */
+/* ===== Init Google Maps ===== */
 function initMap(){
   map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
   directionsService  = new google.maps.DirectionsService();
@@ -641,7 +628,7 @@ function initMap(){
 }
 window.initMap = initMap;
 
-/* ===== Read More (sin cambios) ===== */
+/* ===== Read More ===== */
 (function wireReadMore(){
   const content = document.getElementById('terms-content');
   const btn = document.getElementById('readMoreBtn');
@@ -654,7 +641,7 @@ window.initMap = initMap;
   });
 })();
 
-/* ===== Términos + botones (sin cambios) ===== */
+/* ===== Términos + botones ===== */
 const acceptPill  = document.getElementById('acceptPill');
 const calcBtn = document.getElementById('calculate');
 const payBtn = document.getElementById('pay');
@@ -680,7 +667,7 @@ function syncButtons(){
 acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
 acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
 
-/* ===== Email (sin cambios) ===== */
+/* ===== Email ===== */
 (function wireEmail(){
   const input = document.getElementById('email');
   const help  = document.getElementById('emailHelp');
@@ -712,7 +699,7 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
   });
 })();
 
-/* ===== Teléfono US (sin cambios) ===== */
+/* ===== Teléfono US ===== */
 (function wirePhone(){
   const input = document.getElementById('phone');
   const help  = document.getElementById('phoneHelp');
@@ -753,7 +740,7 @@ acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){
   });
 })();
 
-/* ===== Calculate (sin cambios de lógica) ===== */
+/* ===== Calculate ===== */
 calcBtn?.addEventListener("click", async ()=>{
   if (!isAccepted()){
     alert("Please accept Terms & Conditions first.");
@@ -796,7 +783,7 @@ calcBtn?.addEventListener("click", async ()=>{
   }
 });
 
-/* ===== PAY (añadido solo payload de privado) ===== */
+/* ===== PAY ===== */
 function generateConfirmationNumber(){
   const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
   const rand=Math.random().toString(36).slice(2,6).toUpperCase();
@@ -815,7 +802,6 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     time: document.getElementById('time').value,
     flightNumber: document.getElementById('flightNumber').value || null,
     flightOriginCity: document.getElementById('flightOrigin').value || null,
-    /* NUEVO: campos para FBO */
     tailNumber: document.getElementById('tailNumber')?.value || null,
     privateFlightOriginCity: document.getElementById('pvtOrigin')?.value || null,
 
@@ -830,7 +816,7 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
   // TODO: POST to /api/create-checkout-session
 });
 
-/* ===== Luggage Accordion (sin cambios) ===== */
+/* ===== Luggage Accordion ===== */
 (function wireLuggageAccordion(){
   const acc = document.getElementById('luggageAccordion');
   const sum = document.getElementById('luggageSummary');
