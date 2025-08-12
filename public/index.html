@@ -162,7 +162,7 @@
     .lug-note{opacity:.9;margin:2px 0 8px}
     .lug-list{margin:0 0 10px 18px}
 
-    /* ===== Modal (mínimo y ligero) ===== */
+    /* ===== Modal (ligero, sin cambios al layout) ===== */
     .modal-backdrop{position:fixed;inset:0;display:none;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:16px;z-index:9999}
     .modal-backdrop.open{display:flex}
     .modal{max-width:860px;width:100%;max-height:86vh;background:#0e0e0e;border:1px solid rgba(168,116,79,.45);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column}
@@ -196,8 +196,7 @@
 
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
-
-    <!-- NUEVO: Special Instructions (debajo de Drop-off) -->
+        <!-- NUEVO: Special Instructions (debajo de Drop-off) -->
     <label for="specialInstructions">Special Instructions:</label>
     <textarea
       id="specialInstructions"
@@ -217,9 +216,7 @@
       <label for="flightOrigin" style="margin-top:12px;">Flight Origin City:</label>
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
-    </div>
-
-    <!-- === NUEVO: Private Jet (FBO) — solo si es aeropuerto privado en Utah === -->
+    </div>    <!-- === NUEVO: Private Jet (FBO) — solo si es aeropuerto privado en Utah === -->
     <div id="privateFlightContainer" style="display:none;">
       <label for="tailNumber">Jet Tail Number (N‑Number):</label>
       <input id="tailNumber" placeholder="e.g., N123AB" />
@@ -241,9 +238,7 @@
         <input id="time" type="time" step="900" />
         <div id="timeHelp" class="helper"></div>
       </div>
-    </div>
-
-    <!-- Vehicle selector -->
+    </div>    <!-- Vehicle selector -->
     <label>Vehicle Type:</label>
     <div class="veh-toggle">
       <button type="button" class="veh-btn active" data-type="suv" aria-pressed="true">
@@ -318,8 +313,7 @@
           cancellation policy, and liability limits. Please read carefully before proceeding. Bonanza Transportation
           reserves the right to modify or cancel reservations if conditions warrant. Full terms are available upon request.
         </div>
-        <button type="button" id="readMoreBtn" class="readmore-btn" aria-expanded="false">Read More</button>
-        <!-- agregado: botón para abrir el modal (ligero) -->
+        <!-- SOLO queda el botón para abrir modal -->
         <button type="button" id="openTermsModal" class="readmore-btn">View Full Terms</button>
       </div>
     </div>
@@ -344,6 +338,17 @@
         <button type="button" id="closeTerms" class="close-btn">Close</button>
       </div>
       <div class="modal-body" id="termsBody">
+
+        <!-- Resumen con Read More ahora dentro del modal -->
+        <div id="modal-terms-content" class="terms-content clamped">
+          By booking with Bonanza Transportation, you agree to our policies including but not limited to payment terms,
+          cancellation policy, and liability limits. Please read carefully before proceeding. Bonanza Transportation
+          reserves the right to modify or cancel reservations if conditions warrant. Full terms are available upon request.
+        </div>
+        <button type="button" id="modalReadMoreBtn" class="readmore-btn" aria-expanded="false">Read More</button>
+
+        <hr style="border:0;border-top:1px solid rgba(168,116,79,.28);margin:12px 0 16px"/>
+
         <p><strong>Last updated:</strong> 2024</p>
         <hr style="border:0;border-top:1px solid rgba(168,116,79,.28);margin:8px 0 14px"/>
 
@@ -434,7 +439,8 @@
            📍 Park City, Utah – USA</p>
       </div>
     </div>
-  </div>  <script>
+  </div>
+    <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -507,7 +513,7 @@ function mountDateTime(){
   timeEl?.addEventListener('change', update);
   update();
 }
-    /* ===== Google Places helpers ===== */
+      /* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -693,7 +699,8 @@ function wireFlightValidation(){
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
-})();/* ===== Render Summary ===== */
+})();
+      /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
@@ -730,7 +737,8 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__vehicleType = selectedVehicle;
   syncButtons();
 }
-    /* ===== Init Google Maps ===== */
+
+/* ===== Init Google Maps ===== */
 function initMap(){
   map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
   directionsService  = new google.maps.DirectionsService();
@@ -745,10 +753,10 @@ function initMap(){
 }
 window.initMap = initMap;
 
-/* ===== Read More ===== */
-(function wireReadMore(){
-  const content = document.getElementById('terms-content');
-  const btn = document.getElementById('readMoreBtn');
+/* ===== Modal Read More (MOVIDO al modal) ===== */
+(function wireModalReadMore(){
+  const content = document.getElementById('modal-terms-content');
+  const btn = document.getElementById('modalReadMoreBtn');
   if(!content || !btn) return;
   btn.addEventListener('click', ()=>{
     const clamped = content.classList.toggle('clamped');
@@ -943,11 +951,13 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     const open = acc.classList.toggle('open');
     acc.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
-})();/* ===== Modal Wiring (mínimo) ===== */
+})();
+
+/* ===== Modal Wiring (abrir/cerrar) ===== */
 (function wireTermsModal(){
-  const modal = document.getElementById('termsModal');
+  const modal   = document.getElementById('termsModal');
   const openBtn = document.getElementById('openTermsModal');
-  const closeBtn = document.getElementById('closeTerms');
+  const closeBtn= document.getElementById('closeTerms');
 
   function openModal(){
     if(!modal) return;
@@ -966,7 +976,6 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
 
   openBtn?.addEventListener('click', openModal);
   closeBtn?.addEventListener('click', closeModal);
-
   modal?.addEventListener('click', (e)=> { if(e.target === modal) closeModal(); });
   document.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && modal?.classList.contains('open')) closeModal(); });
 })();
