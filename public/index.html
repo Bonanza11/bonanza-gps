@@ -125,9 +125,27 @@
     .hint.warn{color:var(--warn)}
     .hint.err{color:var(--err)}
     .hint.ok{color:var(--ok)}
+
+    /* Botón flotante top-left */
+    #termsFloating{
+      position:fixed;top:10px;left:10px;z-index:9999;
+      background:#0e0e0e;border:1px solid rgba(168,116,79,.45);
+      border-radius:12px;padding:6px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,0,0,.45);
+    }
+    #termsFloating .label{font-size:.85rem;color:#ffddae}
   </style>
 </head>
-    <header>
+<body>
+  <!-- Botón flotante de Términos (esquina superior izquierda) -->
+  <div id="termsFloating" title="Terms & Conditions">
+    <span class="label">Terms & Conditions</span>
+    <div id="acceptPillFloating" class="accept-pill" role="checkbox" aria-checked="false" tabindex="0">
+      <div class="accept-dot"></div>
+    </div>
+  </div>
+
+  <header>
     <div class="logo-wrap">
       <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo">
     </div>
@@ -238,13 +256,55 @@
           </div>
         </div>
         <div class="terms-body" id="termsBody">
-          <!-- (Contenido de términos igual que tu versión) -->
           <div id="terms-content">
             <strong>Terms and Conditions</strong><br>
             Bonanza Transportation<br>
             Last updated: [Date]<br><br>
             <hr>
-            <!-- …secciones 1–12… -->
+            <h4>1. Introduction and Acceptance</h4>
+            <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
+            <h4>2. Definitions</h4>
+            <ul>
+              <li><em>Client</em>: The individual or entity booking services from Bonanza Transportation.</li>
+              <li><em>Service</em>: Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
+              <li><em>Booking</em>: A confirmed service agreement with Bonanza Transportation.</li>
+              <li><em>Cancellation</em>: Termination of a confirmed booking.</li>
+              <li><em>Fare</em>: The agreed price for the contracted service.</li>
+            </ul>
+            <h4>3. Bookings and Payments</h4>
+            <ul>
+              <li>Bookings must be made in advance via our website, mobile app, text message, phone, or email.</li>
+              <li>Payments may be made by credit/debit card or secure platforms such as Stripe.</li>
+              <li>Bonanza Transportation may require partial or full payment at the time of booking confirmation.</li>
+              <li>All fares are quoted in U.S. Dollars (USD) and include applicable taxes unless otherwise stated.</li>
+              <li>All information provided by the client is their sole responsibility. Bonanza Transportation will only interpret and honor the details exactly as they are written in the booking; we are not responsible for any errors or omissions caused by typos or incorrect information submitted by the client.</li>
+            </ul>
+            <h4>4. Cancellation and Rescheduling Policy</h4>
+            <ul>
+              <li>More than 24 hours before service: the client may reschedule at no additional cost, subject to availability.</li>
+              <li>Within 24 hours before service: the client may reschedule, but a 50% fee of the agreed fare will apply.</li>
+              <li>Rescheduling must be confirmed directly with Bonanza Transportation via phone or email.</li>
+            </ul>
+            <h4>5. No-Show and Waiting Times</h4>
+            <ul>
+              <li>A “No-Show” will be considered if the client does not arrive at the agreed location and time without prior notice.</li>
+              <li>Non-airport: up to 20 minutes free of charge.</li>
+              <li>Airport pickups: up to 1 hour after landing if the flight is on time.</li>
+            </ul>
+            <h4>6. Flight Delays</h4>
+            <p>We monitor flights to adjust pickup times. If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</p>
+            <h4>7. Luggage and Personal Belongings</h4>
+            <p>The client must inform luggage details at booking time. We are not liable for items left in the vehicle.</p>
+            <h4>8. Client Conduct</h4>
+            <p>No smoking, alcohol, or illegal substances. The driver may refuse service for unsafe behavior.</p>
+            <h4>9. Limitation of Liability</h4>
+            <p>No liability for delays or losses due to traffic, weather, accidents, or force majeure. No consequential damages.</p>
+            <h4>10. Insurance</h4>
+            <p>Covered by commercial insurance in accordance with Utah law.</p>
+            <h4>11. Privacy and Personal Data</h4>
+            <p>Personal information is confidential and used solely to provide the service, per our Privacy Policy.</p>
+            <h4>12. Jurisdiction</h4>
+            <p>Utah, USA. Disputes subject to Utah courts.</p>
             <p><strong>Contact</strong><br>
             📞 (786) 683-5128 · 📧 bonanzatransportation1@outlook.com · 📍 Park City, Utah – USA</p>
           </div>
@@ -257,7 +317,7 @@
     <div id="info"></div>
     <button id="pay" style="display:none;">PAY NOW</button>
   </main>
-    <script>
+  <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -413,26 +473,88 @@ function wireFlightValidation(){
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
-      /* ===== Aceptación de términos (solo switch interno) ===== */
+
+/* ===== Render Summary ===== */
+function renderInfo(leg, base, surcharge, afterHours){
+  const miles = leg.distance.value / 1609.34;
+  const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
+
+  window.__lastBase = base;
+  window.__lastSurcharge = surcharge;
+  window.__lastAhFee = ahFee;
+
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+  const hasExtra = (surcharge > 0) || (ahFee > 0);
+
+  const el = document.getElementById("info");
+  el.style.display = "block";
+  el.innerHTML = `
+    <h3 class="info-title">Trip Summary</h3>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
+      <div class="kpi"><div class="label">Price</div><div class="value price">$${finalTotal.toFixed(2)}</div></div>
+    </div>
+    ${hasExtra ? `
+      <div class="divider"></div>
+      <div class="breakdown">
+        ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
+        ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
+        <div class="divider"></div>
+        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
+      </div>
+    ` : ``}
+  `;
+
+  window.__lastQuotedTotal = finalTotal;
+  window.__lastDistanceMiles = miles;
+  window.__vehicleType = selectedVehicle;
+  syncPayBtn();
+}
+
+/* ===== Init Google Maps ===== */
+function initMap(){
+  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  directionsService  = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer();
+  directionsRenderer.setMap(map);
+  geocoder = new google.maps.Geocoder();
+  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
+  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
+  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
+  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
+}
+window.initMap = initMap;
+
+/* ===== Aceptación de términos: sincronizar 2 switches (flotante y en caja) ===== */
 const termsBox = document.getElementById('termsBox');
 const toggleTerms = document.getElementById('toggleTerms');
-const acceptPill  = document.getElementById('acceptPill'); // único switch
+const acceptPill  = document.getElementById('acceptPill');            // en el formulario
+const acceptPillFloating = document.getElementById('acceptPillFloating'); // flotante top-left
 const payBtn = document.getElementById('pay');
 
 function setAcceptedState(on){
-  if(!acceptPill) return;
-  acceptPill.classList.toggle('on', on);
-  acceptPill.setAttribute('aria-checked', on ? 'true' : 'false');
+  [acceptPill, acceptPillFloating].forEach(p=>{
+    if(!p) return;
+    p.classList.toggle('on', on);
+    p.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
   syncPayBtn();
 }
-function isAccepted(){ return acceptPill?.classList.contains('on'); }
+function isAccepted(){ return acceptPill?.classList.contains('on') || acceptPillFloating?.classList.contains('on'); }
 
 toggleTerms?.addEventListener('click', (e)=>{
-  if(e.target.closest('#acceptPill')) return;
+  if(e.target.closest('#acceptPill')) return; // no interferir con clic al switch
   termsBox.classList.toggle('open');
 });
 acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
 acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
+acceptPillFloating?.addEventListener('click', (e)=>{
+  if(!termsBox.classList.contains('open')) termsBox.classList.add('open'); // al tocar el flotante, abre los términos
+  setAcceptedState(!isAccepted());
+});
+acceptPillFloating?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
 
 /* ===== Gating de botones ===== */
 function syncPayBtn(){
@@ -447,6 +569,7 @@ function syncPayBtn(){
 document.getElementById("calculate").addEventListener("click", async ()=>{
   if (!isAccepted()){
     alert("Please accept Terms & Conditions first.");
+    // asegura que el usuario vea la caja de términos
     termsBox?.classList.add('open');
     return;
   }
@@ -558,23 +681,13 @@ mountDateTime();
 wireFlightValidation();
 syncPayBtn();
 
-/* ===== Init Google Maps ===== */
-function initMap(){
-  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
-  directionsService  = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer();
-  directionsRenderer.setMap(map);
-  geocoder = new google.maps.Geocoder();
-  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
-  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
-  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
-  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
-  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
-}
-window.initMap = initMap;
-  </script>
-  <!-- Google Maps loader -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
+/* ===== Scroll al tocar el contenedor flotante (abre términos) ===== */
+document.getElementById('termsFloating')?.addEventListener('click', ()=>{
+  termsBox?.classList.add('open');
+  document.getElementById('termsBox')?.scrollIntoView({behavior:'smooth', block:'center'});
+});
+</script>
+<!-- Google Maps loader -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
-<body>
