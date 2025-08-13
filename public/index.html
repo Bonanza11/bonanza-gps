@@ -210,40 +210,7 @@
 @media (prefers-reduced-motion: reduce){
   .jet-faux3d .jet {animation: none;}
 }     
- /* ===== Jet Animation ===== */
-.jet-showcase {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin: 20px 0;
-}
-
-.jet-faux3d {
-  perspective: 1000px;
-}
-
-.jet-faux3d img {
-  width: 300px;
-  height: auto;
-  border-radius: 10px;
-  animation: spinJet 12s linear infinite;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-}
-
-@keyframes spinJet {
-  0% { transform: rotateY(0deg); }
-  100% { transform: rotateY(360deg); }
-}
-
-.jet-caption {
-  font-weight: 700;
-  color: #ffddae;
-  text-align: center;
-  margin-top: 6px;
-  letter-spacing: .2px;
-  opacity: .95;
-} </style>
+ </style>
 </head>
 <body>
   <header>
@@ -319,13 +286,6 @@
       <button class="veh-btn active" data-type="suv">SUV (1-5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
-<!-- Jet showcase -->
-<div class="jet-showcase">
-  <div class="jet-faux3d">
-    <img src="/images/global-jet.jpg" alt="Luxury Global Jet" class="jet">
-  </div>
-  <div class="jet-caption">Your Luxury Global Jet Experience</div>
-</div>
     <div class="turntable">
       <img class="car" src="/images/suv.png" alt="Selected Vehicle">
       <div class="platform"></div>
