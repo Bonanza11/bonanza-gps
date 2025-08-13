@@ -69,8 +69,7 @@
     .breakdown .row{display:flex;justify-content:space-between;padding:6px 0;}
     .breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
     .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
-
-    /* Date/Time */
+        /* Date/Time */
     .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     @media (max-width:520px){.input-row{grid-template-columns:1fr;}}
     #date,#time{
@@ -84,7 +83,8 @@
       opacity:.95;cursor:pointer;
     }
     .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
-        /* Vehicle visual */
+
+    /* Vehicle visual */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
     .turntable .platform{
@@ -115,7 +115,8 @@
       border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto;
     }
     .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
-        /* Switch (único) */
+
+    /* Switch (único) */
     .accept-pill{
       min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
       display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
@@ -127,8 +128,7 @@
     .accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
     .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
     .accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
-
-    /* Read-more (2 líneas + degradado) */
+        /* Read-more (2 líneas + degradado) */
     .terms-body{margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
     .terms-content.clamped{
       display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
@@ -143,7 +143,8 @@
       display:inline-block;margin-top:8px;padding:6px 10px;border:1px solid rgba(168,116,79,.55);
       border-radius:8px;background:#1a1a1a;color:#ffddae;font-weight:700;font-size:.85rem;cursor:pointer;
     }
-        /* Hints */
+
+    /* Hints */
     .hint{font-size:.85rem;margin-top:6px}
     .hint.warn{color:var(--warn)}
     .hint.err{color:var(--err)}
@@ -179,7 +180,7 @@
   </header>
 
   <main>
-        <label for="fullname">Full Name:</label>
+    <label for="fullname">Full Name:</label>
     <input id="fullname" type="text" placeholder="e.g. John Doe" autocomplete="name" required />
 
     <label for="phone">Phone Number (US):</label>
@@ -205,8 +206,7 @@
       onfocus="this.style.borderColor='#a8744f'; this.style.boxShadow='0 0 0 3px rgba(168,116,79,.18)';"
       onblur="this.style.borderColor='#444'; this.style.boxShadow='none';"
     ></textarea>
-
-    <div id="flightContainer" style="display:none;">
+        <div id="flightContainer" style="display:none;">
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" />
       <div id="flightHint" class="hint warn" style="display:none">
@@ -217,9 +217,10 @@
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
     </div>
-        <!-- Private Jet (FBO) — solo si es aeropuerto privado en Utah -->
+
+    <!-- Private Jet (FBO) — solo si es aeropuerto privado en Utah -->
     <div id="privateFlightContainer" style="display:none;">
-      <label for="tailNumber">Jet Tail Number (N-Number):</label>
+      <label for="tailNumber">Jet Tail Number (N‑Number):</label>
       <input id="tailNumber" placeholder="e.g., N123AB" />
       <div id="tailHelp" class="hint" style="display:none"></div>
 
@@ -240,8 +241,7 @@
         <div id="timeHelp" class="helper"></div>
       </div>
     </div>
-
-    <!-- Vehicle Selector -->
+        <!-- Vehicle Selector -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1-5 pax)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 pax)</button>
@@ -252,7 +252,8 @@
       <div class="platform"></div>
       <div class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
-        <!-- Luggage Accordion -->
+
+    <!-- Luggage Accordion -->
     <div class="luggage-accordion" id="luggageAccordion">
       <div class="luggage-summary">
         <span class="luggage-title">Luggage Guidelines</span>
@@ -269,8 +270,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Terms -->
+        <!-- Terms -->
     <div class="terms-box" id="terms-box">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
@@ -279,21 +279,15 @@
         <div class="accept-label">I accept the Terms & Conditions</div>
       </div>
       <div class="terms-body">
-        <!-- RESUMEN PROFESIONAL (solo contenido cambia) -->
         <div id="terms-content" class="terms-content clamped">
-          By booking with Bonanza Transportation, you agree to our Terms & Conditions. Key points:
-          • Bookings must be made in advance; payment may be required to confirm.
-          • Free reschedule when requested more than 24 hours before service; within 24 hours a 50% fee may apply.
-          • No-show may be billed at 100% of the fare.
-          • Included waiting time: 20 minutes at non-airport locations; up to 1 hour after landing for on-time flights.
-          • We are not responsible for errors from incorrect information provided in the booking.
-          • Full Terms & Conditions available below.
+          By booking with Bonanza Transportation, you agree to our policies including but not limited to payment terms,
+          cancellation policy, and liability limits. Please read carefully before proceeding. Bonanza Transportation
+          reserves the right to modify or cancel reservations if conditions warrant. Full terms are available upon request.
         </div>
         <button type="button" id="openTermsModal" class="readmore-btn">View Full Terms</button>
       </div>
     </div>
-
-    <!-- Botones -->
+        <!-- Botones -->
     <button id="calculate" disabled>Calculate Price</button>
 
     <!-- Mapa -->
@@ -311,108 +305,24 @@
           <h2 id="termsTitle" class="modal-title">Terms & Conditions</h2>
           <button id="closeTerms" class="close-btn">Close</button>
         </div>
-        <!-- TEXTO COMPLETO DE TÉRMINOS (solo contenido cambia) -->
         <div class="modal-body">
-          <h3 style="margin-top:0">Bonanza Transportation — Terms and Conditions</h3>
-          <p><strong>Last updated:</strong> 2024</p>
-          <hr style="border-color: rgba(168,116,79,.28);">
-
-          <h4>1. Introduction and Acceptance</h4>
-          <p>Welcome to Bonanza Transportation. By booking, hiring, or using our services, you agree to comply with these Terms and Conditions. We reserve the right to modify them at any time; updated versions will be available on our website and will take effect immediately.</p>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>2. Definitions</h4>
+          <p>
+            Bonanza Transportation provides luxury transportation services with a focus on safety, punctuality,
+            and comfort. By booking, you agree to the following:
+          </p>
           <ul>
-            <li><strong>Client:</strong> The individual or entity booking services from Bonanza Transportation.</li>
-            <li><strong>Service:</strong> Private transportation provided by Bonanza Transportation, including airport pickups, events, transfers, and private trips.</li>
-            <li><strong>Booking:</strong> A confirmed service agreement with Bonanza Transportation.</li>
-            <li><strong>Cancellation:</strong> Termination of a confirmed booking.</li>
-            <li><strong>Fare:</strong> The agreed price for the contracted service.</li>
+            <li>Full payment is required to confirm your booking.</li>
+            <li>Cancellations within 24 hours of the trip will incur a 50% charge.</li>
+            <li>We reserve the right to adjust pricing in case of significant route changes.</li>
+            <li>Our liability is limited to the value of the trip booked.</li>
           </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>3. Bookings and Payments</h4>
-          <ul>
-            <li>Bookings must be made in advance via our website, mobile app, text message, phone, or email.</li>
-            <li>Payments may be made by credit/debit card or secure platforms such as Stripe.</li>
-            <li>Bonanza Transportation may require partial or full payment at the time of booking confirmation.</li>
-            <li>All fares are quoted in U.S. Dollars (USD) and include applicable taxes unless otherwise stated.</li>
-            <li>All information provided by the client is their sole responsibility. Bonanza Transportation will only interpret and honor the details exactly as they are written in the booking; we are not responsible for any errors or omissions caused by typos or incorrect information submitted by the client.</li>
-          </ul>
-                    <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>4. Cancellation and Rescheduling Policy</h4>
-          <ul>
-            <li>More than 24 hours before service: the client may reschedule at no additional cost, subject to availability.</li>
-            <li>Within 24 hours before service: the client may reschedule, but a 50% fee of the agreed fare will apply.</li>
-            <li>Rescheduling must be confirmed directly with Bonanza Transportation via phone or email.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>5. No-Show and Waiting Times</h4>
-          <ul>
-            <li>A “No-Show” will be considered if the client does not arrive at the agreed location and time without prior notice.</li>
-            <li><strong>Included waiting time:</strong></li>
-            <li>Non-airport locations: up to 20 minutes free of charge.</li>
-            <li>Airport pickups: up to 1 hour after landing if the flight is on time.</li>
-            <li>After this period, additional waiting charges will apply.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>6. Flight Delays</h4>
-          <ul>
-            <li>We monitor flights to adjust pickup times.</li>
-            <li>If the flight is delayed, we will make every effort to pick up the client at the new arrival time.</li>
-            <li>If the delay is excessive and we cannot wait, the service may be rescheduled subject to availability.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>7. Luggage and Personal Belongings</h4>
-          <ul>
-            <li>The client is responsible for informing us at the time of booking about the quantity and size of luggage.</li>
-            <li>Bonanza Transportation is not liable for damage or loss of personal belongings left in the vehicle.</li>
-          </ul>
-                    <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>8. Client Conduct</h4>
-          <ul>
-            <li>Smoking, drinking alcohol, or using illegal substances inside the vehicles is prohibited.</li>
-            <li>Respect towards the driver and vehicle is required.</li>
-            <li>The driver may refuse service if the client exhibits aggressive, unsafe, or unlawful behavior.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>9. Limitation of Liability</h4>
-          <ul>
-            <li>Bonanza Transportation will not be liable for delays, losses, or damages caused by circumstances beyond our control, such as traffic, weather conditions, accidents, or force majeure events.</li>
-            <li>Claims for indirect losses, loss of income, or consequential damages will not be accepted.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>10. Insurance</h4>
-          <ul>
-            <li>All our services are covered by commercial insurance in accordance with the laws of the State of Utah.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>11. Privacy and Personal Data</h4>
-          <ul>
-            <li>Personal information provided by the client will be treated confidentially and used solely for purposes related to the provision of the service, in accordance with our Privacy Policy.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>12. Jurisdiction</h4>
-          <ul>
-            <li>These terms are governed by the laws of the State of Utah, USA.</li>
-            <li>Any dispute will be submitted to the competent courts of Utah.</li>
-          </ul>
-
-          <hr style="border-color: rgba(168,116,79,.28);">
-          <h4>Contact</h4>
-          <p>📞 Phone: (786) 683-5128<br>
-             📧 Email: <a href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a><br>
-             📍 Park City, Utah – USA</p>
+          <p>
+            Please contact our office if you have any questions about these terms or require clarification.
+          </p>
         </div>
       </div>
-    </div<script>
+    </div>
+        <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
 const VAN_IMG = "/images/van-sprinter.png";
@@ -466,11 +376,11 @@ function mountDateTime(){
   const dateHelp = document.getElementById('dateHelp');
   const timeHelp = document.getElementById('timeHelp');
 
-  const minDt = earliestAllowedDt();
-  if(dateEl) dateEl.min = localISODate(minDt);
+  const minDt = earliestAllowedDt();              /* MOD */
+  if(dateEl) dateEl.min = localISODate(minDt);    /* MOD */
 
-  if(dateEl && !dateEl.value) dateEl.value = localISODate(minDt);
-  if(timeEl && !timeEl.value) setTimeValue(timeEl, minDt.getHours(), minDt.getMinutes());
+  if(dateEl && !dateEl.value) dateEl.value = localISODate(minDt);  /* MOD */
+  if(timeEl && !timeEl.value) setTimeValue(timeEl, minDt.getHours(), minDt.getMinutes()); /* MOD */
 
   function update(){
     if(dateHelp && dateEl?.value){
@@ -484,7 +394,7 @@ function mountDateTime(){
   update();
 }
 
-/* After-hours helper */
+/* After-hours helper (sin cambios de reglas) */
 function isAfterHours(dateStr, timeStr){
   if(!dateStr || !timeStr) return false;
   const d = new Date(`${dateStr}T${timeStr}:00`);
@@ -494,8 +404,7 @@ function isAfterHours(dateStr, timeStr){
   const end   = new Date(d); end.setHours(eh, em, 0, 0);
   return (d < start) || (d > end);
 }
-
-/* ===== Google Places helpers ===== */
+          /* ===== Google Places helpers ===== */
 function isAirport(place){
   const t = place?.types || [];
   return t.includes("airport") || /airport/i.test(place?.name || place?.formatted_address || "");
@@ -593,18 +502,428 @@ function updateFlightVisibility(){
   }
 }
 
-/* Aquí seguirían todas las funciones de tu base:
-   wireFlightValidation, wireVehicleSelector, renderInfo, initMap,
-   wireModalReadMore, syncButtons, validación email/teléfono, alerts pickup/dropoff,
-   calculate, PAY, luggage accordion, wireTermsModal, mountDateTime, etc. */
+/* ===== Listeners/validaciones de vuelo ===== */
+function wireFlightValidation(){
+  const input=document.getElementById('flightNumber');
+  const hint=document.getElementById('flightHint');
+  const origin = document.getElementById('flightOrigin');
+  const originHelp = document.getElementById('originHelp');
+
+  if(input){
+    input.addEventListener('input', ()=>{
+      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){ input.setCustomValidity(""); if(hint) hint.style.display='none'; return; }
+      const r=validateFlightValue(input.value);
+      input.setCustomValidity(r.ok?"":r.msg);
+      if(hint) hint.style.display = input.value.trim().length ? 'block' : 'none';
+    });
+  }
+  if(origin){
+    origin.addEventListener('input', ()=>{
+      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){ origin.setCustomValidity(""); if(originHelp) originHelp.style.display='none'; return; }
+      const r = validateCityLike(origin.value, "origin city");
+      origin.setCustomValidity(r.ok?"":r.msg);
+      if(originHelp){
+        originHelp.textContent = r.msg || 'Origin city captured.';
+        originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+        originHelp.style.display='block';
+      }
+    });
+  }
+
+  const tail = document.getElementById('tailNumber');
+  const tailHelp = document.getElementById('tailHelp');
+  const pvtOrigin = document.getElementById('pvtOrigin');
+  const pvtOriginHelp = document.getElementById('pvtOriginHelp');
+
+  if(tail){
+    tail.addEventListener('input', ()=>{
+      if(!isPrivateUtahAirport(pickupPlace)){ tail.setCustomValidity(""); if(tailHelp) tailHelp.style.display='none'; return; }
+      const r = validateNNumber(tail.value);
+      tail.setCustomValidity(r.ok?"":r.msg);
+      if(tailHelp){
+        tailHelp.textContent = r.msg || 'Tail number captured.';
+        tailHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+        tailHelp.style.display='block';
+      }
+    });
+  }
+  if(pvtOrigin){
+    pvtOrigin.addEventListener('input', ()=>{
+      if(!isPrivateUtahAirport(pickupPlace)){ pvtOrigin.setCustomValidity(""); if(pvtOriginHelp) pvtOriginHelp.style.display='none'; return; }
+      const r = validateCityLike(pvtOrigin.value, "origin city");
+      pvtOrigin.setCustomValidity(r.ok?"":r.msg);
+      if(pvtOriginHelp){
+        pvtOriginHelp.textContent = r.msg || 'Origin city captured.';
+        pvtOriginHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+        pvtOriginHelp.style.display='block';
+      }
+    });
+  }
+}
+          /* ===== Vehicle selector + photo & guides ===== */
+(function wireVehicleSelector(){
+  const suv = document.querySelector('.veh-btn[data-type="suv"]') || document.querySelector('.veh-btn:nth-child(1)');
+  const van = document.querySelector('.veh-btn[data-type="van"]') || document.querySelector('.veh-btn:nth-child(2)');
+  const vanGuide = document.getElementById('van-luggage');
+  const suvGuide = document.getElementById('suv-luggage');
+  const photo = document.getElementById('vehicle-photo') || document.querySelector('.turntable .car');
+  const caption = document.getElementById('vehicle-caption') || document.querySelector('.vehicle-caption');
+
+  const lugSUV = document.getElementById('lug-suv');
+  const lugVAN = document.getElementById('lug-van');
+
+  function setVehicle(type){
+    selectedVehicle = type;
+    [suv,van].forEach(b=>{
+      const on = b && ((b.dataset && b.dataset.type===type) || (type==='suv' && b===suv) || (type==='van' && b===van));
+      if(!b) return;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    const isVan = (type==='van');
+    if(vanGuide) vanGuide.style.display = isVan ? 'block' : 'none';
+    if(suvGuide) suvGuide.style.display = isVan ? 'none' : 'block';
+    if(photo) photo.src = isVan ? VAN_IMG : SUV_IMG;
+    if(caption) caption.textContent = isVan ? 'This will be your Van' : 'This will be your SUV';
+    if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
+    if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
+    recalcFromCache();
+  }
+  suv?.addEventListener('click', ()=> setVehicle('suv'));
+  van?.addEventListener('click', ()=> setVehicle('van'));
+  setVehicle('suv');
+})();
+
+/* ===== Render Summary ===== */
+function renderInfo(leg, base, surcharge, afterHours){
+  const miles = leg.distance.value / 1609.34;
+  const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
+
+  window.__lastBase = base;
+  window.__lastSurcharge = surcharge;
+  window.__lastAhFee = ahFee;
+
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+  const hasExtra = (surcharge > 0) || (ahFee > 0);
+
+  const el = document.getElementById("info");
+  el.style.display = "block";
+  el.innerHTML = `
+    <h3 class="info-title">Trip Summary</h3>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
+      <div class="kpi"><div class="label">Price</div><div class="value price">$${finalTotal.toFixed(2)}</div></div>
+    </div>
+    ${hasExtra ? `
+      <div class="divider"></div>
+      <div class="breakdown">
+        ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
+        ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
+        <div class="divider"></div>
+        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
+      </div>
+    ` : ``}
+  `;
+
+  window.__lastQuotedTotal = finalTotal;
+  window.__lastDistanceMiles = miles;
+  window.__vehicleType = selectedVehicle;
+  syncButtons();
+}
+          /* ===== Init Google Maps ===== */
+function initMap(){
+  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  directionsService  = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer();
+  directionsRenderer.setMap(map);
+  geocoder = new google.maps.Geocoder();
+
+  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
+  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
+  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
+
+  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
+}
+window.initMap = initMap;
+
+/* ===== Modal Read More (términos) ===== */
+(function wireModalReadMore(){
+  const content = document.getElementById('modal-terms-content');
+  const btn = document.getElementById('modalReadMoreBtn');
+  if(!content || !btn) return;
+  btn.addEventListener('click', ()=>{
+    const clamped = content.classList.toggle('clamped');
+    const expanded = !clamped;
+    btn.textContent = expanded ? 'Read Less' : 'Read More';
+    btn.setAttribute('aria-expanded', String(expanded));
+  });
+})();
+
+/* ===== Términos + botones ===== */
+const acceptPill  = document.getElementById('acceptPill');
+const calcBtn = document.getElementById('calculate');
+const payBtn = document.getElementById('pay');
+
+function setAcceptedState(on){
+  if(!acceptPill) return;
+  acceptPill.classList.toggle('on', on);
+  acceptPill.setAttribute('aria-checked', on ? 'true' : 'false');
+  syncButtons();
+}
+function isAccepted(){ return acceptPill?.classList.contains('on'); }
+function syncButtons(){
+  const accepted = isAccepted();
+  if(calcBtn) calcBtn.disabled = !accepted;
+  const readyPay = !!window.__lastQuotedTotal && accepted;
+  if(payBtn){
+    payBtn.disabled = !readyPay;
+    payBtn.style.display = 'block';
+    payBtn.style.opacity = readyPay ? 1 : .5;
+    payBtn.style.cursor = readyPay ? 'pointer' : 'not-allowed';
+  }
+}
+acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
+acceptPill?.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }});
+
+/* ===== Email (igual a base) ===== */
+(function wireEmail(){
+  const input = document.getElementById('email');
+  const help  = document.getElementById('emailHelp');
+  if(!input) return;
+
+  function validateEmail(v){
+    const val = (v||'').trim();
+    const basic = /^[^\s@]+@[^\s@]+\.[^\s@]{2,24}$/.test(val);
+    if(!basic) return {ok:false,msg:'Please enter a valid email, e.g., name@domain.com'};
+    if(/\.\./.test(val)) return {ok:false,msg:'Email cannot contain consecutive dots'};
+    const typos = [/@gmal\.com$/i, /@gmial\.com$/i, /@hotnail\.com$/i, /@yaho\.com$/i];
+    if(typos.some(rx=>rx.test(val))) return {ok:false,msg:'Please correct the domain spelling (e.g., @gmail.com)'};
+    return {ok:true,msg:'Email looks good'};
+  }
+
+  input.addEventListener('input', ()=>{
+    const r = validateEmail(input.value);
+    input.setCustomValidity(r.ok ? '' : r.msg);
+    if(help){
+      help.textContent = r.ok ? 'Valid email' : r.msg;
+      help.className = 'hint ' + (r.ok ? 'ok' : 'err');
+    }
+  });
+
+  input.addEventListener('blur', ()=> {
+    if(!input.checkValidity() && help){
+      help.className = 'hint err';
+    }
+  });
+})();
+
+/* ===== Teléfono US (igual a base) ===== */
+(function wirePhone(){
+  const input = document.getElementById('phone');
+  const help  = document.getElementById('phoneHelp');
+  if(!input) return;
+
+  function formatUS(digits){
+    if(digits.startsWith('1')) digits = digits.slice(1);
+    digits = digits.slice(0,10);
+    const a = digits.slice(0,3), b = digits.slice(3,6), c = digits.slice(6,10);
+    if(digits.length > 6) return `(${a}) ${b}-${c}`;
+    if(digits.length > 3) return `(${a}) ${b}`;
+    if(digits.length > 0) return `(${a}`;
+    return '';
+  }
+  function validateNANP(digits){
+    if(digits.length===11 && digits.startsWith('1')) digits = digits.slice(1);
+    if(digits.length!==10) return {ok:false,msg:'Enter a 10-digit US number'};
+    if(!/^[2-9]/.test(digits[0])) return {ok:false,msg:'Area code must start 2–9'};
+    if(!/^[2-9]/.test(digits[3])) return {ok:false,msg:'Exchange must start 2–9'};
+    return {ok:true,msg:'Valid US number'};
+  }
+
+  input.addEventListener('input', ()=>{
+    const digits = input.value.replace(/\D/g,'').slice(0,11);
+    input.value = formatUS(digits);
+    const v = validateNANP(digits);
+    input.setCustomValidity(v.ok ? '' : v.msg);
+    if(help){
+      help.textContent = v.ok ? 'Valid US number' : v.msg;
+      help.className = 'hint ' + (v.ok ? 'ok' : 'err');
+    }
+  });
+
+  input.addEventListener('blur', ()=> {
+    if(!input.checkValidity() && help){
+      help.className = 'hint err';
+    }
+  });
+})();
+
+/* ===== MOD/ADDED (acordado): alertas para Pick‑up / Drop‑off vacíos ===== */
+(function wirePickupDropoffAlerts(){
+  const pickup  = document.getElementById('pickup');
+  const dropoff = document.getElementById('dropoff');
+  pickup?.addEventListener('blur', ()=>{
+    if(!pickup.value.trim()){ alert('Please enter the Pick-up Address.'); pickup.focus(); }
+  });
+  dropoff?.addEventListener('blur', ()=>{
+    if(!dropoff.value.trim()){ alert('Please enter the Drop-off Address.'); dropoff.focus(); }
+  });
+})();
+
+/* ===== Helpers 24h ===== */
+/* Ya fijamos min por defecto en mountDateTime(); aquí validamos al calcular */
+function getSelectedDateTime(){
+  const ds = document.getElementById('date')?.value;
+  const ts = document.getElementById('time')?.value;
+  if(!ds || !ts) return null;
+  return new Date(`${ds}T${ts}:00`);
+}
+function isAtLeast24hAhead(d){
+  if(!d) return false;
+  const now = new Date();
+  return d.getTime() - now.getTime() >= 24*60*60*1000;
+}
+
+/* ===== Calculate (con validaciones mínimas acordadas) ===== */
+calcBtn?.addEventListener("click", async ()=>{
+  if (!isAccepted()){
+    alert("Please accept Terms & Conditions first.");
+    return;
+  }
+
+  /* MOD/ADDED: pick-up/drop-off no vacíos */
+  const pickupStr  = document.getElementById('pickup')?.value.trim();
+  const dropoffStr = document.getElementById('dropoff')?.value.trim();
+  if(!pickupStr){ alert("Pick-up Address is required."); return; }
+  if(!dropoffStr){ alert("Drop-off Address is required."); return; }
+
+  /* MOD/ADDED: fecha/hora mínimo 24h de antelación */
+  const selDt = getSelectedDateTime();
+  if(!selDt || !isAtLeast24hAhead(selDt)){
+    alert("Please choose a Date & Time at least 24 hours in advance.");
+    return;
+  }
+
+  if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
+    alert("Please select addresses from the suggestions.");
+    return;
+  }
+
+  try{
+    const trip = await routeAsync({
+      origin:{placeId: pickupPlace.place_id},
+      destination:{placeId: dropoffPlace.place_id},
+      travelMode: google.maps.TravelMode.DRIVING
+    });
+    directionsRenderer.setDirections(trip);
+    const leg = trip.routes[0].legs[0];
+    const miles = leg.distance.value/1609.34;
+    const basePrice = calculateBase(miles);
+    let surcharge = 0;
+
+    const pickupAir = isAirport(pickupPlace);
+    let pickupCounty = countyFrom(pickupPlace) || await countyByPlaceId(pickupPlace.place_id);
+    let dropCounty   = countyFrom(dropoffPlace) || await countyByPlaceId(dropoffPlace.place_id);
+    const pickupAllowed = /Summit County|Wasatch County/.test(pickupCounty||"");
+    const dropAllowed   = /Summit County|Wasatch County/.test(dropCounty||"");
+
+    if (pickupAir){
+      if (!dropAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
+    }else{
+      if (!pickupAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
+    }
+
+    const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
+    renderInfo(leg, basePrice, surcharge, afterHours);
+    if(payBtn) payBtn.style.display = "block";
+    syncButtons();
+  }catch(err){
+    alert("Could not calculate route: " + err);
+  }
+});
+
+/* ===== PAY (sin cambios, solo lo acordado se mantiene) ===== */
+function generateConfirmationNumber(){
+  const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  const rand=Math.random().toString(36).slice(2,6).toUpperCase();
+  return `BZ-${y}${m}${day}-${rand}`;
+}
+document.getElementById('pay')?.addEventListener('click', async ()=>{
+  if(!isAccepted()){ alert('Please accept Terms to proceed.'); return; }
+
+  const payload = {
+    fullname: document.getElementById('fullname').value,
+    phone: document.getElementById('phone').value,
+    email: document.getElementById('email').value,
+    pickup: document.getElementById('pickup').value,
+    dropoff: document.getElementById('dropoff').value,
+    specialInstructions: document.getElementById('specialInstructions')?.value || null, /* ok si vacío */
+    date: document.getElementById('date').value,
+    time: document.getElementById('time').value,
+    flightNumber: document.getElementById('flightNumber').value || null,
+    flightOriginCity: document.getElementById('flightOrigin').value || null,
+    tailNumber: document.getElementById('tailNumber')?.value || null,
+    privateFlightOriginCity: document.getElementById('pvtOrigin')?.value || null,
+
+    vehicleType: window.__vehicleType || selectedVehicle || 'suv',
+    distanceMiles: window.__lastDistanceMiles || null,
+    quotedTotal: window.__lastQuotedTotal || null,
+    confirmationNumber: generateConfirmationNumber(),
+    acceptedTermsAt: new Date().toISOString()
+  };
+  console.log('PAYLOAD →', payload);
+  alert(`Your confirmation number is ${payload.confirmationNumber}`);
+  // TODO: POST to /api/create-checkout-session
+});
+
+/* ===== Luggage Accordion ===== */
+(function wireLuggageAccordion(){
+  const acc = document.getElementById('luggageAccordion');
+  const sum = document.querySelector('#luggageAccordion .luggage-summary');
+  if(!acc || !sum) return;
+  sum.addEventListener('click', ()=>{
+    const open = acc.classList.toggle('open');
+    acc.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+})();
+
+/* ===== Modal abrir/cerrar ===== */
+(function wireTermsModal(){
+  const modal   = document.getElementById('termsModal');
+  const openBtn = document.getElementById('openTermsModal');
+  const closeBtn= document.getElementById('closeTerms');
+
+  function openModal(){
+    if(!modal) return;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+    closeBtn?.focus();
+  }
+  function closeModal(){
+    if(!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+    openBtn?.focus();
+  }
+
+  openBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e)=> { if(e.target === modal) closeModal(); });
+  document.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && modal?.classList.contains('open')) closeModal(); });
+})();
 
 /* ===== On load ===== */
-mountDateTime();
-wireFlightValidation();
-syncButtons();
+mountDateTime();          /* ya fija min 24h y valores por defecto */
+wireFlightValidation();   /* validaciones vuelo */
+syncButtons();            /* estado botones */
 </script>
-
-<!-- Google Maps Loader -->
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
-</script>
+    <!-- Google Maps Loader -->
+    <script async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
+    </script>
+  </body>
+</html>
