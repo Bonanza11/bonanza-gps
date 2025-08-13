@@ -298,13 +298,7 @@
       <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
       <div id="pvtOriginHelp" class="hint" style="display:none"></div>
     </div>
-<div id="slcBaggageOption" style="display:none; margin-top:10px;">
-  <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:700; color:#ffddae;">
-    <input id="bclaimInside" type="checkbox" style="width:18px; height:18px; accent-color: var(--copper); cursor:pointer;">
-    <span>Meet inside at baggage claim (+$50)</span>
-  </label>
-  <div class="helper">Available only at Salt Lake City International Airport (SLC) and for SUVs.</div>
-</div>
+
     <div class="input-row">
       <div>
         <label for="date">Date:</label>
@@ -322,14 +316,6 @@
       <button class="veh-btn active" data-type="suv">SUV (1-5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
-<!-- SLC curbside (solo SUV y solo SLC) -->
-<div id="slcOption" class="slc-option" style="display:none; margin:10px 0;">
-  <label style="display:flex;gap:8px;align-items:center;cursor:pointer;">
-    <input id="slcCurbside" type="checkbox" />
-    <span>Pick up inside SLC baggage claim (curbside assistance) — <strong>$50</strong></span>
-  </label>
-  <small style="opacity:.8">Only available for SUVs at Salt Lake City International Airport (SLC).</small>
-</div>
     <div class="turntable">
       <img class="car" src="/images/suv.png" alt="Selected Vehicle">
       <div class="platform"></div>
@@ -342,7 +328,10 @@
         <span class="luggage-title">Luggage Guidelines</span>
         <span class="luggage-chev"></span>
       </div>
+
+
 <div class="luggage-body">
+
   <div class="lug-section">
     <h4>SUV – 1 to 5 Passengers</h4>
 
@@ -515,32 +504,7 @@ let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
- /* ===== SLC curbside option (SUV only @ SLC) ===== */
-const SLC_NAME_RX = /(salt lake city international|slc airport|slc intl|slc,? airport)/i;
-function isSLCPlace(place){
-  if(!place) return false;
-  const text = `${place.name||""} ${place.formatted_address||""}`;
-  const types = place.types || [];
-  return types.includes('airport') && (SLC_NAME_RX.test(text) || /\bSLC\b/i.test(text));
-}
-function slcEligible(){
-  return selectedVehicle === 'suv' && (isSLCPlace(pickupPlace) || isSLCPlace(dropoffPlace));
-}
-function getSlcFee(){
-  const cb = document.getElementById('slcCurbside');
-  return (slcEligible() && cb && cb.checked) ? 50 : 0;
-}
-function updateSlcVisibility(){
-  const box = document.getElementById('slcOption');
-  const cb  = document.getElementById('slcCurbside');
-  const show = slcEligible();
-  if(box){
-    box.style.display = show ? 'block' : 'none';
-    if(!show && cb) cb.checked = false;
-  }
-  recalcFromCache(); // refresca totales si ya hay cálculo
-}
-document.getElementById('slcCurbside')?.addEventListener('change', ()=>recalcFromCache());       
+
 /* ===== Operating hours (6:00–23:00) ===== */
 const OPERATING_START = "06:00";
 const OPERATING_END   = "23:00";
@@ -795,81 +759,47 @@ function wireFlightValidation(){
     if(caption) caption.textContent = isVan ? 'This will be your Van' : 'This will be your SUV';
     if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
     if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
-        if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
     recalcFromCache();
-}
+  }
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
-/* ===== Render Summary (con SLC Inside Pickup) ===== */
+
+/* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
-
-  // --- After-hours (20%) ---
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
 
-  // --- SLC Inside Pickup (solo SUV + SLC como pick-up) ---
-  const slcEligible = (selectedVehicle === 'suv') && isSlcAirport(pickupPlace);
-  const slcInsideEl = document.getElementById('slcInside');
-  const slcInside   = !!(slcEligible && slcInsideEl && slcInsideEl.checked);
-  const slcFee      = slcInside ? 50 : 0;
+  window.__lastBase = base;
+  window.__lastSurcharge = surcharge;
+  window.__lastAhFee = ahFee;
 
-  // Guarda en caché para recálculo al cambiar SUV/Van
-  window.__lastBase       = base;
-  window.__lastSurcharge  = surcharge + slcFee;
-  window.__lastAhFee      = ahFee;
-
-  // Total final (incluye multiplicador de VAN si aplica)
-  const finalTotal = applyVehicleMultiplier(base + surcharge + slcFee + ahFee);
-  const hasExtra   = (surcharge > 0) || (slcFee > 0) || (ahFee > 0);
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+  const hasExtra = (surcharge > 0) || (ahFee > 0);
 
   const el = document.getElementById("info");
   el.style.display = "block";
   el.innerHTML = `
     <h3 class="info-title">Trip Summary</h3>
     <div class="kpis">
-      <div class="kpi">
-        <div class="label">Distance</div>
-        <div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div>
-      </div>
-      <div class="kpi">
-        <div class="label">Duration</div>
-        <div class="value">${leg.duration.text}</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Price</div>
-        <div class="value price">$${finalTotal.toFixed(2)}</div>
-      </div>
+      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
+      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
+      <div class="kpi"><div class="label">Price</div><div class="value price">$${finalTotal.toFixed(2)}</div></div>
     </div>
-
     ${hasExtra ? `
       <div class="divider"></div>
       <div class="breakdown">
-        ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
-        ${slcFee>0 ? `<div class="row"><span>SLC Inside Pickup (SUV)</span><span>$${slcFee.toFixed(2)}</span></div>` : ``}
-        ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
-        <div class="divider"></div>
-        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
-        <div class="tax-note">Taxes &amp; gratuity included.</div>
-      </div>
-    ` : `
-      <div class="breakdown">
-        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
-        <div class="tax-note">Taxes &amp; gratuity included.</div>
-      </div>
-    `}
+${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
+${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
+<div class="divider"></div>
+<div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
+<div class="tax-note">Taxes &amp; gratuity included</div>  
+      </div> 
+    ` : ``}
   `;
 
-  // valores para "Pay now" y para recálculo al cambiar vehículo
-  window.__lastQuotedTotal   = finalTotal;
-  window.__lastDistanceMiles = miles;
-  window.__vehicleType       = selectedVehicle;
-
-  syncButtons();
-}        
-  </div>
-`;  
+  window.__lastQuotedTotal = finalTotal;
   window.__lastDistanceMiles = miles;
   window.__vehicleType = selectedVehicle;
   syncButtons();
@@ -886,15 +816,8 @@ function initMap(){
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
 
-acPickup.addListener("place_changed", ()=>{
-  pickupPlace = acPickup.getPlace() || null;
-  updateFlightVisibility();   // ya existente
-  updateSlcVisibility();      // ← NUEVO
-});
-acDropoff.addListener("place_changed", ()=>{
-  dropoffPlace = acDropoff.getPlace() || null;
-  updateSlcVisibility();      // ← NUEVO (por si condicionas también al drop-off)
-}); 
+  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
 }
 window.initMap = initMap;
 
@@ -1084,44 +1007,7 @@ calcBtn?.addEventListener("click", async ()=>{
     }else{
       if (!pickupAllowed){ const m = await computeMilesFromBase(pickupPlace.place_id); surcharge = m * 3; }
     }
-// ⬇️ Helpers para la opción de recogida dentro de SLC (solo SUV)
-const SLC_INSIDE_FEE = 50;
 
-/* Verifica si el lugar es el Aeropuerto Internacional de Salt Lake City */
-function isSLC(place) {
-  if (!place) return false;
-  const txt = `${place.name || ""} ${place.formatted_address || ""}`.toLowerCase();
-  return /salt lake city international airport|slc international airport|slc airport|salt lake city intl/.test(txt);
-}
-
-/* Verifica si está seleccionado SUV */
-function isSUVSelected() {
-  const t = (window.__vehicleType || selectedVehicle || 'suv');
-  return t === 'suv';
-}
-
-/* Verifica si el checkbox “inside pickup” está activo */
-function slcFeeActive() {
-  const cb = document.getElementById('slc-inside');
-  return !!(cb && cb.checked);
-}
-
-/* Verifica si se puede ofrecer la opción (solo SUV y recogida en SLC) */
-function canOfferSLCInsidePickup() {
-  return isSUVSelected() && isSLC(pickupPlace);
-}
-
-/* Muestra u oculta el bloque y recalcula precio si cambia */
-function updateSlcVisibility() {
-  const wrap = document.getElementById('slc-meet-wrap');
-  const cb = document.getElementById('slc-inside');
-  const show = canOfferSLCInsidePickup();
-
-  if (wrap) wrap.style.display = show ? 'block' : 'none';
-  if (!show && cb) cb.checked = false; // si no aplica, desmarcar
-
-  recalcFromCache();
-}
     const afterHours = isAfterHours(document.getElementById("date").value, document.getElementById("time").value);
     renderInfo(leg, basePrice, surcharge, afterHours);
     if(payBtn) payBtn.style.display = "block";
