@@ -384,6 +384,112 @@ const originalAcPickupListener = function(){
       <button class="veh-btn active" data-type="suv">SUV (1-5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
+<!-- === Meet & Greet (SLC only) — aparece debajo del botón SUV === -->
+<style>
+  .mng-card{
+    display:none; opacity:0; transform:translateY(-6px);
+    transition:opacity .25s ease, transform .25s ease;
+    margin-top:10px; padding:14px 12px; border-radius:12px;
+    background:#0e0e0e;
+    border:1px solid rgba(168,116,79,.45);
+    box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 1px rgba(168,116,79,.08);
+  }
+  .mng-card.show{ display:block; opacity:1; transform:translateY(0); }
+  .mng-title{font-weight:800;color:#ffddae;letter-spacing:.2px;}
+  .mng-subtitle{margin-top:4px;font-size:.92rem;color:#e9d5c1;opacity:.9}
+  .mng-buttons{display:grid;gap:10px;margin-top:12px}
+  @media (min-width:560px){ .mng-buttons{grid-template-columns:repeat(3,1fr)} }
+  .mng-btn{
+    background:#161616;border:1px solid rgba(168,116,79,.55);
+    color:#ffddae;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:700;
+    transition:transform .06s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .mng-btn:hover{border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18);transform:translateY(-1px)}
+  .mng-btn.active{background:var(--copper);color:#000;border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.25)}
+  .mng-note{margin-top:10px;font-size:.85rem;color:#c9a97c;opacity:.95}
+</style>
+
+<div id="meetAndGreetCard" class="mng-card" aria-hidden="true">
+  <div class="mng-title">Meet &amp; Greet — SLC Only</div>
+  <div class="mng-subtitle">Choose where you want your driver to meet you inside the terminal.</div>
+
+  <div class="mng-buttons">
+    <button type="button" class="mng-btn" data-mng="tsa_exit">TSA Exit (+$50)</button>
+    <button type="button" class="mng-btn" data-mng="baggage_claim">Baggage Claim (+$50)</button>
+    <button type="button" class="mng-btn active" data-mng="none">No Meet &amp; Greet</button>
+  </div>
+
+  <div class="mng-note">
+    Available only for <strong>SUV</strong> at <strong>Salt Lake City International (SLC)</strong>. Vans must use the designated curbside pickup area.
+  </div>
+</div>
+
+<script>
+window.meetAndGreetChoice = 'none';
+
+function mng_isSLC(place){
+  if(!place) return false;
+  const types = place.types || [];
+  const txt = `${place.name||""} ${place.formatted_address||""}`;
+  const looksLikeSLC =
+    /\b(Salt Lake City International|SLC International|Salt Lake City Intl|SLC Airport|Salt Lake City Airport)\b/i.test(txt) ||
+    /\bSLC\b/.test(txt);
+  return types.includes("airport") && looksLikeSLC;
+}
+
+function mng_updateVisibility(){
+  const card = document.getElementById('meetAndGreetCard');
+  if(!card) return;
+  const suv = (window.selectedVehicle === 'suv');
+  const slc = mng_isSLC(window.pickupPlace);
+  const show = suv && slc;
+  card.classList.toggle('show', show);
+  card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  if(!show){
+    window.meetAndGreetChoice = 'none';
+    card.querySelectorAll('.mng-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.mng === 'none');
+    });
+  }
+}
+
+(function(){
+  const card = document.getElementById('meetAndGreetCard');
+  if(!card) return;
+  const btns = card.querySelectorAll('.mng-btn');
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(window.selectedVehicle !== 'suv' || !mng_isSLC(window.pickupPlace)) return;
+      window.meetAndGreetChoice = btn.dataset.mng;
+      btns.forEach(b=> b.classList.toggle('active', b === btn));
+    });
+  });
+})();
+
+document.querySelector('.veh-btn[data-type="suv"]')?.addEventListener('click', ()=> {
+  mng_updateVisibility();
+});
+document.querySelector('.veh-btn[data-type="van"]')?.addEventListener('click', ()=> {
+  const card = document.getElementById('meetAndGreetCard');
+  window.meetAndGreetChoice = 'none';
+  card?.querySelectorAll('.mng-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mng === 'none');
+  });
+  mng_updateVisibility();
+});
+
+if (typeof window.updateFlightVisibility === 'function') {
+  const __origUFV = window.updateFlightVisibility;
+  window.updateFlightVisibility = function(){
+    const r = __origUFV.apply(this, arguments);
+    try { mng_updateVisibility(); } catch(_) {}
+    return r;
+  };
+}
+
+document.addEventListener('DOMContentLoaded', mng_updateVisibility);
+</script>
+<!-- === /Meet & Greet (SLC only) === -->
     <div class="turntable">
       <img class="car" src="/images/suv.png" alt="Selected Vehicle">
       <div class="platform"></div>
