@@ -239,51 +239,7 @@
 }    
 @media (prefers-reduced-motion: reduce){
   .jet-faux3d .jet {animation: none;}
-}  
-    /* === Meet & Greet (SLC Only) === */
-.mg-card{
-  display:none; /* visible por reglas */
-  margin:10px 0 8px;
-  background:linear-gradient(180deg,#121212,#0b0b0b);
-  border:1px solid rgba(168,116,79,.38);
-  border-radius:14px;
-  box-shadow:0 14px 28px rgba(0,0,0,.55);
-  padding:12px;
-  transform:translateY(6px);
-  opacity:0;
-  transition:opacity .22s ease, transform .22s ease;
-}
-.mg-card.show{display:block;opacity:1;transform:translateY(0)}
-
-.mg-title{font-weight:800;color:#ffddae;margin:4px 0 2px}
-.mg-sub{font-size:.95rem;opacity:.9;margin:0 0 10px;color:#e9d5c1}
-
-.mg-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.mg-btn{
-  flex:1 1 0;
-  padding:10px 12px;
-  background:#1a1a1a;
-  border:1px solid rgba(168,116,79,.55);
-  color:var(--copper);
-  border-radius:10px;
-  font-weight:700;
-  cursor:pointer;
-  transition:transform .12s ease, box-shadow .12s ease;
-}
-.mg-btn:hover{transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.35)}
-.mg-btn[aria-pressed="true"]{
-  background:var(--copper);
-  color:#000;
-  border-color:var(--copper);
-  box-shadow:0 0 0 3px rgba(168,116,79,.25)
-}
-
-.mg-note{
-  margin-top:8px;
-  font-size:.85rem;
-  color:#c9a97c;
-  opacity:.95;
-}  
+}      
  </style>
 </head>
 <body>
@@ -360,37 +316,6 @@
       <button class="veh-btn active" data-type="suv">SUV (1-5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
-<!-- Meet & Greet — SLC Only -->
-<div id="mgCard" class="mg-card" style="display:none;">
-    <div id="mgTitle" class="mg-title">Meet &amp; Greet — SLC Only</div>
-    <div class="mg-sub">Choose where you want your driver to meet you inside the terminal.</div>
-    
-    <div class="mg-buttons" role="group" aria-label="Meet &amp; Greet Options">
-        <button type="button" class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</button>
-        <button type="button" class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</button>
-        <button type="button" class="mg-btn active" data-choice="none">No Meet &amp; Greet</button>
-    </div>
-    
-    <div class="mg-note">
-        Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.
-    </div>
-</div>    
-<!-- Meet & Greet — SLC Only -->
-<div id="mgCard" class="mg-card" aria-labelledby="mgTitle" aria-hidden="true">
-  <div id="mgTitle" class="mg-title">Meet &amp; Greet — SLC Only</div>
-  <div class="mg-sub">Choose where you want your driver to meet you inside the terminal.</div>
-
-  <div class="mg-buttons" role="group" aria-label="Meet &amp; Greet options">
-    <button type="button" class="mg-btn" data-choice="tsa_exit" aria-pressed="false">TSA Exit (+$50)</button>
-    <button type="button" class="mg-btn" data-choice="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</button>
-    <button type="button" class="mg-btn" data-choice="none" aria-pressed="true">No Meet &amp; Greet</button>
-  </div>
-
-  <div class="mg-note">
-    Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.
-  </div>
-</div>
-    
     <div class="turntable">
       <img class="car" src="/images/suv.png" alt="Selected Vehicle">
       <div class="platform"></div>
@@ -579,55 +504,7 @@ let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
-/* ===== Meet & Greet (estado y utilidades) ===== */
-let meetAndGreetChoice = 'none';
-const MEET_GREET_FEE = 50;
-const mgCard = document.getElementById('mgCard');
-const mgButtons = document.querySelectorAll('.mg-btn');
 
-mgButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        mgButtons.forEach(b => b.removeAttribute('aria-pressed'));
-        btn.setAttribute('aria-pressed', 'true');
-        meetAndGreetChoice = btn.dataset.choice;
-    });
-});
-
-function checkMeetGreetVisibility(){
-    const isSLC = pickupPlace && pickupPlace.name.includes('Salt Lake City International');
-    const isSUV = selectedVehicle === 'suv';
-    const isArrival = document.getElementById('serviceType').value === 'arrival';
-    const isFBO = document.getElementById('pvtOrigin').value.trim() !== '';
-
-    if(isSLC && isSUV && isArrival && !isFBO){
-        mgCard.classList.add('show');
-    } else {
-        mgCard.classList.remove('show');
-        meetAndGreetChoice = 'none';
-    }
-}
-
-function applyMeetGreetFee(total){
-    return (meetAndGreetChoice !== 'none') ? total + MEET_GREET_FEE : total;
-}
-/* Detecta SLC comercial (no FBO) */
-function isSLC(place){
-  if(!place) return false;
-  const text = `${place.name||""} ${place.formatted_address||""}`.toLowerCase();
-  const isSlcName = /salt lake city international|slc airport/.test(text);
-  return isSlcName && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
-}
-
-/* ARRIVAL: pickup=SLC y dropoff != SLC */
-function isArrivalSLC(){
-  return isSLC(pickupPlace) && !isSLC(dropoffPlace);
-}
-
-/* Fee según estado y reglas */
-function getMeetGreetFee(){
-  const suv = (selectedVehicle === 'suv');
-  return (suv && isArrivalSLC() && meetAndGreetChoice !== 'none') ? MEET_GREET_FEE : 0;
-}
 /* ===== Operating hours (6:00–23:00) ===== */
 const OPERATING_START = "06:00";
 const OPERATING_END   = "23:00";
@@ -648,9 +525,8 @@ function recalcFromCache(){
   const el = document.getElementById('info');
   if (!el || window.__lastBase == null) return;
   const base = window.__lastBase, surcharge = window.__lastSurcharge||0, ahFee = window.__lastAhFee||0;
- const preTotal = base + surcharge + ahFee;
-const finalTotal = applyVehicleMultiplier( applyMeetGreetFee(preTotal) );
- const priceEl = el.querySelector('.kpi .value.price');
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+  const priceEl = el.querySelector('.kpi .value.price');
   const totalEl = el.querySelector('.row.total span:last-child');
   if (priceEl) priceEl.textContent = `$${finalTotal.toFixed(2)}`;
   if (totalEl) totalEl.textContent = `$${finalTotal.toFixed(2)}`;
@@ -884,7 +760,6 @@ function wireFlightValidation(){
     if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
     if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
     recalcFromCache();
-checkMeetGreetVisibility();  
   }
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
@@ -895,15 +770,13 @@ checkMeetGreetVisibility();
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
-const preTotal = base + surcharge + ahFee;
-const withMG = applyMeetGreetFee(preTotal);
-const mgFee = withMG - preTotal;
+
   window.__lastBase = base;
   window.__lastSurcharge = surcharge;
   window.__lastAhFee = ahFee;
 
-const finalTotal = applyVehicleMultiplier(withMG);
-const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+  const hasExtra = (surcharge > 0) || (ahFee > 0);
 
   const el = document.getElementById("info");
   el.style.display = "block";
@@ -919,7 +792,6 @@ const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
       <div class="breakdown">
 ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
 ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
-${mgFee>0 ? `<div class="row"><span>Meet &amp; Greet (SLC)</span><span>$${mgFee.toFixed(2)}</span></div>` : ``}
 <div class="divider"></div>
 <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
 <div class="tax-note">Taxes &amp; gratuity included</div>  
@@ -932,57 +804,24 @@ ${mgFee>0 ? `<div class="row"><span>Meet &amp; Greet (SLC)</span><span>$${mgFee.
   window.__vehicleType = selectedVehicle;
   syncButtons();
 }
-/* ===== Init Google Maps (versión optimizada) ===== */
-function initMap() {
-  // Crear mapa centrado en Salt Lake City
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 40.7587, lng: -111.8762 },
-    zoom: 10,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: true
-  });
-
-  // Inicializar servicios
+          /* ===== Init Google Maps ===== */
+function initMap(){
+  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
   directionsService  = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+  directionsRenderer = new google.maps.DirectionsRenderer();
   directionsRenderer.setMap(map);
   geocoder = new google.maps.Geocoder();
 
-  // Configuración de Autocomplete
-  const opts = {
-    componentRestrictions: { country: ["us"] },
-    fields: [
-      "place_id",
-      "name",
-      "types",
-      "formatted_address",
-      "geometry",
-      "address_components"
-    ]
-  };
-
-  // Autocomplete para pick-up y drop-off
+  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
 
-  // Evento para pick-up
-// Evento para pick-up
-acPickup.addListener("place_changed", () => {
-    pickupPlace = acPickup.getPlace() || null;
-    updateFlightVisibility();   // Mantiene lógica de vuelos
-    checkMeetGreetVisibility(); // Nuevo: Evalúa si mostrar/ocultar Meet & Greet
-});
-
-// Evento para drop-off
-acDropoff.addListener("place_changed", () => {
-    dropoffPlace = acDropoff.getPlace() || null;
-    checkMeetGreetVisibility(); // Nuevo: Evalúa si mostrar/ocultar Meet & Greet
-});
-    dropoffPlace = acDropoff.getPlace() || null;
-  });
+  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
+  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
 }
-window.initMap = initMap;          
+window.initMap = initMap;
+
+/* ===== Modal Read More (términos) ===== */
 (function wireModalReadMore(){
   const content = document.getElementById('modal-terms-content');
   const btn = document.getElementById('modalReadMoreBtn');
@@ -1261,4 +1100,3 @@ syncButtons();            /* estado botones */
     </script>
   </body>
 </html>
-  
