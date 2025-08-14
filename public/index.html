@@ -1098,7 +1098,7 @@ syncButtons();            /* estado botones */
     <script async
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
     </script>
-<!-- ===== MEET & GREET – LITE (SUV + pickup en SLC airport, no FBO) ===== -->
+<!-- ===== MEET & GREET – LITE (SUV + pickup en SLC airport, dropoff ≠ SLC) ===== -->
 <script>
 (function(){
   // ---------- Estado ----------
@@ -1129,11 +1129,12 @@ syncButtons();            /* estado botones */
     document.head.appendChild(s);
   }
 
-  // ---------- Inserción de la card (bajo .veh-toggle) ----------
+  // ---------- Inserción de la card (bajo .veh-toggle, o fallback) ----------
   function ensureCard(){
     if(document.getElementById('mgCard')) return;
-    const host=document.querySelector('.veh-toggle');
-    if(!host) return;
+    const main = document.querySelector('main') || document.body;
+    const anchor = document.querySelector('.veh-toggle') || document.querySelector('.turntable') || main.firstElementChild;
+
     const card=document.createElement('div');
     card.id='mgCard'; card.className='mg-card'; card.setAttribute('role','region');
     card.innerHTML=`
@@ -1147,9 +1148,13 @@ syncButtons();            /* estado botones */
       <div class="mg-note">
         Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.
       </div>`;
-    host.insertAdjacentElement('afterend', card);
+    if(anchor && anchor.insertAdjacentElement){
+      anchor.insertAdjacentElement('afterend', card);
+    }else{
+      main.appendChild(card);
+    }
 
-    // Comportamiento “radio”
+    // “radio” behavior
     card.querySelectorAll('.mg-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         card.querySelectorAll('.mg-btn').forEach(b=>{
@@ -1162,17 +1167,17 @@ syncButtons();            /* estado botones */
   }
 
   // ---------- Detección SLC comercial (no FBO) ----------
-  const SLC_MATCH = /(salt lake city.*international.*airport|slc airport|salt lake city \(slc\)|slc intl)/i;
+  const SLC_MATCH = /(salt lake city.*international.*airport|slc airport|salt lake city \(slc\)|slc intl|salt lake city intl)/i;
   function isSLCCommercial(p){
     if(!p) return false;
     if(typeof isPrivateUtahAirport==='function' && isPrivateUtahAirport(p)) return false; // excluye FBO
-    const txt=`${p.name||''} ${p.formatted_address||''}`;
+    const txt=`${p.name||''} ${p.formatted_address||''}`.toLowerCase();
     return SLC_MATCH.test(txt);
   }
 
   // ---------- Reglas de visibilidad ----------
   function vehicleIsSUV(){ return (window.selectedVehicle||'suv')==='suv'; }
-  // Solo mostrar si: vehículo = SUV y pickup = SLC comercial; dropoff puede ser cualquiera excepto SLC (no aceptamos pickup=dropoff en SLC)
+  // Mostrar si: SUV + Pick-up es SLC (comercial) y Drop-off NO es SLC (evita pickup=dropoff en SLC)
   function shouldShowMG(){
     const pickIsSLC = isSLCCommercial(window.pickupPlace);
     const dropIsSLC = isSLCCommercial(window.dropoffPlace);
@@ -1230,22 +1235,22 @@ syncButtons();            /* estado botones */
     }
   }
 
-  // ---------- Enganches sin tocar tu base ----------
-  // 1) Botones de vehículo (respetamos tu setVehicle)
+  // ---------- Enganches + Watcher robusto ----------
+  // 1) Botones de vehículo
   (function(){
     const suv=document.querySelector('.veh-btn[data-type="suv"]')||document.querySelector('.veh-btn:nth-child(1)');
     const van=document.querySelector('.veh-btn[data-type="van"]')||document.querySelector('.veh-btn:nth-child(2)');
     [suv,van].forEach(b=> b && b.addEventListener('click', ()=> setTimeout(updateVisibility,0)));
   })();
 
-  // 2) Inputs de pickup/dropoff (cuando Autocomplete actualiza tus globals, reevalúa)
+  // 2) Inputs de pickup/dropoff (reevalúa cuando el usuario escribe)
   (function(){
     const p=document.getElementById('pickup'), d=document.getElementById('dropoff');
     const recheck=()=> setTimeout(updateVisibility,50);
     ['change','blur','input'].forEach(evt=>{ p?.addEventListener(evt,recheck); d?.addEventListener(evt,recheck); });
   })();
 
-  // 3) Parchear recalcFromCache y renderInfo solo para refrescar UI
+  // 3) Parchear recalcFromCache y renderInfo (refresca UI)
   const _recalc=window.recalcFromCache;
   if(typeof _recalc==='function'){
     window.recalcFromCache=function(){ _recalc(); applyMGFeeAndUpdateUI(); };
@@ -1254,6 +1259,18 @@ syncButtons();            /* estado botones */
   if(typeof _render==='function'){
     window.renderInfo=function(leg,base,sur,ahFlag){ _render(leg,base,sur,ahFlag); applyMGFeeAndUpdateUI(); updateVisibility(); };
   }
+
+  // 4) Watcher que detecta cambios reales en globals de Autocomplete / vehículo
+  (function(){
+    let lastP=null, lastD=null, lastV=null;
+    setInterval(()=>{
+      const p=window.pickupPlace||null, d=window.dropoffPlace||null, v=window.selectedVehicle||'suv';
+      if(p!==lastP || d!==lastD || v!==lastV){
+        lastP=p; lastD=d; lastV=v;
+        updateVisibility();
+      }
+    }, 400);
+  })();
 
   // ---------- Primera ejecución ----------
   ensureCard(); resetMG(); updateVisibility();
