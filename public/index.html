@@ -1098,20 +1098,20 @@ syncButtons();            /* estado botones */
     <script async
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
     </script>
-<!-- ===== MEET & GREET – LITE (SUV + pickup en SLC, dropoff ≠ SLC) ===== -->
+<!-- ===== MEET & GREET – debajo de PICKUP ===== -->
 <script>
 (function(){
-  window.meetAndGreetChoice = 'none';
-  window.__mgFee = 0;
+  // --- Estado global mínimo ---
+  window.meetAndGreetChoice = window.meetAndGreetChoice || 'none';
+  window.__mgFee = window.__mgFee || 0;
 
-  // ---------- CSS ----------
+  // --- CSS de la card ---
   if(!document.getElementById('mgStyles')){
     const s=document.createElement('style'); s.id='mgStyles';
     s.textContent=`
       .mg-card{display:none;margin:10px 0 8px;padding:14px;border-radius:14px;
         background:linear-gradient(180deg,#101010,#0b0b0b);border:1px solid rgba(168,116,79,.45);
-        box-shadow:0 16px 36px rgba(0,0,0,.5);opacity:0;
-        transition:opacity .25s ease}
+        box-shadow:0 16px 36px rgba(0,0,0,.5);opacity:0;transition:opacity .25s ease}
       .mg-card.show{display:block;opacity:1}
       .mg-title{font-weight:800;color:#ffddae;margin:0 0 4px}
       .mg-sub{opacity:.95;margin:0 0 10px;color:#e9d5c1}
@@ -1127,99 +1127,98 @@ syncButtons();            /* estado botones */
     document.head.appendChild(s);
   }
 
-  // ---------- Crear card SOLO UNA VEZ ----------
-  function createCard(){
+  // --- Construcción e inserción debajo de #pickup ---
+  function ensureCard(){
     if(document.getElementById('mgCard')) return;
-    const anchor=document.querySelector('.veh-toggle')||document.querySelector('main');
+    const anchor=document.getElementById('pickup');
     if(!anchor) return;
 
     const card=document.createElement('div');
-    card.id='mgCard'; card.className='mg-card';
+    card.id='mgCard'; card.className='mg-card'; card.setAttribute('role','region');
     card.innerHTML=`
       <div class="mg-title">Meet &amp; Greet — SLC Only</div>
       <div class="mg-sub">Choose where you want your driver to meet you inside the terminal.</div>
-      <div class="mg-buttons">
+      <div class="mg-buttons" role="group">
         <button type="button" class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</button>
         <button type="button" class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</button>
         <button type="button" class="mg-btn active" data-choice="none">No Meet &amp; Greet</button>
       </div>
-      <div class="mg-note">Available only for SUV arrivals at Salt Lake City International (SLC).</div>`;
+      <div class="mg-note">
+        Available only for SUV arrivals at Salt Lake City International (SLC).
+      </div>`;
     anchor.insertAdjacentElement('afterend', card);
 
-    // listeners
+    // comportamiento radio
     card.querySelectorAll('.mg-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        card.querySelectorAll('.mg-btn').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        window.meetAndGreetChoice = btn.dataset.choice;
+        card.querySelectorAll('.mg-btn').forEach(b=>{
+          const on=b===btn; b.classList.toggle('active',on);
+        });
+        window.meetAndGreetChoice = btn.dataset.choice || 'none';
         applyMGFeeAndUpdateUI();
       });
     });
   }
 
-  // ---------- Helpers ----------
-  function vehicleIsSUV(){ return (window.selectedVehicle||'suv')==='suv'; }
-  const SLC_BBOX={minLat:40.76,maxLat:40.81,minLng:-112.03,maxLng:-111.97};
-  function inSLC(p){ if(!p?.geometry?.location) return false;
-    const lat=p.geometry.location.lat(),lng=p.geometry.location.lng();
-    return lat>=SLC_BBOX.minLat&&lat<=SLC_BBOX.maxLat&&lng>=SLC_BBOX.minLng&&lng<=SLC_BBOX.maxLng;
-  }
-  const FBO_RX=/\b(fbo|jet center|private|hangar|atlantic|million air|signature|ross aviation|tac air|ok3 air)\b/i;
-  function isSLCCommercial(p){
+  // --- Reglas ---
+  const SLC_MATCH=/(salt lake city.*international.*airport|slc airport|salt lake city \(slc\)|slc intl)/i;
+  function isSLC(p){
     if(!p) return false;
-    if(!inSLC(p)) return false;
-    if(FBO_RX.test(`${p.name||''} ${p.formatted_address||''}`)) return false;
-    return true;
+    if(typeof isPrivateUtahAirport==='function' && isPrivateUtahAirport(p)) return false; 
+    const txt=`${p.name||''} ${p.formatted_address||''}`;
+    return SLC_MATCH.test(txt);
   }
+  function vehicleIsSUV(){ return (window.selectedVehicle||'suv')==='suv'; }
+  function isArrivalSLC(){ return isSLC(window.pickupPlace) && !isSLC(window.dropoffPlace); }
 
-  // ---------- Regla de visibilidad ----------
-  function shouldShowMG(){
-    const pickIsSLC=isSLCCommercial(window.pickupPlace);
-    const dropIsSLC=isSLCCommercial(window.dropoffPlace);
-    return vehicleIsSUV() && pickIsSLC && !dropIsSLC;
+  function resetMG(){
+    window.meetAndGreetChoice='none'; window.__mgFee=0;
+    const root=document.getElementById('mgCard');
+    if(root) root.querySelectorAll('.mg-btn').forEach(b=>{
+      const isNone=b.dataset.choice==='none';
+      b.classList.toggle('active',isNone);
+    });
   }
+  function showCard(){ ensureCard(); const c=document.getElementById('mgCard'); if(c){ c.classList.add('show'); c.style.display='block'; } }
+  function hideCard(){ const c=document.getElementById('mgCard'); if(c){ c.classList.remove('show'); setTimeout(()=>c.style.display='none',200); } }
 
-  function showCard(){ const c=document.getElementById('mgCard'); if(c) c.classList.add('show'); }
-  function hideCard(){ const c=document.getElementById('mgCard'); if(c) c.classList.remove('show'); window.meetAndGreetChoice='none'; window.__mgFee=0; }
-
-  function updateVisibility(){ if(shouldShowMG()) showCard(); else hideCard(); applyMGFeeAndUpdateUI(); }
+  function updateVisibility(){
+    ensureCard();
+    const ok=vehicleIsSUV() && isArrivalSLC();
+    if(ok) showCard(); else { hideCard(); resetMG(); applyMGFeeAndUpdateUI(); }
+  }
   window.updateMeetAndGreetVisibility=updateVisibility;
 
-  // ---------- Fee + UI ----------
+  // --- Recargo $50 ---
   function applyMGFeeAndUpdateUI(){
-    window.__mgFee=(shouldShowMG() && window.meetAndGreetChoice!=='none')?50:0;
-    const info=document.getElementById('info'); if(!info) return;
-    const base=window.__lastBase||0,sur=window.__lastSurcharge||0,ah=window.__lastAhFee||0;
-    const pre=base+sur+ah+window.__mgFee;
-    const total=(typeof applyVehicleMultiplier==='function')?applyVehicleMultiplier(pre):pre;
-    const totalEl=info.querySelector('.row.total span:last-child');
-    if(totalEl) totalEl.textContent=`$${total.toFixed(2)}`;
-    window.__lastQuotedTotal=total;
-    const breakdown=info.querySelector('.breakdown');
-    if(breakdown){
-      let row=breakdown.querySelector('.row.mgfee');
-      if(window.__mgFee && !row){
-        row=document.createElement('div');row.className='row mgfee';row.innerHTML='<span>Meet &amp; Greet</span><span>$50.00</span>';
-        breakdown.insertBefore(row,breakdown.querySelector('.divider:last-child'));
-      }else if(!window.__mgFee && row){row.remove();}
-    }
+    const eligible=vehicleIsSUV() && isArrivalSLC();
+    window.__mgFee=(eligible && window.meetAndGreetChoice!=='none')?50:0;
+    if(typeof renderInfo==='function'){ renderInfo(window.__lastLeg||null, window.__lastBase||0, window.__lastSurcharge||0, window.__lastAhFlag||false); }
   }
 
-  // ---------- Hooks ----------
-  createCard(); // solo una vez
-  document.querySelectorAll('.veh-btn').forEach(b=>b.addEventListener('click',()=>setTimeout(updateVisibility,0)));
-  ['change','blur','input'].forEach(e=>{
-    document.getElementById('pickup')?.addEventListener(e,()=>setTimeout(updateVisibility,50));
-    document.getElementById('dropoff')?.addEventListener(e,()=>setTimeout(updateVisibility,50));
-  });
+  // Enganches
+  (function(){
+    const suv=document.querySelector('.veh-btn[data-type="suv"]'), van=document.querySelector('.veh-btn[data-type="van"]');
+    [suv,van].forEach(b=> b && b.addEventListener('click', ()=>setTimeout(updateVisibility,0)));
+  })();
+  (function(){
+    const p=document.getElementById('pickup'), d=document.getElementById('dropoff');
+    const recheck=()=>setTimeout(updateVisibility,60);
+    ['change','blur','input'].forEach(evt=>{ p?.addEventListener(evt,recheck); d?.addEventListener(evt,recheck); });
+  })();
+
   const _render=window.renderInfo;
   if(typeof _render==='function'){
-    window.renderInfo=function(leg,base,sur,ah){_render(leg,base,sur,ah);applyMGFeeAndUpdateUI();updateVisibility();}
+    window.renderInfo=function(leg,base,sur,ah){ 
+      window.__lastLeg=leg; window.__lastBase=base; window.__lastSurcharge=sur; window.__lastAhFlag=ah;
+      _render(leg,base,sur,ah); applyMGFeeAndUpdateUI(); updateVisibility();
+    };
   }
 
-  updateVisibility();
+  // Primera ejecución
+  ensureCard(); resetMG(); updateVisibility();
 })();
 </script>
-<!-- ===== END MEET & GREET – LITE ===== -->
+<!-- ===== END MEET & GREET ===== -->
      </body>
 </html>
