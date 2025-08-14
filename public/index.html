@@ -1098,7 +1098,7 @@ syncButtons();            /* estado botones */
     <script async
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
     </script>
-<!-- ===== MEET & GREET – LITE (solo si PICKUP es SLC airport) ===== -->
+<!-- ===== MEET & GREET – LITE (SUV + pickup en SLC airport, no FBO) ===== -->
 <script>
 (function(){
   // ---------- Estado ----------
@@ -1170,12 +1170,13 @@ syncButtons();            /* estado botones */
     return SLC_MATCH.test(txt);
   }
 
-  // **Regla simplificada pedida**: SOLO depende del PICKUP en SLC (dropoff puede ser cualquiera)
+  // ---------- Reglas de visibilidad ----------
+  function vehicleIsSUV(){ return (window.selectedVehicle||'suv')==='suv'; }
+  // Solo mostrar si: vehículo = SUV y pickup = SLC comercial; dropoff puede ser cualquiera excepto SLC (no aceptamos pickup=dropoff en SLC)
   function shouldShowMG(){
     const pickIsSLC = isSLCCommercial(window.pickupPlace);
-    // Extra: si ambos fueran SLC (caso inválido), no mostramos
     const dropIsSLC = isSLCCommercial(window.dropoffPlace);
-    return pickIsSLC && !dropIsSLC;
+    return vehicleIsSUV() && pickIsSLC && !dropIsSLC;
   }
 
   // ---------- Mostrar/Ocultar ----------
@@ -1197,7 +1198,7 @@ syncButtons();            /* estado botones */
   }
   window.updateMeetAndGreetVisibility = updateVisibility;
 
-  // ---------- Sumar $50 al total (sin tocar tu cálculo) ----------
+  // ---------- Sumar $50 al total (sin tocar tu cálculo base) ----------
   function applyMGFeeAndUpdateUI(){
     const eligible = shouldShowMG();
     window.__mgFee = (eligible && window.meetAndGreetChoice!=='none') ? 50 : 0;
@@ -1230,14 +1231,21 @@ syncButtons();            /* estado botones */
   }
 
   // ---------- Enganches sin tocar tu base ----------
-  // Pickup/Dropoff: cuando Autocomplete actualiza tus globals, reevalúa
+  // 1) Botones de vehículo (respetamos tu setVehicle)
+  (function(){
+    const suv=document.querySelector('.veh-btn[data-type="suv"]')||document.querySelector('.veh-btn:nth-child(1)');
+    const van=document.querySelector('.veh-btn[data-type="van"]')||document.querySelector('.veh-btn:nth-child(2)');
+    [suv,van].forEach(b=> b && b.addEventListener('click', ()=> setTimeout(updateVisibility,0)));
+  })();
+
+  // 2) Inputs de pickup/dropoff (cuando Autocomplete actualiza tus globals, reevalúa)
   (function(){
     const p=document.getElementById('pickup'), d=document.getElementById('dropoff');
     const recheck=()=> setTimeout(updateVisibility,50);
     ['change','blur','input'].forEach(evt=>{ p?.addEventListener(evt,recheck); d?.addEventListener(evt,recheck); });
   })();
 
-  // Parchear recalcFromCache y renderInfo solo para refrescar UI
+  // 3) Parchear recalcFromCache y renderInfo solo para refrescar UI
   const _recalc=window.recalcFromCache;
   if(typeof _recalc==='function'){
     window.recalcFromCache=function(){ _recalc(); applyMGFeeAndUpdateUI(); };
@@ -1247,20 +1255,10 @@ syncButtons();            /* estado botones */
     window.renderInfo=function(leg,base,sur,ahFlag){ _render(leg,base,sur,ahFlag); applyMGFeeAndUpdateUI(); updateVisibility(); };
   }
 
-  // Añadir meetAndGreetChoice al payload de PAY sin romper tu listener
-  (function(){
-    const btn=document.getElementById('pay'); if(!btn) return;
-    const clone=btn.cloneNode(true); btn.parentNode.replaceChild(clone,btn);
-    clone.addEventListener('click', ()=>{
-      console.log('Meet&Greet →', {meetAndGreetChoice: window.meetAndGreetChoice||'none'});
-      // Tu handler original (confirmación/POST) sigue intacto
-    });
-  })();
-
   // ---------- Primera ejecución ----------
   ensureCard(); resetMG(); updateVisibility();
 })();
 </script>
-<!-- ===== END MEET & GREET – LITE ===== -->   
+<!-- ===== END MEET & GREET – LITE ===== -->
   </body>
 </html>
