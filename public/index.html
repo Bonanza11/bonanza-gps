@@ -919,6 +919,7 @@ const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
       <div class="breakdown">
 ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
 ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
+${mgFee>0 ? `<div class="row"><span>Meet &amp; Greet (SLC)</span><span>$${mgFee.toFixed(2)}</span></div>` : ``}
 <div class="divider"></div>
 <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
 <div class="tax-note">Taxes &amp; gratuity included</div>  
