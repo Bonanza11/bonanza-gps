@@ -287,7 +287,18 @@
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
     </div>
-
+<!-- Meet & Greet (SLC only) – STEP 1: UI ONLY -->
+<div id="meetAndGreetGroup" class="mng-group" style="margin-top:14px;">
+  <div class="mng-title">Meet &amp; Greet location</div>
+  <div class="mng-buttons">
+    <button type="button" class="mng-btn" data-mng="tsa_exit">🚪 TSA Exit (+$50)</button>
+    <button type="button" class="mng-btn" data-mng="baggage_claim">🧳 Baggage Claim Area (+$50)</button>
+    <button type="button" class="mng-btn active" data-mng="none">❌ No Meet &amp; Greet</button>
+  </div>
+  <div class="hint" style="margin-top:6px;">
+    Available only for <strong>SUV</strong> at <strong>SLC International Airport</strong>. Vans must use the curbside pickup area.
+  </div>
+</div>
     <!-- Private Jet (FBO) — solo si es aeropuerto privado en Utah -->
     <div id="privateFlightContainer" style="display:none;">
       <label for="tailNumber">Jet Tail Number (N‑Number):</label>
