@@ -287,50 +287,12 @@
       <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
       <div id="originHelp" class="hint" style="display:none"></div>
     </div>
-<!-- Meet & Greet (SLC only) -->
-<div id="meetAndGreetGroup" class="mng-group" style="margin-top:14px; display:none;">
-  <div class="mng-title">Meet &amp; Greet — SLC Only</div>
-  <div class="mng-subtitle">Choose where you want your driver to meet you inside the terminal.</div>
 
-  <div class="mng-buttons">
-    <button type="button" class="mng-btn" data-mng="tsa_exit">TSA Exit (+$50)</button>
-    <button type="button" class="mng-btn" data-mng="baggage_claim">Baggage Claim (+$50)</button>
-    <button type="button" class="mng-btn active" data-mng="none">No Meet &amp; Greet</button>
-  </div>
 
-  <div class="mng-note">
-    Available only for <strong>SUV</strong> at <strong>Salt Lake City International (SLC)</strong>. Vans must use the designated curbside pickup area.
-  </div>
-</div>
-<script>
-// Mostrar/ocultar bloque según reglas
-function updateMeetAndGreetVisibility(){
-  const mngGroup = document.getElementById('meetAndGreetGroup');
-  if(mngGroup){
-    const showMng = isSLC(pickupPlace) && (selectedVehicle === 'suv');
-    mngGroup.style.display = showMng ? 'block' : 'none';
-    if(!showMng){
-      meetAndGreetChoice = 'none';
-      mngGroup.querySelectorAll('.mng-btn').forEach(btn=>{
-        btn.classList.toggle('active', btn.dataset.mng === 'none');
-      });
-    }
-  }
-}
 
-// Exclusividad de botones
-(function wireMeetAndGreet(){
-  const group = document.getElementById('meetAndGreetGroup');
-  if(!group) return;
-  const btns = group.querySelectorAll('.mng-btn');
-  btns.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(selectedVehicle !== 'suv' || !isSLC(pickupPlace)) return;
-      meetAndGreetChoice = btn.dataset.mng;
-      btns.forEach(b=> b.classList.toggle('active', b === btn));
-    });
-  });
-})();
+
+    
+
 
 // Integración con cambios de vehículo
 const originalSetVehicle = typeof setVehicle === 'function' ? setVehicle : null;
@@ -417,37 +379,6 @@ const originalAcPickupListener = function(){
     <button type="button" class="mng-btn" data-mng="tsa_exit">TSA Exit (+$50)</button>
     <button type="button" class="mng-btn" data-mng="baggage_claim">Baggage Claim (+$50)</button>
     <button type="button" class="mng-btn active" data-mng="none">No Meet &amp; Greet</button>
-<!-- Meet & Greet Options for SUV at SLC Airport -->
-<div id="meetGreetContainer" class="mng-card" style="display:none;">
-  <div class="mng-title">Meet &amp; Greet – SLC Only</div>
-  <div class="mng-subtitle">Choose where you want your driver to meet you inside the terminal:</div>
-  
-  <div class="mng-buttons">
-    <button type="button" class="mng-btn" data-mng="tsa_exit">TSA Exit (+$50)</button>
-    <button type="button" class="mng-btn" data-mng="baggage_claim">Baggage Claim (+$50)</button>
-    <button type="button" class="mng-btn active" data-mng="none">No Meet &amp; Greet</button>
-  </div>
-  
-  <div class="mng-note">
-    Available only for <strong>SUV</strong> at <strong>Salt Lake City International (SLC)</strong>. Vans must use the designated curbside pickup area.
-  </div>
-</div> 
-<!-- Meet & Greet (SLC only) — aparece debajo del botón SUV -->
-<div id="airportMeetGreetCard" class="mng-card" aria-hidden="true">
-  <div class="mng-title">Meet & Greet – SLC Only</div>
-  <div class="mng-subtitle">Choose where you want your driver to meet you inside the terminal:</div>
-  
-  <div class="mng-buttons">
-    <button type="button" class="mng-btn" data-mng="tsa_exit">TSA Exit (+$50)</button>
-    <button type="button" class="mng-btn" data-mng="baggage_claim">Baggage Claim (+$50)</button>
-    <button type="button" class="mng-btn" data-mng="none">No Meet &amp; Greet</button>
-  </div>
-
-  <div class="mng-note">
-    Available only for <strong>SUV</strong> arrivals at <strong>Salt Lake City International (SLC)</strong>.  
-    Vans must use the designated curbside pickup area.
-  </div>
-</div>
   </div>
 
   <div class="mng-note">
@@ -456,6 +387,92 @@ const originalAcPickupListener = function(){
 </div>
 
 <script>
+/* ===== Meet & Greet state ===== */
+window.meetAndGreetChoice = 'none'; // 'none' | 'tsa_exit' | 'baggage_claim'
+
+/* Detección de SLC (con place y con texto del input) */
+function mng_isSLC(place){
+  if(place){
+    const types = place.types || [];
+    const txt = `${place.name||""} ${place.formatted_address||""}`;
+    const looksLikeSLC =
+      /\b(Salt Lake City International|SLC International|Salt Lake City Intl|SLC Airport|Salt Lake City Airport)\b/i.test(txt) ||
+      /\bSLC\b/.test(txt);
+    if (types.includes("airport") && looksLikeSLC) return true;
+  }
+  const raw = document.getElementById('pickup')?.value || '';
+  const t = raw.toLowerCase();
+  return /salt\s*lake\s*city\s*international/.test(t) ||
+         /\bslc\s*(intl|international)?\b/.test(t) ||
+         /slc\s*airport/.test(t) ||
+         /salt\s*lake\s*city\s*airport/.test(t);
+}
+
+/* Mostrar/ocultar según SUV + SLC (arrivals) */
+function mng_updateVisibility(){
+  const card = document.getElementById('meetAndGreetCard');
+  if(!card) return;
+  const suv = (window.selectedVehicle === 'suv');
+  const slc = mng_isSLC(window.pickupPlace);
+  const show = suv && slc;
+  card.classList.toggle('show', show);
+  card.style.display = show ? 'block' : 'none';
+  card.setAttribute('aria-hidden', show ? 'false' : 'true');
+  if(!show){
+    window.meetAndGreetChoice = 'none';
+    card.querySelectorAll('.mng-btn')?.forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.mng === 'none');
+    });
+  }
+}
+
+/* Botones exclusivos (tipo radio) */
+(function(){
+  const card = document.getElementById('meetAndGreetCard');
+  if(!card) return;
+  const btns = card.querySelectorAll('.mng-btn');
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(window.selectedVehicle !== 'suv' || !mng_isSLC(window.pickupPlace)) return;
+      window.meetAndGreetChoice = btn.dataset.mng; // 'tsa_exit' | 'baggage_claim' | 'none'
+      btns.forEach(b=> b.classList.toggle('active', b === btn));
+    });
+  });
+})();
+
+/* Re-evaluar cuando cambie el vehículo */
+document.querySelector('.veh-btn[data-type="suv"]')?.addEventListener('click', mng_updateVisibility);
+document.querySelector('.veh-btn[data-type="van"]')?.addEventListener('click', ()=>{
+  window.meetAndGreetChoice = 'none';
+  mng_updateVisibility();
+});
+
+/* Re-evaluar cuando se escribe/selecciona el pick-up */
+const _pickupEl = document.getElementById('pickup');
+_pickupEl?.addEventListener('input', mng_updateVisibility);
+_pickupEl?.addEventListener('blur', mng_updateVisibility);
+
+/* Enganche a tu updateFlightVisibility (se dispara al elegir place en el Autocomplete) */
+if (typeof window.updateFlightVisibility === 'function') {
+  const __origUFV = window.updateFlightVisibility;
+  window.updateFlightVisibility = function(){
+    const r = __origUFV.apply(this, arguments);
+    try { mng_updateVisibility(); } catch(_) {}
+    return r;
+  };
+}
+
+/* Primer render */
+document.addEventListener('DOMContentLoaded', mng_updateVisibility);
+</script>
+<!-- === /Meet & Greet (SLC only) === -->
+
+
+
+
+
+    
+
 window.meetAndGreetChoice = 'none';
 
 function mng_isSLC(place){
