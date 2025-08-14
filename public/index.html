@@ -283,7 +283,7 @@
   font-size:.85rem;
   color:#c9a97c;
   opacity:.95;
-}
+}  
  </style>
 </head>
 <body>
@@ -582,7 +582,34 @@ let selectedVehicle = 'suv';
 /* ===== Meet & Greet (estado y utilidades) ===== */
 let meetAndGreetChoice = 'none';
 const MEET_GREET_FEE = 50;
+const mgCard = document.getElementById('mgCard');
+const mgButtons = document.querySelectorAll('.mg-btn');
 
+mgButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        mgButtons.forEach(b => b.removeAttribute('aria-pressed'));
+        btn.setAttribute('aria-pressed', 'true');
+        meetAndGreetChoice = btn.dataset.choice;
+    });
+});
+
+function checkMeetGreetVisibility(){
+    const isSLC = pickupPlace && pickupPlace.name.includes('Salt Lake City International');
+    const isSUV = selectedVehicle === 'suv';
+    const isArrival = document.getElementById('serviceType').value === 'arrival';
+    const isFBO = document.getElementById('pvtOrigin').value.trim() !== '';
+
+    if(isSLC && isSUV && isArrival && !isFBO){
+        mgCard.classList.add('show');
+    } else {
+        mgCard.classList.remove('show');
+        meetAndGreetChoice = 'none';
+    }
+}
+
+function applyMeetGreetFee(total){
+    return (meetAndGreetChoice !== 'none') ? total + MEET_GREET_FEE : total;
+}
 /* Detecta SLC comercial (no FBO) */
 function isSLC(place){
   if(!place) return false;
@@ -621,8 +648,9 @@ function recalcFromCache(){
   const el = document.getElementById('info');
   if (!el || window.__lastBase == null) return;
   const base = window.__lastBase, surcharge = window.__lastSurcharge||0, ahFee = window.__lastAhFee||0;
-  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
-  const priceEl = el.querySelector('.kpi .value.price');
+ const preTotal = base + surcharge + ahFee;
+const finalTotal = applyVehicleMultiplier( applyMeetGreetFee(preTotal) );
+ const priceEl = el.querySelector('.kpi .value.price');
   const totalEl = el.querySelector('.row.total span:last-child');
   if (priceEl) priceEl.textContent = `$${finalTotal.toFixed(2)}`;
   if (totalEl) totalEl.textContent = `$${finalTotal.toFixed(2)}`;
@@ -856,6 +884,7 @@ function wireFlightValidation(){
     if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
     if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
     recalcFromCache();
+checkMeetGreetVisibility();  
   }
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
@@ -866,13 +895,15 @@ function wireFlightValidation(){
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
-
+const preTotal = base + surcharge + ahFee;
+const withMG = applyMeetGreetFee(preTotal);
+const mgFee = withMG - preTotal;
   window.__lastBase = base;
   window.__lastSurcharge = surcharge;
   window.__lastAhFee = ahFee;
 
-  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
-  const hasExtra = (surcharge > 0) || (ahFee > 0);
+const finalTotal = applyVehicleMultiplier(withMG);
+const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
 
   const el = document.getElementById("info");
   el.style.display = "block";
@@ -935,13 +966,18 @@ function initMap() {
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
 
   // Evento para pick-up
-  acPickup.addListener("place_changed", () => {
+// Evento para pick-up
+acPickup.addListener("place_changed", () => {
     pickupPlace = acPickup.getPlace() || null;
-    updateFlightVisibility(); // Mantiene lógica de vuelos
-  });
+    updateFlightVisibility();   // Mantiene lógica de vuelos
+    checkMeetGreetVisibility(); // Nuevo: Evalúa si mostrar/ocultar Meet & Greet
+});
 
-  // Evento para drop-off
-  acDropoff.addListener("place_changed", () => {
+// Evento para drop-off
+acDropoff.addListener("place_changed", () => {
+    dropoffPlace = acDropoff.getPlace() || null;
+    checkMeetGreetVisibility(); // Nuevo: Evalúa si mostrar/ocultar Meet & Greet
+});
     dropoffPlace = acDropoff.getPlace() || null;
   });
 }
