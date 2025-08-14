@@ -263,7 +263,18 @@
 
     <label for="pickup">Pick-up Address:</label>
     <input id="pickup" placeholder="e.g. SLC Airport" required />
-
+<!-- ===== MEET & GREET BLOCK ===== -->
+<div id="meetGreetWrapper" style="display:none; margin-top:12px; padding:14px; border-radius:12px; background:#111; border:1px solid rgba(168,116,79,.45);">
+  <h4 style="color:#ffddae; margin:0 0 6px;">Meet &amp; Greet (SLC Only)</h4>
+  <p style="color:#e9d5c1; margin:0 0 10px;">Choose where you want your driver to meet you inside the terminal.</p>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button type="button" class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</button>
+    <button type="button" class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</button>
+    <button type="button" class="mg-btn active" data-choice="none">No Meet &amp; Greet</button>
+  </div>
+  <small style="color:#c9a97c; display:block; margin-top:8px;">Only for SUV arrivals at Salt Lake City International (SLC).</small>
+</div>
+<!-- ===== END MEET & GREET BLOCK ===== -->
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
 
@@ -1093,8 +1104,131 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
 mountDateTime();          /* ya fija min 24h y valores por defecto */
 wireFlightValidation();   /* validaciones vuelo */
 syncButtons();            /* estado botones */
+     /* ======== MEET & GREET — debajo de “Pick-up Address” (solo si PICKUP es SLC airport) ======== */
+(function(){
+  // 1) CSS mínimo (solo una vez)
+  if(!document.getElementById('mg-lite-css')){
+    const st = document.createElement('style');
+    st.id = 'mg-lite-css';
+    st.textContent = `
+      .mg-card{display:none;margin:10px 0 8px;padding:14px;border-radius:14px;
+        background:linear-gradient(180deg,#101010,#0b0b0b);border:1px solid rgba(168,116,79,.45);
+        box-shadow:0 16px 36px rgba(0,0,0,.5)}
+      .mg-title{font-weight:800;color:#ffddae;margin:0 0 4px}
+      .mg-sub{opacity:.95;margin:0 0 10px;color:#e9d5c1}
+      .mg-buttons{display:flex;gap:8px;flex-wrap:wrap}
+      .mg-btn{flex:1 1 0;background:#1a1a1a;color:var(--copper);
+        border:1px solid rgba(168,116,79,.55);border-radius:10px;padding:10px 12px;
+        font-weight:700;cursor:pointer}
+      .mg-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
+      .mg-note{margin-top:8px;font-size:.9rem;color:#c9a97c;opacity:.95}
+      @media (max-width:520px){.mg-buttons{flex-direction:column}}
+    `;
+    document.head.appendChild(st);
+  }
+
+  // 2) Insertar la card JUSTO debajo del input #pickup
+  function ensureCard(){
+    if(document.getElementById('mgCard')) return;
+    const pickupInput = document.getElementById('pickup');
+    if(!pickupInput) return;
+    const card = document.createElement('div');
+    card.id = 'mgCard';
+    card.className = 'mg-card';
+    card.innerHTML = `
+      <div class="mg-title">Meet &amp; Greet — SLC Only</div>
+      <div class="mg-sub">Choose where you want your driver to meet you inside the terminal.</div>
+      <div class="mg-buttons" role="group" aria-label="Meet &amp; Greet Options">
+        <button type="button" class="mg-btn" data-choice="tsa_exit" aria-pressed="false">TSA Exit (+$50)</button>
+        <button type="button" class="mg-btn" data-choice="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</button>
+        <button type="button" class="mg-btn active" data-choice="none" aria-pressed="true">No Meet &amp; Greet</button>
+      </div>
+      <div class="mg-note">
+        Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.
+      </div>
+    `;
+    pickupInput.insertAdjacentElement('afterend', card);
+
+    // radio-like
+    card.querySelectorAll('.mg-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        card.querySelectorAll('.mg-btn').forEach(b=>{
+          const on = b===btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-pressed', on?'true':'false');
+        });
+        window.meetAndGreetChoice = btn.dataset.choice || 'none';
+      });
+    });
+  }
+  ensureCard();
+
+  // 3) Estado global simple
+  window.meetAndGreetChoice = window.meetAndGreetChoice || 'none';
+
+  // 4) Detección SLC comercial (no FBO)
+  const SLC_MATCH = /(salt lake city.*international.*airport|slc airport|salt lake city \(slc\)|slc intl)/i;
+  function isSLCCommercial(p){
+    if(!p) return false;
+    if(typeof isPrivateUtahAirport==='function' && isPrivateUtahAirport(p)) return false; // excluye FBO
+    const txt = `${p.name||''} ${p.formatted_address||''}`;
+    return SLC_MATCH.test(txt);
+  }
+
+  // 5) Reglas pedidas: mostrar SOLO si PICKUP es SLC airport.
+  //    (Drop-off puede ser cualquiera, excepto el mismo SLC para evitar pickup=dropoff allí.)
+  function shouldShow(){
+    const pickIsSLC  = isSLCCommercial(window.pickupPlace);
+    const dropIsSLC  = isSLCCommercial(window.dropoffPlace); // si también es SLC, ocultamos
+    return !!(pickIsSLC && !dropIsSLC);
+  }
+
+  function resetMG(){
+    window.meetAndGreetChoice = 'none';
+    const root = document.getElementById('mgCard');
+    if(root){
+      root.querySelectorAll('.mg-btn').forEach(b=>{
+        const isNone = b.dataset.choice === 'none';
+        b.classList.toggle('active', isNone);
+        b.setAttribute('aria-pressed', isNone?'true':'false');
+      });
+    }
+  }
+
+  function updateVisibility(){
+    ensureCard();
+    const card = document.getElementById('mgCard');
+    if(!card) return;
+    if(shouldShow()){
+      card.style.display = 'block';
+    }else{
+      card.style.display = 'none';
+      resetMG();
+    }
+  }
+
+  // 6) Re-evaluar cuando cambien pickup / dropoff (inputs) y tras cálculos
+  (function watchInputs(){
+    const p = document.getElementById('pickup');
+    const d = document.getElementById('dropoff');
+    const recheck = () => setTimeout(updateVisibility, 60);
+    ['input','change','blur'].forEach(ev=>{ p?.addEventListener(ev,recheck); d?.addEventListener(ev,recheck); });
+  })();
+
+  // Si tu renderInfo() existe, refrescamos visibilidad al terminar
+  const _render = window.renderInfo;
+  if(typeof _render === 'function'){
+    window.renderInfo = function(leg, base, sur, ah){
+      _render(leg, base, sur, ah);
+      updateVisibility();
+    };
+  }
+
+  // 7) Primera evaluación
+  updateVisibility();
+})();     
 </script>
-    <!-- Google Maps Loader -->
+<!-- Google Maps Loader -->
     <script async
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
     </script>
