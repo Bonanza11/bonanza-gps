@@ -239,7 +239,36 @@
 }    
 @media (prefers-reduced-motion: reduce){
   .jet-faux3d .jet {animation: none;}
-}      
+}   
+    /* === Meet & Greet card (SLC only) === */
+.mg-card {
+  display: none; /* oculto por defecto; lo mostraremos luego por JS */
+  margin: 16px 0;
+  border-radius: 14px;
+  border: 1px solid rgba(168,116,79,.45);
+  background: linear-gradient(180deg,#121212,#0b0b0b);
+  box-shadow: 0 12px 24px rgba(0,0,0,.35);
+  padding: 16px;
+  animation: mgFadeIn .25s ease;
+}
+.mg-card h3 { margin: 0 0 4px; color: #ffddae; font-size: 1.1rem; }
+.mg-card p  { margin: 0 0 12px; font-size: .9rem; opacity: .85; }
+.mg-options { display: flex; gap: 8px; margin-bottom: 8px; }
+.mg-btn {
+  flex: 1 1 0;
+  background: #1a1a1a;
+  border: 1px solid rgba(168,116,79,.55);
+  color: var(--copper);
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+  user-select: none;
+}
+.mg-btn.active { background: var(--copper); color: #000; border-color: var(--copper); }
+.mg-note { font-size: .8rem; color: #aa8b72; }
+@keyframes mgFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
  </style>
 </head>
 <body>
