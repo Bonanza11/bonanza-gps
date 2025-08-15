@@ -566,7 +566,7 @@ function recalcFromCache(){
   const el = document.getElementById('info');
   if (!el || window.__lastBase == null) return;
   const base = window.__lastBase, surcharge = window.__lastSurcharge||0, ahFee = window.__lastAhFee||0;
-  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee);
+ const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee + getMGFee());
   const priceEl = el.querySelector('.kpi .value.price');
   const totalEl = el.querySelector('.row.total span:last-child');
   if (priceEl) priceEl.textContent = `$${finalTotal.toFixed(2)}`;
