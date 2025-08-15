@@ -545,7 +545,9 @@ let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
-
+/* ===== Meet & Greet state ===== */
+let mgChoice = 'none'; // 'none' | 'tsa_exit' | 'baggage_claim'
+function getMGFee(){ return (mgChoice !== 'none') ? 50 : 0; }
 /* ===== Operating hours (6:00–23:00) ===== */
 const OPERATING_START = "06:00";
 const OPERATING_END   = "23:00";
