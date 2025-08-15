@@ -832,17 +832,17 @@ function getMGFee(){                      // $50 si no es "none"
   btns.forEach(b=> b.addEventListener('click', ()=> activate(b.dataset.choice)));
   activate('none'); // por defecto
 })();
-/* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
+  const mgFee = getMGFee();                 // +$50 si hay Meet & Greet
   const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
-  const mgFee = getMGFee();
+
   window.__lastBase = base;
   window.__lastSurcharge = surcharge;
   window.__lastAhFee = ahFee;
 
- const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee + mgFee);
-  const hasExtra = (surcharge > 0) || (ahFee > 0);
+  const finalTotal = applyVehicleMultiplier(base + surcharge + ahFee + mgFee);
+  const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
 
   const el = document.getElementById("info");
   el.style.display = "block";
@@ -856,11 +856,12 @@ function renderInfo(leg, base, surcharge, afterHours){
     ${hasExtra ? `
       <div class="divider"></div>
       <div class="breakdown">
-${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
-${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
-<div class="divider"></div>
-<div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
-<div class="tax-note">Taxes &amp; gratuity included</div>  
+        ${surcharge>0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ``}
+        ${ahFee>0 ? `<div class="row"><span>After-Hours Fee (20%) – Regular Hours: 6:00 am to 11:00 pm</span><span>$${ahFee.toFixed(2)}</span></div>` : ``}
+        ${mgFee>0 ? `<div class="row"><span>Meet & Greet (SLC)</span><span>$${mgFee.toFixed(2)}</span></div>` : ``}
+        <div class="divider"></div>
+        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
+        <div class="tax-note">Taxes &amp; gratuity included</div>  
       </div> 
     ` : ``}
   `;
