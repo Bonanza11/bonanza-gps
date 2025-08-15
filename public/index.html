@@ -806,7 +806,30 @@ function wireFlightValidation(){
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
+/* === Meet & Greet: estado + botones (solo UI y precio) === */
+window.__mgChoice = 'none';               // valor por defecto
+function getMGFee(){                      // $50 si no es "none"
+  return (window.__mgChoice !== 'none') ? 50 : 0;
+}
 
+(function wireMeetGreetButtons(){
+  const card = document.getElementById('meetGreetCard');
+  if(!card) return;
+  const btns = Array.from(card.querySelectorAll('.mg-btn'));
+
+  function activate(choice){
+    window.__mgChoice = choice;
+    btns.forEach(b=>{
+      const on = b.dataset.choice === choice;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    recalcFromCache(); // si ya hay un cálculo, refresca el total
+  }
+
+  btns.forEach(b=> b.addEventListener('click', ()=> activate(b.dataset.choice)));
+  activate('none'); // por defecto
+})();
 /* ===== Render Summary ===== */
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
