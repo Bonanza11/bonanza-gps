@@ -1135,8 +1135,6 @@ mountDateTime();          /* ya fija min 24h y valores por defecto */
 wireFlightValidation();   /* validaciones vuelo */
 syncButtons();            /* estado botones */
 </script>
-    <!-- Google Maps Loader -->
-<!-- Google Maps Loader -->
 <!-- Google Maps Loader -->
 <script async
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
@@ -1144,10 +1142,17 @@ syncButtons();            /* estado botones */
 
 <!-- TEMP: mostrar la card para revisar el diseño -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+(function () {
+  function showMG() {
     var mg = document.getElementById('meetGreetCard');
     if (mg) mg.style.display = 'block';
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showMG);
+  } else {
+    showMG();
+  }
+})();
 </script>
 
 </body>
