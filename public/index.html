@@ -803,6 +803,7 @@ function wireFlightValidation(){
     if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
     if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
     recalcFromCache();
+    updateMeetGreetVisibility();
   }
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
