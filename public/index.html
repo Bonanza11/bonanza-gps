@@ -811,6 +811,18 @@ const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
 async function maybeCheckBackend(){
+// --- Disparadores para validar vuelo con el backend ---
+function wireFlightBackendTriggers(){
+  const fn   = document.getElementById('flightNumber');
+  const orig = document.getElementById('flightOrigin');
+  const date = document.getElementById('date');
+
+  const run = () => setTimeout(maybeCheckBackend, 200);
+
+  if(fn)   fn.addEventListener('input', run);
+  if(orig) orig.addEventListener('input', run);
+  if(date) date.addEventListener('change', run);
+}
   // Solo validamos con backend cuando:
   // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
   // 2) Hay flightNumber y origin city y fecha
