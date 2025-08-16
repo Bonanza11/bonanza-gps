@@ -822,38 +822,27 @@ function wireFlightValidation(){
   van?.addEventListener('click', ()=> setVehicle('van'));
   setVehicle('suv');
 })();
-          
-/* === Meet & Greet: estado + botones (solo UI y precio) === */
-          
-window.__mgChoice = 'none';               // valor por defecto
-function getMGFee(){                      // $50 si no es "none"
-  return (window.__mgChoice !== 'none') ? 50 : 0;
+ /* === Meet & Greet: SLC (UI + pricing) === */
+window.__mgChoice = 'none';                          // default
+function getMGFee(){ return window.__mgChoice !== 'none' ? 50 : 0; }
+
+/* Se muestra solo si: vehículo = SUV y el PICK-UP es SLC comercial (no FBO). 
+   Requiere que exista isSLCInternational(place), ya la tienes definida arriba. */
+function shouldShowMeetGreet(){
+  return selectedVehicle === 'suv' && isSLCInternational(pickupPlace || null);
 }
-/* === Controla visibilidad de la Meet & Greet Card === */
+
 function updateMeetGreetVisibility(){
-  // 1) Debe ser SUV
-  const isSUV = (selectedVehicle === 'suv');
+  const card = document.getElementById('meetGreetCard');
+  if(!card) return;
 
-  // 2) Debe ser ARRIVAL en SLC comercial
-  function isArrivalAtSLC(){
-    const atUtahAirport = pickupIsUtahAirport();              // pick-up es aeropuerto en Utah
-    const isPrivate = isPrivateUtahAirport(pickupPlace);      // es FBO (aeropuerto privado)?
-    return atUtahAirport && !isPrivate;
-  }
-
-  const show = isSUV && isArrivalAtSLC();
-
+  const show = shouldShowMeetGreet();
   if(show){
-    // Mostrar con animación
-    const card = document.getElementById("meetGreetCard");
-    card.style.display = "block";
-    card.style.animation = "mgFadeIn .25s ease";
+    card.style.display = 'block';
+    card.style.animation = 'mgFadeIn .25s ease';
   } else {
-    // Ocultar
-    const card = document.getElementById("meetGreetCard");
-    card.style.display = "none";
-
-    // RESET Meet & Greet -> siempre dejar en "none"
+    // ocultar y reset
+    card.style.display = 'none';
     window.__mgChoice = 'none';
     const btns = card.querySelectorAll('.mg-btn');
     btns.forEach(b=>{
@@ -861,23 +850,11 @@ function updateMeetGreetVisibility(){
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', String(on));
     });
-
-    // Recalcular precio sin Meet & Greet
-    recalcFromCache();
+    if (typeof recalcFromCache === 'function') recalcFromCache();
   }
-}     
-    // reset al "No Meet & Greet"
-    const active = card.querySelector(".mg-btn.active");
-    if(active) active.classList.remove("active");
-    const def = card.querySelector(".mg-btn[data-choice='none']");
-    if(def){
-      def.classList.add("active");
-      def.setAttribute("aria-pressed","true");
-    }
+}
 
-    if(typeof recalcFromCache === 'function') recalcFromCache();
-  }
-}         
+// Botones de Meet & Greet
 (function wireMeetGreetButtons(){
   const card = document.getElementById('meetGreetCard');
   if(!card) return;
@@ -890,12 +867,13 @@ function updateMeetGreetVisibility(){
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', String(on));
     });
-    recalcFromCache(); // si ya hay un cálculo, refresca el total
+    if (typeof recalcFromCache === 'function') recalcFromCache();
   }
 
   btns.forEach(b=> b.addEventListener('click', ()=> activate(b.dataset.choice)));
-  activate('none'); // por defecto
-})();
+  activate('none'); // default
+})();        
+
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const mgFee = getMGFee();                // $50 si hay Meet & Greet
