@@ -803,31 +803,98 @@ function updateFlightVisibility(){
 }
 /* ===== Listeners/validaciones de vuelo ===== */
 function wireFlightValidation(){
-  const input=document.getElementById('flightNumber');
-  const hint=document.getElementById('flightHint');
-  const origin = document.getElementById('flightOrigin');
-  const originHelp = document.getElementById('originHelp');
+  const input     = document.getElementById('flightNumber');
+  const hint      = document.getElementById('flightHint');
+  const origin    = document.getElementById('flightOrigin');
+  const originHelp= document.getElementById('originHelp');
+
+  // Utilidad para obtener fecha en formato YYYY-MM-DD desde tu selector
+  const getDateISO = () => (document.getElementById('date')?.value || '').trim();
+
+  async function maybeCheckBackend(){
+    // Solo validamos con backend cuando:
+    // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
+    // 2) Hay flightNumber y origin city y fecha
+    if(!isCommercialPickup(pickupPlace)) return;
+
+    const fl  = (input?.value || '').trim();
+    const org = (origin?.value || '').trim();
+    const dt  = getDateISO();
+
+    if(!fl || !org || !dt) return;   // todavía falta completar algo
+
+    // Validación local (formato) antes de llamar
+    const fLocal = validateFlightValue(fl);
+    if(!fLocal.ok){
+      input.setCustomValidity(fLocal.msg);
+      if(hint){ hint.textContent = fLocal.msg; hint.className='hint err'; hint.style.display='block'; }
+      return;
+    }
+
+    const oLocal = validateCityLike(org, "origin city");
+    if(!oLocal.ok){
+      origin.setCustomValidity(oLocal.msg);
+      if(originHelp){ originHelp.textContent = oLocal.msg; originHelp.className='hint warn'; originHelp.style.display='block'; }
+      return;
+    }
+
+    // Llamada a Cloud Run
+    if(hint){ hint.textContent = "Checking flight…"; hint.className='hint warn'; hint.style.display='block'; }
+    if(originHelp){ originHelp.textContent = "Validating origin…"; originHelp.className='hint warn'; originHelp.style.display='block'; }
+
+    const r = await verifyFlightWithBackend(fl, org, dt);
+
+    if(r.ok){
+      input.setCustomValidity("");
+      origin.setCustomValidity("");
+      if(hint){ hint.textContent = "Flight looks valid."; hint.className='hint ok'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent = "Origin city looks valid."; originHelp.className='hint ok'; originHelp.style.display='block'; }
+    }else{
+      // No bloqueamos el flujo si solo quieres asegurar que el cliente “ingrese algo razonable”.
+      // Si quieres bloquear, quita los setCustomValidity("") y pon el mensaje de error.
+      input.setCustomValidity("");
+      origin.setCustomValidity("");
+      if(hint){ hint.textContent = r.msg || "Could not validate flight."; hint.className='hint warn'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent = r.msg || "Could not validate origin."; originHelp.className='hint warn'; originHelp.style.display='block'; }
+    }
+  }
 
   if(input){
     input.addEventListener('input', ()=>{
-      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){ input.setCustomValidity(""); if(hint) hint.style.display='none'; return; }
+      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
+        input.setCustomValidity(""); if(hint) hint.style.display='none'; return;
+      }
       const r=validateFlightValue(input.value);
       input.setCustomValidity(r.ok?"":r.msg);
-      if(hint) hint.style.display = input.value.trim().length ? 'block' : 'none';
+      if(hint){
+        hint.textContent = r.ok ? "Format OK (AA1234)" : r.msg;
+        hint.className   = 'hint ' + (r.ok ? 'ok':'warn');
+        hint.style.display = input.value.trim().length ? 'block' : 'none';
+      }
     });
+    input.addEventListener('blur', maybeCheckBackend);
   }
+
   if(origin){
     origin.addEventListener('input', ()=>{
-      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){ origin.setCustomValidity(""); if(originHelp) originHelp.style.display='none'; return; }
+      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
+        origin.setCustomValidity(""); if(originHelp) originHelp.style.display='none'; return;
+      }
       const r = validateCityLike(origin.value, "origin city");
       origin.setCustomValidity(r.ok?"":r.msg);
       if(originHelp){
-        originHelp.textContent = r.msg || 'Origin city captured.';
-        originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
-        originHelp.style.display='block';
+        originHelp.textContent = r.ok ? "Origin city captured." : r.msg;
+        originHelp.className   = 'hint ' + (r.ok ? 'ok':'warn');
+        originHelp.style.display = 'block';
       }
     });
+    origin.addEventListener('blur', maybeCheckBackend);
   }
+
+  // Cuando el usuario cambia el pickup a SLC/PVU/SGU/JSX, vuelve a intentar
+  // (esto se llama desde initMap -> acPickup listener)
+  window._recheckFlightIfNeeded = maybeCheckBackend;
+}
 
   const tail = document.getElementById('tailNumber');
   const tailHelp = document.getElementById('tailHelp');
