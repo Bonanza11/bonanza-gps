@@ -926,27 +926,34 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__vehicleType = selectedVehicle;
   syncButtons();
 }
-          /* ===== Init Google Maps ===== */
+        /* ===== Init Google Maps ===== */
 function initMap(){
-  map = new google.maps.Map(document.getElementById("map"), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  map = new google.maps.Map(document.getElementById("map"), {
+    center:{lat:40.7587,lng:-111.8762}, zoom:10
+  });
   directionsService  = new google.maps.DirectionsService();
   directionsRenderer = new google.maps.DirectionsRenderer();
   directionsRenderer.setMap(map);
   geocoder = new google.maps.Geocoder();
 
-  const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
+  const opts = {
+    componentRestrictions:{country:["us"]},
+    fields:["place_id","name","types","formatted_address","geometry","address_components"]
+  };
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
-  acPickup.addListener("place_changed", ()=>{
-  pickupPlace = acPickup.getPlace() || null;
-  updateFlightVisibility();
-  updateMeetGreetVisibility();   // <-- añadido para mostrar/ocultar Meet & Greet
-});
 
-acDropoff.addListener("place_changed", ()=>{
-  dropoffPlace = acDropoff.getPlace() || null;
-});  
-window.initMap = initMap;
+  acPickup.addListener("place_changed", ()=>{
+    pickupPlace = acPickup.getPlace() || null;
+    updateFlightVisibility();
+    updateMeetGreetVisibility();   // controla la tarjeta Meet & Greet
+  });
+
+  acDropoff.addListener("place_changed", ()=>{
+    dropoffPlace = acDropoff.getPlace() || null;
+  });
+}
+window.initMap = initMap;   // <— MUY IMPORTANTE: fuera de la función
 
 /* ===== Modal Read More (términos) ===== */
 (function wireModalReadMore(){
