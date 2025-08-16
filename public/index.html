@@ -647,7 +647,40 @@ function isSLCInternational(place){
   // Aseguramos que sea aeropuerto “grande” y no un FBO
   return (hitsName || hitsAddr) && isAirport(place) && !isPrivateUtahAirport(place);
 }
+/* === Más aeropuertos comerciales en Utah === */
+function isProvoAirport(place){
+  if(!place) return false;
+  const name = (place.name || "").toLowerCase();
+  const addr = (place.formatted_address || "").toLowerCase();
+  return (/\bpvu\b/.test(name) || /\bpvu\b/.test(addr) ||
+          /provo( municipal)? airport/.test(name) || /provo( municipal)? airport/.test(addr))
+         && isAirport(place) && isUtah(place);
+}
 
+function isStGeorgeAirport(place){
+  if(!place) return false;
+  const name = (place.name || "").toLowerCase();
+  const addr = (place.formatted_address || "").toLowerCase();
+  return (/\bsgu\b/.test(name) || /\bsgu\b/.test(addr) ||
+          /st\.?\s*george( regional)? airport/.test(name) || /st\.?\s*george( regional)? airport/.test(addr))
+         && isAirport(place) && isUtah(place);
+}
+
+function isJSXAddress(place){
+  if(!place) return false;
+  const text = `${(place.name||"")} ${(place.formatted_address||"")}`.toLowerCase();
+  return /\bjsx\b/.test(text) && isUtah(place);
+}
+
+/* Comerciales admitidos para pedir Flight Number */
+function isCommercialPickup(place){
+  return !!place && isUtah(place) && (
+    isSLCInternational(place) ||
+    isProvoAirport(place) ||
+    isStGeorgeAirport(place) ||
+    isJSXAddress(place)
+  );
+}          
 /* “Arrival en SLC” = cuando el PICK-UP es SLC comercial (si es drop-off SLC, NO aplica) */
 function isArrivalAtSLC(){
   return !!pickupPlace && isSLCInternational(pickupPlace);
@@ -689,35 +722,54 @@ function validateCityLike(v, label="origin city"){
   const ok = /^[A-Za-z .,'-]{2,}( \([A-Z]{3}\))?$/.test(val);
   return ok ? {ok:true,msg:`${label[0].toUpperCase()+label.slice(1)} captured.`} : {ok:false,msg:`Use letters and optional airport code, e.g., Van Nuys (VNY).`};
 }
-
-/* === Mostrar/ocultar secciones según tipo de aeropuerto === */
+/* === Mostrar/ocultar secciones según tipo de aeropuerto (comercial vs privado) === */
 function updateFlightVisibility(){
-  const commWrap=document.getElementById('flightContainer');
-  const commNum=document.getElementById('flightNumber');
-  const commHint=document.getElementById('flightHint');
-  const commOrigin=document.getElementById('flightOrigin');
-  const commOriginHelp=document.getElementById('originHelp');
+  const commWrap = document.getElementById('flightContainer');
+  const commNum  = document.getElementById('flightNumber');
+  const commHint = document.getElementById('flightHint');
+  const commOrig = document.getElementById('flightOrigin');
+  const commOrigHelp = document.getElementById('originHelp');
 
-  const pvtWrap=document.getElementById('privateFlightContainer');
-  const tail=document.getElementById('tailNumber');
-  const tailHelp=document.getElementById('tailHelp');
-  const pvtOrigin=document.getElementById('pvtOrigin');
-  const pvtOriginHelp=document.getElementById('pvtOriginHelp');
+  const pvtWrap  = document.getElementById('privateFlightContainer');
+  const tail     = document.getElementById('tailNumber');
+  const tailHelp = document.getElementById('tailHelp');
+  const pvtOrig  = document.getElementById('pvtOrigin');
+  const pvtOrigHelp = document.getElementById('pvtOriginHelp');
 
-  const isUTA = pickupIsUtahAirport();
-  const isPvt = isPrivateUtahAirport(pickupPlace);
+  const place = pickupPlace;
+  const isAirportUT = !!place && isAirport(place) && isUtah(place);
+  const isComm      = isCommercialPickup(place);   // SLC / PVU / SGU / JSX
 
-  if(commWrap){
-    const showComm = isUTA && !isPvt;
+  // 1) Aeropuertos comerciales -> Flight Number + Flight Origin
+  if (commWrap){
+    const showComm = isComm;
     commWrap.style.display = showComm ? 'block' : 'none';
     if(!showComm){
-      if(commNum){ commNum.value=""; commNum.setCustomValidity(""); }
-      if(commHint) commHint.style.display='none';
-      if(commOrigin){ commOrigin.value=""; commOrigin.setCustomValidity(""); }
-      if(commOriginHelp) commOriginHelp.style.display='none';
+      if(commNum){  commNum.value="";  commNum.setCustomValidity(""); }
+      if(commHint){ commHint.style.display='none'; }
+      if(commOrig){ commOrig.value=""; commOrig.setCustomValidity(""); }
+      if(commOrigHelp){ commOrigHelp.style.display='none'; }
     }
   }
 
+  // 2) Aeropuertos de Utah que NO son comerciales -> Tail Number + Origin privado
+  if (pvtWrap){
+    const showPvt = isAirportUT && !isComm;
+    pvtWrap.style.display = showPvt ? 'block' : 'none';
+    if(!showPvt){
+      if(tail){ tail.value=""; tail.setCustomValidity(""); }
+      if(tailHelp){ tailHelp.style.display='none'; }
+      if(pvtOrig){ pvtOrig.value=""; pvtOrig.setCustomValidity(""); }
+      if(pvtOrigHelp){ pvtOrigHelp.style.display='none'; }
+    }
+  }
+
+  // 3) Si NO es aeropuerto -> ocultar ambas
+  if(!isAirportUT){
+    if(commWrap) commWrap.style.display = 'none';
+    if(pvtWrap)  pvtWrap.style.display  = 'none';
+  }
+}
   if(pvtWrap){
     const showPvt = isUTA && isPvt;
     pvtWrap.style.display = showPvt ? 'block' : 'none';
