@@ -789,6 +789,7 @@ function wireFlightValidation(){
   }
 }
           /* ===== Vehicle selector + photo & guides ===== */
+/* ===== Vehicle selector + photo & guides (corrigido) ===== */
 (function wireVehicleSelector(){
   const suv = document.querySelector('.veh-btn[data-type="suv"]') || document.querySelector('.veh-btn:nth-child(1)');
   const van = document.querySelector('.veh-btn[data-type="van"]') || document.querySelector('.veh-btn:nth-child(2)');
@@ -802,24 +803,35 @@ function wireFlightValidation(){
 
   function setVehicle(type){
     selectedVehicle = type;
+
+    // toggle botones
     [suv,van].forEach(b=>{
-      const on = b && ((b.dataset && b.dataset.type===type) || (type==='suv' && b===suv) || (type==='van' && b===van));
       if(!b) return;
+      const on = (b.dataset?.type === type);
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', String(on));
     });
-    const isVan = (type==='van');
+
+    // UI asociada
+    const isVan = (type === 'van');
     if(vanGuide) vanGuide.style.display = isVan ? 'block' : 'none';
     if(suvGuide) suvGuide.style.display = isVan ? 'none' : 'block';
     if(photo) photo.src = isVan ? VAN_IMG : SUV_IMG;
     if(caption) caption.textContent = isVan ? 'This will be your Van' : 'This will be your SUV';
     if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
     if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
-    recalcFromCache();
-    updateMeetGreetVisibility();
+
+    // recalcular total (por el multiplicador VAN y/o MG fee)
+    if(typeof recalcFromCache === 'function') recalcFromCache();
+
+    // mostrar/ocultar Meet & Greet según vehículo + pickup SLC
+    if(typeof updateMeetGreetVisibility === 'function') updateMeetGreetVisibility();
   }
+
   suv?.addEventListener('click', ()=> setVehicle('suv'));
   van?.addEventListener('click', ()=> setVehicle('van'));
+
+  // estado inicial
   setVehicle('suv');
 })();
  /* === Meet & Greet: SLC (UI + pricing) === */
