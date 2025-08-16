@@ -806,6 +806,10 @@ function updateFlightVisibility(){
 // Obtiene fecha en formato YYYY-MM-DD desde tu selector
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
+// ===== Validación de vuelo con backend ===== //
+
+const getDateISO = () => (document.getElementById('date')?.value || '').trim();
+
 async function maybeCheckBackend(){
   // Solo validamos con backend cuando:
   // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
@@ -818,19 +822,15 @@ async function maybeCheckBackend(){
 
   if(!fl || !org || !dt) return;  // todavía falta completar algo
 
-  // Llamada a Cloud Run
   const hint = document.getElementById('flightHint');
   const originHelp = document.getElementById('originHelp');
-  if(hint)  hint.textContent  = "Checking flight...";
+
+  if(hint) hint.textContent = "Checking flight...";
   if(originHelp) originHelp.textContent = "Validating origin...";
 
   try {
-    const resp = await fetch("https://flightcheck-7728622851.us-west3.run.app", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ flight: fl, origin: org, date: dt })
-    });
-
+    const url = `https://flightcheck-7728622851.us-west3.run.app?flight=${encodeURIComponent(fl)}&origin=${encodeURIComponent(org)}&date=${encodeURIComponent(dt)}`;
+    const resp = await fetch(url);
     const data = await resp.json();
 
     if(data.ok){
@@ -844,6 +844,7 @@ async function maybeCheckBackend(){
     console.error("Error calling backend:", e);
     if(hint) hint.textContent = "Backend error ❌";
   }
+}
 }         
  /* === Meet & Greet: SLC (UI + pricing) === */
 window.__mgChoice = 'none';                          // default
