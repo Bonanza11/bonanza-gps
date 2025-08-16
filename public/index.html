@@ -849,16 +849,12 @@ function wireFlightValidation(){
 
 // ===== Validación de vuelo con backend ===== //
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
-
 async function maybeCheckBackend(){
-  // Solo validamos con backend cuando:
-  // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
-  // 2) Hay flightNumber y origin city y fecha
   if(!isCommercialPickup(pickupPlace)) return;
 
-  const fl = (document.getElementById('flightNumber')?.value || '').trim();
+  const fl  = (document.getElementById('flightNumber')?.value || '').trim();
   const org = (document.getElementById('flightOrigin')?.value || '').trim();
-  const dt = getDateISO();
+  const dt  = getDateISO();
 
   if(!fl || !org || !dt) return;  // todavía falta completar algo
 
@@ -889,7 +885,7 @@ async function maybeCheckBackend(){
     console.error("Error calling backend:", e);
     if(hint) hint.textContent = "Backend error ❌";
   }
-}   
+}
  /* === Meet & Greet: SLC (UI + pricing) === */
 window.__mgChoice = 'none';                          // default
 function getMGFee(){ return window.__mgChoice !== 'none' ? 50 : 0; }
