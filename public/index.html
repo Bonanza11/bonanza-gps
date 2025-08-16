@@ -635,7 +635,23 @@ function isPrivateUtahAirport(place){
   return FBO_KEYWORDS.test(text);
 }
 function pickupIsUtahAirport(){ return pickupPlace && isAirport(pickupPlace) && isUtah(pickupPlace); }
+/* === SLC helpers para visibilidad de Meet & Greet === */
+/* Detecta el aeropuerto comercial SLC (no FBO) por nombre/dirección y “SLC” */
+function isSLCInternational(place){
+  if(!place) return false;
+  const name = (place.name || "").toLowerCase();
+  const addr = (place.formatted_address || "").toLowerCase();
+  // Coincidencias típicas que devuelve Google Places
+  const hitsName = /salt lake city international/.test(name) || /\bslc\b/.test(name);
+  const hitsAddr = /salt lake city international/.test(addr) || /\bslc\b/.test(addr);
+  // Aseguramos que sea aeropuerto “grande” y no un FBO
+  return (hitsName || hitsAddr) && isAirport(place) && !isPrivateUtahAirport(place);
+}
 
+/* “Arrival en SLC” = cuando el PICK-UP es SLC comercial (si es drop-off SLC, NO aplica) */
+function isArrivalAtSLC(){
+  return !!pickupPlace && isSLCInternational(pickupPlace);
+}
 function countyFrom(place){
   const comps=place?.address_components||[];
   const c=comps.find(x=>x.types?.includes("administrative_area_level_2"));
