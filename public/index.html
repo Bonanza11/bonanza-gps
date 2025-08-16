@@ -801,177 +801,50 @@ function updateFlightVisibility(){
     if(pvtWrap)  pvtWrap.style.display  = 'none';
   }
 }
-/* ===== Listeners/validaciones de vuelo ===== */
-function wireFlightValidation(){
-  const input     = document.getElementById('flightNumber');
-  const hint      = document.getElementById('flightHint');
-  const origin    = document.getElementById('flightOrigin');
-  const originHelp= document.getElementById('originHelp');
+/* ===== Validación de vuelo con backend ===== */
 
-  // Utilidad para obtener fecha en formato YYYY-MM-DD desde tu selector
-  const getDateISO = () => (document.getElementById('date')?.value || '').trim();
+// Obtiene fecha en formato YYYY-MM-DD desde tu selector
+const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
-  async function maybeCheckBackend(){
-    // Solo validamos con backend cuando:
-    // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
-    // 2) Hay flightNumber y origin city y fecha
-    if(!isCommercialPickup(pickupPlace)) return;
+async function maybeCheckBackend(){
+  // Solo validamos con backend cuando:
+  // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
+  // 2) Hay flightNumber y origin city y fecha
+  if(!isCommercialPickup(pickupPlace)) return;
 
-    const fl  = (input?.value || '').trim();
-    const org = (origin?.value || '').trim();
-    const dt  = getDateISO();
+  const fl = (document.getElementById('flightNumber')?.value || '').trim();
+  const org = (document.getElementById('flightOrigin')?.value || '').trim();
+  const dt = getDateISO();
 
-    if(!fl || !org || !dt) return;   // todavía falta completar algo
+  if(!fl || !org || !dt) return;  // todavía falta completar algo
 
-    // Validación local (formato) antes de llamar
-    const fLocal = validateFlightValue(fl);
-    if(!fLocal.ok){
-      input.setCustomValidity(fLocal.msg);
-      if(hint){ hint.textContent = fLocal.msg; hint.className='hint err'; hint.style.display='block'; }
-      return;
-    }
+  // Llamada a Cloud Run
+  const hint = document.getElementById('flightHint');
+  const originHelp = document.getElementById('originHelp');
+  if(hint)  hint.textContent  = "Checking flight...";
+  if(originHelp) originHelp.textContent = "Validating origin...";
 
-    const oLocal = validateCityLike(org, "origin city");
-    if(!oLocal.ok){
-      origin.setCustomValidity(oLocal.msg);
-      if(originHelp){ originHelp.textContent = oLocal.msg; originHelp.className='hint warn'; originHelp.style.display='block'; }
-      return;
-    }
-
-    // Llamada a Cloud Run
-    if(hint){ hint.textContent = "Checking flight…"; hint.className='hint warn'; hint.style.display='block'; }
-    if(originHelp){ originHelp.textContent = "Validating origin…"; originHelp.className='hint warn'; originHelp.style.display='block'; }
-
-    const r = await verifyFlightWithBackend(fl, org, dt);
-
-    if(r.ok){
-      input.setCustomValidity("");
-      origin.setCustomValidity("");
-      if(hint){ hint.textContent = "Flight looks valid."; hint.className='hint ok'; hint.style.display='block'; }
-      if(originHelp){ originHelp.textContent = "Origin city looks valid."; originHelp.className='hint ok'; originHelp.style.display='block'; }
-    }else{
-      // No bloqueamos el flujo si solo quieres asegurar que el cliente “ingrese algo razonable”.
-      // Si quieres bloquear, quita los setCustomValidity("") y pon el mensaje de error.
-      input.setCustomValidity("");
-      origin.setCustomValidity("");
-      if(hint){ hint.textContent = r.msg || "Could not validate flight."; hint.className='hint warn'; hint.style.display='block'; }
-      if(originHelp){ originHelp.textContent = r.msg || "Could not validate origin."; originHelp.className='hint warn'; originHelp.style.display='block'; }
-    }
-  }
-
-  if(input){
-    input.addEventListener('input', ()=>{
-      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
-        input.setCustomValidity(""); if(hint) hint.style.display='none'; return;
-      }
-      const r=validateFlightValue(input.value);
-      input.setCustomValidity(r.ok?"":r.msg);
-      if(hint){
-        hint.textContent = r.ok ? "Format OK (AA1234)" : r.msg;
-        hint.className   = 'hint ' + (r.ok ? 'ok':'warn');
-        hint.style.display = input.value.trim().length ? 'block' : 'none';
-      }
+  try {
+    const resp = await fetch("https://flightcheck-7728622851.us-west3.run.app", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flight: fl, origin: org, date: dt })
     });
-    input.addEventListener('blur', maybeCheckBackend);
-  }
 
-  if(origin){
-    origin.addEventListener('input', ()=>{
-      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
-        origin.setCustomValidity(""); if(originHelp) originHelp.style.display='none'; return;
-      }
-      const r = validateCityLike(origin.value, "origin city");
-      origin.setCustomValidity(r.ok?"":r.msg);
-      if(originHelp){
-        originHelp.textContent = r.ok ? "Origin city captured." : r.msg;
-        originHelp.className   = 'hint ' + (r.ok ? 'ok':'warn');
-        originHelp.style.display = 'block';
-      }
-    });
-    origin.addEventListener('blur', maybeCheckBackend);
-  }
+    const data = await resp.json();
 
-  // Cuando el usuario cambia el pickup a SLC/PVU/SGU/JSX, vuelve a intentar
-  // (esto se llama desde initMap -> acPickup listener)
-  window._recheckFlightIfNeeded = maybeCheckBackend;
-}
-
-  const tail = document.getElementById('tailNumber');
-  const tailHelp = document.getElementById('tailHelp');
-  const pvtOrigin = document.getElementById('pvtOrigin');
-  const pvtOriginHelp = document.getElementById('pvtOriginHelp');
-
-  if(tail){
-    tail.addEventListener('input', ()=>{
-      if(!isPrivateUtahAirport(pickupPlace)){ tail.setCustomValidity(""); if(tailHelp) tailHelp.style.display='none'; return; }
-      const r = validateNNumber(tail.value);
-      tail.setCustomValidity(r.ok?"":r.msg);
-      if(tailHelp){
-        tailHelp.textContent = r.msg || 'Tail number captured.';
-        tailHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
-        tailHelp.style.display='block';
-      }
-    });
-  }
-  if(pvtOrigin){
-    pvtOrigin.addEventListener('input', ()=>{
-      if(!isPrivateUtahAirport(pickupPlace)){ pvtOrigin.setCustomValidity(""); if(pvtOriginHelp) pvtOriginHelp.style.display='none'; return; }
-      const r = validateCityLike(pvtOrigin.value, "origin city");
-      pvtOrigin.setCustomValidity(r.ok?"":r.msg);
-      if(pvtOriginHelp){
-        pvtOriginHelp.textContent = r.msg || 'Origin city captured.';
-        pvtOriginHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
-        pvtOriginHelp.style.display='block';
-      }
-    });
-  }
-}
-        /* ===== Vehicle selector + photo & guides (robusto) ===== */
-(function wireVehicleSelector(){
-  var suv = document.querySelector('.veh-btn[data-type="suv"]') || document.querySelector('.veh-btn:nth-child(1)');
-  var van = document.querySelector('.veh-btn[data-type="van"]') || document.querySelector('.veh-btn:nth-child(2)');
-  var vanGuide = document.getElementById('van-luggage');
-  var suvGuide = document.getElementById('suv-luggage');
-  var photo = document.getElementById('vehicle-photo') || document.querySelector('.turntable .car');
-  var caption = document.getElementById('vehicle-caption') || document.querySelector('.vehicle-caption');
-  var lugSUV = document.getElementById('lug-suv');
-  var lugVAN = document.getElementById('lug-van');
-
-  function setVehicle(type){
-    try {
-      selectedVehicle = type;
-
-      // Toggle botones
-      [suv, van].forEach(function(b){
-        if(!b) return;
-        var isOn = (b.getAttribute('data-type') === type);
-        b.classList.toggle('active', isOn);
-        b.setAttribute('aria-pressed', String(isOn));
-      });
-
-      // UI asociada
-      var isVan = (type === 'van');
-      if(vanGuide) vanGuide.style.display = isVan ? 'block' : 'none';
-      if(suvGuide) suvGuide.style.display = isVan ? 'none' : 'block';
-      if(photo) photo.src = isVan ? VAN_IMG : SUV_IMG;
-      if(caption) caption.textContent = isVan ? 'This will be your Van' : 'This will be your SUV';
-      if(lugSUV) lugSUV.style.display = isVan ? 'none' : 'block';
-      if(lugVAN) lugVAN.style.display = isVan ? 'block' : 'none';
-
-      // Recalcular total y actualizar Meet & Greet
-      if (typeof recalcFromCache === 'function') recalcFromCache();
-      if (typeof updateMeetGreetVisibility === 'function') updateMeetGreetVisibility();
-    } catch (e){
-      console.error('setVehicle error:', e);
+    if(data.ok){
+      if(hint) hint.textContent = "Flight confirmed ✅";
+      if(originHelp) originHelp.textContent = "Origin city confirmed ✅";
+    } else {
+      if(hint) hint.textContent = data.msg || "Flight not found ❌";
+      if(originHelp) originHelp.textContent = data.msg || "Invalid origin ❌";
     }
+  } catch (e) {
+    console.error("Error calling backend:", e);
+    if(hint) hint.textContent = "Backend error ❌";
   }
-
-  if (suv) suv.addEventListener('click', function(){ setVehicle('suv'); });
-  if (van) van.addEventListener('click', function(){ setVehicle('van'); });
-
-  // Estado inicial
-  setVehicle('suv');
-})();
+}         
  /* === Meet & Greet: SLC (UI + pricing) === */
 window.__mgChoice = 'none';                          // default
 function getMGFee(){ return window.__mgChoice !== 'none' ? 50 : 0; }
