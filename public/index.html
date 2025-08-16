@@ -801,63 +801,101 @@ function updateFlightVisibility(){
     if(pvtWrap)  pvtWrap.style.display  = 'none';
   }
 }
-/* ===== Validación de vuelo con backend ===== */
-
-// Obtiene fecha en formato YYYY-MM-DD desde tu selector
+<!-- ===== Validación de vuelo (frontend + backend) ===== -->
+<script>
+/* ===== Helpers de fecha para el backend ===== */
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
-// ===== Validación de vuelo con backend ===== //
+/* ===== Validaciones de campos de vuelo (frontend) ===== */
+function wireFlightValidation(){
+  const input=document.getElementById('flightNumber');
+  const hint=document.getElementById('flightHint');
+  const origin = document.getElementById('flightOrigin');
+  const originHelp = document.getElementById('originHelp');
 
-const getDateISO = () => (document.getElementById('date')?.value || '').trim();
+  if(input){
+    input.addEventListener('input', ()=>{
+      // solo aplica en aeropuerto comercial de Utah
+      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
+        input.setCustomValidity("");
+        if(hint) hint.style.display='none';
+        return;
+      }
+      const r=validateFlightValue(input.value);
+      input.setCustomValidity(r.ok?"":r.msg);
+      if(hint){
+        hint.textContent = input.value.trim() ? (r.ok ? "Format OK" : r.msg) : "✈️ Enter the complete flight number exactly as it appears on your boarding pass or itinerary.";
+        hint.style.display='block';
+        hint.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+      }
+    });
+  }
 
+  if(origin){
+    origin.addEventListener('input', ()=>{
+      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
+        origin.setCustomValidity("");
+        if(originHelp) originHelp.style.display='none';
+        return;
+      }
+      const r = validateCityLike(origin.value, "origin city");
+      origin.setCustomValidity(r.ok?"":r.msg);
+      if(originHelp){
+        originHelp.textContent = r.msg || 'Origin city captured.';
+        originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+        originHelp.style.display='block';
+      }
+    });
+  }
+}
+
+/* ===== Llamada al backend (Cloud Run) ===== */
 async function maybeCheckBackend(){
-// --- Disparadores para validar vuelo con el backend ---
+  // Solo validamos con backend si el pick-up es aeropuerto comercial en Utah
+  if(!isCommercialPickup(pickupPlace)) return;
+
+  const fl  = (document.getElementById('flightNumber')?.value || '').trim();
+  const org = (document.getElementById('flightOrigin')?.value || '').trim();
+  const dt  = getDateISO();
+
+  if(!fl || !org || !dt) return;  // falta completar algo
+
+  const hint = document.getElementById('flightHint');
+  const originHelp = document.getElementById('originHelp');
+  if(hint){ hint.textContent = "Checking flight..."; hint.style.display='block'; hint.className='hint warn'; }
+  if(originHelp){ originHelp.textContent = "Validating origin..."; originHelp.style.display='block'; originHelp.className='hint warn'; }
+
+  try {
+    const url = `https://flightcheck-7728622851.us-west3.run.app?flight=${encodeURIComponent(fl)}&origin=${encodeURIComponent(org)}&date=${encodeURIComponent(dt)}`;
+    const resp = await fetch(url);
+    const data = await resp.json().catch(()=> ({}));
+
+    if(data.ok){
+      if(hint){ hint.textContent = "Flight confirmed ✅"; hint.className='hint ok'; }
+      if(originHelp){ originHelp.textContent = "Origin city confirmed ✅"; originHelp.className='hint ok'; }
+    } else {
+      const msg = data.msg || "Flight not found ❌";
+      if(hint){ hint.textContent = msg; hint.className='hint err'; }
+      if(originHelp){ originHelp.textContent = data.msg || "Invalid origin ❌"; originHelp.className='hint err'; }
+    }
+  } catch (e) {
+    console.error("Backend error:", e);
+    if(hint){ hint.textContent = "Backend error ❌"; hint.className='hint err'; }
+  }
+}
+
+/* ===== Disparadores para el backend ===== */
 function wireFlightBackendTriggers(){
   const fn   = document.getElementById('flightNumber');
   const orig = document.getElementById('flightOrigin');
   const date = document.getElementById('date');
 
   const run = () => setTimeout(maybeCheckBackend, 200);
-
   if(fn)   fn.addEventListener('input', run);
   if(orig) orig.addEventListener('input', run);
   if(date) date.addEventListener('change', run);
 }
-  // Solo validamos con backend cuando:
-  // 1) Pickup es aeropuerto comercial en Utah (SLC/PVU/SGU/JSX)
-  // 2) Hay flightNumber y origin city y fecha
-  if(!isCommercialPickup(pickupPlace)) return;
-
-  const fl = (document.getElementById('flightNumber')?.value || '').trim();
-  const org = (document.getElementById('flightOrigin')?.value || '').trim();
-  const dt = getDateISO();
-
-  if(!fl || !org || !dt) return;  // todavía falta completar algo
-
-  const hint = document.getElementById('flightHint');
-  const originHelp = document.getElementById('originHelp');
-
-  if(hint) hint.textContent = "Checking flight...";
-  if(originHelp) originHelp.textContent = "Validating origin...";
-
-  try {
-    const url = `https://flightcheck-7728622851.us-west3.run.app?flight=${encodeURIComponent(fl)}&origin=${encodeURIComponent(org)}&date=${encodeURIComponent(dt)}`;
-    const resp = await fetch(url);
-    const data = await resp.json();
-
-    if(data.ok){
-      if(hint) hint.textContent = "Flight confirmed ✅";
-      if(originHelp) originHelp.textContent = "Origin city confirmed ✅";
-    } else {
-      if(hint) hint.textContent = data.msg || "Flight not found ❌";
-      if(originHelp) originHelp.textContent = data.msg || "Invalid origin ❌";
-    }
-  } catch (e) {
-    console.error("Error calling backend:", e);
-    if(hint) hint.textContent = "Backend error ❌";
-  }
-}
-}         
+</script>        
  /* === Meet & Greet: SLC (UI + pricing) === */
 window.__mgChoice = 'none';                          // default
 function getMGFee(){ return window.__mgChoice !== 'none' ? 50 : 0; }
