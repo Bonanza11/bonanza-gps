@@ -770,18 +770,6 @@ function updateFlightVisibility(){
     if(pvtWrap)  pvtWrap.style.display  = 'none';
   }
 }
-  if(pvtWrap){
-    const showPvt = isUTA && isPvt;
-    pvtWrap.style.display = showPvt ? 'block' : 'none';
-    if(!showPvt){
-      if(tail){ tail.value=""; tail.setCustomValidity(""); }
-      if(tailHelp) tailHelp.style.display='none';
-      if(pvtOrigin){ pvtOrigin.value=""; pvtOrigin.setCustomValidity(""); }
-      if(pvtOriginHelp) pvtOriginHelp.style.display='none';
-    }
-  }
-}
-
 /* ===== Listeners/validaciones de vuelo ===== */
 function wireFlightValidation(){
   const input=document.getElementById('flightNumber');
