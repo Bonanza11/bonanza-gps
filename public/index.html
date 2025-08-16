@@ -543,6 +543,10 @@ const VAN_IMG = "/images/van-sprinter.png";
 /* ===== Globals ===== */
 let map, directionsService, directionsRenderer, geocoder;
 const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
+          // === FlightCheck (Cloud Run) ===
+// Reemplaza por tu URL exacta (la que ves en Cloud Run).
+// Ejemplo: https://flightcheck-7728622851.us-west3.run.app
+const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app";
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
 /* ===== Operating hours (6:00–23:00) ===== */
