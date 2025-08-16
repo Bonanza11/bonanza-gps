@@ -925,10 +925,15 @@ function initMap(){
   const opts = { componentRestrictions:{country:["us"]}, fields:["place_id","name","types","formatted_address","geometry","address_components"] };
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
+  acPickup.addListener("place_changed", ()=>{
+  pickupPlace = acPickup.getPlace() || null;
+  updateFlightVisibility();
+  updateMeetGreetVisibility();   // <-- añadido para mostrar/ocultar Meet & Greet
+});
 
-  acPickup.addListener("place_changed", ()=>{ pickupPlace = acPickup.getPlace() || null; updateFlightVisibility(); });
-  acDropoff.addListener("place_changed", ()=>{ dropoffPlace = acDropoff.getPlace() || null; });
-}
+acDropoff.addListener("place_changed", ()=>{
+  dropoffPlace = acDropoff.getPlace() || null;
+});  
 window.initMap = initMap;
 
 /* ===== Modal Read More (términos) ===== */
