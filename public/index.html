@@ -871,6 +871,7 @@ function shouldShowMeetGreet(){
 function updateMeetGreetVisibility(){
   const card = document.getElementById('meetGreetCard');
   if(!card) return;
+  wireFlightBackendTriggers();
 
   const show = shouldShowMeetGreet();
   if(show){
