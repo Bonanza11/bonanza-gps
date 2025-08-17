@@ -874,24 +874,6 @@ async function maybeCheckBackend() {
     if (backendRes) backendRes.textContent = "⚠️ Error consultando backend: " + e.message;
   }
 }
-  if (origin) {
-    origin.addEventListener('input', ()=>{
-      if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
-        origin.setCustomValidity("");
-        if (originHelp) originHelp.style.display='none';
-        return;
-      }
-      const r = validateCityLike(origin.value, "origin city");
-      origin.setCustomValidity(r.ok ? "" : r.msg);
-      if (originHelp){
-        originHelp.textContent = r.msg || 'Origin city captured.';
-        originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
-        originHelp.style.display='block';
-      }
-    });
-  }
-}
-
 /* ===== Disparadores para el backend ===== */
 function wireFlightBackendTriggers(){
   const fn   = document.getElementById('flightNumber');
