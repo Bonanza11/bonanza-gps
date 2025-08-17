@@ -766,8 +766,8 @@ function updateFlightVisibility(){
       if(commOrig){ commOrig.value=""; commOrig.setCustomValidity(""); }
       if(commOrigHelp){ commOrigHelp.style.display='none'; }
     }
+    initFlightOriginAutocomplete();   // <<— nuevo
   }
-
   // 2) Aeropuertos de Utah que NO son comerciales -> Tail Number + Origin privado
   if (pvtWrap){
     const showPvt = isAirportUT && !isComm;
