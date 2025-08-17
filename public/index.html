@@ -805,67 +805,55 @@ function updateFlightVisibility(){
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
 /* ===== Llamada al backend (Cloud Run) =====
-   Espera que tu servicio responda JSON:
-   { ok: boolean, msg?: string, arrivalLocal?: "YYYY-MM-DDTHH:MM" }
-   - arrivalLocal (opcional) se usa para autorrellenar #time.
+   Espera que tu servicio responda JSON (proxy de AeroDataBox):
+   { arrival?: { scheduledTimeLocal?: "YYYY-MM-DDTHH:MM:SS" }, ... }
+   - Si hay llegada, autorrellenamos #time.
+*/
 async function maybeCheckBackend() {
-  const fl = document.getElementById("flightNumber").value.trim();
-  const org = document.getElementById("flightOrigin").value.trim();
-  const dt = document.getElementById("date").value;
-
+  const fl = document.getElementById("flightNumber")?.value.trim();
+  const org = document.getElementById("flightOrigin")?.value.trim();
+  const dt  = document.getElementById("date")?.value; // YYYY-MM-DD
   if (!fl || !org || !dt) return;
 
-  const flight = fl.replace(/\s+/g, "").toUpperCase();
+  // normalizamos entrada
+  const flight = fl.replace(/\s+/g, "").toUpperCase(); // "DL 464" -> "DL464"
   const origin = org.toUpperCase();
+
+  // tu URL de Cloud Run + endpoint /flight
   const base = "https://flightcheck-7728622851.us-west3.run.app";
   const qs = new URLSearchParams({ flight, origin, date: dt });
 
-  const hint = document.getElementById("flightHint");
+  const hint       = document.getElementById("flightHint");
   const originHelp = document.getElementById("originHelp");
+  const backendRes = document.getElementById("backendResult"); // opcional, si lo tienes
 
   try {
     const resp = await fetch(`${base}/flight?${qs.toString()}`);
     if (!resp.ok) {
-      if (hint) hint.textContent = "❌ Vuelo inválido o no encontrado";
-      if (originHelp) originHelp.textContent = "❌ Ciudad inválida";
+      // marcar inválidos
+      if (hint)       { hint.textContent = "❌ Flight not found"; hint.className = "hint err"; hint.style.display='block'; }
+      if (originHelp) { originHelp.textContent = "❌ Invalid origin"; originHelp.className = "hint err"; originHelp.style.display='block'; }
+      if (backendRes) backendRes.textContent = `Service error (${resp.status})`;
       return;
     }
 
     const data = await resp.json();
 
-    if (!data || !data.arrival) {
-      if (hint) hint.textContent = "❌ Número de vuelo no válido";
-      return;
-    }
+    // éxito
+    if (hint)       { hint.textContent = "✅ Flight confirmed"; hint.className = "hint ok"; hint.style.display='block'; }
+    if (originHelp) { originHelp.textContent = "✈️ Origin city confirmed"; originHelp.className = "hint ok"; originHelp.style.display='block'; }
 
-    if (hint) {
-      hint.textContent = "✅ Vuelo confirmado";
-      hint.className = "hint ok";
-    }
-    if (originHelp) {
-      originHelp.textContent = "✈️ Ciudad confirmada";
-      originHelp.className = "hint ok";
-    }
-
-    // Autorrellenar hora de llegada
-    if (data.arrival.scheduledTimeLocal) {
-      const arrivalInput = document.getElementById("arrivalTime");
-      if (arrivalInput) {
-        arrivalInput.value = data.arrival.scheduledTimeLocal.slice(11, 16);
-      }
-    }
-  } catch (err) {
-    console.error(err);
-    if (hint) hint.textContent = "⚠️ Error consultando servidor";
-    if (originHelp) originHelp.textContent = "";
-  }
-}
-}
+    // autorrellenar #time si viene arrival.scheduledTimeLocal
+    const t = data?.arrival?.scheduledTimeLocal;
+    if (t) {
+      const hhmm = t.slice(11, 16);
+      const timeEl = document.getElementById("time");
+      if (timeEl) timeEl.value = hhmm;
     }
   } catch (e) {
     console.error("Backend error:", e);
-    if (hint)      { hint.textContent = "Backend error ❌";  hint.className='hint err'; }
-    if (originHelp){ originHelp.textContent = "Backend error ❌"; originHelp.className='hint err'; }
+    if (hint)       { hint.textContent = "Backend error ❌"; hint.className = "hint err"; hint.style.display='block'; }
+    if (originHelp) { originHelp.textContent = ""; originHelp.style.display='none'; }
   }
 }
 
