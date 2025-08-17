@@ -1351,12 +1351,13 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
   modal?.addEventListener('click', (e)=> { if(e.target === modal) closeModal(); });
   document.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && modal?.classList.contains('open')) closeModal(); });
 })();
-
 /* ===== On Load ===== */
-mountDateTime();            /* ya fija min 24h y valores por defecto */
-wireFlightValidation();     /* validaciones vuelo */
-wireFlightBackendTriggers();/* disparadores backend (llamadas a Cloud Run) */
-syncButtons();              /* estado botones */
+document.addEventListener('DOMContentLoaded', () => {
+  mountDateTime();              // fija min 24h y valores por defecto
+  wireFlightValidation();       // validaciones vuelo
+  wireFlightBackendTriggers();  // disparadores backend (llamadas a Cloud Run)
+  syncButtons();                // estado botones
+});
 </script>
 <!-- Google Maps Loader -->
 <script async
