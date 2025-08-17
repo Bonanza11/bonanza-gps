@@ -806,86 +806,74 @@ function updateFlightVisibility(){
 /* ===== Helpers de fecha para el backend ===== */
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
-/* ===== Llamada al backend (Cloud Run) =====
-   Espera que tu servicio responda JSON (proxy de AeroDataBox):
-   { arrival?: { scheduledTimeLocal?: "YYYY-MM-DDTHH:MM:SS" }, ... }
-   - Si hay llegada, autorrellenamos #time.
-*/
+/* ===== Llamada al backend (Cloud Run) + validación estricta ===== */
+
+// Normalizador de número de vuelo (quita espacios, mayúsculas)
+function normFlight(x) {
+  return (x || "").replace(/\s+/g, "").toUpperCase(); 
+}
+
+// Normalizador de ciudad de origen (mayúsculas)
+function normOrigin(x) {
+  return (x || "").toUpperCase();
+}
+
 async function maybeCheckBackend() {
-  const fl = document.getElementById("flightNumber")?.value.trim();
-  const org = document.getElementById("flightOrigin")?.value.trim();
-  const dt  = document.getElementById("date")?.value; // YYYY-MM-DD
-  if (!fl || !org || !dt) return;
+  const fl = normFlight(document.getElementById("flightNumber")?.value.trim());
+  const org = normOrigin(document.getElementById("flightOrigin")?.value.trim());
+  const dt = document.getElementById("date")?.value.trim(); // YYYY-MM-DD
 
-  // normalizamos entrada
-  const flight = fl.replace(/\s+/g, "").toUpperCase(); // "DL 464" -> "DL464"
-  const origin = org.toUpperCase();
+  if (!fl || !org || !dt) return; // si falta algo, no seguimos
 
-  // tu URL de Cloud Run + endpoint /flight
-  const base = "https://flightcheck-7728622851.us-west3.run.app";
-  const qs = new URLSearchParams({ flight, origin, date: dt });
-const mySeq = ++__flightSeq;   // marca esta solicitud como la más reciente
-  
-  const hint       = document.getElementById("flightHint");
+  const base = FLIGHTCHECK_URL; // definida arriba como tu endpoint en Cloud Run
+  const qs = new URLSearchParams({ flight: fl, origin: org, date: dt });
+  const mySeq = ++__flightSeq; // marca consulta como la más reciente
+
+  const hint = document.getElementById("flightHint");
   const originHelp = document.getElementById("originHelp");
-  const backendRes = document.getElementById("backendResult"); // opcional, si lo tienes
+  const backendRes = document.getElementById("backendResult");
 
   try {
     const resp = await fetch(`${base}/flight?${qs.toString()}`);
     if (!resp.ok) {
-      // marcar inválidos
-      if (hint)       { hint.textContent = "❌ Flight not found"; hint.className = "hint err"; hint.style.display='block'; }
-      if (originHelp) { originHelp.textContent = "❌ Invalid origin"; originHelp.className = "hint err"; originHelp.style.display='block'; }
+      if (hint) hint.textContent = "✗ Flight not found";
+      if (originHelp) originHelp.textContent = "✗ Invalid origin";
       if (backendRes) backendRes.textContent = `Service error (${resp.status})`;
       return;
     }
 
-    const data = await resp.json();
-    if (mySeq !== __flightSeq) return;  // si ya hay una consulta más nueva, ignora esta
-    // éxito
-    if (hint)       { hint.textContent = "✅ Flight confirmed"; hint.className = "hint ok"; hint.style.display='block'; }
-    if (originHelp) { originHelp.textContent = "✈️ Origin city confirmed"; originHelp.className = "hint ok"; originHelp.style.display='block'; }
+    const data = await resp.json().catch(() => ({}));
+    if (mySeq !== __flightSeq) return; // si hubo otra consulta más reciente, ignora esta
 
-    // autorrellenar #time si viene arrival.scheduledTimeLocal
-    const t = data?.arrival?.scheduledTimeLocal;
-    if (t) {
-      const hhmm = t.slice(11, 16);
-      const timeEl = document.getElementById("time");
-      if (timeEl) timeEl.value = hhmm;
+    // Si respuesta valida
+    if (data.ok) {
+      if (hint) {
+        hint.textContent = "✅ Flight confirmed";
+        hint.className = "hint ok";
+        hint.style.display = "block";
+      }
+      if (originHelp) {
+        originHelp.textContent = "✅ Origin city confirmed";
+        originHelp.className = "hint ok";
+        originHelp.style.display = "block";
+      }
+
+      // Autorrellenar hora si viene "arrivalLocal"
+      if (data.arrivalLocal) {
+        const t = data.arrivalLocal.match(/T(\d{2}:\d{2})/);
+        if (t) {
+          const timeEl = document.getElementById("time");
+          if (timeEl) timeEl.value = t[1]; // hh:mm
+        }
+      }
+    } else {
+      if (backendRes) backendRes.textContent = data.msg || "Vuelo no válido";
     }
   } catch (e) {
-    console.error("Backend error:", e);
-    if (hint)       { hint.textContent = "Backend error ❌"; hint.className = "hint err"; hint.style.display='block'; }
-    if (originHelp) { originHelp.textContent = ""; originHelp.style.display='none'; }
+    console.error(e);
+    if (backendRes) backendRes.textContent = "⚠️ Error consultando backend: " + e.message;
   }
 }
-
-/* ===== Validaciones de campos de vuelo (frontend) ===== */
-function wireFlightValidation(){
-  const input = document.getElementById('flightNumber');
-  const hint  = document.getElementById('flightHint');
-  const origin = document.getElementById('flightOrigin');
-  const originHelp = document.getElementById('originHelp');
-
-  if (input) {
-    input.addEventListener('input', ()=>{
-      if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
-        input.setCustomValidity("");
-        if (hint) hint.style.display='none';
-        return;
-      }
-      const r = validateFlightValue(input.value);
-      input.setCustomValidity(r.ok ? "" : r.msg);
-      if (hint){
-        hint.textContent = input.value.trim()
-          ? (r.ok ? "Format OK" : r.msg)
-          : "✈️ Enter the complete flight number exactly as it appears on your boarding pass or itinerary.";
-        hint.style.display='block';
-        hint.className = 'hint ' + (r.ok ? 'ok' : 'warn');
-      }
-    });
-  }
-
   if (origin) {
     origin.addEventListener('input', ()=>{
       if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
