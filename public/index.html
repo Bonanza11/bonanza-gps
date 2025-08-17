@@ -696,17 +696,6 @@ function isJSXUtah(place){
   // Debe ser en Utah y con tipo de aeropuerto
   return (nameHit || addrHit) && isUtah(place) && isAirport(place);
 }
-
-  // Coincidencias típicas: nombre JSX o Jet Suite X
-  const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
-
-  // Dirección exacta conocida del JSX en Salt Lake City
-  const addrHit =
-    /\b470\s*n\s*2360\s*w\b/.test(addr) && /salt lake city/.test(addr) && /84116/.test(addr);
-
-  // Verifica que sea en Utah y tipo aeropuerto
-  return (nameHit || addrHit) && isUtah(place) && isAirport(place);
-}
 // Solo SLC o JSX en Utah activan la captura de vuelo
 function isCommercialPickup(place){
   return !!place && isUtah(place) && (
