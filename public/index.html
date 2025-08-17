@@ -702,7 +702,40 @@ function parseOriginIata(text){
   if (/^[A-Z]{3}$/.test(t)) return t;     // solo "MIA"
   return null;                             // otro formato (ciudad sin IATA)
 }
+// Intenta derivar un IATA cuando el usuario selecciona una ciudad con Autocomplete
+function cityPlaceToIata(place){
+  if(!place) return "";
+  const name = (place.name || "").toUpperCase();
 
+  // Mapa mínimo (puedes ampliarlo luego)
+  const MAP = {
+    "BOSTON": "BOS",
+    "MIAMI": "MIA",
+    "LAS VEGAS": "LAS",
+    "LOS ANGELES": "LAX",
+    "NEW YORK": "JFK",
+    "SAN FRANCISCO": "SFO",
+    "DALLAS": "DFW",
+    "DENVER": "DEN",
+    "CHICAGO": "ORD",
+    "HOUSTON": "IAH",
+    "PHOENIX": "PHX",
+    "ATLANTA": "ATL",
+    "SEATTLE": "SEA"
+  };
+
+  if (MAP[name]) return MAP[name];
+
+  // Heurísticas básicas
+  if (/MIAMI/.test(name)) return "MIA";
+  if (/LAS\s*VEGAS/.test(name)) return "LAS";
+  if (/BOSTON/.test(name)) return "BOS";
+  if (/LOS\s*ANGELES/.test(name)) return "LAX";
+  if (/NEW\s*YORK/.test(name)) return "JFK";
+  if (/SAN\s*FRANCISCO/.test(name)) return "SFO";
+
+  return "";
+}
 function validateFlightValue(v){
   const m = normalizeFlight(v).match(FLIGHT_REGEX);
   if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
@@ -710,16 +743,6 @@ function validateFlightValue(v){
   if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
   if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
   return {ok:true,msg:''};
-}
-          
-// Extrae el IATA del campo "Flight Origin".
-// Acepta "Miami (MIA)" → "MIA" o directamente "MIA".
-function parseOriginIata(text){
-  const t = (text || "").trim().toUpperCase();
-  const m = t.match(/\(([A-Z]{3})\)$/);   // …(MIA)
-  if (m) return m[1];
-  if (/^[A-Z]{3}$/.test(t)) return t;     // MIA
-  return null;                            // otro formato (ciudad sin IATA)
 }
 {
   const m = normalizeFlight(v).match(FLIGHT_REGEX);
