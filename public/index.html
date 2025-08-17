@@ -946,25 +946,6 @@ function updateMeetGreetVisibility(){
     });
   });
 })();
-// Botones de Meet & Greet
-(function wireMeetGreetButtons(){
-  const card = document.getElementById('meetGreetCard');
-  if(!card) return;
-  const btns = Array.from(card.querySelectorAll('.mg-btn'));
-
-  function activate(choice){
-    window.__mgChoice = choice;
-    btns.forEach(b=>{
-      const on = b.dataset.choice === choice;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
-    if (typeof recalcFromCache === 'function') recalcFromCache();
-  }
-
-  btns.forEach(b=> b.addEventListener('click', ()=> activate(b.dataset.choice)));
-  activate('none'); // default
-})();        
 
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
