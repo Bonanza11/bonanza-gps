@@ -804,41 +804,109 @@ function updateFlightVisibility(){
 /* ===== Helpers de fecha para el backend ===== */
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 
+/* ===== Llamada al backend (Cloud Run) =====
+   Espera que tu servicio responda JSON:
+   { ok: boolean, msg?: string, arrivalLocal?: "YYYY-MM-DDTHH:MM" }
+   - arrivalLocal (opcional) se usa para autorrellenar #time.
+*/
+async function maybeCheckBackend(){
+  // Solo validamos si el PICK-UP es aeropuerto comercial en Utah
+  if (!isCommercialPickup(pickupPlace)) return;
+
+  const fl  = (document.getElementById('flightNumber')?.value || '').trim();
+  const org = (document.getElementById('flightOrigin')?.value || '').trim();
+  const dt  = getDateISO();
+  if (!fl || !org || !dt) return; // falta completar
+
+  const hint = document.getElementById('flightHint');
+  const originHelp = document.getElementById('originHelp');
+
+  if (hint)      { hint.textContent = "Checking flight..."; hint.style.display='block'; hint.className='hint warn'; }
+  if (originHelp){ originHelp.textContent = "Validating origin..."; originHelp.style.display='block'; originHelp.className='hint warn'; }
+
+  try {
+    // ⚠️ TU URL de Cloud Run (sin ruta) + endpoint '/flightcheck'
+    const url = "https://flightcheck-7728622851.us-west3.run.app/flightcheck";
+
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ flight: fl, origin: org, date: dt })
+    });
+
+    // Respuesta no-OK
+    if (!resp.ok) {
+      const msg = resp.status === 429 ? "Too many checks. Try again in a minute."
+                                      : `Service error (${resp.status})`;
+      if (hint)      { hint.textContent = msg; hint.className='hint err'; }
+      if (originHelp){ originHelp.textContent = msg; originHelp.className='hint err'; }
+      return;
+    }
+
+    const data = await resp.json().catch(()=> ({}));
+
+    if (data.ok) {
+      if (hint)      { hint.textContent = "Flight confirmed ✅";        hint.className='hint ok'; }
+      if (originHelp){ originHelp.textContent = "Origin city confirmed ✅"; originHelp.className='hint ok'; }
+
+      // === Autorrellenar hora si llega 'arrivalLocal' (YYYY-MM-DDTHH:MM) ===
+      if (data.arrivalLocal) {
+        const hhmm = (data.arrivalLocal.match(/T(\d{2}:\d{2})/) || [])[1];
+        const timeEl = document.getElementById('time');
+        const timeHelp = document.getElementById('timeHelp');
+        if (hhmm && timeEl) {
+          timeEl.value = hhmm;
+          if (timeHelp) timeHelp.textContent = `Auto-set from flight: ${hhmm}`;
+        }
+      }
+    } else {
+      const msg = data.msg || "Flight not found ❌";
+      if (hint)      { hint.textContent = msg; hint.className='hint err'; }
+      if (originHelp){ originHelp.textContent = data.msg || "Invalid origin ❌"; originHelp.className='hint err'; }
+    }
+  } catch (e) {
+    console.error("Backend error:", e);
+    if (hint)      { hint.textContent = "Backend error ❌";  hint.className='hint err'; }
+    if (originHelp){ originHelp.textContent = "Backend error ❌"; originHelp.className='hint err'; }
+  }
+}
+
 /* ===== Validaciones de campos de vuelo (frontend) ===== */
 function wireFlightValidation(){
-  const input=document.getElementById('flightNumber');
-  const hint=document.getElementById('flightHint');
+  const input = document.getElementById('flightNumber');
+  const hint  = document.getElementById('flightHint');
   const origin = document.getElementById('flightOrigin');
   const originHelp = document.getElementById('originHelp');
 
-  if(input){
+  if (input) {
     input.addEventListener('input', ()=>{
-      // solo aplica en aeropuerto comercial de Utah
-      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
+      if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
         input.setCustomValidity("");
-        if(hint) hint.style.display='none';
+        if (hint) hint.style.display='none';
         return;
       }
-      const r=validateFlightValue(input.value);
-      input.setCustomValidity(r.ok?"":r.msg);
-      if(hint){
-        hint.textContent = input.value.trim() ? (r.ok ? "Format OK" : r.msg) : "✈️ Enter the complete flight number exactly as it appears on your boarding pass or itinerary.";
+      const r = validateFlightValue(input.value);
+      input.setCustomValidity(r.ok ? "" : r.msg);
+      if (hint){
+        hint.textContent = input.value.trim()
+          ? (r.ok ? "Format OK" : r.msg)
+          : "✈️ Enter the complete flight number exactly as it appears on your boarding pass or itinerary.";
         hint.style.display='block';
         hint.className = 'hint ' + (r.ok ? 'ok' : 'warn');
       }
     });
   }
 
-  if(origin){
+  if (origin) {
     origin.addEventListener('input', ()=>{
-      if(!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)){
+      if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
         origin.setCustomValidity("");
-        if(originHelp) originHelp.style.display='none';
+        if (originHelp) originHelp.style.display='none';
         return;
       }
       const r = validateCityLike(origin.value, "origin city");
-      origin.setCustomValidity(r.ok?"":r.msg);
-      if(originHelp){
+      origin.setCustomValidity(r.ok ? "" : r.msg);
+      if (originHelp){
         originHelp.textContent = r.msg || 'Origin city captured.';
         originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
         originHelp.style.display='block';
@@ -847,67 +915,17 @@ function wireFlightValidation(){
   }
 }
 
-// ===== Validación de vuelo con backend ===== //
-const getDateISO = () => (document.getElementById('date')?.value || '').trim();
-async function maybeCheckBackend(){
-    if(!isCommercialPickup(pickupPlace)) return;
+/* ===== Disparadores para el backend ===== */
+function wireFlightBackendTriggers(){
+  const fn   = document.getElementById('flightNumber');
+  const orig = document.getElementById('flightOrigin');
+  const date = document.getElementById('date');
 
-    const fl = (document.getElementById('flightNumber')?.value || '').trim();
-    const org = (document.getElementById('flightOrigin')?.value || '').trim();
-    const dt = getDateISO();
-
-    if(!fl || !org || !dt) return;
-
-    // Referencias a los hints
-    const hint = document.getElementById('flightHint');
-    const originHelp = document.getElementById('originHelp');
-    const timeInput = document.getElementById('time'); // Campo de hora en tu formulario
-
-    if(hint) hint.textContent = "Checking flight...";
-    if(originHelp) originHelp.textContent = "Validating origin...";
-
-    try {
-        const resp = await fetch("https://flightcheck-7728622851.us-west3.run.app", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ flight: fl, origin: org, date: dt })
-        });
-
-        const data = await resp.json();
-
-        if(data.ok){
-            if(hint) hint.textContent = "Flight confirmed ✅";
-            if(originHelp) originHelp.textContent = "Origin city confirmed ✅";
-
-            // ⏰ Autorrellenar hora si backend devuelve arrivalTime
-            if(data.arrivalTime && timeInput){
-                timeInput.value = data.arrivalTime; 
-            }
-
-        } else {
-            if(hint) hint.textContent = data.msg || "Flight not found ❌";
-            if(originHelp) originHelp.textContent = data.msg || "Invalid origin ❌";
-        }
-    } catch (e) {
-        console.error("Error calling backend:", e);
-        if(hint) hint.textContent = "Backend error ❌";
-    }
+  const run = () => setTimeout(maybeCheckBackend, 200);
+  if (fn)   fn.addEventListener('input', run);
+  if (orig) orig.addEventListener('input', run);
+  if (date) date.addEventListener('change', run);
 }
- /* === Meet & Greet: SLC (UI + pricing) === */
-window.__mgChoice = 'none';                          // default
-function getMGFee(){ return window.__mgChoice !== 'none' ? 50 : 0; }
-
-/* Se muestra solo si: vehículo = SUV y el PICK-UP es SLC comercial (no FBO). 
-   Requiere que exista isSLCInternational(place), ya la tienes definida arriba. */
-function shouldShowMeetGreet(){
-  return selectedVehicle === 'suv' && isSLCInternational(pickupPlace || null);
-}
-
-function updateMeetGreetVisibility(){
-  const card = document.getElementById('meetGreetCard');
-  if(!card) return;
-  wireFlightBackendTriggers();
-
   const show = shouldShowMeetGreet();
   if(show){
     card.style.display = 'block';
