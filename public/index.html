@@ -1115,10 +1115,10 @@ function initMap(){
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
 
   acPickup.addListener("place_changed", ()=>{
-    pickupPlace = acPickup.getPlace() || null;
-    updateFlightVisibility();
-    updateMeetGreetVisibility();   // controla la tarjeta Meet & Greet
-  });
+  window.pickupPlace = acPickup.getPlace() || null;
+  updateFlightVisibility();
+  updateMeetGreetVisibility();
+});
   // Fallback: si el usuario escribe y NO selecciona sugerencia del Autocomplete
   const pickupInput = document.getElementById("pickup");
   pickupInput.addEventListener("blur", async ()=>{
