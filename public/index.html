@@ -850,41 +850,48 @@ function wireFlightValidation(){
 // ===== Validación de vuelo con backend ===== //
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 async function maybeCheckBackend(){
-  if(!isCommercialPickup(pickupPlace)) return;
+    if(!isCommercialPickup(pickupPlace)) return;
 
-  const fl  = (document.getElementById('flightNumber')?.value || '').trim();
-  const org = (document.getElementById('flightOrigin')?.value || '').trim();
-  const dt  = getDateISO();
+    const fl = (document.getElementById('flightNumber')?.value || '').trim();
+    const org = (document.getElementById('flightOrigin')?.value || '').trim();
+    const dt = getDateISO();
 
-  if(!fl || !org || !dt) return;  // todavía falta completar algo
+    if(!fl || !org || !dt) return;
 
-  // Referencias a los hints
-  const hint = document.getElementById('flightHint');
-  const originHelp = document.getElementById('originHelp');
+    // Referencias a los hints
+    const hint = document.getElementById('flightHint');
+    const originHelp = document.getElementById('originHelp');
+    const timeInput = document.getElementById('time'); // Campo de hora en tu formulario
 
-  if(hint) hint.textContent = "Checking flight...";
-  if(originHelp) originHelp.textContent = "Validating origin...";
+    if(hint) hint.textContent = "Checking flight...";
+    if(originHelp) originHelp.textContent = "Validating origin...";
 
-  try {
-    const resp = await fetch("https://flightcheck-7728622851.us-west3.run.app", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ flight: fl, origin: org, date: dt })
-    });
+    try {
+        const resp = await fetch("https://flightcheck-7728622851.us-west3.run.app", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ flight: fl, origin: org, date: dt })
+        });
 
-    const data = await resp.json();
+        const data = await resp.json();
 
-    if(data.ok){
-      if(hint) hint.textContent = "Flight confirmed ✅";
-      if(originHelp) originHelp.textContent = "Origin city confirmed ✅";
-    } else {
-      if(hint) hint.textContent = data.msg || "Flight not found ❌";
-      if(originHelp) originHelp.textContent = data.msg || "Invalid origin ❌";
+        if(data.ok){
+            if(hint) hint.textContent = "Flight confirmed ✅";
+            if(originHelp) originHelp.textContent = "Origin city confirmed ✅";
+
+            // ⏰ Autorrellenar hora si backend devuelve arrivalTime
+            if(data.arrivalTime && timeInput){
+                timeInput.value = data.arrivalTime; 
+            }
+
+        } else {
+            if(hint) hint.textContent = data.msg || "Flight not found ❌";
+            if(originHelp) originHelp.textContent = data.msg || "Invalid origin ❌";
+        }
+    } catch (e) {
+        console.error("Error calling backend:", e);
+        if(hint) hint.textContent = "Backend error ❌";
     }
-  } catch (e) {
-    console.error("Error calling backend:", e);
-    if(hint) hint.textContent = "Backend error ❌";
-  }
 }
  /* === Meet & Greet: SLC (UI + pricing) === */
 window.__mgChoice = 'none';                          // default
