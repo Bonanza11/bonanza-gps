@@ -1118,7 +1118,22 @@ function initMap(){
     updateFlightVisibility();
     updateMeetGreetVisibility();   // controla la tarjeta Meet & Greet
   });
-
+  // Fallback: si el usuario escribe y NO selecciona sugerencia del Autocomplete
+  const pickupInput = document.getElementById("pickup");
+  pickupInput.addEventListener("blur", async ()=>{
+    // si ya hay place válido, no hacemos nada
+    if (pickupPlace?.place_id) return;
+    const val = pickupInput.value.trim();
+    if (!val) return;
+    try{
+      const r = await geocodeAsync({ address: val }); // usa tu geocoder ya creado
+      pickupPlace = r;                                 // guardamos un Place-like
+      updateFlightVisibility();                        // muestra Flight Number/Origin si aplica
+      updateMeetGreetVisibility();
+    }catch(e){
+      console.warn("Geocode fallback failed:", e);
+    }
+  });
   acDropoff.addListener("place_changed", ()=>{
     dropoffPlace = acDropoff.getPlace() || null;
   });
