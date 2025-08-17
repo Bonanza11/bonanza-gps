@@ -1114,33 +1114,32 @@ function initMap(){
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
 
-  acPickup.addListener("place_changed", ()=>{
+ acPickup.addListener("place_changed", ()=>{
   window.pickupPlace = acPickup.getPlace() || null;
   updateFlightVisibility();
   updateMeetGreetVisibility();
 });
-  // Fallback: si el usuario escribe y NO selecciona sugerencia del Autocomplete
-  const pickupInput = document.getElementById("pickup");
-  pickupInput.addEventListener("blur", async ()=>{
-    // si ya hay place válido, no hacemos nada
-    if (pickupPlace?.place_id) return;
-    const val = pickupInput.value.trim();
-    if (!val) return;
-    try{
-      const r = await geocodeAsync({ address: val }); // usa tu geocoder ya creado
-      pickupPlace = r;                                 // guardamos un Place-like
-      updateFlightVisibility();                        // muestra Flight Number/Origin si aplica
-      updateMeetGreetVisibility();
-    }catch(e){
-      console.warn("Geocode fallback failed:", e);
-    }
-  });
-  acDropoff.addListener("place_changed", ()=>{
-    dropoffPlace = acDropoff.getPlace() || null;
-  });
-}
-window.initMap = initMap;   // <— MUY IMPORTANTE: fuera de la función
 
+// Fallback: si el usuario escribe y NO selecciona de las sugerencias
+const pickupInput = document.getElementById("pickup");
+pickupInput.addEventListener("blur", async ()=>{
+  // si ya hay place válido, no hacemos nada
+  if (window.pickupPlace?.place_id) return;
+  const val = pickupInput.value.trim();
+  if (!val) return;
+  try{
+    const r = await geocodeAsync({ address: val });  // geocoding libre
+    window.pickupPlace = r;                           // <-- global
+    updateFlightVisibility();
+    updateMeetGreetVisibility();
+  }catch(e){
+    console.warn("Geocode fallback failed:", e);
+  }
+});
+
+acDropoff.addListener("place_changed", ()=>{
+  window.dropoffPlace = acDropoff.getPlace() || null; // <-- global
+});
 /* ===== Modal Read More (términos) ===== */
 (function wireModalReadMore(){
   const content = document.getElementById('modal-terms-content');
