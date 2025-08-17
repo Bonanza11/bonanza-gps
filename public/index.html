@@ -547,6 +547,8 @@ const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 // Reemplaza por tu URL exacta (la que ves en Cloud Run).
 // Ejemplo: https://flightcheck-7728622851.us-west3.run.app
 const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app";
+          // Evita que respuestas viejas sobreescriban el estado (debounce por secuencia)
+let __flightSeq = 0;
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
 /* ===== Operating hours (6:00–23:00) ===== */
@@ -822,7 +824,8 @@ async function maybeCheckBackend() {
   // tu URL de Cloud Run + endpoint /flight
   const base = "https://flightcheck-7728622851.us-west3.run.app";
   const qs = new URLSearchParams({ flight, origin, date: dt });
-
+const mySeq = ++__flightSeq;   // marca esta solicitud como la más reciente
+  
   const hint       = document.getElementById("flightHint");
   const originHelp = document.getElementById("originHelp");
   const backendRes = document.getElementById("backendResult"); // opcional, si lo tienes
@@ -838,7 +841,7 @@ async function maybeCheckBackend() {
     }
 
     const data = await resp.json();
-
+    if (mySeq !== __flightSeq) return;  // si ya hay una consulta más nueva, ignora esta
     // éxito
     if (hint)       { hint.textContent = "✅ Flight confirmed"; hint.className = "hint ok"; hint.style.display='block'; }
     if (originHelp) { originHelp.textContent = "✈️ Origin city confirmed"; originHelp.className = "hint ok"; originHelp.style.display='block'; }
