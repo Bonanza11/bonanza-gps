@@ -811,40 +811,55 @@ const getDateISO = () => (document.getElementById('date')?.value || '').trim();
 async function maybeCheckBackend() {
   const fl = document.getElementById("flightNumber").value.trim();
   const org = document.getElementById("flightOrigin").value.trim();
-  const dt = document.getElementById("date").value; // input type="date" ya está en formato yyyy-mm-dd
+  const dt = document.getElementById("date").value;
 
   if (!fl || !org || !dt) return;
 
-  // Normalizamos parámetros
-  const flight = fl.replace(/\s+/g, "").toUpperCase(); // "DL 464" → "DL464"
-  const origin = org.toUpperCase(); // "bos" → "BOS"
-
+  const flight = fl.replace(/\s+/g, "").toUpperCase();
+  const origin = org.toUpperCase();
   const base = "https://flightcheck-7728622851.us-west3.run.app";
   const qs = new URLSearchParams({ flight, origin, date: dt });
 
+  const hint = document.getElementById("flightHint");
+  const originHelp = document.getElementById("originHelp");
+
   try {
     const resp = await fetch(`${base}/flight?${qs.toString()}`);
-    if (!resp.ok) throw new Error("Backend error " + resp.status);
+    if (!resp.ok) {
+      if (hint) hint.textContent = "❌ Vuelo inválido o no encontrado";
+      if (originHelp) originHelp.textContent = "❌ Ciudad inválida";
+      return;
+    }
 
     const data = await resp.json();
 
-    if (data && data.arrival && data.arrival.scheduledTimeLocal) {
-      document.getElementById("backendResult").innerText =
-        "✅ Vuelo válido: llegada " + data.arrival.scheduledTimeLocal;
+    if (!data || !data.arrival) {
+      if (hint) hint.textContent = "❌ Número de vuelo no válido";
+      return;
+    }
 
+    if (hint) {
+      hint.textContent = "✅ Vuelo confirmado";
+      hint.className = "hint ok";
+    }
+    if (originHelp) {
+      originHelp.textContent = "✈️ Ciudad confirmada";
+      originHelp.className = "hint ok";
+    }
+
+    // Autorrellenar hora de llegada
+    if (data.arrival.scheduledTimeLocal) {
       const arrivalInput = document.getElementById("arrivalTime");
       if (arrivalInput) {
-        arrivalInput.value = data.arrival.scheduledTimeLocal.slice(11, 16); // HH:MM
+        arrivalInput.value = data.arrival.scheduledTimeLocal.slice(11, 16);
       }
-    } else {
-      document.getElementById("backendResult").innerText =
-        "⚠️ Vuelo encontrado pero sin datos de llegada";
     }
   } catch (err) {
     console.error(err);
-    document.getElementById("backendResult").innerText =
-      "❌ Error consultando backend: " + err.message;
+    if (hint) hint.textContent = "⚠️ Error consultando servidor";
+    if (originHelp) originHelp.textContent = "";
   }
+}
 }
     }
   } catch (e) {
