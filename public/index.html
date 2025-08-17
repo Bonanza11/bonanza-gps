@@ -719,11 +719,12 @@ function isArrivalAtAirport(){
 function isArrivalAtSLC(){
   return !!pickupPlace && isSLCInternational(pickupPlace);
 }
-  const comps=place?.address_components||[];
-  const c=comps.find(x=>x.types?.includes("administrative_area_level_2"));
-  return c?.long_name||"";
+function countyFrom(place){
+  const comps = place?.address_components || [];
+  const c = comps.find(x => x.types?.includes("administrative_area_level_2"));
+  return c?.long_name || "";
 }
-function routeAsync(opts){ return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
+function routeAsync(opts){return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
 function geocodeAsync(req){ return new Promise((res,rej)=>{ geocoder.geocode(req,(results,status)=>{ if(status==="OK"&&results?.[0]) res(results[0]); else rej(status||"GEOCODE_ERROR"); }); }); }
 async function countyByPlaceId(placeId){ try{ const r=await geocodeAsync({placeId}); const c=r.address_components.find(c=>c.types.includes("administrative_area_level_2")); return c?.long_name||""; }catch(_){ return ""; } }
 async function computeMilesFromBase(placeId){ const r=await routeAsync({origin:BASE_ADDRESS,destination:{placeId},travelMode:google.maps.TravelMode.DRIVING}); return r.routes[0].legs[0].distance.value/1609.34; }
