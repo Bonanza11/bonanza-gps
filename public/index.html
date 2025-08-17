@@ -1305,7 +1305,8 @@ document.addEventListener('DOMContentLoaded', () => {
   mountDateTime();              // fija min 24h y valores por defecto
   wireFlightValidation();       // validaciones vuelo
   wireFlightBackendTriggers();  // disparadores backend (llamadas a Cloud Run)
-  syncButtons();                // estado botones
+  syncButtons();  
+  setTimeout(maybeCheckBackend, 100);
 });
 </script>
 <!-- Google Maps Loader -->
