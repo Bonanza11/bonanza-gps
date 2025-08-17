@@ -847,29 +847,38 @@ async function maybeCheckBackend() {
       if (backendRes) backendRes.textContent = `Service error (${resp.status})`;
       return;
     }
+const data = await resp.json();
+if (mySeq !== __flightSeq) return; // si ya hay una consulta más nueva, ignora esta
 
-    const data = await resp.json().catch(() => ({}));
-    if (mySeq !== __flightSeq) return;
+if (data.ok) {
+  if (hint) {
+    hint.textContent = "✔️ Flight confirmed";
+    hint.className = "hint ok";
+    hint.style.display = "block";
+  }
+  if (originHelp) {
+    originHelp.textContent = "✔️ Origin city confirmed";
+    originHelp.className = "hint ok";
+    originHelp.style.display = "block";
+  }
+  if (backendRes) {
+    backendRes.textContent = `Vuelo válido: llegada ${data.arrivalLocal}`;
+  }
 
-    if (data.ok) {
-      if (hint) { hint.textContent = "✅ Flight confirmed"; hint.className = "hint ok"; hint.style.display = "block"; }
-      if (originHelp) { originHelp.textContent = "✅ Origin city confirmed"; originHelp.className = "hint ok"; originHelp.style.display = "block"; }
-
-      if (data.arrivalLocal) {
-        const t = String(data.arrivalLocal).match(/T(\d{2}:\d{2})/);
-        if (t) { const timeEl = document.getElementById("time"); if (timeEl) timeEl.value = t[1]; }
-      }
-    } else {
-      if (hint) { hint.textContent = "✗ Flight not found"; hint.className="hint err"; hint.style.display="block"; }
-      if (originHelp) { originHelp.textContent = data.msg || "✗ Invalid origin"; originHelp.className="hint err"; originHelp.style.display="block"; }
-      if (backendRes) backendRes.textContent = data.msg || "Vuelo no válido";
-    }
-  } catch (e) {
+  // Autorrellenar el campo #time si llega la hora
+  const t = data.arrivalLocal?.match(/T(\d{2}:\d{2})/);
+  if (t) {
+    const timeEL = document.getElementById("time");
+    if (timeEL) timeEL.value = t[1];
+  }
+} else {
+  if (backendRes) backendRes.textContent = data.msg || "Vuelo no válido";
+}
     console.error(e);
     if (hint) { hint.textContent = "⚠️ Network error"; hint.className="hint err"; hint.style.display="block"; }
     if (backendRes) backendRes.textContent = "⚠️ Error consultando backend: " + e.message;
   }
-}
+}          
 /* ===== Disparadores para el backend ===== */
 function wireFlightBackendTriggers(){
   const fn   = document.getElementById('flightNumber');
