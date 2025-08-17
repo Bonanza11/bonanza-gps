@@ -686,9 +686,32 @@ async function computeMilesFromBase(placeId){ const r=await routeAsync({origin:B
 
 /* ===== Vuelo comercial ===== */
 const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
+/* ===== Vuelo comercial ===== */
+const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
 const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
-function normalizeFlight(v){ return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-'); }
-function validateFlightValue(v)
+
+function normalizeFlight(v){
+  return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
+}
+
+/* Extrae IATA del campo "Flight Origin" (acepta "Miami (MIA)" o "MIA") */
+function parseOriginIata(text){
+  const t = (text || "").trim().toUpperCase();
+  const m = t.match(/\(([A-Z]{3})\)$/);   // termina en "(MIA)"
+  if (m) return m[1];
+  if (/^[A-Z]{3}$/.test(t)) return t;     // solo "MIA"
+  return null;                             // otro formato (ciudad sin IATA)
+}
+
+function validateFlightValue(v){
+  const m = normalizeFlight(v).match(FLIGHT_REGEX);
+  if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
+  const code = m[1], num = m[2];
+  if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
+  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
+  return {ok:true,msg:''};
+}
+          
 // Extrae el IATA del campo "Flight Origin".
 // Acepta "Miami (MIA)" → "MIA" o directamente "MIA".
 function parseOriginIata(text){
