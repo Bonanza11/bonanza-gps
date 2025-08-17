@@ -678,7 +678,7 @@ function isProvoAirport(place){
   // Debe ser aeropuerto en Utah y no FBO
   return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
-// === JSX (Salt Lake City) ===
+          // === JSX (Salt Lake City) ===
 // Ubicación JSX en SLC; no siempre viene con tipo "airport" en Places
 function isJSXUtah(place){
   if(!place) return false;
@@ -689,21 +689,13 @@ function isJSXUtah(place){
   const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
 
   // Dirección exacta conocida del JSX en Salt Lake City: 470 N 2360 W, SLC, UT 84116
-  const addrHit = /\b470\s*n\s*2360\s*w\b/.test(addr) && /salt lake city/.test(addr) && /84116/.test(addr);
+  const addrHit =
+    /\b470\s*n\s*2360\s*w\b/.test(addr) &&
+    /salt lake city/.test(addr) &&
+    /84116/.test(addr);
 
   // Para JSX basta con que sea Utah y coincida nombre o dirección (no exigimos "airport")
   return (nameHit || addrHit) && isUtah(place);
-}
-  // Coincidencias típicas de nombre
-  const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
-
-  // Dirección exacta conocida del JSX en Salt Lake City:
-  // “470 N 2360 W, Salt Lake City, UT 84116”
-  const addrHit =
-    /\b470\s*n\s*2360\s*w\b/.test(addr) && /salt lake city/.test(addr) && /84116/.test(addr);
-
-  // Debe ser en Utah y con tipo de aeropuerto
-  return (nameHit || addrHit) && isUtah(place) && isAirport(place);
 }
 // Solo SLC o JSX en Utah activan la captura de vuelo
 function isCommercialPickup(place){
@@ -713,7 +705,6 @@ function isCommercialPickup(place){
     isJSXUtah(place)
   );
 }
-
 // ARRIVAL = el pickup es SLC o JSX (no aplica si solo el drop-off es aeropuerto)
 function isArrivalAtAirport(){
   return !!pickupPlace && isCommercialPickup(pickupPlace);
