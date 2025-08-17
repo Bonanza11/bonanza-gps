@@ -734,20 +734,11 @@ function cityPlaceToIata(place){
   if (/NEW\s*YORK/.test(name)) return "JFK";
   if (/SAN\s*FRANCISCO/.test(name)) return "SFO";
 
-  return "";
-}
+  return "";}
 function validateFlightValue(v){
   const m = normalizeFlight(v).match(FLIGHT_REGEX);
   if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
   const code = m[1], num = m[2];
-  if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
-  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
-  return {ok:true,msg:''};
-}
-{
-  const m = normalizeFlight(v).match(FLIGHT_REGEX);
-  if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
-  const code=m[1], num=m[2];
   if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
   if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
   return {ok:true,msg:''};
