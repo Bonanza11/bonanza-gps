@@ -655,6 +655,13 @@ function isSLCInternational(place){
   // Aseguramos que sea aeropuerto “grande” y no un FBO
   return (hitsName || hitsAddr) && isAirport(place) && !isPrivateUtahAirport(place);
 }
+function isProvoAirport(place){
+  if(!place) return false;
+  const name = (place.name || "").toLowerCase();
+  const addr = (place.formatted_address || "").toLowerCase();
+  const hits = /provo/.test(name+addr) && /airport/.test(name+addr);
+  return hits && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
+}
 function isJSXUtah(place){
   if(!place) return false;
   const text = `${place.name||""} ${place.formatted_address||""}`.toLowerCase();
@@ -663,7 +670,11 @@ function isJSXUtah(place){
 
 // Solo SLC o JSX en Utah activan la captura de vuelo
 function isCommercialPickup(place){
-  return !!place && isUtah(place) && (isSLCInternational(place) || isJSXUtah(place));
+  return !!place && isUtah(place) && (
+    isSLCInternational(place) ||
+    isProvoAirport(place) ||
+    isJSXUtah(place)
+  );
 }
 
 // ARRIVAL = el pickup es SLC o JSX (no aplica si solo el drop-off es aeropuerto)
