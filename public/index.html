@@ -808,61 +808,44 @@ const getDateISO = () => (document.getElementById('date')?.value || '').trim();
    Espera que tu servicio responda JSON:
    { ok: boolean, msg?: string, arrivalLocal?: "YYYY-MM-DDTHH:MM" }
    - arrivalLocal (opcional) se usa para autorrellenar #time.
-*/
-async function maybeCheckBackend(){
-  // Solo validamos si el PICK-UP es aeropuerto comercial en Utah
-  if (!isCommercialPickup(pickupPlace)) return;
+async function maybeCheckBackend() {
+  const fl = document.getElementById("flightNumber").value.trim();
+  const org = document.getElementById("flightOrigin").value.trim();
+  const dt = document.getElementById("date").value; // input type="date" ya está en formato yyyy-mm-dd
 
-  const fl  = (document.getElementById('flightNumber')?.value || '').trim();
-  const org = (document.getElementById('flightOrigin')?.value || '').trim();
-  const dt  = getDateISO();
-  if (!fl || !org || !dt) return; // falta completar
+  if (!fl || !org || !dt) return;
 
-  const hint = document.getElementById('flightHint');
-  const originHelp = document.getElementById('originHelp');
+  // Normalizamos parámetros
+  const flight = fl.replace(/\s+/g, "").toUpperCase(); // "DL 464" → "DL464"
+  const origin = org.toUpperCase(); // "bos" → "BOS"
 
-  if (hint)      { hint.textContent = "Checking flight..."; hint.style.display='block'; hint.className='hint warn'; }
-  if (originHelp){ originHelp.textContent = "Validating origin..."; originHelp.style.display='block'; originHelp.className='hint warn'; }
+  const base = "https://flightcheck-7728622851.us-west3.run.app";
+  const qs = new URLSearchParams({ flight, origin, date: dt });
 
   try {
-    // ⚠️ TU URL de Cloud Run (sin ruta) + endpoint '/flightcheck'
-    const url = "https://flightcheck-7728622851.us-west3.run.app/flightcheck";
+    const resp = await fetch(`${base}/flight?${qs.toString()}`);
+    if (!resp.ok) throw new Error("Backend error " + resp.status);
 
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ flight: fl, origin: org, date: dt })
-    });
+    const data = await resp.json();
 
-    // Respuesta no-OK
-    if (!resp.ok) {
-      const msg = resp.status === 429 ? "Too many checks. Try again in a minute."
-                                      : `Service error (${resp.status})`;
-      if (hint)      { hint.textContent = msg; hint.className='hint err'; }
-      if (originHelp){ originHelp.textContent = msg; originHelp.className='hint err'; }
-      return;
-    }
+    if (data && data.arrival && data.arrival.scheduledTimeLocal) {
+      document.getElementById("backendResult").innerText =
+        "✅ Vuelo válido: llegada " + data.arrival.scheduledTimeLocal;
 
-    const data = await resp.json().catch(()=> ({}));
-
-    if (data.ok) {
-      if (hint)      { hint.textContent = "Flight confirmed ✅";        hint.className='hint ok'; }
-      if (originHelp){ originHelp.textContent = "Origin city confirmed ✅"; originHelp.className='hint ok'; }
-
-      // === Autorrellenar hora si llega 'arrivalLocal' (YYYY-MM-DDTHH:MM) ===
-      if (data.arrivalLocal) {
-        const hhmm = (data.arrivalLocal.match(/T(\d{2}:\d{2})/) || [])[1];
-        const timeEl = document.getElementById('time');
-        const timeHelp = document.getElementById('timeHelp');
-        if (hhmm && timeEl) {
-          timeEl.value = hhmm;
-          if (timeHelp) timeHelp.textContent = `Auto-set from flight: ${hhmm}`;
-        }
+      const arrivalInput = document.getElementById("arrivalTime");
+      if (arrivalInput) {
+        arrivalInput.value = data.arrival.scheduledTimeLocal.slice(11, 16); // HH:MM
       }
     } else {
-      const msg = data.msg || "Flight not found ❌";
-      if (hint)      { hint.textContent = msg; hint.className='hint err'; }
-      if (originHelp){ originHelp.textContent = data.msg || "Invalid origin ❌"; originHelp.className='hint err'; }
+      document.getElementById("backendResult").innerText =
+        "⚠️ Vuelo encontrado pero sin datos de llegada";
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("backendResult").innerText =
+      "❌ Error consultando backend: " + err.message;
+  }
+}
     }
   } catch (e) {
     console.error("Backend error:", e);
