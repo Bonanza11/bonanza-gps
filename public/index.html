@@ -551,7 +551,8 @@ const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
           // Evita que respuestas viejas sobreescriban el estado (debounce por secuencia)
 let __flightSeq = 0;
-let pickupPlace = null, dropoffPlace = null;
+window.pickupPlace  = null;
+window.dropoffPlace = null;
 let selectedVehicle = 'suv';
 /* ===== Operating hours (6:00–23:00) ===== */
 const OPERATING_START = "06:00";
