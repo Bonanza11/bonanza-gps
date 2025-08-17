@@ -821,7 +821,27 @@ function updateFlightVisibility(){
 }
 /* ===== Helpers de fecha para el backend ===== */
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
+// === Autocomplete para Flight Origin ===
+function initFlightOriginAutocomplete() {
+  const input = document.getElementById("flightOrigin");
+  if (!input) return;
 
+  const autocomplete = new google.maps.places.Autocomplete(input, {
+    types: ["(cities)"],
+    fields: ["name", "place_id", "geometry"],
+  });
+
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place || !place.place_id) {
+      console.warn("⚠️ No se seleccionó ciudad válida en Flight Origin");
+      return;
+    }
+    console.log("✅ Ciudad seleccionada como origen:", place.name, place.place_id);
+    // Aquí podrías guardar en variable global si lo necesitas:
+    window._flightOrigin = place;
+  });
+}
 /* ===== Llamada al backend (Cloud Run) + validación estricta ===== */
 
 // Normalizador de número de vuelo (quita espacios, mayúsculas)
