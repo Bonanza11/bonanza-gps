@@ -743,6 +743,25 @@ function validateFlightValue(v){
   if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
   return {ok:true,msg:''};
 }
+// --- Validación en vivo del Flight Number (DL1234, WN 987, etc.)
+function wireFlightValidation(){
+  const input = document.getElementById('flightNumber');
+  const hint  = document.getElementById('flightHint');
+  if(!input || !hint) return;
+
+  function update(){
+    const r = validateFlightValue(input.value || "");
+    // Mensaje y clases
+    hint.textContent = r.ok ? "Format looks good" : r.msg;
+    hint.className   = "hint " + (r.ok ? "ok" : "err");
+    // Constraint para el formulario
+    input.setCustomValidity(r.ok ? "" : r.msg);
+  }
+
+  input.addEventListener('input', update);
+  // Disparo inicial por si ya hay valor
+  update();
+}         
 // Llama a Cloud Run para validar vuelo + ciudad de origen
 async function verifyFlightWithBackend(flight, originCity, dateISO){
   if(!FLIGHTCHECK_URL) return {ok:false, msg:"Service URL not configured"};
