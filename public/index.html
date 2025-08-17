@@ -679,21 +679,20 @@ function isProvoAirport(place){
   // Debe ser aeropuerto en Utah y no FBO
   return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
-   // === JSX (Salt Lake City) ===
-// Detección flexible del JSX en SLC
+// === JSX (Salt Lake City) ===
+// A veces no trae type "airport" ni UT claro en la dirección.
 function isJSXUtah(place){
   if(!place) return false;
   const name = (place.name || "").toLowerCase();
   const addr = (place.formatted_address || "").toLowerCase();
 
-  // Coincidencias por nombre (a veces viene solo "JSX")
+  // Nombre típico
   const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
 
-  // Dirección conocida: acepta "2360 W" con o sin "470 N", y con o sin "st"
+  // Dirección conocida: acepta con o sin número "470"
   const addrHit =
-    /salt lake( city)?/.test(addr) &&
-    /84116/.test(addr) &&
-    /\b(?:470\s*n\s*)?2360\s*w\b/.test(addr);  // <-- 470 opcional
+    /\b470\s*n\s*2360\s*w\b/.test(addr) ||
+    /\bn\s*2360\s*w\b/.test(addr);
 
   // Señales de Utah / SLC
   const utahish =
@@ -705,15 +704,21 @@ function isJSXUtah(place){
   // Para JSX no exigimos type "airport"
   return (nameHit || addrHit) && utahish;
 }
+
+/* === Decide si el pickup es aeropuerto comercial (SLC/PVU/JSX) === */
+function isCommercialPickup(place){
+  return isSLCInternational(place) || isProvoAirport(place) || isJSXUtah(place);
+}
+
 // ARRIVAL = el pickup es SLC o JSX (no aplica si solo el drop-off es aeropuerto)
 function isArrivalAtAirport(){
   return !!pickupPlace && isCommercialPickup(pickupPlace);
-}     
-/* “Arrival en SLC” = cuando el PICK-UP es SLC comercial (si es drop-off SLC, NO aplica) */
+}
+
+/* "Arrival en SLC" = cuando el PICK-UP es SLC comercial (si es drop-off SLC, NO aplica) */
 function isArrivalAtSLC(){
   return !!pickupPlace && isSLCInternational(pickupPlace);
 }
-function countyFrom(place){
   const comps=place?.address_components||[];
   const c=comps.find(x=>x.types?.includes("administrative_area_level_2"));
   return c?.long_name||"";
