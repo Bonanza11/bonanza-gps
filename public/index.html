@@ -679,12 +679,21 @@ function isProvoAirport(place){
   return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
 // === JSX (Salt Lake City) ===
-// Ubicación JSX en SLC y coincidencias de nombre
+// Ubicación JSX en SLC; no siempre viene con tipo "airport" en Places
 function isJSXUtah(place){
   if(!place) return false;
   const name = (place.name || "").toLowerCase();
   const addr = (place.formatted_address || "").toLowerCase();
 
+  // Coincidencias de nombre
+  const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
+
+  // Dirección exacta conocida del JSX en Salt Lake City: 470 N 2360 W, SLC, UT 84116
+  const addrHit = /\b470\s*n\s*2360\s*w\b/.test(addr) && /salt lake city/.test(addr) && /84116/.test(addr);
+
+  // Para JSX basta con que sea Utah y coincida nombre o dirección (no exigimos "airport")
+  return (nameHit || addrHit) && isUtah(place);
+}
   // Coincidencias típicas de nombre
   const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
 
