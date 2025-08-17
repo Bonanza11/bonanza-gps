@@ -415,11 +415,11 @@
         <li>Carry-on: 1 per passenger (backpack or small bag)</li>
       </ul>
     </div>
-    </div> <!-- .lug-section -->
-</div> <!-- .luggage-body -->
-</div> <!-- #luggageAccordion -->
-       
-    <!-- Terms -->
+  </div>
+</div>      
+</div>
+    </div>
+        <!-- Terms -->
     <div class="terms-box" id="terms-box">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
@@ -447,7 +447,6 @@
 
     <!-- Resumen -->
     <div id="info"></div>
-    </main>  <!-- cerrar <main> aquí -->
         <!-- Modal Términos -->
     <div class="modal-backdrop" id="termsModal" aria-hidden="true">
       <div class="modal" role="dialog" aria-labelledby="termsTitle" aria-modal="true">
@@ -552,8 +551,7 @@ const BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
 const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
           // Evita que respuestas viejas sobreescriban el estado (debounce por secuencia)
 let __flightSeq = 0;
-window.pickupPlace  = null;
-window.dropoffPlace = null;
+let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
 /* ===== Operating hours (6:00–23:00) ===== */
 const OPERATING_START = "06:00";
@@ -680,52 +678,55 @@ function isProvoAirport(place){
   // Debe ser aeropuerto en Utah y no FBO
   return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
-// === JSX (Salt Lake City) ===
-// A veces no trae type "airport" ni UT claro en la dirección.
+      // === JSX (Salt Lake City) ===
+// Validación especial para JSX en SLC, que a veces no viene marcado como "airport"
 function isJSXUtah(place){
   if(!place) return false;
   const name = (place.name || "").toLowerCase();
   const addr = (place.formatted_address || "").toLowerCase();
 
-  // Nombre típico
+  // Coincidencias típicas de nombre
   const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
 
-  // Dirección conocida: acepta con o sin número "470"
+  // Dirección conocida: 470 N 2360 W, SLC, UT 84116
   const addrHit =
-    /\b470\s*n\s*2360\s*w\b/.test(addr) ||
-    /\bn\s*2360\s*w\b/.test(addr);
+    /\b470\s*n\s*2360\s*w\b/.test(addr) &&
+    /84116/.test(addr) &&
+    /salt lake( city)?/.test(addr);
 
-  // Señales de Utah / SLC
+  // “Utah-ish”: acepta UT o señales claras de SLC
   const utahish =
     isUtah(place) ||
+    /\but\b/.test(addr) ||
     /salt lake( city)?/.test(addr) ||
     /\bslc\b/.test(addr) ||
     /\bslc\b/.test(name);
 
-  // Para JSX no exigimos type "airport"
   return (nameHit || addrHit) && utahish;
 }
 
-/* === Decide si el pickup es aeropuerto comercial (SLC/PVU/JSX) === */
+// Solo SLC, Provo o JSX en Utah activan la captura de vuelo
 function isCommercialPickup(place){
-  return isSLCInternational(place) || isProvoAirport(place) || isJSXUtah(place);
+  return !!place && isUtah(place) && (
+    isSLCInternational(place) ||
+    isProvoAirport(place) ||
+    isJSXUtah(place)
+  );
 }
-
 // ARRIVAL = el pickup es SLC o JSX (no aplica si solo el drop-off es aeropuerto)
 function isArrivalAtAirport(){
   return !!pickupPlace && isCommercialPickup(pickupPlace);
-}
-
-/* "Arrival en SLC" = cuando el PICK-UP es SLC comercial (si es drop-off SLC, NO aplica) */
+}     
+/* “Arrival en SLC” = cuando el PICK-UP es SLC comercial (si es drop-off SLC, NO aplica) */
 function isArrivalAtSLC(){
   return !!pickupPlace && isSLCInternational(pickupPlace);
 }
 function countyFrom(place){
-  const comps = place?.address_components || [];
-  const c = comps.find(x => x.types?.includes("administrative_area_level_2"));
-  return c?.long_name || "";
+  const comps=place?.address_components||[];
+  const c=comps.find(x=>x.types?.includes("administrative_area_level_2"));
+  return c?.long_name||"";
 }
-function routeAsync(opts){return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
+function routeAsync(opts){ return new Promise((res,rej)=>{ directionsService.route(opts,(r,s)=> s==="OK"&&r?res(r):rej(s||"ROUTE_ERROR")); }); }
 function geocodeAsync(req){ return new Promise((res,rej)=>{ geocoder.geocode(req,(results,status)=>{ if(status==="OK"&&results?.[0]) res(results[0]); else rej(status||"GEOCODE_ERROR"); }); }); }
 async function countyByPlaceId(placeId){ try{ const r=await geocodeAsync({placeId}); const c=r.address_components.find(c=>c.types.includes("administrative_area_level_2")); return c?.long_name||""; }catch(_){ return ""; } }
 async function computeMilesFromBase(placeId){ const r=await routeAsync({origin:BASE_ADDRESS,destination:{placeId},travelMode:google.maps.TravelMode.DRIVING}); return r.routes[0].legs[0].distance.value/1609.34; }
@@ -1121,32 +1122,18 @@ function initMap(){
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
 
- acPickup.addListener("place_changed", ()=>{
-  window.pickupPlace = acPickup.getPlace() || null;
-  updateFlightVisibility();
-  updateMeetGreetVisibility();
-});
-
-// Fallback: si el usuario escribe y NO selecciona de las sugerencias
-const pickupInput = document.getElementById("pickup");
-pickupInput.addEventListener("blur", async ()=>{
-  // si ya hay place válido, no hacemos nada
-  if (window.pickupPlace?.place_id) return;
-  const val = pickupInput.value.trim();
-  if (!val) return;
-  try{
-    const r = await geocodeAsync({ address: val });  // geocoding libre
-    window.pickupPlace = r;                           // <-- global
+  acPickup.addListener("place_changed", ()=>{
+    pickupPlace = acPickup.getPlace() || null;
     updateFlightVisibility();
-    updateMeetGreetVisibility();
-  }catch(e){
-    console.warn("Geocode fallback failed:", e);
-  }
-});
+    updateMeetGreetVisibility();   // controla la tarjeta Meet & Greet
+  });
 
-acDropoff.addListener("place_changed", ()=>{
-  window.dropoffPlace = acDropoff.getPlace() || null; // <-- global
-});
+  acDropoff.addListener("place_changed", ()=>{
+    dropoffPlace = acDropoff.getPlace() || null;
+  });
+}
+window.initMap = initMap;   // <— MUY IMPORTANTE: fuera de la función
+
 /* ===== Modal Read More (términos) ===== */
 (function wireModalReadMore(){
   const content = document.getElementById('modal-terms-content');
@@ -1424,9 +1411,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <!-- Google Maps Loader -->
-<script
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"
-  async defer>
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
 </script>
 </body>
 </html>
