@@ -926,6 +926,19 @@ function wireFlightBackendTriggers(){
   if (orig) orig.addEventListener('input', run);
   if (date) date.addEventListener('change', run);
 }
+ /* === Meet & Greet: SLC (UI + pricing) === */
+window.__mgChoice = 'none';                          // default
+function getMGFee(){ return window.__mgChoice !== 'none' ? 50 : 0; }
+
+/* Se muestra solo si: vehículo = SUV y el PICK-UP es SLC comercial (no FBO). */
+function shouldShowMeetGreet(){
+  return selectedVehicle === 'suv' && isSLCInternational(pickupPlace || null);
+}
+
+function updateMeetGreetVisibility(){
+  const card = document.getElementById('meetGreetCard');
+  if(!card) return;
+
   const show = shouldShowMeetGreet();
   if(show){
     card.style.display = 'block';
@@ -944,6 +957,40 @@ function wireFlightBackendTriggers(){
   }
 }
 
+/* Botones Meet & Greet */
+(function wireMeetGreetButtons(){
+  const card = document.getElementById('meetGreetCard');
+  if(!card) return;
+  const btns = Array.from(card.querySelectorAll('.mg-btn'));
+
+  function activate(choice){
+    window.__mgChoice = choice;
+    btns.forEach(b=>{
+      const on = b.dataset.choice === choice;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    if (typeof recalcFromCache === 'function') recalcFromCache();
+  }
+
+  btns.forEach(b=> b.addEventListener('click', ()=> activate(b.dataset.choice)));
+  activate('none'); // default
+})();
+
+/* Cambiar vehículo (asegura que se re-evalue Meet & Greet) */
+(function wireVehicleToggle(){
+  const btns = document.querySelectorAll('.veh-btn');
+  if(!btns.length) return;
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.veh-btn').forEach(b=> b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedVehicle = btn.dataset.type || 'suv';
+      updateMeetGreetVisibility();
+      recalcFromCache?.();
+    });
+  });
+})();
 // Botones de Meet & Greet
 (function wireMeetGreetButtons(){
   const card = document.getElementById('meetGreetCard');
