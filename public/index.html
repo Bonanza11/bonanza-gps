@@ -679,27 +679,29 @@ function isProvoAirport(place){
   return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
    // === JSX (Salt Lake City) ===
-// Detección flexible del JSX en Salt Lake City
+// Detección flexible del JSX en SLC
 function isJSXUtah(place){
   if(!place) return false;
   const name = (place.name || "").toLowerCase();
   const addr = (place.formatted_address || "").toLowerCase();
 
-  // Coincidencias típicas por nombre
+  // Coincidencias por nombre (a veces viene solo "JSX")
   const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
 
-  // Dirección conocida: acepta variantes con y sin "470"
+  // Dirección conocida: acepta "2360 W" con o sin "470 N", y con o sin "st"
   const addrHit =
-    (/2360\s*w/.test(addr) && /salt lake city/.test(addr) && /84116/.test(addr));
+    /salt lake( city)?/.test(addr) &&
+    /84116/.test(addr) &&
+    /\b(?:470\s*n\s*)?2360\s*w\b/.test(addr);  // <-- 470 opcional
 
-  // “Utah-ish”: acepta UT o señales claras de SLC
+  // Señales de Utah / SLC
   const utahish =
     isUtah(place) ||
     /salt lake( city)?/.test(addr) ||
     /\bslc\b/.test(addr) ||
-    /\butah\b/.test(addr);
+    /\bslc\b/.test(name);
 
-  // Validación final
+  // Para JSX no exigimos type "airport"
   return (nameHit || addrHit) && utahish;
 }
 // ARRIVAL = el pickup es SLC o JSX (no aplica si solo el drop-off es aeropuerto)
