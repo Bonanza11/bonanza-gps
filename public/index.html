@@ -544,7 +544,6 @@ const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight"
 let __flightSeq = 0;
 let pickupPlace = null, dropoffPlace = null;
 let selectedVehicle = 'suv';
-let _flightOriginAC = null; // evita crear múltiples Autocomplete
 /* ===== Operating hours (6:00–23:00) ===== */
 const OPERATING_START = "06:00";
 const OPERATING_END   = "23:00";
@@ -771,67 +770,8 @@ function cityPlaceToIata(place){
   if (/LOS\s*ANGELES/.test(name)) return "LAX";
   if (/NEW\s*YORK/.test(name)) return "JFK";
   if (/SAN\s*FRANCISCO/.test(name)) return "SFO";
-return "";}
-// --- Resolver IATA desde texto y/o Autocomplete (robusto) ---
-function resolveIataFromText(cityText){
-  const t = (cityText || "").trim().toUpperCase();
-  const m = t.match(/\(([A-Z]{3})\)$/);  // "Dallas (DFW)"
-  if (m) return m[1];
-  if (/^[A-Z]{3}$/.test(t)) return t;    // "DFW"
 
-  const MAP = {
-    "ATLANTA": "ATL",
-    "BOSTON": "BOS",
-    "CHICAGO": "ORD",
-    "DALLAS": "DFW",
-    "DALLAS-FORT WORTH": "DFW",
-    "DENVER": "DEN",
-    "HOUSTON": "IAH",
-    "LAS VEGAS": "LAS",
-    "LOS ANGELES": "LAX",
-    "MIAMI": "MIA",
-    "NEW YORK": "JFK",
-    "ORLANDO": "MCO",
-    "PHOENIX": "PHX",
-    "SAN FRANCISCO": "SFO",
-    "SEATTLE": "SEA",
-    "SALT LAKE CITY": "SLC",
-    "PROVO": "PVU"
-  };
-
-  const key = t
-    .replace(/,?\s*USA?$/,'')
-    .replace(/\s+UT$|,\s*UT$/,'')
-    .replace(/\s+AZ$|,\s*AZ$/,'')
-    .replace(/\s+GA$|,\s*GA$/,'')
-    .replace(/\s+TX$|,\s*TX$/,'')
-    .replace(/\s+CA$|,\s*CA$/,'')
-    .replace(/\s+/g,' ')
-    .trim();
-
-  if (MAP[key]) return MAP[key];
-  for (const city in MAP){ if (key.includes(city)) return MAP[city]; }
-  return "";
-}
-
-function resolveIata(cityText, cityPlace){
-  const t = resolveIataFromText(cityText);
-  if (t) return t;
-  if (cityPlace?.name){
-    const p = resolveIataFromText(cityPlace.name);
-    if (p) return p;
-  }
-  const blob = ((cityPlace?.name || "") + " " + (cityText || "")).toUpperCase();
-  if (/DALLAS/.test(blob)) return "DFW";
-  if (/PHOENIX/.test(blob)) return "PHX";
-  if (/ATLANTA/.test(blob)) return "ATL";
-  if (/BOSTON/.test(blob))  return "BOS";
-  if (/MIAMI/.test(blob))   return "MIA";
-  if (/LAS VEGAS/.test(blob)) return "LAS";
-  if (/LOS ANGELES/.test(blob)) return "LAX";
-  if (/NEW YORK/.test(blob)) return "JFK";
-  return "";
-}          
+  return "";}
 function validateFlightValue(v){
   const m = normalizeFlight(v).match(FLIGHT_REGEX);
   if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
@@ -951,20 +891,25 @@ function updateFlightVisibility(){
 }
 /* ===== Helpers de fecha para el backend ===== */
 const getDateISO = () => (document.getElementById('date')?.value || '').trim();
-let _flightOriginAC = null; // evita crear múltiples Autocomplete
+// === Autocomplete para Flight Origin ===
 function initFlightOriginAutocomplete() {
-  if (_flightOriginAC) return; // ya inicializado
   const input = document.getElementById("flightOrigin");
   if (!input) return;
 
-  _flightOriginAC = new google.maps.places.Autocomplete(input, {
+  const autocomplete = new google.maps.places.Autocomplete(input, {
     types: ["(cities)"],
     fields: ["name", "place_id", "geometry"],
   });
 
-  _flightOriginAC.addListener("place_changed", () => {
-    const place = _flightOriginAC.getPlace();
-    window._flightOrigin = place || null;
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place || !place.place_id) {
+      console.warn("⚠️ No se seleccionó ciudad válida en Flight Origin");
+      return;
+    }
+    console.log("✅ Ciudad seleccionada como origen:", place.name, place.place_id);
+    // Aquí podrías guardar en variable global si lo necesitas:
+    window._flightOrigin = place;
   });
 }
 /* ===== Llamada al backend (Cloud Run) + validación estricta ===== */
