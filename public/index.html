@@ -655,17 +655,47 @@ function isSLCInternational(place){
   // Aseguramos que sea aeropuerto “grande” y no un FBO
   return (hitsName || hitsAddr) && isAirport(place) && !isPrivateUtahAirport(place);
 }
+ // === Provo Airport (PVU) ===
+// Detecta el aeropuerto de Provo (comercial regional) y evita FBOs.
 function isProvoAirport(place){
   if(!place) return false;
   const name = (place.name || "").toLowerCase();
   const addr = (place.formatted_address || "").toLowerCase();
-  const hits = /provo/.test(name+addr) && /airport/.test(name+addr);
-  return hits && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
+
+  // Señales por nombre o IATA
+  const nameHit =
+    /\bprovo\b/.test(name) ||                 // “Provo …”
+    /\bpvu\b/.test(name)  ||                  // IATA PVU
+    /municipal/.test(name) ||                 // “Provo Municipal …”
+    /regional/.test(name);                    // “Provo Regional …” (por si acaso)
+
+  // Señales por dirección conocidas
+  const addrHit =
+    (/\bprovo\b/.test(addr) && /\but\b/.test(addr)) ||
+    /\b84601\b/.test(addr) ||
+    /mike\s*jense\s*pkwy/.test(addr);
+
+  // Debe ser aeropuerto en Utah y no FBO
+  return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
+// === JSX (Salt Lake City) ===
+// Ubicación JSX en SLC y coincidencias de nombre
 function isJSXUtah(place){
   if(!place) return false;
   const name = (place.name || "").toLowerCase();
   const addr = (place.formatted_address || "").toLowerCase();
+
+  // Coincidencias típicas de nombre
+  const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
+
+  // Dirección exacta conocida del JSX en Salt Lake City:
+  // “470 N 2360 W, Salt Lake City, UT 84116”
+  const addrHit =
+    /\b470\s*n\s*2360\s*w\b/.test(addr) && /salt lake city/.test(addr) && /84116/.test(addr);
+
+  // Debe ser en Utah y con tipo de aeropuerto
+  return (nameHit || addrHit) && isUtah(place) && isAirport(place);
+}
 
   // Coincidencias típicas: nombre JSX o Jet Suite X
   const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
