@@ -874,6 +874,51 @@ async function maybeCheckBackend() {
     if (backendRes) backendRes.textContent = "⚠️ Error consultando backend: " + e.message;
   }
 }
+          // --- Validador de número de vuelo y ciudad origen ---
+function wireFlightValidation(){
+  const input = document.getElementById('flightNumber');
+  const hint  = document.getElementById('flightHint');
+  const origin = document.getElementById('flightOrigin');
+  const originHelp = document.getElementById('originHelp');
+
+  // Valida número de vuelo (cuando pickup es aeropuerto comercial en Utah)
+  if (input) {
+    input.addEventListener('input', ()=>{
+      if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
+        input.setCustomValidity("");
+        if (hint) hint.style.display='none';
+        return;
+      }
+      const r = validateFlightValue(input.value);
+      input.setCustomValidity(r.ok ? "" : r.msg);
+      if (hint){
+        hint.textContent = input.value.trim()
+          ? (r.ok ? "Format OK" : r.msg)
+          : "✈️ Enter the complete flight number exactly as it appears on your boarding pass or itinerary.";
+        hint.style.display='block';
+        hint.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+      }
+    });
+  }
+
+  // Valida ciudad origen
+  if (origin) {
+    origin.addEventListener('input', ()=>{
+      if (!pickupIsUtahAirport() || isPrivateUtahAirport(pickupPlace)) {
+        origin.setCustomValidity("");
+        if (originHelp) originHelp.style.display='none';
+        return;
+      }
+      const r = validateCityLike(origin.value, "origin city");
+      origin.setCustomValidity(r.ok ? "" : r.msg);
+      if (originHelp){
+        originHelp.textContent = r.msg || 'Origin city captured.';
+        originHelp.className = 'hint ' + (r.ok ? 'ok' : 'warn');
+        originHelp.style.display='block';
+      }
+    });
+  }
+}
 /* ===== Disparadores para el backend ===== */
 function wireFlightBackendTriggers(){
   const fn   = document.getElementById('flightNumber');
