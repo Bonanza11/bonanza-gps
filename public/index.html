@@ -799,34 +799,6 @@ function wireFlightValidation(){
   // Disparo inicial por si ya hay valor
   update();
 }         
-// Llama a Cloud Run para validar vuelo + ciudad de origen
-async function verifyFlightWithBackend(flight, originCity, dateISO){
-  if(!FLIGHTCHECK_URL) return {ok:false, msg:"Service URL not configured"};
-  const u = new URL(FLIGHTCHECK_URL);
-  u.searchParams.set("fn", flight);            // nombre de parámetro que exige tu backend
-  u.searchParams.set("origin", originCity);
-  u.searchParams.set("date", dateISO);         // "YYYY-MM-DD"
-
-  try{
-    const res = await fetch(u.toString(), { method: "GET" });
-    if(!res.ok){
-      // Mensajes amigables por códigos comunes
-      if(res.status === 429) return {ok:false, msg:"Too many checks. Try again in a minute."};
-      return {ok:false, msg:`Service error (${res.status})`};
-    }
-    // Asumimos que tu backend devuelve JSON { ok:boolean, msg?:string }
-    const data = await res.json().catch(()=> ({}));
-    if(typeof data.ok === "boolean"){
-      return { ok: data.ok, msg: data.msg || (data.ok ? "Flight validated." : "Flight not found.") };
-    }
-    // si tu backend devuelve texto plano:
-    const txt = await res.text();
-    const ok = /ok/i.test(txt);
-    return { ok, msg: txt || (ok ? "Flight validated." : "Flight not found.") };
-  }catch(err){
-    return {ok:false, msg:"Network error"};
-  }
-}
 /* ===== Private Jet ===== */
 const N_NUMBER_REGEX = /^N[1-9]\d{0,4}([A-HJ-NP-Z]{1,2})?$/i;
 function validateNNumber(v){
