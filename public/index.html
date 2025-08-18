@@ -881,7 +881,7 @@ function updateFlightVisibility(){
   const isComm      = isCommercialPickup(place);   // SLC / PVU / SGU / JSX
   // Mostrar/ocultar la nota elegante solo para JSX
 if (jsxNote) {
-  const isJSX = !!place && /JSX/i.test(place.name || "");
+  const isJSX = isJSXUtah(place);
   jsxNote.style.display = isJSX ? "block" : "none";
 }
 
@@ -1148,9 +1148,9 @@ function initMap(){
 // --- Lógica extra para JSX (nuevo) ---
 const ta = document.getElementById("specialInstructions");
 const flightContainer = document.getElementById("flightContainer");
-
-const JSX_TEXT = Pick-up at the JSX terminal.
-Please include your flight number and origin city.`;
+  
+const JSX_TEXT = `Pick up at the JSX terminal.
+Add flight number and origin city here.`;
 
 // Función que actualiza la UI según el pick-up
 function applyJSXUI(){
