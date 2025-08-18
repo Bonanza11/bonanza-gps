@@ -299,9 +299,19 @@
     Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.
   </div>
 </div>
-    <!-- Special Instructions -->
-    <label for="specialInstructions">Special Instructions:</label>
-<div id="jsxNote" class="hint warn" style="display:none; margin-top:6px;"></div>
+    <!-- Special Instructions -->    
+  <label for="specialInstructions">Special Instructions:</label>
+
+<!-- Nota elegante para JSX: solo la mostraremos por JS -->
+<div id="jsxNote"
+     style="display:none; margin-top:10px; padding:12px 16px;
+            border:1px solid rgba(168,116,79,.45);
+            background:linear-gradient(180deg,#121212,#0b0b0b);
+            color:#ffddae; font-size:14px; border-radius:10px;
+            text-align:center; box-shadow:0 12px 24px rgba(0,0,0,.35);">
+  Add flight number and origin city here.
+</div>
+
 <textarea
   id="specialInstructions"
   placeholder="Add any important details for your driver (e.g., gate code, extra luggage, pickup location)."
@@ -854,6 +864,7 @@ function validateCityLike(v, label="origin city"){
 }
 /* === Mostrar/ocultar secciones según tipo de aeropuerto (comercial vs privado) === */
 function updateFlightVisibility(){
+  const jsxNote = document.getElementById("jsxNote");
   const commWrap = document.getElementById('flightContainer');
   const commNum  = document.getElementById('flightNumber');
   const commHint = document.getElementById('flightHint');
