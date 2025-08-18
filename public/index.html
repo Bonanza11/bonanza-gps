@@ -905,7 +905,7 @@ function normOrigin(x) {
 async function maybeCheckBackend() {
   const fl  = (document.getElementById("flightNumber")?.value || "").trim();
   const org = (document.getElementById("flightOrigin")?.value || "").trim();
-  const dt  = (document.getElementById("date")?.value || "").trim(); // YYYY-MM-DD
+  const dt = getDateISO(); // 👈 siempre devuelve YYYY-MM-DD limpio
 
   if (!fl || !org || !dt) return;
 
