@@ -880,6 +880,11 @@ function updateFlightVisibility(){
   const place = pickupPlace;
   const isAirportUT = !!place && isAirport(place) && isUtah(place);
   const isComm      = isCommercialPickup(place);   // SLC / PVU / SGU / JSX
+  // Mostrar/ocultar la nota elegante solo para JSX
+if (jsxNote) {
+  const isJSX = !!place && /JSX/i.test(place.name || "");
+  jsxNote.style.display = isJSX ? "block" : "none";
+}
 
   // 1) Aeropuertos comerciales -> Flight Number + Flight Origin
   if (commWrap){
