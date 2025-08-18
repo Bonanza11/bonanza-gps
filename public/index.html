@@ -283,7 +283,14 @@
 
     <label for="pickup">Pick-up Address:</label>
     <input id="pickup" placeholder="e.g. SLC Airport" required />
+<!-- JSX fields: aparecen solo si el pick-up es JSX -->
+<div id="jsxContainer" style="display:none; margin-top:10px;">
+  <label for="jsxFlightNumber">JSX Flight Number:</label>
+  <input id="jsxFlightNumber" placeholder="e.g. XE1234" />
 
+  <label for="jsxOrigin" style="margin-top:12px;">JSX Origin City:</label>
+  <input id="jsxOrigin" placeholder="e.g. Burbank (BUR)" />
+</div>
     <label for="dropoff">Drop-off Address:</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" required />
 <!-- Meet & Greet — SLC Only (visual, sin lógica) -->
