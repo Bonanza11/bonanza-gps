@@ -1129,8 +1129,8 @@ function initMap(){
     fields:["place_id","name","types","formatted_address","geometry","address_components"]
   };
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
-  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
-// --- Lógica extra para JSX ---
+  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts); 
+// --- Lógica extra para JSX (nuevo) ---
 const ta = document.getElementById("specialInstructions");
 const flightContainer = document.getElementById("flightContainer");
 
@@ -1138,14 +1138,26 @@ const JSX_TEXT = `JSX (code XE) does not use public flight numbers.
 Meeting point: JSX terminal — 470 N 2360 W, Salt Lake City, UT 84116.
 Please include your arrival time and origin city.`;
 
-if (isJSXUtah(pickupPlace)) {
-  if (ta) ta.value = JSX_TEXT;
-  if (flightContainer) flightContainer.style.display = "none"; // oculta número de vuelo
-} else {
-  if (ta && ta.value.startsWith("JSX")) ta.value = "";          // limpia si era JSX
-  if (flightContainer)
-    flightContainer.style.display = isCommercialPickup(pickupPlace) ? "block" : "none";
+// Función que actualiza la UI según el pick-up
+function applyJSXUI(){
+  updateFlightVisibility();
+  updateMeetGreetVisibility?.();
+
+  if (isJSXUtah(pickupPlace)) {
+    if (ta && (!ta.value || ta.value.startsWith("JSX"))) ta.value = JSX_TEXT;
+    if (flightContainer) flightContainer.style.display = "none"; // JSX oculta flight #
+  } else {
+    if (ta && ta.value.startsWith("JSX")) ta.value = "";           // limpia si ya no es JSX
+    if (flightContainer)
+      flightContainer.style.display = isCommercialPickup(pickupPlace) ? "block" : "none";
+  }
 }
+
+// Detecta cambios en pick-up
+acPickup.addListener("place_changed", ()=>{
+  pickupPlace = acPickup.getPlace() || null;
+  applyJSXUI();
+}); 
   acDropoff.addListener("place_changed", ()=>{
     dropoffPlace = acDropoff.getPlace() || null;
   });
