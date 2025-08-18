@@ -1092,13 +1092,35 @@ function initMap(){
   };
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
+acPickup.addListener("place_changed", ()=>{
+  pickupPlace = acPickup.getPlace() || null;
 
-  acPickup.addListener("place_changed", ()=>{
-    pickupPlace = acPickup.getPlace() || null;
-    updateFlightVisibility();
-    updateMeetGreetVisibility();   // controla la tarjeta Meet & Greet
-  });
+  // Reglas normales
+  updateFlightVisibility();
+  updateMeetGreetVisibility();
 
+  // --- Lógica extra para JSX ---
+  const jsxNote = document.getElementById("jsxNote");
+  const flightContainer = document.getElementById("flightContainer");
+
+  const JSX_TEXT = "JSX (code XE) no usa número de vuelo público. Reúnase en la terminal JSX: 470 N 2360 W, Salt Lake City, UT 84116. Indique la hora estimada de llegada.";
+
+  if (isJSXUtah(pickupPlace)) {
+    if (jsxNote) {
+      jsxNote.style.display = "block";
+      jsxNote.textContent = JSX_TEXT;
+    }
+    if (flightContainer) flightContainer.style.display = "none";
+  } else {
+    if (jsxNote) {
+      jsxNote.style.display = "none";
+      jsxNote.textContent = "";
+    }
+    if (flightContainer) {
+      flightContainer.style.display = isCommercialPickup(pickupPlace) ? "block" : "none";
+    }
+  }
+});
   acDropoff.addListener("place_changed", ()=>{
     dropoffPlace = acDropoff.getPlace() || null;
   });
@@ -1379,28 +1401,6 @@ document.addEventListener('DOMContentLoaded', () => {
   wireFlightBackendTriggers();  // disparadores backend (llamadas a Cloud Run)
   syncButtons();  
   setTimeout(maybeCheckBackend, 100);
-});
-          // Mostrar nota automática si el Pick-up es JSX
-document.getElementById("pickup").addEventListener("change", function() {
-  const pickup = this.value.toUpperCase();
-  const jsxNote = document.getElementById("jsxNote");
-  const flightContainer = document.getElementById("flightContainer");
-
-  if (pickup.includes("JSX")) {
-    // Mostrar nota
-    jsxNote.style.display = "block";
-    jsxNote.textContent = "Reminder: JSX flights at SLC do not have flight numbers. Please confirm your arrival time directly with JSX staff.";
-
-    // Ocultar campo de Flight Number (no aplica a JSX)
-    if (flightContainer) flightContainer.style.display = "none";
-  } else {
-    // Ocultar nota
-    jsxNote.style.display = "none";
-    jsxNote.textContent = "";
-
-    // Mostrar campo de Flight Number otra vez
-    if (flightContainer) flightContainer.style.display = "block";
-  }
 });
 </script>
 <!-- Google Maps Loader -->
