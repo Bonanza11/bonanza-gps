@@ -625,6 +625,44 @@ function isUtah(place){
   const addr=(place?.formatted_address||'').toLowerCase();
   return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
 }
+// ===== Autofill para JSX en Special Instructions (sin validaciones) =====
+const JSX_MARK = "[AUTO-JSX]";  // identifica que el texto lo puso el sistema
+
+function buildJSXNote() {
+  const origin = (document.getElementById("flightOrigin")?.value || "").trim();
+  const date   = (document.getElementById("date")?.value || "").trim();
+  const time   = (document.getElementById("time")?.value || "").trim();
+  const eta    = (date && time) ? `${date} ${time}` : "";
+
+  return `${JSX_MARK}
+JSX (code XE) does not use public flight numbers.
+Meeting point: JSX terminal — 470 N 2360 W, Salt Lake City, UT 84116.
+Please include your arrival time${eta ? ` (${eta})` : ""} and origin city${origin ? ` (${origin})` : ""}.`;
+}
+
+function writeJSXNote() {
+  const ta = document.getElementById("specialInstructions");
+  if (!ta) return;
+  // Solo autocompleta si está vacío o ya era auto-generado
+  if (!ta.value || ta.value.startsWith(JSX_MARK)) {
+    ta.value = buildJSXNote();
+  }
+}
+
+function clearJSXNote() {
+  const ta = document.getElementById("specialInstructions");
+  if (!ta) return;
+  // Si era auto-generado, lo dejamos vacío para que se vea el placeholder normal
+  if (ta.value.startsWith(JSX_MARK)) ta.value = "";
+}
+
+// Si cambian origen/fecha/hora y la nota era auto-generada, la refrescamos
+["flightOrigin","date","time"].forEach(id=>{
+  document.getElementById(id)?.addEventListener("input", () => {
+    const ta = document.getElementById("specialInstructions");
+    if (ta && ta.value.startsWith(JSX_MARK)) ta.value = buildJSXNote();
+  });
+});        
 /* Heurística FBO (aeropuerto privado) en Utah */
 const FBO_KEYWORDS = /\b(fbo|jet center|private terminal|general aviation|hangar|atlantic aviation|million air|signature( aviation| flight| support)?|ross aviation|tac air|ok3 air|provo jet center|sheltair|jet linx|jet aviation|magellan jets|aero charter|aero center|modern aviation|banyan air service|cutter aviation|lynx|western aircraft)\b/i;
 
@@ -1092,35 +1130,22 @@ function initMap(){
   };
   const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
   const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts);
-acPickup.addListener("place_changed", ()=>{
-  pickupPlace = acPickup.getPlace() || null;
+// --- Lógica extra para JSX ---
+const ta = document.getElementById("specialInstructions");
+const flightContainer = document.getElementById("flightContainer");
 
-  // Reglas normales
-  updateFlightVisibility();
-  updateMeetGreetVisibility();
+const JSX_TEXT = `JSX (code XE) does not use public flight numbers.
+Meeting point: JSX terminal — 470 N 2360 W, Salt Lake City, UT 84116.
+Please include your arrival time and origin city.`;
 
-  // --- Lógica extra para JSX ---
-  const jsxNote = document.getElementById("jsxNote");
-  const flightContainer = document.getElementById("flightContainer");
-
-  const JSX_TEXT = "JSX (code XE) no usa número de vuelo público. Reúnase en la terminal JSX: 470 N 2360 W, Salt Lake City, UT 84116. Indique la hora estimada de llegada.";
-
-  if (isJSXUtah(pickupPlace)) {
-    if (jsxNote) {
-      jsxNote.style.display = "block";
-      jsxNote.textContent = JSX_TEXT;
-    }
-    if (flightContainer) flightContainer.style.display = "none";
-  } else {
-    if (jsxNote) {
-      jsxNote.style.display = "none";
-      jsxNote.textContent = "";
-    }
-    if (flightContainer) {
-      flightContainer.style.display = isCommercialPickup(pickupPlace) ? "block" : "none";
-    }
-  }
-});
+if (isJSXUtah(pickupPlace)) {
+  if (ta) ta.value = JSX_TEXT;
+  if (flightContainer) flightContainer.style.display = "none"; // oculta número de vuelo
+} else {
+  if (ta && ta.value.startsWith("JSX")) ta.value = "";          // limpia si era JSX
+  if (flightContainer)
+    flightContainer.style.display = isCommercialPickup(pickupPlace) ? "block" : "none";
+}
   acDropoff.addListener("place_changed", ()=>{
     dropoffPlace = acDropoff.getPlace() || null;
   });
