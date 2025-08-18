@@ -861,8 +861,15 @@ function updateFlightVisibility(){
     if(pvtWrap)  pvtWrap.style.display  = 'none';
   }
 }
-/* ===== Helpers de fecha para el backend ===== */
-const getDateISO = () => (document.getElementById('date')?.value || '').trim();
+const getDateISO = () => {
+  const v = (document.getElementById('date')?.value || '').trim();
+  if (!v) return '';
+  // Convierte respetando la zona horaria local → YYYY-MM-DD
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v; // fallback
+  const localMs = d.getTime() - d.getTimezoneOffset() * 60000;
+  return new Date(localMs).toISOString().slice(0, 10);
+};
 // === Autocomplete para Flight Origin ===
 function initFlightOriginAutocomplete() {
   const input = document.getElementById("flightOrigin");
