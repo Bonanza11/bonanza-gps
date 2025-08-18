@@ -1174,16 +1174,18 @@ function applyJSXUI(){
   updateFlightVisibility();
   updateMeetGreetVisibility?.();
 
+  const jsxContainer    = document.getElementById("jsxContainer");     // 👈 bloque nuevo JSX
+  const flightContainer = document.getElementById("flightContainer");  // vuelos comerciales normales
+
   if (isJSXUtah(pickupPlace)) {
-    if (ta && (!ta.value || ta.value.startsWith("JSX"))) ta.value = JSX_TEXT;
-    if (flightContainer) flightContainer.style.display = "none"; // JSX oculta flight #
+    if (jsxContainer)    jsxContainer.style.display = "block";  // mostrar JSX
+    if (flightContainer) flightContainer.style.display = "none"; // ocultar flightContainer
   } else {
-    if (ta && ta.value.startsWith("JSX")) ta.value = "";           // limpia si ya no es JSX
-    if (flightContainer)
-      flightContainer.style.display = isCommercialPickup(pickupPlace) ? "block" : "none";
+    if (jsxContainer)    jsxContainer.style.display = "none";   // ocultar JSX
+    if (flightContainer) flightContainer.style.display =
+      isCommercialPickup(pickupPlace) ? "block" : "none";
   }
 }
-
 // Detecta cambios en pick-up
 acPickup.addListener("place_changed", ()=>{
   pickupPlace = acPickup.getPlace() || null;
