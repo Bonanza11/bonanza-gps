@@ -1076,21 +1076,32 @@ function updateMeetGreetVisibility(){
   activate('none'); // default
 })();
 
-/* Cambiar vehículo (asegura que se re-evalue Meet & Greet) */
+/* Cambiar vehículo (asegura que se re-evalue Meet & Greet y cambia la foto) */
 (function wireVehicleToggle(){
   const btns = document.querySelectorAll('.veh-btn');
+  const carImg = document.querySelector('.turntable .car');
+  const caption = document.querySelector('.turntable .vehicle-caption');
   if(!btns.length) return;
+
   btns.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.veh-btn').forEach(b=> b.classList.remove('active'));
       btn.classList.add('active');
       selectedVehicle = btn.dataset.type || 'suv';
+      // 🔹 Actualizar imagen y caption según vehículo
+      if (selectedVehicle === 'suv') {
+        if (carImg) carImg.src = SUV_IMG;
+        if (caption) caption.textContent = "SUV — Max 5 passengers, 5 suitcases";
+      } else {
+        if (carImg) carImg.src = VAN_IMG;
+        if (caption) caption.textContent = "Van — Up to 12 passengers, luggage varies";
+      }
+
       updateMeetGreetVisibility();
       recalcFromCache?.();
     });
   });
-})();
-
+})();          
 function renderInfo(leg, base, surcharge, afterHours){
   const miles = leg.distance.value / 1609.34;
   const mgFee = getMGFee();                // $50 si hay Meet & Greet
