@@ -1565,7 +1565,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Monto en centavos
     const amount = Math.round(total * 100);
+ // === Required fields (front guard) ===
+// Marca en rojo los campos vacíos y bloquea el pago si falta algo básico.
+const requiredIds = ['fullname','phone','email','pickup','dropoff'];
+let missing = [];
 
+requiredIds.forEach(id => {
+  const el = document.getElementById(id);
+  const empty = !el || !el.value || el.value.trim() === '';
+  if (el) el.classList.toggle('invalid', empty);
+  if (empty) missing.push(id);
+});
+
+if (missing.length) {
+  alert('Please complete all required fields.');
+  return;
+}
     // Payload con metadatos (ajusta si quieres)
     const payload = {
       amount,
