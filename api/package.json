@@ -1,8 +1,0 @@
-{
-  "name": "bonanza-gps",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "stripe": "^13.0.0"
-  }
-}
