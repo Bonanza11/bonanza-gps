@@ -1546,35 +1546,64 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Google Maps Loader -->
 <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
 <script>
-  const payBtn = document.getElementById("pay");
-  const STRIPE_PK = pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF; // ← tu clave pública
+<script>
+  // ⬅️ tu bloque de Google Maps queda arriba; no lo toques
 
-  payBtn?.addEventListener("click", async () => {
+  // === Stripe Checkout (frontend) ===
+  const payBtn   = document.getElementById('pay');
+  const STRIPE_PK = pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF; // ⬅️ tu Publishable key real
+
+  payBtn?.addEventListener('click', async () => {
     // Debe haber cotización y términos aceptados
-    if (!isAccepted()) { alert("Please accept Terms & Conditions first."); return; }
+    if (!isAccepted()) { alert('Please accept Terms & Conditions first.'); return; }
 
     const total = Number(window.__lastQuotedTotal);
     if (!total || Number.isNaN(total)) {
-      alert("Please calculate a price first.");
+      alert('Please calculate a price first.');
       return;
     }
 
-    const amount = Math.round(total * 100); // a centavos
+    // Monto en centavos
+    const amount = Math.round(total * 100);
+
+    // Payload con metadatos (ajusta si quieres)
+    const payload = {
+      amount,
+      fullname: document.getElementById('fullname').value,
+      phone: document.getElementById('phone').value,
+      email: document.getElementById('email').value,
+      pickup: document.getElementById('pickup').value,
+      dropoff: document.getElementById('dropoff').value,
+      specialInstructions: document.getElementById('specialInstructions')?.value || null,
+      date: document.getElementById('date').value,
+      time: document.getElementById('time').value,
+      flightNumber: document.getElementById('flightNumber')?.value || null,
+      flightOriginCity: document.getElementById('flightOrigin')?.value || null,
+      tailNumber: document.getElementById('tailNumber')?.value || null,
+      privateFlightOriginCity: document.getElementById('pvtOrigin')?.value || null,
+      vehicleType: window.__vehicleType || 'suv',
+      distanceMiles: window.__lastDistanceMiles || null,
+      quotedTotal: window.__lastQuotedTotal || null,
+      confirmationNumber: generateConfirmationNumber(),
+    };
 
     try {
-      const resp = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount })
+      // 1) Crear la sesión en tu API
+      const resp = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload),
       });
       const data = await resp.json();
-      if (!data?.id) throw new Error("Missing session id");
+      if (!resp.ok || !data?.id) throw new Error(data?.error || 'Stripe session could not be created.');
 
+      // 2) Redirigir a Stripe Checkout
       const stripe = Stripe(STRIPE_PK);
-      await stripe.redirectToCheckout({ sessionId: data.id });
-    } catch (err) {
-      console.error(err);
-      alert("Payment session could not be created.");
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+      if (error) alert(error.message);
+    } catch (e) {
+      console.error(e);
+      alert('Payment error: ' + e.message);
     }
   });
 </script>
