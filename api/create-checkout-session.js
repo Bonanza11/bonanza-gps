@@ -1,83 +1,85 @@
-// /api/create-checkout-session.js  (Vercel serverless - Node 18+)
-// Requiere env: STRIPE_SECRET_KEY = sk_live_...
+<!-- Stripe.js (OBLIGATORIO) -->
+<script src="https://js.stripe.com/v3"></script>
+<script>
+  // Tu Publishable Key (pk_live_...)
+  const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
 
-const Stripe = require('stripe');
+  // NO redeclaramos 'payBtn' ni 'isAccepted' para evitar el error
+  // "Identifier 'payBtn' has already been declared". Usamos un alias local.
+  (function attachStripe(){
+    const btn = document.getElementById('pay');
+    if (!btn) return;
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeSecret ? new Stripe(stripeSecret) : null;
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+      // isAccepted() ya existe en tu JS de términos
+      if (typeof isAccepted === 'function' && !isAccepted()) {
+        alert('Please accept Terms & Conditions first.');
+        return;
+      }
 
-  if (!stripe) {
-    return res.status(500).json({ error: 'Stripe secret key is missing' });
-  }
+      const total = Number(window.__lastQuotedTotal);
+      if (!total || Number.isNaN(total)) {
+        alert('Please calculate a price first.');
+        return;
+      }
 
-  try {
-    const {
-      amount, // en centavos
-      fullname, phone, email,
-      pickup, dropoff, date, time,
-      flightNumber, flightOriginCity,
-      tailNumber, privateFlightOriginCity,
-      vehicleType, distanceMiles, quotedTotal, confirmationNumber
-    } = req.body || {};
+      // Validación mínima de campos
+      const requiredIds = ['fullname','phone','email','pickup','dropoff'];
+      let missing = [];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        const empty = !el || !el.value || el.value.trim() === '';
+        if (el) el.classList.toggle('invalid', empty);
+        if (empty) missing.push(id);
+      });
+      if (missing.length) { alert('Please complete all required fields.'); return; }
 
-    // Validación monto ($50–$2000)
-    const cents = Number(amount);
-    if (!Number.isInteger(cents) || cents < 5000 || cents > 200000) {
-      return res.status(400).json({ error: 'Invalid amount (must be between $50 and $2000)' });
-    }
+      const amount = Math.round(total * 100);
 
-    const meta = {
-      fullname: fullname || '',
-      phone: phone || '',
-      email: email || '',
-      pickup: pickup || '',
-      dropoff: dropoff || '',
-      date: date || '',
-      time: time || '',
-      flightNumber: flightNumber || '',
-      flightOriginCity: flightOriginCity || '',
-      tailNumber: tailNumber || '',
-      privateFlightOriginCity: privateFlightOriginCity || '',
-      vehicleType: vehicleType || '',
-      distanceMiles: String(distanceMiles ?? ''),
-      quotedTotal: String(quotedTotal ?? ''),
-      confirmationNumber: confirmationNumber || '',
-    };
+      // generateConfirmationNumber() ya existe en tu JS; si no, quita esta llamada o define la función
+      const payload = {
+        amount,
+        fullname: document.getElementById('fullname').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        pickup: document.getElementById('pickup').value,
+        dropoff: document.getElementById('dropoff').value,
+        specialInstructions: document.getElementById('specialInstructions')?.value || null,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        flightNumber: document.getElementById('flightNumber')?.value || null,
+        flightOriginCity: document.getElementById('flightOrigin')?.value || null,
+        tailNumber: document.getElementById('tailNumber')?.value || null,
+        privateFlightOriginCity: document.getElementById('pvtOrigin')?.value || null,
+        vehicleType: window.__vehicleType || 'suv',
+        distanceMiles: window.__lastDistanceMiles || null,
+        quotedTotal: window.__lastQuotedTotal || null,
+        confirmationNumber: (typeof generateConfirmationNumber === 'function')
+          ? generateConfirmationNumber()
+          : ''
+      };
 
-    // Origin dinámico (sirve en previews y prod)
-    const origin =
-      req.headers.origin ||
-      (req.headers.host ? `https://${req.headers.host}` : 'https://bonanza-gps.vercel.app');
+      try {
+        const resp = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Bonanza Transportation Ride' },
-          unit_amount: cents,
-        },
-        quantity: 1,
-      }],
-      customer_email: email || undefined,
-      success_url: `${origin}/success`,
-      cancel_url:  `${origin}/cancel`,
-      metadata: meta,
-      payment_intent_data: { metadata: meta },
-      // allow_promotion_codes: true,
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || !data?.id) {
+          throw new Error(data?.error || `Bad response (${resp.status})`);
+        }
+
+        const stripe = Stripe(STRIPE_PK);
+        const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+        if (error) alert(error.message);
+      } catch (e) {
+        alert('Payment error: ' + (e?.message || e));
+        console.error(e);
+      }
     });
-
-    return res.status(200).json({ id: session.id });
-  } catch (err) {
-    console.error('Stripe ERROR:', err?.type, err?.message);
-    return res.status(500).json({
-      error: `Stripe session failed: ${err?.message || 'unknown error'}`
-    });
-  }
-};
+  })();
+</script>
