@@ -1489,18 +1489,41 @@ document.getElementById('pay')?.addEventListener('click', async ()=>{
     document.body.style.overflow = '';
     openBtn?.focus();
   }
-
   openBtn?.addEventListener('click', openModal);
   closeBtn?.addEventListener('click', closeModal);
   modal?.addEventListener('click', (e)=> { if(e.target === modal) closeModal(); });
   document.addEventListener('keydown', (e)=> { if(e.key === 'Escape' && modal?.classList.contains('open')) closeModal(); });
 })();
+// ====== Limpieza en vivo de campos inválidos ======
+function wireLiveCleanup(){
+  const ids = [
+    'fullname','phone','email','pickup','dropoff',
+    'date','time',
+    // Condicionales (si existen en tu HTML)
+    'flightNumber','flightOrigin',      // SLC/PVU
+    'jsxFlightNumber','jsxOrigin',      // JSX
+    'tailNumber','pvtOrigin'            // FBO
+  ];
+
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    const evt = (el.type === 'date' || el.type === 'time') ? 'change' : 'input';
+    el.addEventListener(evt, ()=>{
+      const hasValue = (el.value || '').trim() !== '';
+      const ok = typeof el.checkValidity === 'function' ? el.checkValidity() : true;
+      if (hasValue && ok) el.classList.remove('invalid');
+    });
+  });
+}        
 /* ===== On Load ===== */
 document.addEventListener('DOMContentLoaded', () => {
-  mountDateTime();              // fija min 24h y valores por defecto
-  wireFlightValidation();       // validaciones vuelo
-  wireFlightBackendTriggers();  // disparadores backend (llamadas a Cloud Run)
-  syncButtons();  
+  mountDateTime();          // fija mín 24h y valores por defecto
+  wireFlightValidation();   // validaciones vuelo
+  wireFlightBackendTriggers(); // disparadores backend (llamadas a Cloud Run)
+  wireLiveCleanup();        // 👈 activa limpieza en vivo
+  syncButtons();
   setTimeout(maybeCheckBackend, 100);
 });
 </script>
