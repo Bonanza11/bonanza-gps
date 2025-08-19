@@ -1446,34 +1446,6 @@ function generateConfirmationNumber(){
   const rand=Math.random().toString(36).slice(2,6).toUpperCase();
   return `BZ-${y}${m}${day}-${rand}`;
 }
-document.getElementById('pay')?.addEventListener('click', async ()=>{
-  if(!isAccepted()){ alert('Please accept Terms to proceed.'); return; }
-
-  const payload = {
-    fullname: document.getElementById('fullname').value,
-    phone: document.getElementById('phone').value,
-    email: document.getElementById('email').value,
-    pickup: document.getElementById('pickup').value,
-    dropoff: document.getElementById('dropoff').value,
-    specialInstructions: document.getElementById('specialInstructions')?.value || null, /* ok si vacío */
-    date: document.getElementById('date').value,
-    time: document.getElementById('time').value,
-    flightNumber: document.getElementById('flightNumber').value || null,
-    flightOriginCity: document.getElementById('flightOrigin').value || null,
-    tailNumber: document.getElementById('tailNumber')?.value || null,
-    privateFlightOriginCity: document.getElementById('pvtOrigin')?.value || null,
-
-    vehicleType: window.__vehicleType || selectedVehicle || 'suv',
-    distanceMiles: window.__lastDistanceMiles || null,
-    quotedTotal: window.__lastQuotedTotal || null,
-    confirmationNumber: generateConfirmationNumber(),
-    acceptedTermsAt: new Date().toISOString()
-  };
-  console.log('PAYLOAD →', payload);
-  alert(`Your confirmation number is ${payload.confirmationNumber}`);
-  // TODO: POST to /api/create-checkout-session
-});
-
 /* ===== Luggage Accordion ===== */
 (function wireLuggageAccordion(){
   const acc = document.getElementById('luggageAccordion');
