@@ -1544,8 +1544,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <!-- Google Maps Loader -->
-<script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
+<script>
+  const payBtn = document.getElementById("pay");
+  const STRIPE_PK = pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF; // ← tu clave pública
+
+  payBtn?.addEventListener("click", async () => {
+    // Debe haber cotización y términos aceptados
+    if (!isAccepted()) { alert("Please accept Terms & Conditions first."); return; }
+
+    const total = Number(window.__lastQuotedTotal);
+    if (!total || Number.isNaN(total)) {
+      alert("Please calculate a price first.");
+      return;
+    }
+
+    const amount = Math.round(total * 100); // a centavos
+
+    try {
+      const resp = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount })
+      });
+      const data = await resp.json();
+      if (!data?.id) throw new Error("Missing session id");
+
+      const stripe = Stripe(STRIPE_PK);
+      await stripe.redirectToCheckout({ sessionId: data.id });
+    } catch (err) {
+      console.error(err);
+      alert("Payment session could not be created.");
+    }
+  });
 </script>
 </body>
 </html>
