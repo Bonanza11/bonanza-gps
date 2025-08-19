@@ -582,7 +582,43 @@ function recalcFromCache(){
   window.__lastQuotedTotal = finalTotal;
   window.__vehicleType = selectedVehicle;
 }
+// ====== Validación mínima antes de calcular precio ======
 
+// Lista de IDs de campos básicos
+const requiredFields = [
+  'fullname','phone','email',
+  'pickup','dropoff',
+  'date','time'
+];
+
+// Revisa campos y aplica/quita .invalid
+function validateForm(){
+  let valid = true;
+  requiredFields.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    if(!el.value || el.value.trim()===""){
+      el.classList.add("invalid");
+      valid = false;
+    } else {
+      el.classList.remove("invalid");
+    }
+  });
+  return valid;
+}
+
+// Cuando se presiona "Calculate Price"
+document.getElementById("calculate")?.addEventListener("click", function(e){
+  if(!validateForm()){
+    e.preventDefault(); // detiene cálculo si faltan campos
+    alert("Por favor completa todos los campos obligatorios.");
+    return;
+  }
+
+  // 👉 Aquí continúa tu lógica normal de cálculo
+  console.log("Todo listo para calcular precio ✅");
+});
 /* ===== Time helpers ===== */
 function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
 function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
