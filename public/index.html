@@ -1182,7 +1182,7 @@ function renderInfo(leg, base, surcharge, afterHours){
 }
 /* ===== Init Google Maps ===== */
 function initMap(){
-  // Mapa y servicios
+  // Map and services
   map = new google.maps.Map(document.getElementById("map"), {
     center:{lat:40.7587,lng:-111.8762}, zoom:10
   });
@@ -1191,7 +1191,7 @@ function initMap(){
   directionsRenderer.setMap(map);
   geocoder = new google.maps.Geocoder();
 
-  // Autocomplete (US)
+  // Autocomplete (restricted to US)
   const opts = {
     componentRestrictions:{country:["us"]},
     fields:["place_id","name","types","formatted_address","geometry","address_components"]
@@ -1203,12 +1203,14 @@ function initMap(){
   const acPickup  = new google.maps.places.Autocomplete(pickupInput,  opts);
   const acDropoff = new google.maps.places.Autocomplete(dropoffInput, opts);
 
-  // === Actualiza UI según pick-up (SLC/PVU/JSX/FBO) ===
+  // === Update UI depending on pickup location (SLC / PVU / JSX / FBO) ===
   function applyJSXUI(){
-    updateFlightVisibility?.();    // mantiene visibilidad SLC/JSX/FBO
-    updateMeetGreetVisibility?.(); // reevaluar Meet & Greet (SUV/SLC)
+    updateFlightVisibility?.();    // Update SLC / JSX / FBO visibility
+    updateMeetGreetVisibility?.(); // Re-evaluate Meet & Greet (SUV/SLC only)
+
     const jsxContainer    = document.getElementById("jsxContainer");
     const flightContainer = document.getElementById("flightContainer");
+
     if (isJSXUtah(pickupPlace)) {
       if (jsxContainer)    jsxContainer.style.display = "block";
       if (flightContainer) flightContainer.style.display = "none";
@@ -1219,17 +1221,17 @@ function initMap(){
     }
   }
 
-  // === Listeners: quitan .invalid y sincronizan ===
+  // === Listeners: remove .invalid and sync buttons ===
   acPickup.addListener("place_changed", ()=>{
     pickupPlace = acPickup.getPlace() || null;
-    pickupInput?.classList.remove('invalid');   // limpia rojo al elegir
+    pickupInput?.classList.remove('invalid');   // remove red highlight on valid input
     applyJSXUI();
     syncButtons?.();
   });
 
   acDropoff.addListener("place_changed", ()=>{
     dropoffPlace = acDropoff.getPlace() || null;
-    dropoffInput?.classList.remove('invalid');  // limpia rojo al elegir
+    dropoffInput?.classList.remove('invalid');  // remove red highlight on valid input
     syncButtons?.();
   });
 }
