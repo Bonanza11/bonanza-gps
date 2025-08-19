@@ -759,33 +759,6 @@ function isProvoAirport(place){
   // Debe ser aeropuerto en Utah y no FBO
   return (nameHit || addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
 }
-      // === JSX (Salt Lake City) ===
-// Validación especial para JSX en SLC, que a veces no viene marcado como "airport"
-function isJSXUtah(place){
-  if(!place) return false;
-  const name = (place.name || "").toLowerCase();
-  const addr = (place.formatted_address || "").toLowerCase();
-
-  // Coincidencias típicas de nombre
-  const nameHit = /\bjsx\b/.test(name) || /jet suite x/.test(name);
-
-  // Dirección conocida: 470 N 2360 W, SLC, UT 84116
-  const addrHit =
-    /\b470\s*n\s*2360\s*w\b/.test(addr) &&
-    /84116/.test(addr) &&
-    /salt lake( city)?/.test(addr);
-
-  // “Utah-ish”: acepta UT o señales claras de SLC
-  const utahish =
-    isUtah(place) ||
-    /\but\b/.test(addr) ||
-    /salt lake( city)?/.test(addr) ||
-    /\bslc\b/.test(addr) ||
-    /\bslc\b/.test(name);
-
-  return (nameHit || addrHit) && utahish;
-}
-
 // Solo SLC, Provo o JSX en Utah activan la captura de vuelo
 function isCommercialPickup(place){
   return !!place && isUtah(place) && (
