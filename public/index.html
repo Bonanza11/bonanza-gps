@@ -1180,8 +1180,9 @@ function renderInfo(leg, base, surcharge, afterHours){
   window.__vehicleType = selectedVehicle;
   syncButtons();
 }
-        /* ===== Init Google Maps ===== */
+/* ===== Init Google Maps ===== */
 function initMap(){
+  // Mapa y servicios
   map = new google.maps.Map(document.getElementById("map"), {
     center:{lat:40.7587,lng:-111.8762}, zoom:10
   });
@@ -1190,40 +1191,46 @@ function initMap(){
   directionsRenderer.setMap(map);
   geocoder = new google.maps.Geocoder();
 
+  // Autocomplete (US)
   const opts = {
     componentRestrictions:{country:["us"]},
     fields:["place_id","name","types","formatted_address","geometry","address_components"]
   };
-  const acPickup  = new google.maps.places.Autocomplete(document.getElementById("pickup"), opts);
-  const acDropoff = new google.maps.places.Autocomplete(document.getElementById("dropoff"), opts); 
-// --- Lógica extra para JSX (nuevo) ---
-const ta = document.getElementById("specialInstructions");
-const flightContainer = document.getElementById("flightContainer");
 
-// Función que actualiza la UI según el pick-up
-function applyJSXUI(){
-  updateFlightVisibility();
-  updateMeetGreetVisibility?.();
+  const pickupInput  = document.getElementById("pickup");
+  const dropoffInput = document.getElementById("dropoff");
 
-  const jsxContainer    = document.getElementById("jsxContainer");     // 👈 bloque nuevo JSX
-  const flightContainer = document.getElementById("flightContainer");  // vuelos comerciales normales
+  const acPickup  = new google.maps.places.Autocomplete(pickupInput,  opts);
+  const acDropoff = new google.maps.places.Autocomplete(dropoffInput, opts);
 
-  if (isJSXUtah(pickupPlace)) {
-    if (jsxContainer)    jsxContainer.style.display = "block";  // mostrar JSX
-    if (flightContainer) flightContainer.style.display = "none"; // ocultar flightContainer
-  } else {
-    if (jsxContainer)    jsxContainer.style.display = "none";   // ocultar JSX
-    if (flightContainer) flightContainer.style.display =
-      isCommercialPickup(pickupPlace) ? "block" : "none";
+  // === Actualiza UI según pick-up (SLC/PVU/JSX/FBO) ===
+  function applyJSXUI(){
+    updateFlightVisibility?.();    // mantiene visibilidad SLC/JSX/FBO
+    updateMeetGreetVisibility?.(); // reevaluar Meet & Greet (SUV/SLC)
+    const jsxContainer    = document.getElementById("jsxContainer");
+    const flightContainer = document.getElementById("flightContainer");
+    if (isJSXUtah(pickupPlace)) {
+      if (jsxContainer)    jsxContainer.style.display = "block";
+      if (flightContainer) flightContainer.style.display = "none";
+    } else {
+      if (jsxContainer)    jsxContainer.style.display = "none";
+      if (flightContainer) flightContainer.style.display =
+        isCommercialPickup(pickupPlace) ? "block" : "none";
+    }
   }
-}
-// Detecta cambios en pick-up
-acPickup.addListener("place_changed", ()=>{
-  pickupPlace = acPickup.getPlace() || null;
-  applyJSXUI();
-}); 
+
+  // === Listeners: quitan .invalid y sincronizan ===
+  acPickup.addListener("place_changed", ()=>{
+    pickupPlace = acPickup.getPlace() || null;
+    pickupInput?.classList.remove('invalid');   // limpia rojo al elegir
+    applyJSXUI();
+    syncButtons?.();
+  });
+
   acDropoff.addListener("place_changed", ()=>{
     dropoffPlace = acDropoff.getPlace() || null;
+    dropoffInput?.classList.remove('invalid');  // limpia rojo al elegir
+    syncButtons?.();
   });
 }
 window.initMap = initMap;   // <— MUY IMPORTANTE: fuera de la función
