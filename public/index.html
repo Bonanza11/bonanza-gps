@@ -589,15 +589,6 @@ function recalcFromCache(){
   window.__lastQuotedTotal = finalTotal;
   window.__vehicleType = selectedVehicle;
 }
-// ====== Validación mínima antes de calcular precio ======
-
-// Lista de IDs de campos básicos
-const requiredFields = [
-  'fullname','phone','email',
-  'pickup','dropoff',
-  'date','time'
-];
-
 // Revisa campos y aplica/quita .invalid
 function validateForm(){
   let valid = true;
@@ -614,15 +605,6 @@ function validateForm(){
   });
   return valid;
 }
-
-// Cuando se presiona "Calculate Price"
-document.getElementById("calculate")?.addEventListener("click", function(e){
-  if(!validateForm()){
-    e.preventDefault(); // detiene cálculo si faltan campos
-   alert("Please complete all required fields.");
-    return;
-  }
-
   // 👉 Aquí continúa tu lógica normal de cálculo
   console.log("Todo listo para calcular precio ✅");
 });
@@ -1384,6 +1366,33 @@ function isAtLeast24hAhead(d){
 
 // ===== Calculate (con validaciones obligatorias) =====
 calcBtn?.addEventListener("click", async ()=>{
+  // 🔹 Validar Flight Number
+  const flightNumberEl = document.getElementById("flightNumber");
+  const flightOriginEl = document.getElementById("flightOrigin");
+
+  let valid = true;
+
+  if(!flightNumberEl.value.trim()){
+    flightNumberEl.classList.add("invalid");
+    valid = false;
+  } else {
+    flightNumberEl.classList.remove("invalid");
+  }
+
+  if(!flightOriginEl.value.trim()){
+    flightOriginEl.classList.add("invalid");
+    valid = false;
+  } else {
+    flightOriginEl.classList.remove("invalid");
+  }
+
+  if(!valid){
+    alert("Please complete Flight Number and Flight Origin City.");
+    return;
+  }
+
+  // 👉 Aquí continúa la lógica de tu cálculo normal
+});
 
   // Validar Terms & Conditions
   if (!isAccepted()){
