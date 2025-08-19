@@ -589,6 +589,15 @@ function recalcFromCache(){
   window.__lastQuotedTotal = finalTotal;
   window.__vehicleType = selectedVehicle;
 }
+// ====== Validación mínima antes de calcular precio ======
+
+// Lista de IDs de campos básicos
+const requiredFields = [
+  'fullname','phone','email',
+  'pickup','dropoff',
+  'date','time'
+];
+
 // Revisa campos y aplica/quita .invalid
 function validateForm(){
   let valid = true;
@@ -605,6 +614,15 @@ function validateForm(){
   });
   return valid;
 }
+
+// Cuando se presiona "Calculate Price"
+document.getElementById("calculate")?.addEventListener("click", function(e){
+  if(!validateForm()){
+    e.preventDefault(); // detiene cálculo si faltan campos
+   alert("Please complete all required fields.");
+    return;
+  }
+
   // 👉 Aquí continúa tu lógica normal de cálculo
   console.log("Todo listo para calcular precio ✅");
 });
@@ -1364,92 +1382,12 @@ function isAtLeast24hAhead(d){
   return d.getTime() - now.getTime() >= 24*60*60*1000;
 }
 
-// ===== Calculate (con validaciones obligatorias) =====
+/* ===== Calculate (con validaciones mínimas acordadas) ===== */
 calcBtn?.addEventListener("click", async ()=>{
-  // 🔹 Validar Flight Number
-  const flightNumberEl = document.getElementById("flightNumber");
-  const flightOriginEl = document.getElementById("flightOrigin");
-
-  let valid = true;
-
-  if(!flightNumberEl.value.trim()){
-    flightNumberEl.classList.add("invalid");
-    valid = false;
-  } else {
-    flightNumberEl.classList.remove("invalid");
-  }
-
-  if(!flightOriginEl.value.trim()){
-    flightOriginEl.classList.add("invalid");
-    valid = false;
-  } else {
-    flightOriginEl.classList.remove("invalid");
-  }
-
-  if(!valid){
-    alert("Please complete Flight Number and Flight Origin City.");
-    return;
-  }
-
-  // 👉 Aquí continúa la lógica de tu cálculo normal
-});
-
-  // Validar Terms & Conditions
   if (!isAccepted()){
     alert("Please accept Terms & Conditions first.");
     return;
   }
-
-  // Validar pickup / drop-off vacíos
-  const pickupStr = document.getElementById('pickup')?.value.trim();
-  const dropoffStr = document.getElementById('dropoff')?.value.trim();
-  if (!pickupStr){ alert("Pick-up Address is required."); return; }
-  if (!dropoffStr){ alert("Drop-off Address is required."); return; }
-
-  // Validar fecha/hora mínimo 24h antes
-  const selDt = getSelectedDateTime();
-  if (!selDt || !isAtLeast24hAhead(selDt)){
-    alert("Please choose a Date & Time at least 24 hours in advance.");
-    return;
-  }
-
-  if (!pickupPlace?.place_id || !dropoffPlace?.place_id){
-    alert("Please select addresses from the suggestions.");
-    return;
-  }
-
-  // === VALIDACIÓN EXTRA: flight fields ===
-  const flightWrap   = document.getElementById('flightContainer');
-  const flightNumber = document.getElementById('flightNumber');
-  const flightOrigin = document.getElementById('flightOrigin');
-
-  if (flightWrap && flightWrap.style.display !== 'none') {
-    if (!flightNumber.value.trim() || !flightOrigin.value.trim()) {
-      // marcar recuadros en rojo
-      if (!flightNumber.value.trim()) flightNumber.classList.add("invalid");
-      if (!flightOrigin.value.trim()) flightOrigin.classList.add("invalid");
-      alert("Please complete Flight Number and Flight Origin City.");
-      return;
-    }
-  }
-
-  // === si todo pasa → cálculo normal ===
-  try {
-    const trip = await routeAsync({
-      origin: {placeId: pickupPlace.place_id},
-      destination: {placeId: dropoffPlace.place_id},
-      travelMode: google.maps.TravelMode.DRIVING
-    });
-
-    directionsRenderer.setDirections(trip);
-    const leg = trip.routes[0].legs[0];
-    // ... resto de la lógica como ya la tienes ...
-  }
-  catch(err){
-    console.error("Route calculation error:", err);
-    alert("Could not calculate route. Please try again.");
-  }
-});
 
   /* MOD/ADDED: pick-up/drop-off no vacíos */
   const pickupStr  = document.getElementById('pickup')?.value.trim();
@@ -1594,21 +1532,7 @@ function wireLiveCleanup(){
       if (hasValue && ok) el.classList.remove('invalid');
     });
   });
-} 
-          // --- Marca en rojo los campos de vuelo si están vacíos (solo añade .invalid, no alertas)
-function validateFlightFields() {
-  const flightWrap   = document.getElementById('flightContainer');
-  if (!flightWrap || flightWrap.style.display === 'none') return; // no se valida si está oculto
-
-  const flightNumber = document.getElementById('flightNumber');
-  const flightOrigin = document.getElementById('flightOrigin');
-
-  [flightNumber, flightOrigin].forEach(el => {
-    if (!el) return;
-    if (!el.value.trim()) el.classList.add('invalid');   // vacío → rojo
-    else el.classList.remove('invalid');                // lleno → normal
-  });
-}
+}        
 /* ===== On Load ===== */
 document.addEventListener('DOMContentLoaded', () => {
   mountDateTime();          // fija mín 24h y valores por defecto
