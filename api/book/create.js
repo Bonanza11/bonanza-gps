@@ -1,6 +1,7 @@
 // /api/book/create.js
 import { neon } from "@neondatabase/serverless";
 
+/* ===== Validaciones mínimas ===== */
 function isISODate(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s || ""); }
 function isTime(s){ return /^\d{2}:\d{2}$/.test(s || ""); }
 function atLeast24hAhead(dateStr, timeStr){
@@ -10,12 +11,19 @@ function atLeast24hAhead(dateStr, timeStr){
 }
 
 export default async function handler(req, res){
+  /* ===== CORS ===== */
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.status(200).end();
+
+  /* ===== Solo POST ===== */
   if (req.method !== "POST"){
     res.setHeader("Allow", "POST");
     return res.status(405).json({ ok:false, error:"Method not allowed" });
   }
 
-  try {
+  try{
     const {
       confirmationNumber,
       fullname, phone, email,
@@ -71,8 +79,8 @@ export default async function handler(req, res){
     `;
 
     return res.status(200).json({ ok:true, booking: rows[0] });
-  } catch (err) {
+  }catch(err){
     console.error(err);
-    return res.status(500).json({ ok:false, error:String(err?.message || err) });
+    return res.status(500).json({ ok:false, error: String(err?.message || err) });
   }
 }
