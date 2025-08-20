@@ -6,7 +6,6 @@
   "engines": { "node": "18.x" },
   "dependencies": {
     "stripe": "^13.6.0",
-    "@vercel/postgres": "^0.8.0",
-    "jsonwebtoken": "^9.0.2"
+    "@neondatabase/serverless": "^0.10.4"
   }
 }
