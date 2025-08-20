@@ -2,15 +2,20 @@
 import { neon } from "@neondatabase/serverless";
 
 export default async function handler(req, res) {
+  /* ===== CORS ===== */
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.status(200).end();
+
+  /* ===== Solo GET ===== */
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ ok:false, error:"Method not allowed" });
   }
 
   const cn = (req.query.cn || "").trim();
-  if (!cn) {
-    return res.status(400).json({ ok:false, error:"Missing 'cn' (confirmation number)" });
-  }
+  if (!cn) return res.status(400).json({ ok:false, error:"Missing 'cn' (confirmation number)" });
 
   try {
     const sql = neon(process.env.DATABASE_URL);
@@ -27,6 +32,7 @@ export default async function handler(req, res) {
       where confirmation_number = ${cn}
       limit 1
     `;
+
     if (!rows.length) return res.status(404).json({ ok:false, error:"Not found" });
     return res.status(200).json({ ok:true, booking: rows[0] });
   } catch (err) {
