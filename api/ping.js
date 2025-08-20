@@ -1,17 +1,8 @@
-import { Client } from "pg";
-
-export default async function handler(req, res) {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
+// /api/ping.js
+export default function handler(req, res) {
+  res.status(200).json({
+    ok: true,
+    route: "/api/ping",
+    time: new Date().toISOString(),
   });
-
-  try {
-    await client.connect();
-    const result = await client.query("SELECT NOW()");
-    await client.end();
-
-    res.status(200).json({ message: "✅ Conectado a la DB!", time: result.rows[0] });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 }
