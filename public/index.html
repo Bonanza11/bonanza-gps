@@ -1626,82 +1626,73 @@ document.addEventListener('DOMContentLoaded', () => {
       t.value = `${hh}:${mm}`;
     }
   })();
-</script>
-    (function wireRescheduleForm(){
-    const form  = document.getElementById('rescheduleForm');
-    const btn   = document.getElementById('btnReschedule');
-    const out   = document.getElementById('rescheduleResult');
-    const cnEl  = document.getElementById('cn');
-    const dEl   = document.getElementById('newDate');
-    const tEl   = document.getElementById('newTime');
+<script>
+(function wireRescheduleForm(){
+  const form = document.getElementById('rescheduleForm');
+  const btn = document.getElementById('btnReschedule');
+  const out = document.getElementById('rescheduleOutput');
+  const cnEl = document.getElementById('cn');
+  const dEl = document.getElementById('newDate');
+  const tEl = document.getElementById('newTime');
 
-    if (!form || !btn || !out) return;
+  if (!form || !btn || !out) return;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      // --- Límite de reprogramaciones ---
-const countEl = document.getElementById('rescheduleCount');
-let count = parseInt(countEl.value, 10) || 0;
-
-if (count >= 2) {
-  out.textContent = 'You have reached the limit of 2 reschedules for this reservation. Please contact us directly.';
-  out.style.color = '#ff6b6b';
-  return; // Detiene el envío si ya llegó al límite
-}
-
-count++;
-countEl.value = count;
-
-      const cn      = (cnEl?.value || '').trim();
-      const newDate = (dEl?.value || '').trim();   // YYYY-MM-DD
-      const newTime = (tEl?.value || '').trim();   // HH:mm (24h)
-
-      // Validación mínima en cliente
-      if (!cn || !newDate || !newTime) {
-        out.textContent = 'Please complete all fields (CN, date, time).';
-        out.style.color = '#ff6b6b';
-        return;
-      }
-
-      btn.disabled = true;
-      out.textContent = 'Processing…';
-      out.style.color = '#cba686';
+  // --- botón para cargar CN ---
+  const btnLoad = document.getElementById('btnLoadCN');
+  if (btnLoad) {
+    btnLoad.addEventListener('click', async () => {
+      const cn = cnEl.value.trim();
+      if (!cn) return alert("Ingrese el código de reserva (CN).");
+      out.innerText = "Buscando reserva...";
 
       try {
-        const resp = await fetch('/api/book/reschedule', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cn, newDate, newTime })
-        });
+        const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+        const data = await resp.json();
+        if (!data.ok) throw new Error(data.error || "No encontrada");
+        
+        // Pre-rellenar campos con la reserva existente
+        if (data.booking.date_iso) dEl.value = data.booking.date_iso;
+        if (data.booking.time_hhmm) tEl.value = data.booking.time_hhmm;
 
-        const data = await resp.json().catch(() => ({}));
-
-        if (!resp.ok || data?.ok === false) {
-          // Mensaje del backend si llega, si no, uno genérico
-          const msg = (data && (data.error || data.msg)) || `Error ${resp.status}`;
-          out.textContent = `❌ ${msg}`;
-          out.style.color = '#ff6b6b';
-          return;
-        }
-
-        // Éxito
-        out.innerHTML = `✅ Rescheduled successfully.<br>
-          CN: <b>${cn}</b><br>
-          New date/time: <b>${newDate} ${newTime}</b>`;
-        out.style.color = '#17c964';
-
-        // Opcional: limpiar el formulario
-        // form.reset();
+        out.innerText = "Reserva cargada, puede editar fecha/hora.";
       } catch (err) {
-        out.textContent = 'Network error. Please try again.';
-        out.style.color = '#ff6b6b';
-        console.error(err);
-      } finally {
-        btn.disabled = false;
+        out.innerText = "Error al cargar: " + err.message;
       }
     });
-  })();
+  }
+
+  // --- submit para reprogramar ---
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cn = cnEl.value.trim();
+    const newDate = dEl.value;
+    const newTime = tEl.value;
+
+    if (!cn || !newDate || !newTime) {
+      out.innerText = "Faltan datos";
+      return;
+    }
+
+    out.innerText = "Procesando...";
+
+    try {
+      const resp = await fetch('/api/book/reschedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cn, newDate, newTime })
+      });
+
+      const data = await resp.json();
+      if (!data.ok) throw new Error(data.error || "Error en reschedule");
+
+      out.innerText = "Reprogramado correctamente → " +
+        `${data.booking.date_iso} ${data.booking.time_hhmm}`;
+    } catch (err) {
+      out.innerText = "Error: " + err.message;
+    }
+  });
+})();
+</script>
 </script>
 </body>
 </html>
