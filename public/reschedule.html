@@ -1,193 +1,410 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Reschedule — Bonanza</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reschedule — Bonanza Transportation</title>
+
   <style>
-    body {
-      background:#000;
-      color:#e9d5c1;
-      font-family:Arial,sans-serif;
-      margin:0;
+    :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:#000;color:var(--copper);font-family:Arial,Helvetica,sans-serif}
+    header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
+    .logo{width:160px;height:160px;border-radius:50%;border:2px solid var(--copper);object-fit:cover;
+      box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
+      filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
     }
-    main {
-      max-width:720px;
-      margin:24px auto;
-      padding:0 16px;
+    main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
+    h1{margin:0 0 8px;color:#ffddae;font-size:1.35rem}
+    .card{border:1px solid rgba(168,116,79,.45);border-radius:14px;background:linear-gradient(180deg,#121212,#0b0b0b);
+      box-shadow:0 12px 28px rgba(0,0,0,.45);padding:16px;margin:12px 0}
+    label{display:block;margin:12px 0 6px;font-weight:700}
+    input,select,textarea{
+      display:block;width:100%;height:44px;padding:10px 12px;background:#1a1a1a;color:#ffddae;
+      border:1px solid #444;border-radius:10px;outline:none;
     }
-    .card {
-      background:#0e0e0e;
-      border:1px solid rgba(168,116,79,.35);
-      border-radius:12px;
-      padding:16px;
-    }
-    label {
-      display:block;
-      margin:12px 0 6px;
-      font-weight:700;
-    }
-    input {
-      width:100%;
-      height:44px;
-      padding:10px 12px;
-      background:#1a1a1a;
-      color:#ffddae;
-      border:1px solid #444;
-      border-radius:8px;
-      outline:none;
-    }
-    button {
-      width:100%;
-      padding:14px 16px;
-      margin-top:16px;
-      background:#a8744f;
-      color:#000;
-      font-weight:700;
-      font-size:16px;
-      border:0;
-      border-radius:10px;
-      cursor:pointer;
-    }
-    .muted {
-      opacity:.8;
-    }
-    .row {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width:520px){
-      .row { grid-template-columns:1fr; }
-    }
-    .hint {
-      font-size:.9rem;
-      margin-top:6px;
-    }
-    .ok {
-      color:#17c964;
-    }
-    .err {
-      color:#ff6b6b;
-    }
+    input:focus,select:focus,textarea:focus{border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18)}
+    .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:520px){.input-row{grid-template-columns:1fr}}
+    .helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
+    .hint{font-size:.9rem;margin-top:6px}
+    .hint.ok{color:var(--ok)} .hint.err{color:var(--err)} .hint.warn{color:var(--warn)}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:10px}
+    .kpi .label{font-size:.75rem;opacity:.85;margin-bottom:6px}
+    .kpi .value{font-size:1.25rem;font-weight:800;color:#f0d1ad}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+    .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
+    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:8px 0}
+    button{width:100%;padding:14px 16px;margin-top:14px;background:var(--copper);color:#000;font-weight:800;
+      font-size:18px;border:0;border-radius:10px;cursor:pointer}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .veh-toggle{display:flex;gap:8px}
+    .veh-btn{flex:1 1 0;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);color:var(--copper);
+      padding:10px;border-radius:10px;cursor:pointer;font-weight:700;text-align:center}
+    .veh-btn.active{background:var(--copper);color:#000;border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.25)}
+    .mg-options{display:flex;gap:8px;margin-top:6px}
+    .mg-btn{flex:1 1 0;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);color:var(--copper);
+      padding:10px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center}
+    .mg-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
+    .tax-note{font-size:13px;color:#c9a97c;font-style:italic;text-align:right;opacity:.85}
+    .muted{opacity:.8}
+    .invalid{border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(255,107,107,.25) !important;}
   </style>
 </head>
 <body>
-<main>
-  <h1 style="margin:0 0 12px;">Reschedule</h1>
-  <div id="status" class="hint muted">Loading…</div>
+  <header>
+    <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo"/>
+  </header>
 
-  <div id="bookingCard" class="card" style="display:none">
-    <div id="summary" class="muted"></div>
+  <main>
+    <h1>Reschedule</h1>
+    <div class="card" id="loadCard">
+      <label for="cn">Reservation Code (CN)</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="cn" placeholder="BZ-20250821-ABCD" style="flex:1 1 auto"/>
+        <button id="btnLoad" style="width:auto;padding:10px 14px;">Load</button>
+      </div>
+      <div id="loadHint" class="hint muted"></div>
+    </div>
 
-    <form id="resForm">
-      <div class="row">
+    <!-- Card: Current booking -->
+    <div class="card" id="currentCard" style="display:none">
+      <h3 style="margin:0 0 8px;color:#ffddae">Current Booking</h3>
+      <div id="bookingSummary" class="muted" style="line-height:1.5"></div>
+      <div class="divider"></div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Vehicle</div><div class="value" id="kpiVehicle">SUV</div></div>
+        <div class="kpi"><div class="label">Distance</div><div class="value"><span id="kpiMiles">—</span> mi</div></div>
+        <div class="kpi"><div class="label">Original Total</div><div class="value">$<span id="kpiOriginal">—</span></div></div>
+      </div>
+    </div>
+
+    <!-- Card: Make changes -->
+    <div class="card" id="changeCard" style="display:none">
+      <h3 style="margin:0 0 8px;color:#ffddae">Change Date & Time</h3>
+      <div class="input-row">
         <div>
           <label for="newDate">New Date</label>
-          <input id="newDate" type="date" required>
+          <input type="date" id="newDate"/>
+          <div id="newDateHelp" class="helper"></div>
         </div>
         <div>
           <label for="newTime">New Time</label>
-          <input id="newTime" type="time" required>
+          <input type="time" id="newTime" step="900"/>
+          <div id="newTimeHelp" class="helper"></div>
         </div>
       </div>
 
-      <button type="submit">Confirm Reschedule</button>
-    </form>
+      <!-- Vehicle toggle (por si el cliente quiere cambiar vehículo en la reprogramación) -->
+      <label style="margin-top:14px">Vehicle</label>
+      <div class="veh-toggle" id="vehToggle">
+        <div class="veh-btn active" data-type="suv">SUV (1–5)</div>
+        <div class="veh-btn" data-type="van">Van (up to 12)</div>
+      </div>
 
-    <div id="result" class="hint" style="margin-top:10px;"></div>
-  </div>
-</main>
+      <!-- Meet & Greet (solo para SLC; visible si booking.originalPickupIsSLC === true) -->
+      <div id="mgWrap" style="display:none; margin-top:10px;">
+        <label>Meet & Greet — SLC Only</label>
+        <div class="mg-options">
+          <div class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</div>
+          <div class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</div>
+          <div class="mg-btn active" data-choice="none">No Meet & Greet</div>
+        </div>
+      </div>
 
-<script>
-(function(){
-  const qs = new URLSearchParams(location.search);
-  const cn = qs.get('cn') || '';
-  const status = document.getElementById('status');
-  const card = document.getElementById('bookingCard');
-  const summary = document.getElementById('summary');
-  const resForm = document.getElementById('resForm');
-  const newDate = document.getElementById('newDate');
-  const newTime = document.getElementById('newTime');
-  const result = document.getElementById('result');
+      <div class="divider"></div>
 
-  if(!cn){
-    status.textContent = 'Missing reservation code (?cn=...)';
-    return;
-  }
+      <h3 style="margin:6px 0 8px;color:#ffddae">New Quote</h3>
+      <div class="kpis">
+        <div class="kpi"><div class="label">New Total</div><div class="value">$<span id="kpiNew">—</span></div></div>
+        <div class="kpi"><div class="label">Difference</div><div class="value">$<span id="kpiDiff">—</span></div></div>
+        <div class="kpi"><div class="label">After-Hours</div><div class="value" id="kpiAH">No</div></div>
+      </div>
 
-  // helper: mínimo 24h
-  function earliestAllowedDt(){
-    const d = new Date(Date.now() + 24*60*60*1000);
-    d.setMinutes(d.getMinutes() + (15 - (d.getMinutes()%15 || 15)), 0, 0);
-    return d;
-  }
-  function localISODate(d){
-    const off = d.getTimezoneOffset()*60000;
-    return new Date(d - off).toISOString().slice(0,10);
-  }
-  function setTimeValue(el,h,m){
-    el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-  }
+      <div id="breakdown" style="margin-top:6px"></div>
+      <div class="tax-note">Taxes & gratuity included</div>
 
-  // cargar reserva
-  (async () => {
-    try{
-      const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
-      const data = await resp.json();
-      if(!resp.ok || !data?.ok) throw new Error(data?.error || 'Not found');
+      <button id="btnRecalc">Recalculate</button>
+      <button id="btnSave" disabled>Save Changes</button>
+    </div>
 
-      const b = data.booking;
-      status.textContent = '';
-      card.style.display = 'block';
-      summary.innerHTML = `
-        <div><strong>CN:</strong> ${b.confirmation_number}</div>
-        <div><strong>Name:</strong> ${b.full_name}</div>
-        <div><strong>Pickup:</strong> ${b.pickup}</div>
-        <div><strong>Drop-off:</strong> ${b.dropoff}</div>
-        <div><strong>Date:</strong> ${b.date_iso} @ ${b.time_hhmm}</div>
-        <div><strong>Vehicle:</strong> ${b.vehicle_type}</div>
-        <div><strong>Total:</strong> $${b.quoted_total}</div>
-      `;
+    <!-- Card: Result -->
+    <div class="card" id="resultCard" style="display:none">
+      <h3 style="margin:0 0 8px;color:#ffddae">Result</h3>
+      <div id="result" class="hint"></div>
+    </div>
+  </main>
 
-      const minDt = earliestAllowedDt();
-      newDate.min = localISODate(minDt);
-      newDate.value = localISODate(minDt);
-      setTimeValue(newTime, minDt.getHours(), minDt.getMinutes());
-    } catch(err){
-      status.textContent = `Error: ${err.message}`;
-      status.classList.add('err');
+  <!-- Stripe -->
+  <script src="https://js.stripe.com/v3"></script>
+  <script>
+    /***** CONFIG *****/
+    const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
+    const stripe = Stripe(STRIPE_PK);
+
+    /***** STATE *****/
+    let booking = null;              // se llena con /api/book/get
+    let selectedVehicle = 'suv';     // por default
+    let mgChoice = 'none';           // 'none' | 'tsa_exit' | 'baggage_claim'
+
+    /***** HELPERS (misma lógica que tu index) *****/
+    function calculateBase(mi){
+      if (mi <= 10) return 120;
+      if (mi <= 35) return 190;
+      if (mi <= 39) return 210;
+      if (mi <= 48) return 230;
+      if (mi <= 55) return 250;
+      return mi * 5.4;
     }
-  })();
+    function applyVehicleMultiplier(total){
+      return (selectedVehicle === 'van') ? Math.round(total * 1.30) : total;
+    }
+    function getMGFee(){ return mgChoice !== 'none' ? 50 : 0; }
 
-  // enviar reprogramación
-  resForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    result.textContent = 'Sending...';
-    result.className = 'hint muted';
+    const OPERATING_START = "06:00";
+    const OPERATING_END   = "23:00";
+    function isAfterHours(dateStr, timeStr){
+      if(!dateStr || !timeStr) return false;
+      const d = new Date(`${dateStr}T${timeStr}:00`);
+      const [sh,sm] = OPERATING_START.split(':').map(Number);
+      const [eh,em] = OPERATING_END.split(':').map(Number);
+      const start = new Date(d); start.setHours(sh, sm, 0, 0);
+      const end   = new Date(d); end.setHours(eh, em, 0, 0);
+      return (d < start) || (d > end);
+    }
+    function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
+    function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
+    function earliestAllowedDt(){ return nextQuarter(new Date(Date.now() + 24*60*60*1000)); }
 
-    try{
-      const body = {
-        cn,
-        newDate: newDate.value,
-        newTime: newTime.value
-      };
-      const resp = await fetch('/api/book/reschedule', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
+    function fmtMoney(n){ return Number(n||0).toFixed(2); }
+
+    /***** UI REFS *****/
+    const el = id => document.getElementById(id);
+
+    /***** VEH & MG TOGGLES *****/
+    (function wireVehicle(){
+      const wrap = el('vehToggle');
+      wrap.querySelectorAll('.veh-btn').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          wrap.querySelectorAll('.veh-btn').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          selectedVehicle = b.dataset.type || 'suv';
+          recalc();
+        });
       });
-      const data = await resp.json();
-      if(!resp.ok || !data?.ok) throw new Error(data?.error || 'Failed');
+    })();
+    (function wireMG(){
+      const wrap = el('mgWrap');
+      function set(choice){
+        mgChoice = choice;
+        wrap.querySelectorAll('.mg-btn').forEach(x=>{
+          const on = x.dataset.choice===choice;
+          x.classList.toggle('active', on);
+          x.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        recalc();
+      }
+      wrap.querySelectorAll('.mg-btn').forEach(b=> b.addEventListener('click', ()=> set(b.dataset.choice)));
+    })();
 
-      result.textContent = 'Rescheduled successfully!';
-      result.className = 'hint ok';
-    } catch(err){
-      result.textContent = `Error: ${err.message}`;
-      result.className = 'hint err';
+    /***** DATE/TIME INIT *****/
+    (function mountDateTime(){
+      const dEl = el('newDate'), tEl = el('newTime');
+      const minDt = earliestAllowedDt();
+      const toISO = dt => { const off = dt.getTimezoneOffset()*60000; return new Date(dt.getTime()-off).toISOString().slice(0,10); };
+      if (dEl){ dEl.min = toISO(minDt); if(!dEl.value) dEl.value = toISO(minDt); }
+      if (tEl && !tEl.value){ tEl.value = String(minDt.getHours()).padStart(2,'0')+':'+String(minDt.getMinutes()).padStart(2,'0'); }
+      const upd = ()=>{
+        el('newDateHelp').textContent = dEl.value ? `Selected: ${new Date(dEl.value+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})} (min 24h)` : '';
+        el('newTimeHelp').textContent = tEl.value ? `Selected: ${tEl.value}` : '';
+      };
+      dEl?.addEventListener('change', upd); tEl?.addEventListener('change', upd); upd();
+    })();
+
+    /***** LOAD BY CN *****/
+    function getQueryCN(){
+      const u = new URL(window.location.href);
+      return (u.searchParams.get('cn')||'').trim();
     }
-  });
-})();
-</script>
+    async function loadBooking(cn){
+      el('loadHint').textContent = 'Loading booking...';
+      try{
+        const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+        const data = await resp.json();
+        if(!resp.ok || !data?.ok) throw new Error(data?.error || `Error ${resp.status}`);
+        booking = data.booking || data; // tolerante
+        // Pintar resumen
+        el('currentCard').style.display = 'block';
+        el('changeCard').style.display = 'block';
+
+        el('bookingSummary').innerHTML = `
+          <div><strong>Name:</strong> ${booking.fullname || '-'}</div>
+          <div><strong>Phone:</strong> ${booking.phone || '-'}</div>
+          <div><strong>Email:</strong> ${booking.email || '-'}</div>
+          <div><strong>Pickup:</strong> ${booking.pickup || '-'}</div>
+          <div><strong>Drop-off:</strong> ${booking.dropoff || '-'}</div>
+          <div><strong>Date/Time:</strong> ${booking.date || booking.date_iso || '-'} ${booking.time || booking.time_hhmm || ''}</div>
+          <div><strong>CN:</strong> ${booking.cn || cn}</div>
+        `;
+        // State base
+        selectedVehicle = (booking.vehicleType || 'suv');
+        document.querySelectorAll('.veh-btn').forEach(b=>{
+          b.classList.toggle('active', b.dataset.type === selectedVehicle);
+        });
+        // KPI
+        el('kpiVehicle').textContent = (selectedVehicle==='van'?'Van':'SUV');
+        el('kpiMiles').textContent = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
+        el('kpiOriginal').textContent = fmtMoney(booking.quotedTotal || 0);
+
+        // Meet & Greet visible solo si pickup fue SLC comercial (el backend puede guardarlo como boolean)
+        if (booking.originalPickupIsSLC === true) el('mgWrap').style.display = 'block';
+
+        // Prefill fecha/hora al menos 24h; si backend trae una fecha futura, la usamos respetando el min
+        const dEl = el('newDate'), tEl = el('newTime');
+        if (booking.date_iso) dEl.value = booking.date_iso;
+        if (booking.time_hhmm) tEl.value = booking.time_hhmm;
+
+        // Asegurar mínimo 24h
+        const minDt = earliestAllowedDt();
+        const minStr = localISODate(minDt);
+        if (dEl.value < minStr) { dEl.value = minStr; tEl.value = String(minDt.getHours()).padStart(2,'0')+':'+String(minDt.getMinutes()).padStart(2,'0'); }
+
+        el('loadHint').textContent = 'Booking loaded ✔︎';
+        recalc();
+      }catch(e){
+        el('loadHint').textContent = '❌ ' + (e.message || e);
+      }
+    }
+
+    /***** PRICE & DIFF *****/
+    function recalc(){
+      if(!booking) return;
+      const miles = Number(booking.distanceMiles || 0);
+      const base = calculateBase(miles);
+      const dateStr = el('newDate').value;
+      const timeStr = el('newTime').value;
+      const afterHours = isAfterHours(dateStr, timeStr);
+      const ahFee = afterHours ? (base * 0.20) : 0;
+      const mgFee = getMGFee();
+      const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
+      const original = Number(booking.quotedTotal || 0);
+      const diff = Math.round((newTotal - original) * 100) / 100;
+
+      el('kpiNew').textContent  = fmtMoney(newTotal);
+      el('kpiDiff').textContent = fmtMoney(diff);
+      el('kpiAH').textContent   = afterHours ? 'Yes (+20%)' : 'No';
+
+      // Breakdown
+      const rows = [];
+      if (ahFee>0) rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
+      if (mgFee>0) rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
+      rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
+      el('breakdown').innerHTML = rows.join('');
+
+      // Habilitar guardar siempre que haya fecha/hora válidas (min 24h)
+      const canSave = Boolean(dateStr && timeStr);
+      el('btnSave').disabled = !canSave;
+      // Guardamos en memoria para el submit
+      booking.__calc = { newTotal, diff, afterHours, ahFee, mgFee, miles, selectedVehicle, mgChoice };
+    }
+
+    el('btnRecalc').addEventListener('click', recalc);
+    el('newDate').addEventListener('change', recalc);
+    el('newTime').addEventListener('change', recalc);
+
+    /***** SAVE (con Stripe si hay diferencia positiva) *****/
+    el('btnSave').addEventListener('click', async ()=>{
+      if(!booking) return;
+      const d = el('newDate').value;
+      const t = el('newTime').value;
+      if(!d || !t) { alert('Please choose a Date & Time'); return; }
+
+      const { diff, newTotal, afterHours, mgFee } = booking.__calc || {};
+      const payload = {
+        cn: booking.cn,
+        newDate: d,
+        newTime: t,
+        vehicleType: selectedVehicle,
+        meetGreet: mgChoice,
+        // por si tu backend quiere recalcular/validar:
+        distanceMiles: booking.distanceMiles || null,
+        newQuotedTotal: newTotal,
+        flags: { afterHours, mgFee }
+      };
+
+      el('resultCard').style.display = 'block';
+      el('result').className = 'hint';
+      el('result').textContent = 'Saving changes...';
+
+      try{
+        // 1) Guardar la reprogramación
+        const resp = await fetch('/api/book/reschedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json().catch(()=>({}));
+        if (!resp.ok || !data?.ok) throw new Error(data?.error || `Bad response (${resp.status})`);
+
+        // 2) Si hay diferencia a pagar → Stripe
+        if (diff > 0){
+          el('result').textContent = `New total $${fmtMoney(newTotal)}. You need to pay $${fmtMoney(diff)} to confirm. Redirecting to payment...`;
+          const sessionPayload = {
+            amount: Math.round(diff * 100),
+            purpose: 'reschedule-diff',
+            cn: booking.cn,
+            fullname: booking.fullname,
+            email: booking.email,
+            phone: booking.phone
+          };
+          const pResp = await fetch('/api/create-checkout-session', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(sessionPayload)
+          });
+          const pData = await pResp.json().catch(()=>({}));
+          if(!pResp.ok || !pData?.id) throw new Error(pData?.error || `Bad payment response (${pResp.status})`);
+          const { error } = await stripe.redirectToCheckout({ sessionId: pData.id });
+          if (error) throw error;
+          return; // si Stripe redirige, aquí no seguimos
+        }
+
+        // 3) Si no hay diferencia (o es negativa) → Mensaje de confirmación
+        if (diff === 0){
+          el('result').className = 'hint ok';
+          el('result').textContent = `✅ Rescheduled to ${d} ${t}. Price unchanged.`;
+        } else { // diff < 0
+          el('result').className = 'hint ok';
+          el('result').textContent = `✅ Rescheduled to ${d} ${t}. New price is lower. A credit/refund of $${fmtMoney(Math.abs(diff))} will be issued via bank transfer.`;
+        }
+      }catch(e){
+        el('result').className = 'hint err';
+        el('result').textContent = '❌ ' + (e.message || e);
+      }
+    });
+
+    /***** LOAD BTN & URL PARAM *****/
+    el('btnLoad').addEventListener('click', ()=>{
+      const cn = el('cn').value.trim();
+      if(!cn){ el('cn').classList.add('invalid'); return; }
+      loadBooking(cn);
+      // actualiza URL
+      const u = new URL(window.location.href);
+      u.searchParams.set('cn', cn);
+      window.history.replaceState({}, '', u.toString());
+    });
+
+    // Autoload si viene ?cn=...
+    (function(){
+      const cn = getQueryCN();
+      if (cn){
+        el('cn').value = cn;
+        loadBooking(cn);
+      } else {
+        el('loadHint').textContent = 'Enter your confirmation number (CN) and click Load.';
+      }
+    })();
+  </script>
 </body>
 </html>
