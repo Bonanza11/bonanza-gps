@@ -65,7 +65,7 @@
     <div class="card" id="loadCard">
       <label for="cn">Reservation Code (CN)</label>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input id="cn" placeholder="BZ-20250821-ABCD" style="flex:1 1 auto"/>
+        <input id="cn" placeholder="BZ-20250821-ABCD" style="flex:1 1 auto" autocomplete="off"/>
         <button id="btnLoad" style="width:auto;padding:10px 14px;">Load</button>
       </div>
       <div id="loadHint" class="hint muted"></div>
@@ -81,9 +81,10 @@
         <div class="kpi"><div class="label">Distance</div><div class="value"><span id="kpiMiles">—</span> mi</div></div>
         <div class="kpi"><div class="label">Original Total</div><div class="value">$<span id="kpiOriginal">—</span></div></div>
       </div>
+      <div id="reschedWarn" class="hint warn" style="display:none"></div>
     </div>
 
-    <!-- CHANGES: date/time + vehicle + addresses + map -->
+    <!-- CHANGES -->
     <div class="card" id="changeCard" style="display:none">
       <h3 style="margin:0 0 8px;color:#ffddae">Change Date, Time & Route</h3>
 
@@ -101,10 +102,11 @@
       </div>
 
       <label style="margin-top:10px">Pickup</label>
-      <input id="pickup" placeholder="e.g. SLC Airport"/>
+      <input id="pickup" placeholder="e.g. SLC Airport" autocomplete="off"/>
       <label style="margin-top:10px">Drop-off</label>
-      <input id="dropoff" placeholder="e.g. Montage Deer Valley"/>
+      <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="off"/>
 
+      <!-- ÚNICO BOTÓN DE CÁLCULO -->
       <button id="btnRoute" style="margin-top:12px">Calculate Route</button>
       <div id="map"></div>
 
@@ -137,8 +139,9 @@
       <div id="breakdown" style="margin-top:6px"></div>
       <div class="tax-note">Taxes & gratuity included</div>
 
-      <button id="btnRecalc">Recalculate</button>
+      <!-- YA NO EXISTE RECALCULATE -->
       <button id="btnSave" disabled>Save Changes</button>
+      <div id="saveHint" class="hint muted">First, click “Calculate Route” to generate your full quote.</div>
     </div>
 
     <div class="card" id="resultCard" style="display:none">
@@ -154,6 +157,7 @@
     /***** CONFIG *****/
     const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
     const stripe = Stripe(STRIPE_PK);
+    const MAX_RESCHEDULES = 2;
 
     /***** STATE *****/
     let booking = null;
@@ -162,6 +166,12 @@
     let map, directionsService, directionsRenderer;
     let pickupPlace = null, dropoffPlace = null;
     let routeMiles = null; // millas calculadas por Maps
+    let calculatedOnce = false; // habilita Save después del primer cálculo
+    let reachedLimit = false;   // si superó el máximo de reschedules
+
+    /***** UTIL *****/
+    function fmtMoney(n){ return Number(n||0).toFixed(2); }
+    const el = id => document.getElementById(id);
 
     /***** PRICING (igual a tu base) *****/
     function calculateBase(mi){
@@ -189,10 +199,7 @@
       return (d < start) || (d > end);
     }
     function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
-    function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
     function earliestAllowedDt(){ return nextQuarter(new Date(Date.now() + 24*60*60*1000)); }
-    function fmtMoney(n){ return Number(n||0).toFixed(2); }
-    const el = id => document.getElementById(id);
 
     /***** Meet & Greet visibilidad (SLC comercial) *****/
     const FBO_RX = /\b(fbo|million air|signature|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
@@ -208,7 +215,10 @@
     function updateMeetGreetVisibility(){
       const show = selectedVehicle==='suv' && (isSLCInternational(pickupPlace||null));
       el('mgWrap').style.display = show ? 'block' : 'none';
-      if (!show){ mgChoice='none'; document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{b.classList.toggle('active', b.dataset.choice==='none');}); }
+      if (!show){
+        mgChoice='none';
+        document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{b.classList.toggle('active', b.dataset.choice==='none');});
+      }
     }
 
     /***** DATE/TIME INIT *****/
@@ -222,8 +232,8 @@
         el('newDateHelp').textContent = dEl.value ? `Selected: ${new Date(dEl.value+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})} (min 24h)` : '';
         el('newTimeHelp').textContent = tEl.value ? `Selected: ${tEl.value}` : '';
       };
-      dEl?.addEventListener('change', ()=>{upd(); recalc();});
-      tEl?.addEventListener('change', ()=>{upd(); recalc();});
+      dEl?.addEventListener('change', ()=>{upd(); if(calculatedOnce) recalc();});
+      tEl?.addEventListener('change', ()=>{upd(); if(calculatedOnce) recalc();});
       upd();
     })();
 
@@ -236,7 +246,7 @@
           b.classList.add('active');
           selectedVehicle = b.dataset.type || 'suv';
           updateMeetGreetVisibility();
-          recalc();
+          if(calculatedOnce) recalc();
         });
       });
     })();
@@ -249,13 +259,28 @@
           x.classList.toggle('active', on);
           x.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
-        recalc();
+        if(calculatedOnce) recalc();
       }
       wrap.querySelectorAll('.mg-btn').forEach(b=> b.addEventListener('click', ()=> set(b.dataset.choice)));
     })();
 
     /***** LOAD BY CN *****/
     function getQueryCN(){ const u = new URL(window.location.href); return (u.searchParams.get('cn')||'').trim(); }
+    function extractRescheduleCount(bk){
+      // soporta distintas propiedades posibles del backend
+      if (typeof bk?.reschedulesCount === 'number') return bk.reschedulesCount;
+      if (Array.isArray(bk?.reschedules)) return bk.reschedules.length;
+      if (typeof bk?.reschedules_count === 'number') return bk.reschedules_count;
+      return 0;
+    }
+    function lockForLimit(){
+      reachedLimit = true;
+      // Deshabilitar todos los inputs y botones salvo el Load
+      document.querySelectorAll('#changeCard input, #changeCard .veh-btn, #changeCard .mg-btn, #btnRoute, #btnSave')
+        .forEach(n=>{ n.setAttribute('disabled','disabled'); n.classList.add('muted'); });
+      el('saveHint').textContent = 'You have reached the maximum number of reschedules for this reservation.';
+    }
+
     async function loadBooking(cn){
       el('loadHint').textContent = 'Loading booking...';
       try{
@@ -263,7 +288,8 @@
         const data = await resp.json();
         if(!resp.ok || !data?.ok) throw new Error(data?.error || `Error ${resp.status}`);
         booking = data.booking || data;
-        // Pintar resumen
+
+        // pintar resumen
         el('currentCard').style.display = 'block';
         el('changeCard').style.display = 'block';
 
@@ -276,24 +302,39 @@
           <div><strong>Date/Time:</strong> ${(booking.date_iso||booking.date||'-')} ${(booking.time_hhmm||booking.time||'')}</div>
           <div><strong>CN:</strong> ${booking.cn || cn}</div>
         `;
+
         selectedVehicle = (booking.vehicleType || 'suv');
         document.querySelectorAll('.veh-btn').forEach(b=> b.classList.toggle('active', b.dataset.type===selectedVehicle));
         el('kpiVehicle').textContent = (selectedVehicle==='van'?'Van':'SUV');
         el('kpiMiles').textContent   = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
         el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || 0);
 
-        // Prefill campos de dirección con los originales (se pueden cambiar)
+        // Prefill direcciones con los originales
         el('pickup').value  = booking.pickup || '';
         el('dropoff').value = booking.dropoff || '';
 
+        // Límite de reschedules
+        const used = extractRescheduleCount(booking);
+        if (used >= MAX_RESCHEDULES){
+          el('reschedWarn').style.display = 'block';
+          el('reschedWarn').textContent = `Limit reached: you have already rescheduled ${used} time(s). Further changes are not allowed.`;
+          lockForLimit();
+        } else {
+          el('reschedWarn').style.display = 'block';
+          el('reschedWarn').textContent = `You have used ${used}/${MAX_RESCHEDULES} reschedules.`;
+        }
+
         el('loadHint').textContent = 'Booking loaded ✔︎';
-        recalc(); // primer cálculo con distancia original, si la hay
+        // No calculamos automáticamente; exigimos que el usuario pulse "Calculate Route"
+        calculatedOnce = false;
+        el('btnSave').disabled = true;
+        el('saveHint').textContent = 'First, click “Calculate Route” to generate your full quote.';
       }catch(e){
         el('loadHint').textContent = '❌ ' + (e.message || e);
       }
     }
 
-    /***** PRICE & DIFF *****/
+    /***** PRICE ENGINE *****/
     function currentMiles(){
       // si hay ruta nueva, usamos esa; si no, caemos al valor original
       if (routeMiles != null) return routeMiles;
@@ -318,25 +359,33 @@
       el('kpiMiles').textContent= miles ? miles.toFixed(1) : '—';
 
       const rows = [];
+      rows.push(`<div class="row"><span>Base (${miles?miles.toFixed(1):'—'} mi)</span><span>$${fmtMoney(base)}</span></div>`);
       if (ahFee>0) rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
       if (mgFee>0) rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
       rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
       el('breakdown').innerHTML = rows.join('');
-      el('btnSave').disabled = !(dateStr && timeStr);
-      booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice };
+
+      booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice, dateStr, timeStr };
+
+      // habilitar Save si ya hubo primer cálculo y hay fecha/hora
+      const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
+      el('btnSave').disabled = !canSave;
     }
 
     /***** SAVE (Stripe si diff > 0) *****/
     el('btnSave').addEventListener('click', async ()=>{
-      if(!booking) return;
-      const d = el('newDate').value, t = el('newTime').value;
-      if(!d || !t) { alert('Please choose a Date & Time'); return; }
+      if(!booking || reachedLimit) return;
 
-      const { diff, newTotal, afterHours, miles, mgFee } = booking.__calc || {};
+      const { diff, newTotal, afterHours, miles, mgFee, dateStr, timeStr } = booking.__calc || {};
+      if(!dateStr || !timeStr){
+        alert('Please choose a Date & Time (min 24h).');
+        return;
+      }
+
       const payload = {
         cn: booking.cn,
-        newDate: d,
-        newTime: t,
+        newDate: dateStr,
+        newTime: timeStr,
         vehicleType: selectedVehicle,
         meetGreet: mgChoice,
         distanceMiles: miles || null,
@@ -380,10 +429,10 @@
 
         if (diff === 0){
           el('result').className = 'hint ok';
-          el('result').textContent = `✅ Rescheduled to ${d} ${t}. Price unchanged.`;
+          el('result').textContent = `✅ Rescheduled to ${dateStr} ${timeStr}. Price unchanged.`;
         } else {
           el('result').className = 'hint ok';
-          el('result').textContent = `✅ Rescheduled to ${d} ${t}. New price is lower. A credit/refund of $${fmtMoney(Math.abs(diff))} will be issued via bank transfer.`;
+          el('result').textContent = `✅ Rescheduled to ${dateStr} ${timeStr}. New price is lower. A credit/refund of $${fmtMoney(Math.abs(diff))} will be issued.`;
         }
       }catch(e){
         el('result').className = 'hint err';
@@ -404,7 +453,7 @@
       else { el('loadHint').textContent = 'Enter your confirmation number (CN) and click Load.'; }
     })();
 
-    /***** MAPS + AUTOCOMPLETE + ROUTE *****/
+    /***** MAPS + AUTOCOMPLETE + ROUTE (ÚNICO BOTÓN) *****/
     function routeAsync(opts){
       return new Promise((res,rej)=>{
         directionsService.route(opts,(r,s)=> s==='OK'&&r?res(r):rej(s||'ROUTE_ERROR'));
@@ -430,25 +479,43 @@
         dropoffPlace = acDropoff.getPlace() || null;
       });
 
+      // Único botón que hace TODO el cálculo
       document.getElementById('btnRoute').addEventListener('click', async ()=>{
-        if(!pickupPlace?.place_id || !dropoffPlace?.place_id){
-          alert('Please select both addresses from the suggestions.');
-          return;
+        if(reachedLimit) return;
+
+        // Si el usuario eligió direcciones nuevas -> calculamos ruta y distancia
+        if(pickupPlace?.place_id && dropoffPlace?.place_id){
+          try{
+            const trip = await routeAsync({
+              origin:{placeId: pickupPlace.place_id},
+              destination:{placeId: dropoffPlace.place_id},
+              travelMode: google.maps.TravelMode.DRIVING
+            });
+            directionsRenderer.setDirections(trip);
+            const leg = trip.routes[0].legs[0];
+            routeMiles = leg.distance.value / 1609.34;
+          }catch(err){
+            alert('Could not calculate route: ' + err);
+            return;
+          }
+        } else {
+          // Si no hay nuevas direcciones, usamos la distancia original para el cálculo
+          if(!booking){
+            alert('Load your booking first.');
+            return;
+          }
+          routeMiles = null; // fuerza uso de booking.distanceMiles
         }
-        try{
-          const trip = await routeAsync({
-            origin:{placeId: pickupPlace.place_id},
-            destination:{placeId: dropoffPlace.place_id},
-            travelMode: google.maps.TravelMode.DRIVING
-          });
-          directionsRenderer.setDirections(trip);
-          const leg = trip.routes[0].legs[0];
-          routeMiles = leg.distance.value / 1609.34;
-          updateMeetGreetVisibility(); // por si el pickup ahora es SLC
-          recalc();
-        }catch(err){
-          alert('Could not calculate route: ' + err);
-        }
+
+        updateMeetGreetVisibility(); // por si el pickup ahora es SLC
+        calculatedOnce = true;
+        recalc();
+
+        // Habilita el guardado si ya hay fecha/hora
+        const dOk = !!el('newDate').value;
+        const tOk = !!el('newTime').value;
+        el('btnSave').disabled = !(dOk && tOk) || reachedLimit;
+        el('saveHint').textContent = 'Review the quote and click “Save Changes” to confirm.';
       });
     }
     window.initMapReschedule = initMapReschedule;
