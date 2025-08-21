@@ -14,7 +14,7 @@
       box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
       filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
     }
-    main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
+    main{max-width:820px;width:92vw;margin:0 auto 40px;padding:0 16px}
     h1{margin:0 0 8px;color:#ffddae;font-size:1.35rem}
     .card{border:1px solid rgba(168,116,79,.45);border-radius:14px;background:linear-gradient(180deg,#121212,#0b0b0b);
       box-shadow:0 12px 28px rgba(0,0,0,.45);padding:16px;margin:12px 0}
@@ -50,6 +50,7 @@
     .tax-note{font-size:13px;color:#c9a97c;font-style:italic;text-align:right;opacity:.85}
     .muted{opacity:.8}
     .invalid{border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(255,107,107,.25) !important;}
+    #map{height:360px;border-radius:12px;overflow:hidden;margin-top:10px}
   </style>
 </head>
 <body>
@@ -59,6 +60,8 @@
 
   <main>
     <h1>Reschedule</h1>
+
+    <!-- LOAD -->
     <div class="card" id="loadCard">
       <label for="cn">Reservation Code (CN)</label>
       <div style="display:flex; gap:8px; align-items:center;">
@@ -68,7 +71,7 @@
       <div id="loadHint" class="hint muted"></div>
     </div>
 
-    <!-- Card: Current booking -->
+    <!-- CURRENT -->
     <div class="card" id="currentCard" style="display:none">
       <h3 style="margin:0 0 8px;color:#ffddae">Current Booking</h3>
       <div id="bookingSummary" class="muted" style="line-height:1.5"></div>
@@ -80,9 +83,10 @@
       </div>
     </div>
 
-    <!-- Card: Make changes -->
+    <!-- CHANGES: date/time + vehicle + addresses + map -->
     <div class="card" id="changeCard" style="display:none">
-      <h3 style="margin:0 0 8px;color:#ffddae">Change Date & Time</h3>
+      <h3 style="margin:0 0 8px;color:#ffddae">Change Date, Time & Route</h3>
+
       <div class="input-row">
         <div>
           <label for="newDate">New Date</label>
@@ -96,14 +100,22 @@
         </div>
       </div>
 
-      <!-- Vehicle toggle (por si el cliente quiere cambiar vehículo en la reprogramación) -->
+      <label style="margin-top:10px">Pickup</label>
+      <input id="pickup" placeholder="e.g. SLC Airport"/>
+      <label style="margin-top:10px">Drop-off</label>
+      <input id="dropoff" placeholder="e.g. Montage Deer Valley"/>
+
+      <button id="btnRoute" style="margin-top:12px">Calculate Route</button>
+      <div id="map"></div>
+
+      <!-- Vehicle -->
       <label style="margin-top:14px">Vehicle</label>
       <div class="veh-toggle" id="vehToggle">
         <div class="veh-btn active" data-type="suv">SUV (1–5)</div>
         <div class="veh-btn" data-type="van">Van (up to 12)</div>
       </div>
 
-      <!-- Meet & Greet (solo para SLC; visible si booking.originalPickupIsSLC === true) -->
+      <!-- Meet & Greet (SLC only) -->
       <div id="mgWrap" style="display:none; margin-top:10px;">
         <label>Meet & Greet — SLC Only</label>
         <div class="mg-options">
@@ -129,7 +141,6 @@
       <button id="btnSave" disabled>Save Changes</button>
     </div>
 
-    <!-- Card: Result -->
     <div class="card" id="resultCard" style="display:none">
       <h3 style="margin:0 0 8px;color:#ffddae">Result</h3>
       <div id="result" class="hint"></div>
@@ -138,17 +149,21 @@
 
   <!-- Stripe -->
   <script src="https://js.stripe.com/v3"></script>
+
   <script>
     /***** CONFIG *****/
     const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
     const stripe = Stripe(STRIPE_PK);
 
     /***** STATE *****/
-    let booking = null;              // se llena con /api/book/get
-    let selectedVehicle = 'suv';     // por default
-    let mgChoice = 'none';           // 'none' | 'tsa_exit' | 'baggage_claim'
+    let booking = null;
+    let selectedVehicle = 'suv';
+    let mgChoice = 'none';
+    let map, directionsService, directionsRenderer;
+    let pickupPlace = null, dropoffPlace = null;
+    let routeMiles = null; // millas calculadas por Maps
 
-    /***** HELPERS (misma lógica que tu index) *****/
+    /***** PRICING (igual a tu base) *****/
     function calculateBase(mi){
       if (mi <= 10) return 120;
       if (mi <= 35) return 190;
@@ -176,11 +191,41 @@
     function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
     function localISODate(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
     function earliestAllowedDt(){ return nextQuarter(new Date(Date.now() + 24*60*60*1000)); }
-
     function fmtMoney(n){ return Number(n||0).toFixed(2); }
-
-    /***** UI REFS *****/
     const el = id => document.getElementById(id);
+
+    /***** Meet & Greet visibilidad (SLC comercial) *****/
+    const FBO_RX = /\b(fbo|million air|signature|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
+    function isAirport(place){ return (place?.types||[]).includes('airport') || /airport/i.test(place?.name||place?.formatted_address||''); }
+    function isUtah(place){ const a=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(a) || /, ut(ah)?\b/.test(a); }
+    function isPrivateUtahAirport(place){ if(!place) return false; if(!isAirport(place) || !isUtah(place)) return false; const t=`${place.name||''} ${place.formatted_address||''}`; return FBO_RX.test(t); }
+    function isSLCInternational(place){
+      if(!place) return false;
+      const name=(place.name||'').toLowerCase(), addr=(place.formatted_address||'').toLowerCase();
+      const hits=/salt lake city international/.test(name)||/\bslc\b/.test(name)||/salt lake city international/.test(addr)||/\bslc\b/.test(addr);
+      return hits && isAirport(place) && !isPrivateUtahAirport(place);
+    }
+    function updateMeetGreetVisibility(){
+      const show = selectedVehicle==='suv' && (isSLCInternational(pickupPlace||null));
+      el('mgWrap').style.display = show ? 'block' : 'none';
+      if (!show){ mgChoice='none'; document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{b.classList.toggle('active', b.dataset.choice==='none');}); }
+    }
+
+    /***** DATE/TIME INIT *****/
+    (function mountDateTime(){
+      const dEl = el('newDate'), tEl = el('newTime');
+      const minDt = earliestAllowedDt();
+      const toISO = dt => { const off = dt.getTimezoneOffset()*60000; return new Date(dt.getTime()-off).toISOString().slice(0,10); };
+      if (dEl){ dEl.min = toISO(minDt); if(!dEl.value) dEl.value = toISO(minDt); }
+      if (tEl && !tEl.value){ tEl.value = String(minDt.getHours()).padStart(2,'0')+':'+String(minDt.getMinutes()).padStart(2,'0'); }
+      const upd = ()=>{
+        el('newDateHelp').textContent = dEl.value ? `Selected: ${new Date(dEl.value+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})} (min 24h)` : '';
+        el('newTimeHelp').textContent = tEl.value ? `Selected: ${tEl.value}` : '';
+      };
+      dEl?.addEventListener('change', ()=>{upd(); recalc();});
+      tEl?.addEventListener('change', ()=>{upd(); recalc();});
+      upd();
+    })();
 
     /***** VEH & MG TOGGLES *****/
     (function wireVehicle(){
@@ -190,6 +235,7 @@
           wrap.querySelectorAll('.veh-btn').forEach(x=>x.classList.remove('active'));
           b.classList.add('active');
           selectedVehicle = b.dataset.type || 'suv';
+          updateMeetGreetVisibility();
           recalc();
         });
       });
@@ -208,32 +254,15 @@
       wrap.querySelectorAll('.mg-btn').forEach(b=> b.addEventListener('click', ()=> set(b.dataset.choice)));
     })();
 
-    /***** DATE/TIME INIT *****/
-    (function mountDateTime(){
-      const dEl = el('newDate'), tEl = el('newTime');
-      const minDt = earliestAllowedDt();
-      const toISO = dt => { const off = dt.getTimezoneOffset()*60000; return new Date(dt.getTime()-off).toISOString().slice(0,10); };
-      if (dEl){ dEl.min = toISO(minDt); if(!dEl.value) dEl.value = toISO(minDt); }
-      if (tEl && !tEl.value){ tEl.value = String(minDt.getHours()).padStart(2,'0')+':'+String(minDt.getMinutes()).padStart(2,'0'); }
-      const upd = ()=>{
-        el('newDateHelp').textContent = dEl.value ? `Selected: ${new Date(dEl.value+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})} (min 24h)` : '';
-        el('newTimeHelp').textContent = tEl.value ? `Selected: ${tEl.value}` : '';
-      };
-      dEl?.addEventListener('change', upd); tEl?.addEventListener('change', upd); upd();
-    })();
-
     /***** LOAD BY CN *****/
-    function getQueryCN(){
-      const u = new URL(window.location.href);
-      return (u.searchParams.get('cn')||'').trim();
-    }
+    function getQueryCN(){ const u = new URL(window.location.href); return (u.searchParams.get('cn')||'').trim(); }
     async function loadBooking(cn){
       el('loadHint').textContent = 'Loading booking...';
       try{
         const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
         const data = await resp.json();
         if(!resp.ok || !data?.ok) throw new Error(data?.error || `Error ${resp.status}`);
-        booking = data.booking || data; // tolerante
+        booking = data.booking || data;
         // Pintar resumen
         el('currentCard').style.display = 'block';
         el('changeCard').style.display = 'block';
@@ -244,44 +273,36 @@
           <div><strong>Email:</strong> ${booking.email || '-'}</div>
           <div><strong>Pickup:</strong> ${booking.pickup || '-'}</div>
           <div><strong>Drop-off:</strong> ${booking.dropoff || '-'}</div>
-          <div><strong>Date/Time:</strong> ${booking.date || booking.date_iso || '-'} ${booking.time || booking.time_hhmm || ''}</div>
+          <div><strong>Date/Time:</strong> ${(booking.date_iso||booking.date||'-')} ${(booking.time_hhmm||booking.time||'')}</div>
           <div><strong>CN:</strong> ${booking.cn || cn}</div>
         `;
-        // State base
         selectedVehicle = (booking.vehicleType || 'suv');
-        document.querySelectorAll('.veh-btn').forEach(b=>{
-          b.classList.toggle('active', b.dataset.type === selectedVehicle);
-        });
-        // KPI
+        document.querySelectorAll('.veh-btn').forEach(b=> b.classList.toggle('active', b.dataset.type===selectedVehicle));
         el('kpiVehicle').textContent = (selectedVehicle==='van'?'Van':'SUV');
-        el('kpiMiles').textContent = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
-        el('kpiOriginal').textContent = fmtMoney(booking.quotedTotal || 0);
+        el('kpiMiles').textContent   = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
+        el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || 0);
 
-        // Meet & Greet visible solo si pickup fue SLC comercial (el backend puede guardarlo como boolean)
-        if (booking.originalPickupIsSLC === true) el('mgWrap').style.display = 'block';
-
-        // Prefill fecha/hora al menos 24h; si backend trae una fecha futura, la usamos respetando el min
-        const dEl = el('newDate'), tEl = el('newTime');
-        if (booking.date_iso) dEl.value = booking.date_iso;
-        if (booking.time_hhmm) tEl.value = booking.time_hhmm;
-
-        // Asegurar mínimo 24h
-        const minDt = earliestAllowedDt();
-        const minStr = localISODate(minDt);
-        if (dEl.value < minStr) { dEl.value = minStr; tEl.value = String(minDt.getHours()).padStart(2,'0')+':'+String(minDt.getMinutes()).padStart(2,'0'); }
+        // Prefill campos de dirección con los originales (se pueden cambiar)
+        el('pickup').value  = booking.pickup || '';
+        el('dropoff').value = booking.dropoff || '';
 
         el('loadHint').textContent = 'Booking loaded ✔︎';
-        recalc();
+        recalc(); // primer cálculo con distancia original, si la hay
       }catch(e){
         el('loadHint').textContent = '❌ ' + (e.message || e);
       }
     }
 
     /***** PRICE & DIFF *****/
+    function currentMiles(){
+      // si hay ruta nueva, usamos esa; si no, caemos al valor original
+      if (routeMiles != null) return routeMiles;
+      return Number(booking?.distanceMiles || 0);
+    }
     function recalc(){
       if(!booking) return;
-      const miles = Number(booking.distanceMiles || 0);
-      const base = calculateBase(miles);
+      const miles = currentMiles();
+      const base  = calculateBase(miles || 0);
       const dateStr = el('newDate').value;
       const timeStr = el('newTime').value;
       const afterHours = isAfterHours(dateStr, timeStr);
@@ -294,41 +315,31 @@
       el('kpiNew').textContent  = fmtMoney(newTotal);
       el('kpiDiff').textContent = fmtMoney(diff);
       el('kpiAH').textContent   = afterHours ? 'Yes (+20%)' : 'No';
+      el('kpiMiles').textContent= miles ? miles.toFixed(1) : '—';
 
-      // Breakdown
       const rows = [];
       if (ahFee>0) rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
       if (mgFee>0) rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
       rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
       el('breakdown').innerHTML = rows.join('');
-
-      // Habilitar guardar siempre que haya fecha/hora válidas (min 24h)
-      const canSave = Boolean(dateStr && timeStr);
-      el('btnSave').disabled = !canSave;
-      // Guardamos en memoria para el submit
-      booking.__calc = { newTotal, diff, afterHours, ahFee, mgFee, miles, selectedVehicle, mgChoice };
+      el('btnSave').disabled = !(dateStr && timeStr);
+      booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice };
     }
 
-    el('btnRecalc').addEventListener('click', recalc);
-    el('newDate').addEventListener('change', recalc);
-    el('newTime').addEventListener('change', recalc);
-
-    /***** SAVE (con Stripe si hay diferencia positiva) *****/
+    /***** SAVE (Stripe si diff > 0) *****/
     el('btnSave').addEventListener('click', async ()=>{
       if(!booking) return;
-      const d = el('newDate').value;
-      const t = el('newTime').value;
+      const d = el('newDate').value, t = el('newTime').value;
       if(!d || !t) { alert('Please choose a Date & Time'); return; }
 
-      const { diff, newTotal, afterHours, mgFee } = booking.__calc || {};
+      const { diff, newTotal, afterHours, miles, mgFee } = booking.__calc || {};
       const payload = {
         cn: booking.cn,
         newDate: d,
         newTime: t,
         vehicleType: selectedVehicle,
         meetGreet: mgChoice,
-        // por si tu backend quiere recalcular/validar:
-        distanceMiles: booking.distanceMiles || null,
+        distanceMiles: miles || null,
         newQuotedTotal: newTotal,
         flags: { afterHours, mgFee }
       };
@@ -338,7 +349,6 @@
       el('result').textContent = 'Saving changes...';
 
       try{
-        // 1) Guardar la reprogramación
         const resp = await fetch('/api/book/reschedule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -347,34 +357,31 @@
         const data = await resp.json().catch(()=>({}));
         if (!resp.ok || !data?.ok) throw new Error(data?.error || `Bad response (${resp.status})`);
 
-        // 2) Si hay diferencia a pagar → Stripe
         if (diff > 0){
           el('result').textContent = `New total $${fmtMoney(newTotal)}. You need to pay $${fmtMoney(diff)} to confirm. Redirecting to payment...`;
-          const sessionPayload = {
-            amount: Math.round(diff * 100),
-            purpose: 'reschedule-diff',
-            cn: booking.cn,
-            fullname: booking.fullname,
-            email: booking.email,
-            phone: booking.phone
-          };
           const pResp = await fetch('/api/create-checkout-session', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(sessionPayload)
+            body: JSON.stringify({
+              amount: Math.round(diff * 100),
+              purpose: 'reschedule-diff',
+              cn: booking.cn,
+              fullname: booking.fullname,
+              email: booking.email,
+              phone: booking.phone
+            })
           });
           const pData = await pResp.json().catch(()=>({}));
           if(!pResp.ok || !pData?.id) throw new Error(pData?.error || `Bad payment response (${pResp.status})`);
           const { error } = await stripe.redirectToCheckout({ sessionId: pData.id });
           if (error) throw error;
-          return; // si Stripe redirige, aquí no seguimos
+          return;
         }
 
-        // 3) Si no hay diferencia (o es negativa) → Mensaje de confirmación
         if (diff === 0){
           el('result').className = 'hint ok';
           el('result').textContent = `✅ Rescheduled to ${d} ${t}. Price unchanged.`;
-        } else { // diff < 0
+        } else {
           el('result').className = 'hint ok';
           el('result').textContent = `✅ Rescheduled to ${d} ${t}. New price is lower. A credit/refund of $${fmtMoney(Math.abs(diff))} will be issued via bank transfer.`;
         }
@@ -389,22 +396,65 @@
       const cn = el('cn').value.trim();
       if(!cn){ el('cn').classList.add('invalid'); return; }
       loadBooking(cn);
-      // actualiza URL
-      const u = new URL(window.location.href);
-      u.searchParams.set('cn', cn);
-      window.history.replaceState({}, '', u.toString());
+      const u = new URL(window.location.href); u.searchParams.set('cn', cn); window.history.replaceState({}, '', u.toString());
     });
-
-    // Autoload si viene ?cn=...
     (function(){
       const cn = getQueryCN();
-      if (cn){
-        el('cn').value = cn;
-        loadBooking(cn);
-      } else {
-        el('loadHint').textContent = 'Enter your confirmation number (CN) and click Load.';
-      }
+      if (cn){ el('cn').value = cn; loadBooking(cn); }
+      else { el('loadHint').textContent = 'Enter your confirmation number (CN) and click Load.'; }
     })();
+
+    /***** MAPS + AUTOCOMPLETE + ROUTE *****/
+    function routeAsync(opts){
+      return new Promise((res,rej)=>{
+        directionsService.route(opts,(r,s)=> s==='OK'&&r?res(r):rej(s||'ROUTE_ERROR'));
+      });
+    }
+    function initMapReschedule(){
+      map = new google.maps.Map(document.getElementById('map'), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map });
+
+      const opts = {
+        componentRestrictions:{country:['us']},
+        fields:["place_id","name","types","formatted_address","geometry","address_components"]
+      };
+      const acPickup  = new google.maps.places.Autocomplete(document.getElementById('pickup'),  opts);
+      const acDropoff = new google.maps.places.Autocomplete(document.getElementById('dropoff'), opts);
+
+      acPickup.addListener('place_changed', ()=>{
+        pickupPlace = acPickup.getPlace() || null;
+        updateMeetGreetVisibility();
+      });
+      acDropoff.addListener('place_changed', ()=>{
+        dropoffPlace = acDropoff.getPlace() || null;
+      });
+
+      document.getElementById('btnRoute').addEventListener('click', async ()=>{
+        if(!pickupPlace?.place_id || !dropoffPlace?.place_id){
+          alert('Please select both addresses from the suggestions.');
+          return;
+        }
+        try{
+          const trip = await routeAsync({
+            origin:{placeId: pickupPlace.place_id},
+            destination:{placeId: dropoffPlace.place_id},
+            travelMode: google.maps.TravelMode.DRIVING
+          });
+          directionsRenderer.setDirections(trip);
+          const leg = trip.routes[0].legs[0];
+          routeMiles = leg.distance.value / 1609.34;
+          updateMeetGreetVisibility(); // por si el pickup ahora es SLC
+          recalc();
+        }catch(err){
+          alert('Could not calculate route: ' + err);
+        }
+      });
+    }
+    window.initMapReschedule = initMapReschedule;
   </script>
+
+  <!-- Google Maps Loader (usa tu misma key pública de index.html) -->
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
 </body>
 </html>
