@@ -1686,8 +1686,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await resp.json();
       if (!data.ok) throw new Error(data.error || "Error en reschedule");
 
-      out.innerText = "Reprogramado correctamente → " +
-        `${data.booking.date_iso} ${data.booking.time_hhmm}`;
+      let msg = `✅ Reprogramado para ${data.booking.date_iso} ${data.booking.time_hhmm}`;
+
+// 👉 Precio original desde backend
+const original = data.booking.quotedTotal || 0;
+
+// 👉 Recalcular nuevo precio usando tu lógica
+const miles = window.__lastDistanceMiles || 0;
+const base = calculateBase(miles);
+const afterHours = isAfterHours(newDate, newTime);
+const ahFee = afterHours ? base * 0.20 : 0;
+const mgFee = getMGFee();
+const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
+
+// 👉 Comparar diferencia
+const diff = Math.round((newTotal - original) * 100) / 100;
+
+if (diff === 0) {
+  msg += `.\n💲 Precio sin cambios.`;
+} else if (diff > 0) {
+  msg += `.\n💰 El nuevo precio es $${newTotal.toFixed(2)} → debes pagar $${diff.toFixed(2)} adicionales.`;
+} else {
+  msg += `.\n✅ El nuevo precio es más bajo ($${newTotal.toFixed(2)}).`;
+  msg += `\nRecibirás un reembolso de $${Math.abs(diff).toFixed(2)} o un crédito.`;
+}
+
+out.innerText = msg;
     } catch (err) {
       out.innerText = "Error: " + err.message;
     }
