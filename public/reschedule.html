@@ -51,6 +51,8 @@
     .muted{opacity:.8}
     .invalid{border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(255,107,107,.25) !important;}
     #map{height:360px;border-radius:12px;overflow:hidden;margin-top:10px}
+    /* NUEVO: bloqueo visual/funcional para div-toggles cuando hay límite */
+    .disabled{ pointer-events:none; opacity:.6; }
   </style>
 </head>
 <body>
@@ -242,6 +244,8 @@
       const wrap = el('vehToggle');
       wrap.querySelectorAll('.veh-btn').forEach(b=>{
         b.addEventListener('click', ()=>{
+          if (reachedLimit) return;               // NUEVO guard
+          if (b.classList.contains('disabled')) return; // extra seguridad
           wrap.querySelectorAll('.veh-btn').forEach(x=>x.classList.remove('active'));
           b.classList.add('active');
           selectedVehicle = b.dataset.type || 'suv';
@@ -261,13 +265,16 @@
         });
         if(calculatedOnce) recalc();
       }
-      wrap.querySelectorAll('.mg-btn').forEach(b=> b.addEventListener('click', ()=> set(b.dataset.choice)));
+      wrap.querySelectorAll('.mg-btn').forEach(b=> b.addEventListener('click', ()=>{
+        if (reachedLimit) return;                  // NUEVO guard
+        if (b.classList.contains('disabled')) return; // extra seguridad
+        set(b.dataset.choice);
+      }));
     })();
 
     /***** LOAD BY CN *****/
     function getQueryCN(){ const u = new URL(window.location.href); return (u.searchParams.get('cn')||'').trim(); }
     function extractRescheduleCount(bk){
-      // soporta distintas propiedades posibles del backend
       if (typeof bk?.reschedulesCount === 'number') return bk.reschedulesCount;
       if (Array.isArray(bk?.reschedules)) return bk.reschedules.length;
       if (typeof bk?.reschedules_count === 'number') return bk.reschedules_count;
@@ -275,9 +282,17 @@
     }
     function lockForLimit(){
       reachedLimit = true;
-      // Deshabilitar todos los inputs y botones salvo el Load
-      document.querySelectorAll('#changeCard input, #changeCard .veh-btn, #changeCard .mg-btn, #btnRoute, #btnSave')
-        .forEach(n=>{ n.setAttribute('disabled','disabled'); n.classList.add('muted'); });
+      // Deshabilitar inputs y botones
+      document.querySelectorAll('#changeCard input, #btnRoute, #btnSave').forEach(n=>{
+        n.setAttribute('disabled','disabled');
+        n.classList.add('muted');
+        n.setAttribute('aria-disabled','true');
+      });
+      // Para DIV toggles, usamos clase disabled (pointer-events:none)
+      document.querySelectorAll('#changeCard .veh-btn, #changeCard .mg-btn').forEach(n=>{
+        n.classList.add('disabled','muted');
+        n.setAttribute('aria-disabled','true');
+      });
       el('saveHint').textContent = 'You have reached the maximum number of reschedules for this reservation.';
     }
 
@@ -325,7 +340,6 @@
         }
 
         el('loadHint').textContent = 'Booking loaded ✔︎';
-        // No calculamos automáticamente; exigimos que el usuario pulse "Calculate Route"
         calculatedOnce = false;
         el('btnSave').disabled = true;
         el('saveHint').textContent = 'First, click “Calculate Route” to generate your full quote.';
@@ -336,7 +350,6 @@
 
     /***** PRICE ENGINE *****/
     function currentMiles(){
-      // si hay ruta nueva, usamos esa; si no, caemos al valor original
       if (routeMiles != null) return routeMiles;
       return Number(booking?.distanceMiles || 0);
     }
@@ -367,7 +380,6 @@
 
       booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice, dateStr, timeStr };
 
-      // habilitar Save si ya hubo primer cálculo y hay fecha/hora
       const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
       el('btnSave').disabled = !canSave;
     }
@@ -479,11 +491,9 @@
         dropoffPlace = acDropoff.getPlace() || null;
       });
 
-      // Único botón que hace TODO el cálculo
       document.getElementById('btnRoute').addEventListener('click', async ()=>{
         if(reachedLimit) return;
 
-        // Si el usuario eligió direcciones nuevas -> calculamos ruta y distancia
         if(pickupPlace?.place_id && dropoffPlace?.place_id){
           try{
             const trip = await routeAsync({
@@ -499,19 +509,17 @@
             return;
           }
         } else {
-          // Si no hay nuevas direcciones, usamos la distancia original para el cálculo
           if(!booking){
             alert('Load your booking first.');
             return;
           }
-          routeMiles = null; // fuerza uso de booking.distanceMiles
+          routeMiles = null; // usa booking.distanceMiles
         }
 
-        updateMeetGreetVisibility(); // por si el pickup ahora es SLC
+        updateMeetGreetVisibility();
         calculatedOnce = true;
         recalc();
 
-        // Habilita el guardado si ya hay fecha/hora
         const dOk = !!el('newDate').value;
         const tOk = !!el('newTime').value;
         el('btnSave').disabled = !(dOk && tOk) || reachedLimit;
