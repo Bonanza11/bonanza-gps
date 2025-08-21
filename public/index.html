@@ -1605,6 +1605,28 @@ document.addEventListener('DOMContentLoaded', () => {
   })();
 </script>
     <script>
+<script>
+  // ===== Init campos de reschedule: min 24h y default (reusa helpers que ya tienes) =====
+  (function initRescheduleMin(){
+    const d = document.getElementById('newDate');
+    const t = document.getElementById('newTime');
+    if (!d || !t) return;
+
+    // Usa tus helpers existentes
+    const minDt = (typeof earliestAllowedDt === 'function') ? earliestAllowedDt() : new Date(Date.now()+24*60*60*1000);
+    const toISO = (dt)=> {
+      const off = dt.getTimezoneOffset()*60000;
+      return new Date(dt.getTime()-off).toISOString().slice(0,10);
+    };
+    d.min = toISO(minDt);
+    if (!d.value) d.value = toISO(minDt);
+    if (!t.value) {
+      const hh = String(minDt.getHours()).padStart(2,'0');
+      const mm = String(minDt.getMinutes()).padStart(2,'0');
+      t.value = `${hh}:${mm}`;
+    }
+  })();
+</script>
     (function wireRescheduleForm(){
     const form  = document.getElementById('rescheduleForm');
     const btn   = document.getElementById('btnReschedule');
