@@ -461,19 +461,19 @@
   <form id="rescheduleForm" novalidate>
 <input type="hidden" id="rescheduleCount" value="0" />
     <label>
-      Código de reserva (CN)
+      Reservation Code (CN
       <input type="text" id="cn" placeholder="BZ-TEST-01" required />
     </label>
     <br>
 
     <label>
-      Nueva fecha
+      New Date
       <input type="date" id="newDate" required />
     </label>
     <br>
 
     <label>
-      Nueva hora
+      New Time
       <input type="time" id="newTime" required />
     </label>
     <br>
@@ -1622,7 +1622,7 @@ const countEl = document.getElementById('rescheduleCount');
 let count = parseInt(countEl.value, 10) || 0;
 
 if (count >= 2) {
-  out.textContent = 'Has alcanzado el límite de 2 reprogramaciones para esta reserva. Por favor, contáctanos directamente.';
+  out.textContent = 'You have reached the limit of 2 reschedules for this reservation. Please contact us directly.';
   out.style.color = '#ff6b6b';
   return; // Detiene el envío si ya llegó al límite
 }
