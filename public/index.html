@@ -1628,40 +1628,6 @@ document.addEventListener('DOMContentLoaded', () => {
       t.value = `${hh}:${mm}`;
     }
   })();
-(function wireRescheduleForm(){
-  const form = document.getElementById('rescheduleForm');
-  const btn = document.getElementById('btnReschedule');
-  const out = document.getElementById('rescheduleOutput');
-  const cnEl = document.getElementById('cn');
-  const dEl = document.getElementById('newDate');
-  const tEl = document.getElementById('newTime');
-
-  if (!form || !btn || !out) return;
-
-  // --- botón para cargar CN ---
-  const btnLoad = document.getElementById('btnLoadCN');
-  if (btnLoad) {
-    btnLoad.addEventListener('click', async () => {
-      const cn = cnEl.value.trim();
-      if (!cn) return alert("Ingrese el código de reserva (CN).");
-      out.innerText = "Buscando reserva...";
-
-      try {
-        const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
-        const data = await resp.json();
-        if (!data.ok) throw new Error(data.error || "No encontrada");
-        
-        // Pre-rellenar campos con la reserva existente
-        if (data.booking.date_iso) dEl.value = data.booking.date_iso;
-        if (data.booking.time_hhmm) tEl.value = data.booking.time_hhmm;
-
-        out.innerText = "Reserva cargada, puede editar fecha/hora.";
-      } catch (err) {
-        out.innerText = "Error al cargar: " + err.message;
-      }
-    });
-  }
-
  form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
