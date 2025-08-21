@@ -1603,7 +1603,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })();
 </script>
     <script>
-  (function wireRescheduleForm(){
+    (function wireRescheduleForm(){
     const form  = document.getElementById('rescheduleForm');
     const btn   = document.getElementById('btnReschedule');
     const out   = document.getElementById('rescheduleResult');
@@ -1615,6 +1615,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      // --- Límite de reprogramaciones ---
+const countEl = document.getElementById('rescheduleCount');
+let count = parseInt(countEl.value, 10) || 0;
+
+if (count >= 2) {
+  out.textContent = 'Has alcanzado el límite de 2 reprogramaciones para esta reserva. Por favor, contáctanos directamente.';
+  out.style.color = '#ff6b6b';
+  return; // Detiene el envío si ya llegó al límite
+}
+
+count++;
+countEl.value = count;
 
       const cn      = (cnEl?.value || '').trim();
       const newDate = (dEl?.value || '').trim();   // YYYY-MM-DD
@@ -1671,6 +1684,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <h3>Reschedule</h3>
 
   <form id="rescheduleForm" novalidate>
+   <input type="hidden" id="rescheduleCount" value="0" />
     <label>
       Código de reserva (CN)
       <input type="text" id="cn" placeholder="BZ-TEST-01" required />
