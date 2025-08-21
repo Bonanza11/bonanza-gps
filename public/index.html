@@ -455,34 +455,39 @@
 
     <!-- Resumen -->
     <div id="info"></div>
-  <!-- ==== Reschedule (Production) ==== -->
+<!-- ==== Reschedule (Production) ==== -->
 <section id="reschedule" style="margin-top:24px;">
-  <h3>Reschedule</h3>
+  <h3 style="color:#ffddae;margin:0 0 8px;">Reschedule</h3>
+
   <form id="rescheduleForm" novalidate>
+    <!-- contador simple para limitar intentos si lo usas -->
     <input type="hidden" id="rescheduleCount" value="0" />
 
-    <label>
-      Reservation Code (CN)
-      <input type="text" id="cn" placeholder="BZ-TEST-01" required />
-    </label>
-    <br>
+    <label for="cn">Reservation Code (CN)</label>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="text" id="cn" placeholder="BZ-TEST-01" required style="flex:1 1 auto;" />
+      <button type="button" id="btnLoadCN" class="veh-btn" style="width:auto; padding:10px 14px;">
+        Load
+      </button>
+    </div>
 
-    <label>
-      New Date
-      <input type="date" id="newDate" required />
-    </label>
-    <br>
+    <div class="input-row" style="margin-top:10px;">
+      <div>
+        <label for="newDate">New Date</label>
+        <input type="date" id="newDate" required />
+      </div>
+      <div>
+        <label for="newTime">New Time</label>
+        <input type="time" id="newTime" required />
+      </div>
+    </div>
 
-    <label>
-      New Time
-      <input type="time" id="newTime" required />
-    </label>
-    <br>
-
-    <button id="btnReschedule" type="submit">Reschedule</button>
+    <button id="btnReschedule" type="submit" style="margin-top:14px;">
+      Reschedule
+    </button>
   </form>
 
-  <div id="rescheduleResult" style="margin-top:8px;"></div>
+  <div id="rescheduleOutput" class="hint" style="margin-top:10px;"></div>
 </section>
         <!-- Modal Términos -->
     <div class="modal-backdrop" id="termsModal" aria-hidden="true">
