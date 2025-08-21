@@ -459,7 +459,6 @@
     <!-- Reschedule (solo CN + botón que redirige) -->
 <section id="reschedule" style="margin-top:24px;">
   <h3 style="color:#ffddae;margin:0 0 8px;">Reschedule</h3>
-
   <label for="cn">Reservation Code (CN)</label>
   <div style="display:flex; gap:8px; align-items:center;">
     <input id="cn" type="text" placeholder="BZ-TEST-01" required style="flex:1 1 auto;" />
@@ -477,56 +476,26 @@
     window.location.href = `/reschedule.html?cn=${encodeURIComponent(cn)}`;
   });
 </script>
-        <div><strong>CN:</strong> ${b.confirmation_number}</div>
-        <div><strong>Status:</strong> ${b.status}</div>
-        <div><strong>Current:</strong> ${b.date_iso} ${b.time_hhmm}</div>
-        <div><strong>From:</strong> ${b.pickup}</div>
-        <div><strong>To:</strong> ${b.dropoff}</div>
-      `;
+    <!-- Reschedule (solo CN + botón que redirige) -->
+<section id="reschedule" style="margin-top:24px;">
+  <h3 style="color:#ffddae;margin:0 0 8px;">Reschedule</h3>
 
-      // preparar min 24h
-      const minDt = earliestAllowedDt();
-      newDate.min = localISODate(minDt);
-      if(!newDate.value) newDate.value = localISODate(minDt);
-      if(!newTime.value) setTimeValue(newTime, minDt.getHours(), minDt.getMinutes());
+  <label for="cn">Reservation Code (CN)</label>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <input id="cn" type="text" placeholder="BZ-TEST-01" required style="flex:1 1 auto;" />
+    <button type="button" id="btnLoadCN" class="veh-btn" style="width:auto; padding:10px 14px;">
+      Load Reservation
+    </button>
+  </div>
+</section>
 
-      // enviar reschedule
-      resForm.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        result.textContent = 'Submitting…'; result.className = 'hint';
-
-        const body = {
-          cn: b.confirmation_number,
-          newDate: newDate.value,
-          newTime: newTime.value
-        };
-
-        try{
-          const r = await fetch('/api/book/reschedule', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify(body)
-          });
-          const j = await r.json();
-
-          if(!r.ok || !j?.ok){
-            throw new Error(j?.error || `Error (${r.status})`);
-          }
-
-          result.textContent = `✅ Rescheduled to ${j.booking.date_iso} ${j.booking.time_hhmm}`;
-          result.className = 'hint ok';
-        }catch(err){
-          result.textContent = '❌ ' + (err?.message || 'Reschedule failed');
-          result.className = 'hint err';
-        }
-      });
-
-    }catch(err){
-      status.textContent = '❌ ' + (err?.message || 'Unable to load reservation');
-    }
-  })();
-})();
-</script>
+<script>
+  // Redirige a reschedule.html con ?cn=...
+  document.getElementById('btnLoadCN')?.addEventListener('click', () => {
+    const cn = (document.getElementById('cn')?.value || '').trim();
+    if (!cn) { alert('Enter your reservation code'); return; }
+    window.location.href = `/reschedule.html?cn=${encodeURIComponent(cn)}`;
+  });
         <!-- Modal Términos -->
     <div class="modal-backdrop" id="termsModal" aria-hidden="true">
       <div class="modal" role="dialog" aria-labelledby="termsTitle" aria-modal="true">
