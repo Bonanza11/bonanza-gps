@@ -1608,77 +1608,125 @@ document.addEventListener('DOMContentLoaded', () => {
   })();
 </script>
 <script>
-  // ===== Init campos de reschedule: min 24h y default (reusa helpers que ya tienes) =====
-  (function initRescheduleMin(){
-    const d = document.getElementById('newDate');
-    const t = document.getElementById('newTime');
-    if (!d || !t) return;
+// ===== Init campos de reschedule: min 24h y default =====
+(function initRescheduleMin(){
+  const d = document.getElementById('newDate');
+  const t = document.getElementById('newTime');
+  if (!d || !t) return;
+  const minDt = (typeof earliestAllowedDt === 'function')
+    ? earliestAllowedDt()
+    : new Date(Date.now()+24*60*60*1000);
 
-    // Usa tus helpers existentes
-    const minDt = (typeof earliestAllowedDt === 'function') ? earliestAllowedDt() : new Date(Date.now()+24*60*60*1000);
-    const toISO = (dt)=> {
-      const off = dt.getTimezoneOffset()*60000;
-      return new Date(dt.getTime()-off).toISOString().slice(0,10);
-    };
-    d.min = toISO(minDt);
-    if (!d.value) d.value = toISO(minDt);
-    if (!t.value) {
-      const hh = String(minDt.getHours()).padStart(2,'0');
-      const mm = String(minDt.getMinutes()).padStart(2,'0');
-      t.value = `${hh}:${mm}`;
-    }
-  })();
- form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const cn = cnEl.value.trim();
-  if (!cn) return alert("Ingrese el código de reserva (CN).");
-
-  out.innerText = "Buscando reserva...";
-
-  try {
-    const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
-    const data = await resp.json();
-    if (!data.ok) throw new Error(data.error || "No encontrada");
-
-    // Si la reserva se carga bien, redirigir a otra página
-    window.location.href = `/reschedule.html?cn=${encodeURIComponent(cn)}`;
-  } catch (err) {
-    out.innerText = "❌ Error al cargar reserva: " + err.message;
+  const toISO = (dt)=> {
+    const off = dt.getTimezoneOffset()*60000;
+    return new Date(dt.getTime()-off).toISOString().slice(0,10);
+  };
+  d.min = toISO(minDt);
+  if (!d.value) d.value = toISO(minDt);
+  if (!t.value) {
+    const hh = String(minDt.getHours()).padStart(2,'0');
+    const mm = String(minDt.getMinutes()).padStart(2,'0');
+    t.value = `${hh}:${mm}`;
   }
-});
+})();
 
+// ===== Wire “Load Reservation” y “Reschedule” =====
+(function wireReschedule(){
+  const form = document.getElementById('rescheduleForm');
+  const cnEl = document.getElementById('cn');
+  const newDateEl = document.getElementById('newDate');
+  const newTimeEl = document.getElementById('newTime');
+  const out = document.getElementById('rescheduleOutput');
+  const btnLoad = document.getElementById('btnLoadCN');
+
+  function hhmm(v){                   // normaliza "HH:MM:SS" -> "HH:MM"
+    if (!v) return v;
+    const m = String(v).match(/^(\d{2}:\d{2})/);
+    return m ? m[1] : v;
+  }
+
+  // --- Cargar reserva por CN (prefill básico) ---
+  btnLoad?.addEventListener('click', async ()=>{
+    const cn = (cnEl?.value || '').trim();
+    if (!cn) return alert("Ingrese el código de reserva (CN).");
+
+    out.textContent = "Buscando reserva...";
+    try{
+      const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
       const data = await resp.json();
-      if (!data.ok) throw new Error(data.error || "Error en reschedule");
+      if (!resp.ok || !data?.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
 
-      let msg = `✅ Reprogramado para ${data.booking.date_iso} ${data.booking.time_hhmm}`;
+      const b = data.booking;
+      out.textContent =
+        `CN ${b.confirmation_number} — status: ${b.status}
+Actual: ${b.date_iso} ${hhmm(b.time_hhmm)} — Total: $${Number(b.quoted_total||0).toFixed(2)}`;
 
-// 👉 Precio original desde backend
-const original = data.booking.quotedTotal || 0;
+      // (Opcional) Prefill fecha/hora nuevas a +48h de ahora
+      const base = new Date(Date.now()+48*60*60*1000);
+      const off = base.getTimezoneOffset()*60000;
+      const iso = new Date(base.getTime()-off).toISOString().slice(0,10);
+      newDateEl.value = iso;
+      newTimeEl.value = `${String(base.getHours()).padStart(2,'0')}:${String((base.getMinutes()/15|0)*15).padStart(2,'0')}`;
+    }catch(e){
+      out.textContent = "❌ Error al cargar: " + (e?.message||e);
+    }
+  });
 
-// 👉 Recalcular nuevo precio usando tu lógica
-const miles = window.__lastDistanceMiles || 0;
-const base = calculateBase(miles);
-const afterHours = isAfterHours(newDate, newTime);
-const ahFee = afterHours ? base * 0.20 : 0;
-const mgFee = getMGFee();
-const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
+  // --- Enviar reschedule ---
+  form?.addEventListener('submit', async (e)=>{
+    e.preventDefault();
 
-// 👉 Comparar diferencia
-const diff = Math.round((newTotal - original) * 100) / 100;
+    const cn = (cnEl?.value || '').trim();
+    const newDate = (newDateEl?.value || '').trim();
+    const newTime = (newTimeEl?.value || '').trim();
+    if (!cn || !newDate || !newTime) return alert("Complete CN, fecha y hora.");
 
-if (diff === 0) {
-  msg += `.\n💲 Precio sin cambios.`;
-} else if (diff > 0) {
-  msg += `.\n💰 El nuevo precio es $${newTotal.toFixed(2)} → debes pagar $${diff.toFixed(2)} adicionales.`;
-} else {
-  msg += `.\n✅ El nuevo precio es más bajo ($${newTotal.toFixed(2)}).`;
-  msg += `\nRecibirás un reembolso de $${Math.abs(diff).toFixed(2)} o un crédito.`;
-}
+    out.textContent = "Enviando solicitud de reprogramación...";
 
-out.innerText = msg;
-    } catch (err) {
-      out.innerText = "Error: " + err.message;
+    try{
+      // 1) Llamada al backend (valida 24h y actualiza fecha/hora)
+      const resp = await fetch('/api/book/reschedule', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ cn, newDate, newTime })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data?.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+
+      // 2) Mensaje base
+      let msg = `✅ Reprogramado para ${data.booking.date_iso} ${hhmm(data.booking.time_hhmm)}`;
+
+      // 3) Obtener precio original (snake_case!)
+      //    Si acabas de cargar la reserva, ya lo viste arriba, pero lo pedimos otra vez por seguridad.
+      const respGet = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+      const latest = await respGet.json();
+      const original = Number(latest?.booking?.quoted_total || 0);
+
+      // 4) Recalcular nuevo precio (tu misma lógica del front)
+      const miles = Number(window.__lastDistanceMiles || 0);
+      const base = calculateBase(miles);
+      const afterHours = isAfterHours(newDate, newTime);
+      const ahFee = afterHours ? base * 0.20 : 0;
+      const mgFee = getMGFee();
+      const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
+
+      const diff = Math.round((newTotal - original) * 100) / 100;
+
+      if (diff === 0) {
+        msg += `.\n💲 Precio sin cambios.`;
+      } else if (diff > 0) {
+        msg += `.\n💰 Nuevo total $${newTotal.toFixed(2)} → paga diferencia de $${diff.toFixed(2)}.`;
+        // Aquí podrías redirigir a tu endpoint de Stripe “diff”
+        // const {url} = await (await fetch('/api/create-checkout-session-diff',{...})).json();
+        // window.location.href = url;
+      } else {
+        msg += `.\n✅ Nuevo total más bajo ($${newTotal.toFixed(2)}).`;
+        msg += `\nRecibirás reembolso/CR por $${Math.abs(diff).toFixed(2)} (manual).`;
+      }
+
+      out.textContent = msg;
+    }catch(err){
+      out.textContent = "❌ Error: " + (err?.message || err);
     }
   });
 })();
