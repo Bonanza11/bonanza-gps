@@ -455,38 +455,146 @@
 
     <!-- Resumen -->
     <div id="info"></div>
-<section id="reschedule" style="margin-top:24px;">
-  <h3 style="color:#ffddae;margin:0 0 8px;">Reschedule</h3>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reschedule — Bonanza</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{background:#000;color:#e9d5c1;font-family:Arial,sans-serif;margin:0}
+  main{max-width:720px;margin:24px auto;padding:0 16px}
+  .card{background:#0e0e0e;border:1px solid rgba(168,116,79,.35);border-radius:12px;padding:16px}
+  label{display:block;margin:12px 0 6px;font-weight:700}
+  input{width:100%;height:44px;padding:10px 12px;background:#1a1a1a;color:#ffddae;border:1px solid #444;border-radius:8px;outline:none}
+  button{width:100%;padding:14px 16px;margin-top:16px;background:#a8744f;color:#000;font-weight:700;font-size:16px;border:0;border-radius:10px;cursor:pointer}
+  .muted{opacity:.8}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:520px){.row{grid-template-columns:1fr}}
+  .hint{font-size:.9rem;margin-top:6px}
+  .ok{color:#17c964}.err{color:#ff6b6b}
+</style>
+</head>
+<body>
+<main>
+  <h1 style="margin:0 0 12px;">Reschedule</h1>
+  <div id="status" class="hint muted">Loading…</div>
 
-  <form id="rescheduleForm" novalidate>
-    <input type="hidden" id="rescheduleCount" value="0" />
+  <div id="bookingCard" class="card" style="display:none">
+    <div id="summary" class="muted"></div>
 
-    <label for="cn">Reservation Code (CN)</label>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <input type="text" id="cn" placeholder="BZ-TEST-01" required style="flex:1 1 auto;" />
-      <button type="button" id="btnLoadCN" class="veh-btn" style="width:auto; padding:10px 14px;">
-        Load Reservation
-      </button>
-    </div>
-
-    <div class="input-row" style="margin-top:10px;">
-      <div>
-        <label for="newDate">New Date</label>
-        <input type="date" id="newDate" required />
+    <form id="resForm">
+      <div class="row">
+        <div>
+          <label for="newDate">New Date</label>
+          <input id="newDate" type="date" required>
+        </div>
+        <div>
+          <label for="newTime">New Time</label>
+          <input id="newTime" type="time" required>
+        </div>
       </div>
-      <div>
-        <label for="newTime">New Time</label>
-        <input type="time" id="newTime" required />
-      </div>
-    </div>
 
-    <button id="btnReschedule" type="submit" style="margin-top:14px;">
-      Reschedule
-    </button>
-  </form>
+      <button type="submit">Confirm Reschedule</button>
+    </form>
 
-  <div id="rescheduleOutput" class="hint" style="margin-top:10px;"></div>
-</section>
+    <div id="result" class="hint" style="margin-top:10px;"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const cn = qs.get('cn') || '';
+  const status = document.getElementById('status');
+  const card = document.getElementById('bookingCard');
+  const summary = document.getElementById('summary');
+  const resForm = document.getElementById('resForm');
+  const newDate = document.getElementById('newDate');
+  const newTime = document.getElementById('newTime');
+  const result = document.getElementById('result');
+
+  if(!cn){
+    status.textContent = 'Missing reservation code (?cn=...)';
+    return;
+  }
+
+  // helper: mínimo 24h
+  function earliestAllowedDt(){
+    const d = new Date(Date.now() + 24*60*60*1000);
+    d.setMinutes(d.getMinutes() + (15 - (d.getMinutes()%15 || 15)), 0, 0);
+    return d;
+  }
+  function localISODate(d){
+    const off=d.getTimezoneOffset()*60000;
+    return new Date(d - off).toISOString().slice(0,10);
+  }
+  function setTimeValue(el,h,m){
+    el.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  // cargar reserva
+  (async () => {
+    try{
+      const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+      const data = await resp.json();
+
+      if(!resp.ok || !data?.ok) throw new Error(data?.error || 'Not found');
+
+      const b = data.booking;
+      status.textContent = '';
+      card.style.display = 'block';
+      summary.innerHTML = `
+        <div><strong>CN:</strong> ${b.confirmation_number}</div>
+        <div><strong>Status:</strong> ${b.status}</div>
+        <div><strong>Current:</strong> ${b.date_iso} ${b.time_hhmm}</div>
+        <div><strong>From:</strong> ${b.pickup}</div>
+        <div><strong>To:</strong> ${b.dropoff}</div>
+      `;
+
+      // preparar min 24h
+      const minDt = earliestAllowedDt();
+      newDate.min = localISODate(minDt);
+      if(!newDate.value) newDate.value = localISODate(minDt);
+      if(!newTime.value) setTimeValue(newTime, minDt.getHours(), minDt.getMinutes());
+
+      // enviar reschedule
+      resForm.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        result.textContent = 'Submitting…'; result.className = 'hint';
+
+        const body = {
+          cn: b.confirmation_number,
+          newDate: newDate.value,
+          newTime: newTime.value
+        };
+
+        try{
+          const r = await fetch('/api/book/reschedule', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(body)
+          });
+          const j = await r.json();
+
+          if(!r.ok || !j?.ok){
+            throw new Error(j?.error || `Error (${r.status})`);
+          }
+
+          result.textContent = `✅ Rescheduled to ${j.booking.date_iso} ${j.booking.time_hhmm}`;
+          result.className = 'hint ok';
+        }catch(err){
+          result.textContent = '❌ ' + (err?.message || 'Reschedule failed');
+          result.className = 'hint err';
+        }
+      });
+
+    }catch(err){
+      status.textContent = '❌ ' + (err?.message || 'Unable to load reservation');
+    }
+  })();
+})();
+</script>
         <!-- Modal Términos -->
     <div class="modal-backdrop" id="termsModal" aria-hidden="true">
       <div class="modal" role="dialog" aria-labelledby="termsTitle" aria-modal="true">
