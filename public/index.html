@@ -455,6 +455,27 @@
 
     <!-- Resumen -->
        <div id="info"></div>
+    <!-- Reschedule (solo CN + botón que redirige) -->
+<section id="reschedule" style="margin-top:24px;">
+  <h3 style="color:#ffddae;margin:0 0 8px;">Reschedule</h3>
+
+  <label for="cn">Reservation Code (CN)</label>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <input id="cn" type="text" placeholder="BZ-TEST-01" required style="flex:1 1 auto;" />
+    <button type="button" id="btnLoadCN" class="veh-btn" style="width:auto; padding:10px 14px;">
+      Load Reservation
+    </button>
+  </div>
+</section>
+
+<script>
+  // Redirige a reschedule.html con ?cn=...
+  document.getElementById('btnLoadCN')?.addEventListener('click', () => {
+    const cn = (document.getElementById('cn')?.value || '').trim();
+    if (!cn) { alert('Enter your reservation code'); return; }
+    window.location.href = `/reschedule.html?cn=${encodeURIComponent(cn)}`;
+  });
+</script>
         <div><strong>CN:</strong> ${b.confirmation_number}</div>
         <div><strong>Status:</strong> ${b.status}</div>
         <div><strong>Current:</strong> ${b.date_iso} ${b.time_hhmm}</div>
