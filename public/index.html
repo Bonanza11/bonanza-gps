@@ -455,6 +455,33 @@
 
     <!-- Resumen -->
     <div id="info"></div>
+    <!-- ===== Reschedule (Production) ===== -->
+<section id="reschedule" style="margin-top:24px;">
+  <h3>Reschedule</h3>
+  <form id="rescheduleForm" novalidate>
+    <label>
+      Código de reserva (CN)
+      <input type="text" id="cn" placeholder="BZ-TEST-01" required />
+    </label>
+    <br>
+
+    <label>
+      Nueva fecha
+      <input type="date" id="newDate" required />
+    </label>
+    <br>
+
+    <label>
+      Nueva hora
+      <input type="time" id="newTime" required />
+    </label>
+    <br>
+
+    <button id="btnReschedule" type="submit">Reschedule</button>
+  </form>
+
+  <div id="rescheduleResult" style="margin-top:8px;"></div>
+</section>
         <!-- Modal Términos -->
     <div class="modal-backdrop" id="termsModal" aria-hidden="true">
       <div class="modal" role="dialog" aria-labelledby="termsTitle" aria-modal="true">
@@ -1575,5 +1602,99 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   })();
 </script>
+    <script>
+  (function wireRescheduleForm(){
+    const form  = document.getElementById('rescheduleForm');
+    const btn   = document.getElementById('btnReschedule');
+    const out   = document.getElementById('rescheduleResult');
+    const cnEl  = document.getElementById('cn');
+    const dEl   = document.getElementById('newDate');
+    const tEl   = document.getElementById('newTime');
+
+    if (!form || !btn || !out) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const cn      = (cnEl?.value || '').trim();
+      const newDate = (dEl?.value || '').trim();   // YYYY-MM-DD
+      const newTime = (tEl?.value || '').trim();   // HH:mm (24h)
+
+      // Validación mínima en cliente
+      if (!cn || !newDate || !newTime) {
+        out.textContent = 'Please complete all fields (CN, date, time).';
+        out.style.color = '#ff6b6b';
+        return;
+      }
+
+      btn.disabled = true;
+      out.textContent = 'Processing…';
+      out.style.color = '#cba686';
+
+      try {
+        const resp = await fetch('/api/book/reschedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cn, newDate, newTime })
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || data?.ok === false) {
+          // Mensaje del backend si llega, si no, uno genérico
+          const msg = (data && (data.error || data.msg)) || `Error ${resp.status}`;
+          out.textContent = `❌ ${msg}`;
+          out.style.color = '#ff6b6b';
+          return;
+        }
+
+        // Éxito
+        out.innerHTML = `✅ Rescheduled successfully.<br>
+          CN: <b>${cn}</b><br>
+          New date/time: <b>${newDate} ${newTime}</b>`;
+        out.style.color = '#17c964';
+
+        // Opcional: limpiar el formulario
+        // form.reset();
+      } catch (err) {
+        out.textContent = 'Network error. Please try again.';
+        out.style.color = '#ff6b6b';
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
+   <!-- ===== Reschedule (Production) ===== -->
+<section id="reschedule" style="margin-top:24px;">
+  <h3>Reschedule</h3>
+
+  <form id="rescheduleForm" novalidate>
+    <label>
+      Código de reserva (CN)
+      <input type="text" id="cn" placeholder="BZ-TEST-01" required />
+    </label>
+    <br>
+
+    <label>
+      Nueva fecha
+      <input type="date" id="newDate" required />
+    </label>
+    <br>
+
+    <label>
+      Nueva hora
+      <input type="time" id="newTime" required />
+    </label>
+    <br>
+
+    <button id="btnReschedule" type="submit">
+      <span style="margin-right:6px;">📅</span> Reschedule
+    </button>
+  </form>
+
+  <div id="rescheduleResult" style="margin-top:8px;"></div>
+</section>
 </body>
 </html>
