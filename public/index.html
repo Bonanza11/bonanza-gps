@@ -1680,36 +1680,5 @@ countEl.value = count;
     });
   })();
 </script>
-   <!-- ===== Reschedule (Production) ===== -->
-<section id="reschedule" style="margin-top:24px;">
-  <h3>Reschedule</h3>
-
-  <form id="rescheduleForm" novalidate>
-   <input type="hidden" id="rescheduleCount" value="0" />
-    <label>
-      Código de reserva (CN)
-      <input type="text" id="cn" placeholder="BZ-TEST-01" required />
-    </label>
-    <br>
-
-    <label>
-      Nueva fecha
-      <input type="date" id="newDate" required />
-    </label>
-    <br>
-
-    <label>
-      Nueva hora
-      <input type="time" id="newTime" required />
-    </label>
-    <br>
-
-    <button id="btnReschedule" type="submit">
-      <span style="margin-right:6px;">📅</span> Reschedule
-    </button>
-  </form>
-
-  <div id="rescheduleResult" style="margin-top:8px;"></div>
-</section>
 </body>
 </html>
