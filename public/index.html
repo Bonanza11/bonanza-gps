@@ -1662,26 +1662,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- submit para reprogramar ---
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const cn = cnEl.value.trim();
-    const newDate = dEl.value;
-    const newTime = tEl.value;
+ form.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    if (!cn || !newDate || !newTime) {
-      out.innerText = "Faltan datos";
-      return;
-    }
+  const cn = cnEl.value.trim();
+  if (!cn) return alert("Ingrese el código de reserva (CN).");
 
-    out.innerText = "Procesando...";
+  out.innerText = "Buscando reserva...";
 
-    try {
-      const resp = await fetch('/api/book/reschedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cn, newDate, newTime })
-      });
+  try {
+    const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || "No encontrada");
+
+    // Si la reserva se carga bien, redirigir a otra página
+    window.location.href = `/reschedule.html?cn=${encodeURIComponent(cn)}`;
+  } catch (err) {
+    out.innerText = "❌ Error al cargar reserva: " + err.message;
+  }
+});
 
       const data = await resp.json();
       if (!data.ok) throw new Error(data.error || "Error en reschedule");
