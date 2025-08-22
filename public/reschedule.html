@@ -371,6 +371,7 @@ function wireFlightBackendTriggers(){
     const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
     const stripe = Stripe(STRIPE_PK);
     const MAX_RESCHEDULES = 2;
+    const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
 
     /***** STATE *****/
     let booking = null;
