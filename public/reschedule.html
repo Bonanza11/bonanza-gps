@@ -367,6 +367,182 @@ function wireFlightBackendTriggers(){
   <script src="https://js.stripe.com/v3"></script>
 
   <script>
+    <script>
+// === 1) Detección de modo actual según pickup (reutiliza tus helpers) ===
+function currentPickupMode(){
+  const p = window.pickupPlace || null;
+  if (!p || !isUtah(p) || !isAirport(p)) return 'NONE';
+  if (isJSXUtah(p))           return 'JSX';
+  if (isCommercialPickup(p))  return 'COMM'; // SLC / PVU
+  return 'PVT'; // FBO Utah
+}
+
+// === 2) Validadores simples por campo (apoya los tuyos) ===
+function nonEmpty(v){ return (v||'').trim().length > 0; }
+
+function markInvalid(el, helpEl, msg){
+  if (!el) return false;
+  el.classList.add('invalid');
+  if (helpEl){
+    helpEl.textContent = msg;
+    helpEl.className = 'hint err';
+    helpEl.style.display = 'block';
+  }
+  if (typeof el.setCustomValidity === 'function') el.setCustomValidity(msg);
+  return false;
+}
+function markValid(el, helpEl, okMsg){
+  if (!el) return true;
+  el.classList.remove('invalid');
+  if (helpEl){
+    helpEl.textContent = okMsg || '';
+    helpEl.className = 'hint ok';
+    helpEl.style.display = okMsg ? 'block' : 'none';
+  }
+  if (typeof el.setCustomValidity === 'function') el.setCustomValidity('');
+  return true;
+}
+
+// === 3) Validación dinámica condicional (la llamaremos antes de calcular/pagar)
+function validateAirportConditionalFields(){
+  const mode = currentPickupMode();
+
+  // Comercial
+  const fn   = document.getElementById('flightNumber');
+  const fnh  = document.getElementById('flightHint');
+  const org  = document.getElementById('flightOrigin');
+  const orgh = document.getElementById('originHelp');
+
+  // JSX
+  const jfn  = document.getElementById('jsxFlightNumber');
+  const jorg = document.getElementById('jsxOrigin');
+
+  // Privado
+  const tail = document.getElementById('tailNumber');
+  const tHelp= document.getElementById('tailHelp');
+  const porg = document.getElementById('pvtOrigin');
+  const porh = document.getElementById('pvtOriginHelp');
+
+  // Limpieza rápida de mensajes (evita “fantasmas”)
+  [fnh, orgh, tHelp, porh].forEach(h=>{ if(h){ h.style.display=''; h.textContent=''; } });
+
+  // Por defecto, no exigimos nada si no es aeropuerto de Utah
+  if (mode === 'NONE') return true;
+
+  // ——— COMMERCIAL (SLC/PVU) ———
+  if (mode === 'COMM'){
+    let ok = true;
+
+    // flightNumber requerido + formato (ya tienes validateFlightValue; lo usamos)
+    if (!fn || !nonEmpty(fn.value)) ok = markInvalid(fn, fnh, 'Flight Number is required.');
+    else {
+      const r = validateFlightValue(fn.value);
+      ok = r.ok ? markValid(fn, fnh, 'Format looks good') : markInvalid(fn, fnh, r.msg || 'Invalid flight');
+    }
+
+    // flightOrigin requerido (ciudad con opcional IATA)
+    if (!org || !nonEmpty(org.value)) ok = markInvalid(org, orgh, 'Origin city is required.');
+    else {
+      const ro = validateCityLike(org.value, 'origin city');
+      ok = ro.ok ? markValid(org, orgh, 'Origin captured.') : markInvalid(org, orgh, ro.msg);
+    }
+    return ok;
+  }
+
+  // ——— JSX ——— (no llamamos backend, solo formato básico)
+  if (mode === 'JSX'){
+    let ok = true;
+    if (!jfn || !nonEmpty(jfn.value)) ok = markInvalid(jfn, null, 'JSX Flight Number is required.');
+    else {
+      const norm = normalizeFlight(jfn.value);
+      // Acepta “XE1234” o “JSX1234”; tu set AIRLINES ya incluye "XE"
+      const pat = /^((XE|JSX))\s?-?\s?\d{1,4}$/i;
+      ok = pat.test(norm) ? markValid(jfn, null, '') : markInvalid(jfn, null, 'Use XE1234 or JSX1234.');
+    }
+
+    if (!jorg || !nonEmpty(jorg.value)) ok = markInvalid(jorg, null, 'JSX Origin city is required.');
+    else ok = markValid(jorg, null, '');
+
+    // Mensaje informativo en backendResult
+    const backendRes = document.getElementById('backendResult');
+    if (backendRes) backendRes.textContent = 'JSX flight captured (manual verification).';
+    return ok;
+  }
+
+  // ——— PRIVADO (FBO Utah) ———
+  if (mode === 'PVT'){
+    let ok = true;
+
+    if (!tail || !nonEmpty(tail.value)) ok = markInvalid(tail, tHelp, 'Tail number is required.');
+    else {
+      const r = validateNNumber(tail.value);
+      ok = r.ok ? markValid(tail, tHelp, r.msg) : markInvalid(tail, tHelp, r.msg);
+    }
+
+    if (!porg || !nonEmpty(porg.value)) ok = markInvalid(porg, porh, 'Origin city is required.');
+    else {
+      const ro = validateCityLike(porg.value, 'origin city');
+      ok = ro.ok ? markValid(porg, porh, ro.msg) : markInvalid(porg, porh, ro.msg);
+    }
+    return ok;
+  }
+
+  return true;
+}
+
+// === 4) Hook: revalidar cuando cambie la visibilidad (llámalo al final de updateFlightVisibility)
+(function patchUpdateFlightVisibility(){
+  const _orig = window.updateFlightVisibility;
+  if (typeof _orig !== 'function') return;
+  window.updateFlightVisibility = function(){
+    _orig.apply(this, arguments);
+    // Pequeño defer para que el DOM termine de mostrar/ocultar
+    setTimeout(()=>{ try{ validateAirportConditionalFields(); }catch(_){} }, 0);
+  };
+})();
+
+// === 5) Integración con “Calculate” y “Pay” (bloquear si falta algo condicional)
+(function hardenCalculateAndPay(){
+  // Calculate
+  const calc = document.getElementById('calculate');
+  if (calc){
+    const handler = calc.onclick || null;
+    calc.addEventListener('click', (e)=>{
+      if (!validateAirportConditionalFields()){
+        e.preventDefault();
+        alert('Please complete required flight fields.');
+        return;
+      }
+    }, true);
+    // Mantén tu lógica original (no removemos handlers previos)
+    if (handler) calc.addEventListener('click', handler);
+  }
+
+  // Pay
+  const pay = document.getElementById('pay');
+  if (pay){
+    pay.addEventListener('click', (e)=>{
+      if (!validateAirportConditionalFields()){
+        e.preventDefault();
+        alert('Please complete required flight fields.');
+        return;
+      }
+    }, true);
+  }
+})();
+
+// === 6) Disparo inicial y en cambios del pickup/origen/fecha ===
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Si ya está todo cargado, validamos una vez
+  try{ validateAirportConditionalFields(); }catch(_){}
+  // Revalidar cuando el usuario escribe en campos condicionales
+  ['flightNumber','flightOrigin','jsxFlightNumber','jsxOrigin','tailNumber','pvtOrigin','date','time']
+    .forEach(id=>{
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', ()=>{ try{ validateAirportConditionalFields(); }catch(_){} });
+    });
+});
+</script>
     /***** CONFIG *****/
     const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
     const stripe = Stripe(STRIPE_PK);
