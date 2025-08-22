@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Si ya está todo cargado, validamos una vez
   try{ validateAirportConditionalFields(); }catch(_){}
   // Revalidar cuando el usuario escribe en campos condicionales
- ['flightNumber','flightOrigin','jsxFlightNumber','jsxOrigin','tailNumber','pvtOrigin','newDate','newTime']
+ ;['flightNumber','flightOrigin','jsxFlightNumber','jsxOrigin','tailNumber','pvtOrigin','newDate','newTime']
     .forEach(id=>{
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', ()=>{ try{ validateAirportConditionalFields(); }catch(_){} });
