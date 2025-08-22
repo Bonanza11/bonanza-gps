@@ -317,19 +317,7 @@ function wireFlightBackendTriggers(){
   d?.addEventListener('change', run);
 }
 </script>
-<!-- Resultado del backend (FlightCheck) -->
-<div id="backendResult" class="hint" style="display:block; margin-top:6px;"></div>
 
-<!-- Jet privado / FBO (aeropuertos privados en Utah) -->
-<div id="privateFlightContainer" style="display:none;">
-  <label for="tailNumber">Jet Tail Number (N-Number)</label>
-  <input id="tailNumber" placeholder="e.g., N123AB" />
-  <div id="tailHelp" class="hint" style="display:none"></div>
-
-  <label for="pvtOrigin" style="margin-top:12px;">Flight Origin City</label>
-  <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
-  <div id="pvtOriginHelp" class="hint" style="display:none"></div>
-</div>
 
       <!-- ÚNICO BOTÓN DE CÁLCULO -->
       <button id="btnRoute" style="margin-top:12px">Calculate Route</button>
