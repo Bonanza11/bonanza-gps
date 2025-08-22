@@ -400,7 +400,20 @@ function markValid(el, helpEl, okMsg){
   if (typeof el.setCustomValidity === 'function') el.setCustomValidity('');
   return true;
 }
-
+// ——— Validadores que faltaban (mismos del index) ———
+const N_NUMBER_REGEX = /^N[1-9]\d{0,4}([A-HJ-NP-Z]{1,2})?$/i;
+function validateNNumber(v){
+  const val=(v||"").toUpperCase().trim();
+  if(!val) return {ok:false,msg:"Please enter the aircraft tail number (e.g., N123AB)."};
+  if(!N_NUMBER_REGEX.test(val)) return {ok:false,msg:"Format: N + 1–5 digits + optional 1–2 letters (no I/O)."};
+  return {ok:true,msg:"Tail number captured."};
+}
+function validateCityLike(v, label="origin city"){
+  const val=(v||"").trim();
+  if(!val) return {ok:false,msg:`Please enter the ${label} (e.g., Van Nuys or Van Nuys (VNY)).`};
+  const ok = /^[A-Za-z .,'-]{2,}( \([A-Z]{3}\))?$/.test(val);
+  return ok ? {ok:true,msg:`${label[0].toUpperCase()+label.slice(1)} captured.`} : {ok:false,msg:`Use letters and optional airport code, e.g., Van Nuys (VNY).`};
+}
 // === 3) Validación dinámica condicional (la llamaremos antes de calcular/pagar)
 function validateAirportConditionalFields(){
   const mode = currentPickupMode();
