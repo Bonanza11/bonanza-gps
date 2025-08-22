@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Si ya está todo cargado, validamos una vez
   try{ validateAirportConditionalFields(); }catch(_){}
   // Revalidar cuando el usuario escribe en campos condicionales
-  ['flightNumber','flightOrigin','jsxFlightNumber','jsxOrigin','tailNumber','pvtOrigin','date','time']
+ ['flightNumber','flightOrigin','jsxFlightNumber','jsxOrigin','tailNumber','pvtOrigin','newDate','newTime']
     .forEach(id=>{
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', ()=>{ try{ validateAirportConditionalFields(); }catch(_){} });
@@ -886,7 +886,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
         pickupPlace = acPickup.getPlace() || null;
         updateMeetGreetVisibility();
       });
-      document.getElementById('btnRoute').addEventListener('click', async ()=>{ /* ... como ya lo tienes ... */ });
 
 updateFlightVisibility();      // ← al iniciar la página
 wireFlightValidation();        // ← valida formato
