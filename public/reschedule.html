@@ -746,7 +746,30 @@ document.addEventListener('DOMContentLoaded', ()=>{
         el('loadHint').textContent = '❌ ' + (e.message || e);
       }
     }
+// Hidrata pickupPlace a partir del texto rellenado para activar lógicas SLC/PVU/JSX
+async function hydratePickupFromInput(){
+  const input = document.getElementById('pickup');
+  if (!input || !input.value.trim()) { pickupPlace = null; updateFlightVisibility(); return; }
 
+  const geocoder = new google.maps.Geocoder();
+  await new Promise((resolve)=>{
+    geocoder.geocode({ address: input.value.trim(), componentRestrictions:{ country: "US" } }, (results, status)=>{
+      if (status === "OK" && results && results[0]){
+        pickupPlace = {
+          name: results[0].name || results[0].formatted_address,
+          formatted_address: results[0].formatted_address,
+          place_id: results[0].place_id,
+          types: results[0].types || [],
+          address_components: results[0].address_components
+        };
+      } else {
+        pickupPlace = null;
+      }
+      updateFlightVisibility();
+      resolve();
+    });
+  });
+}
     /***** PRICE ENGINE *****/
     function currentMiles(){
       if (routeMiles != null) return routeMiles;
