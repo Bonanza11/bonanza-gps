@@ -726,7 +726,31 @@ document.addEventListener('DOMContentLoaded', ()=>{
         // Prefill direcciones con los originales
         el('pickup').value  = booking.pickup || '';
         el('dropoff').value = booking.dropoff || '';
+        
+        // Hidrata pickupPlace a partir del texto rellenado para activar lógicas SLC/PVU/JSX
+async function hydratePickupFromInput(){
+  const input = document.getElementById('pickup');
+  if (!input || !input.value.trim()) { pickupPlace = null; updateFlightVisibility(); return; }
 
+  const geocoder = new google.maps.Geocoder();
+  await new Promise((resolve)=>{
+    geocoder.geocode({ address: input.value.trim(), componentRestrictions:{ country: "US" } }, (results, status)=>{
+      if (status === "OK" && results && results[0]){
+        pickupPlace = {
+          name: results[0].name || results[0].formatted_address,
+          formatted_address: results[0].formatted_address,
+          place_id: results[0].place_id,
+          types: results[0].types || [],
+          address_components: results[0].address_components
+        };
+      } else {
+        pickupPlace = null;
+      }
+      updateFlightVisibility();
+      resolve();
+    });
+  });
+}
         // Límite de reschedules
         const used = extractRescheduleCount(booking);
         if (used >= MAX_RESCHEDULES){
