@@ -540,17 +540,21 @@ function validateAirportConditionalFields(){
     }, true);
   }
 })();
-
-// === 6) Disparo inicial y en cambios del pickup/origen/fecha ===
 document.addEventListener('DOMContentLoaded', ()=>{
-  // Si ya está todo cargado, validamos una vez
-  try{ validateAirportConditionalFields(); }catch(_){}
-  // Revalidar cuando el usuario escribe en campos condicionales
- ;['flightNumber','flightOrigin','jsxFlightNumber','jsxOrigin','tailNumber','pvtOrigin','newDate','newTime']
-    .forEach(id=>{
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('input', ()=>{ try{ validateAirportConditionalFields(); }catch(_){} });
+  try { validateAirportConditionalFields(); } catch(_) {}
+
+  const ids = [
+    'flightNumber','flightOrigin',
+    'jsxFlightNumber','jsxOrigin',
+    'tailNumber','pvtOrigin',
+    'newDate','newTime'
+  ];
+  ids.forEach((id)=>{
+    const node = document.getElementById(id);
+    if (node) node.addEventListener('input', ()=>{
+      try { validateAirportConditionalFields(); } catch(_) {}
     });
+  });
 });
     </script>
     <script>
