@@ -750,7 +750,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
       // Hidrata pickup → muestra Flight/JSX/Private según reglas
       try { await hydratePickupFromInput(); } catch(_) {}
-
+updateMeetGreetVisibility();
+updateFlightVisibility();   // asegura que se muestren los campos correctos tras el prefill
       // Límite de reschedules
       const used = extractRescheduleCount(booking);
       if (used >= MAX_RESCHEDULES){
@@ -953,6 +954,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
   window.initMapReschedule = initMapReschedule;
+      <script>
+// --- EXponer helpers del primer bloque al scope global ---
+window.updateFlightVisibility   = updateFlightVisibility;
+window.wireFlightValidation     = wireFlightValidation;
+window.wireFlightBackendTriggers= wireFlightBackendTriggers;
+window.maybeCheckBackend        = maybeCheckBackend;
 </script>
   <!-- Google Maps Loader (usa tu misma key pública de index.html) -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
