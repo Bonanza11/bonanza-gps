@@ -107,7 +107,9 @@
       <input id="pickup" placeholder="e.g. SLC Airport" autocomplete="off"/>
       <label style="margin-top:10px">Drop-off</label>
       <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="off"/>
-      <!-- JSX fields (solo cuando el pickup sea JSX en Utah) -->
+      <!-- 
+      
+      JSX fields (solo cuando el pickup sea JSX en Utah) -->
 <div id="jsxContainer" style="display:none; margin-top:10px;">
   <label for="jsxFlightNumber">JSX Flight Number:</label>
   <input id="jsxFlightNumber" placeholder="e.g. XE1234" />
@@ -138,23 +140,6 @@
   <label for="pvtOrigin" style="margin-top:12px;">Flight Origin City</label>
   <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
   <div id="pvtOriginHelp" class="hint" style="display:none"></div>
-</div><!-- JSX fields (solo cuando el pickup sea JSX en Utah) -->
-<div id="jsxContainer" style="display:none; margin-top:10px;">
-  <label for="jsxFlightNumber">JSX Flight Number:</label>
-  <input id="jsxFlightNumber" placeholder="e.g. XE1234" />
-  <label for="jsxOrigin" style="margin-top:12px;">JSX Origin City:</label>
-  <input id="jsxOrigin" placeholder="e.g. Burbank (BUR)" />
-</div>
-
-<!-- Vuelo comercial (SLC / PVU / JSX comercial) -->
-<div id="flightContainer" style="display:none;">
-  <label for="flightNumber">Flight Number</label>
-  <input id="flightNumber" placeholder="e.g. DL1234" />
-  <div id="flightHint" class="hint warn" style="display:none"></div>
-
-  <label for="flightOrigin" style="margin-top:12px;">Flight Origin City</label>
-  <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
-  <div id="originHelp" class="hint" style="display:none"></div>
 </div>
 <script>
 // === Helpers extra (JSX + vuelo) ===
