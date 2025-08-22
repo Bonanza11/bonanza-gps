@@ -725,6 +725,13 @@ function wireFlightBackendTriggers(){
         pickupPlace = acPickup.getPlace() || null;
         updateMeetGreetVisibility();
       });
+      document.getElementById('btnRoute').addEventListener('click', async ()=>{ /* ... como ya lo tienes ... */ });
+
+updateFlightVisibility();      // ← al iniciar la página
+wireFlightValidation();        // ← valida formato
+wireFlightBackendTriggers();   // ← consulta a Cloud Run
+setTimeout(maybeCheckBackend, 100);
+      
       acDropoff.addListener('place_changed', ()=>{
         dropoffPlace = acDropoff.getPlace() || null;
       });
