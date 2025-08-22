@@ -188,7 +188,7 @@ function updateFlightVisibility(){
   const pvtWrap  = document.getElementById('privateFlightContainer');
   const jsxWrap  = document.getElementById('jsxContainer');
 
-  const place = (window.pickupPlace || null);
+ const place = pickupPlace || null;
   const isAirportUT = !!place && isAirport(place) && isUtah(place);
   const isComm      = isCommercialPickup(place);
 
