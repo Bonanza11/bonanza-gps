@@ -62,6 +62,25 @@
   <main>
     <h1>Reschedule</h1>
 
+    
+    <script>
+  // dentro del bloque donde defines eventos:
+  document.getElementById('btnLoad').addEventListener('click', ()=>{
+    const cn = document.getElementById('cn').value.trim();
+    if(!cn){ document.getElementById('cn').classList.add('invalid'); return; }
+
+    // Si Maps todavía no cargó, diferimos loadBooking unos ms
+    if (!window.google || !google.maps || !google.maps.places){
+      setTimeout(()=> loadBooking(cn), 300);
+    } else {
+      loadBooking(cn);
+    }
+
+    const u = new URL(window.location.href);
+    u.searchParams.set('cn', cn);
+    window.history.replaceState({}, '', u.toString());
+  });
+</script>
     <!-- LOAD -->
     <div class="card" id="loadCard">
       <label for="cn">Reservation Code (CN)</label>
