@@ -140,6 +140,38 @@
   <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
   <div id="pvtOriginHelp" class="hint" style="display:none"></div>
 </div>
+      <!-- Helpers base que usa updateFlightVisibility (deben existir ANTES) -->
+<script>
+(function () {
+  // ¿es aeropuerto?
+  window.isAirport = function (place) {
+    const t = place?.types || [];
+    return t.includes('airport') || /airport/i.test(place?.name || place?.formatted_address || '');
+  };
+  // ¿está en Utah?
+  window.isUtah = function (place) {
+    const a = (place?.formatted_address || '').toLowerCase();
+    return /\but\b/.test(a) || /, ut(ah)?\b/i.test(a);
+  };
+  // FBO privado en Utah
+  const FBO_RX = /\b(fbo|million air|signature( aviation| flight| support)?|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
+  window.isPrivateUtahAirport = function (place) {
+    if (!place) return false;
+    if (!window.isAirport(place) || !window.isUtah(place)) return false;
+    const text = `${place.name || ''} ${place.formatted_address || ''}`;
+    return FBO_RX.test(text);
+  };
+  // SLC comercial (no FBO)
+  window.isSLCInternational = function (place) {
+    if (!place) return false;
+    const name = (place.name || '').toLowerCase();
+    const addr = (place.formatted_address || '').toLowerCase();
+    const hits = /salt lake city international/.test(name) || /\bslc\b/.test(name) ||
+                 /salt lake city international/.test(addr) || /\bslc\b/.test(addr);
+    return hits && window.isAirport(place) && !window.isPrivateUtahAirport(place);
+  };
+})();
+</script>
 <script>
 // === Helpers extra (JSX + vuelo) ===
 const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
