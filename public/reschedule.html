@@ -61,9 +61,6 @@
 
   <main>
     <h1>Reschedule</h1>
-
-    
-    <script>
   // dentro del bloque donde defines eventos:
   document.getElementById('btnLoad').addEventListener('click', ()=>{
     const cn = document.getElementById('cn').value.trim();
@@ -834,7 +831,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       // Hidrata pickup → muestra Flight/JSX/Private según reglas
       try { await hydratePickupFromInput(); } catch(_) {}
 updateMeetGreetVisibility();
-updateFlightVisibility();   // asegura que se muestren los campos correctos tras el prefill
+
       // Límite de reschedules
       const used = extractRescheduleCount(booking);
       if (used >= MAX_RESCHEDULES){
