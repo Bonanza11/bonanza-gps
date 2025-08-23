@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
     el('saveHint').textContent = 'You have reached the maximum number of reschedules for this reservation.';
   }
-<script>
+
   // ——— Única versión global de hydratePickupFromInput (robusta) ———
   async function hydratePickupFromInput(){
     const input = document.getElementById('pickup');
@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       );
     });
   }
-</script>
+
   async function loadBooking(cn){
     el('loadHint').textContent = 'Loading booking...';
     try{
