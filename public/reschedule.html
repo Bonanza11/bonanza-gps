@@ -778,7 +778,32 @@ document.addEventListener('DOMContentLoaded', ()=>{
       );
     });
   }
+<script>
+/* ===== Paso 3: hidratar por escritura ===== */
 
+/* 1) Debounce pequeño para no geocodificar en cada tecla */
+function _debounce(fn, ms=250){
+  let t; 
+  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+}
+
+/* 2) Handler cuando el usuario escribe o sale del campo */
+const _onPickupTyped = _debounce(async ()=>{
+  await hydratePickupFromInput();     // ← crea/actualiza window.pickupPlace
+  updateMeetGreetVisibility();        // ← M&G según SLC
+  updateFlightVisibility();           // ← muestra/oculta Flight/JSX/Privado
+  // si usas verificación backend, vuelve a armar triggers por si el bloque apareció recién
+  try { wireFlightBackendTriggers(); } catch(_) {}
+}, 250);
+
+/* 3) Conecta eventos del input #pickup */
+(function wirePickupTyping(){
+  const p = document.getElementById('pickup');
+  if (!p) return;
+  // “input” cubre tecleo; “change/blur” cuando dejan el campo
+  ['input','change','blur'].forEach(ev => p.addEventListener(ev, _onPickupTyped));
+})();
+</script>
   async function loadBooking(cn){
     el('loadHint').textContent = 'Loading booking...';
     try{
