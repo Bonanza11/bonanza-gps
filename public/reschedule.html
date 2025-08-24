@@ -97,6 +97,33 @@ input[type="time"]::-ms-expand { display: none; }
   input[type="date"],
   input[type="time"] { color-scheme: dark; }
 }
+  /* === Date & Time pickers en BLANCO (ícono calendario y reloj) === */
+input[type="date"],
+input[type="time"] {
+  background-color: #1a1a1a !important;  /* Fondo oscuro */
+  color: #ffffff !important;             /* Texto blanco */
+  border: 1px solid #444 !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  height: 44px !important;
+}
+
+/* Íconos (calendario y reloj) en blanco */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2); /* Forza a blanco */
+  cursor: pointer;
+}
+
+input[type="time"]::-webkit-inner-spin-button {
+  filter: invert(1) brightness(2); /* Flechas de hora en blanco */
+}
+
+/* Para Firefox */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
 </style>
 </head>
 <body>
