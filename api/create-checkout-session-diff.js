@@ -27,21 +27,20 @@ export default async function handler(req, res){
     const origin = req.headers.origin || '';
 
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      customer_email: customerEmail || undefined,
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          // ✅ YA VIENE EN CENTAVOS — NO MULTIPLICAR POR 100
-          unit_amount: cents,
-          product_data: { name: `Reschedule difference for ${cn}` }
-        },
-        quantity: 1
-      }],
-      metadata: { cn, kind: 'reschedule_diff' },
-      success_url: origin ? `${origin}/reschedule-success.html?cn=${encodeURIComponent(cn)}` : `/reschedule-success.html?cn=${encodeURIComponent(cn)}`,
-      cancel_url:  origin ? `${origin}/reschedule.html?cn=${encodeURIComponent(cn)}`          : `/reschedule.html?cn=${encodeURIComponent(cn)}`
-    });
+  mode: 'payment',
+  customer_email: customerEmail || undefined,
+  line_items: [{
+    price_data: {
+      currency: 'usd',
+      unit_amount: 100, // 👈 SIEMPRE $1.00 (100 centavos)
+      product_data: { name: `Test payment for ${cn}` }
+    },
+    quantity: 1
+  }],
+  metadata: { cn, kind: 'reschedule_test' },
+  success_url: `${req.headers.origin}/reschedule-success.html?cn=${encodeURIComponent(cn)}`,
+  cancel_url: `${req.headers.origin}/reschedule.html?cn=${encodeURIComponent(cn)}`
+});
 
     return res.status(200).json({ ok:true, id: session.id, url: session.url });
   }catch(e){
