@@ -50,7 +50,6 @@
     .muted{opacity:.8}
     .invalid{border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(255,107,107,.25) !important;}
     #map{height:360px;border-radius:12px;overflow:hidden;margin-top:10px}
-    /* NUEVO: bloqueo visual/funcional para div-toggles cuando hay límite */
     .disabled{ pointer-events:none; opacity:.6; }
   </style>
 </head>
@@ -60,6 +59,8 @@
   </header>
 
   <main>
+    <h1>Reschedule</h1>
+
     <!-- LOAD -->
     <div class="card" id="loadCard">
       <label for="cn">Reservation Code (CN)</label>
@@ -102,289 +103,81 @@
 
       <label style="margin-top:10px">Pickup</label>
       <input id="pickup" placeholder="e.g. SLC Airport" autocomplete="off"/>
+
       <label style="margin-top:10px">Drop-off</label>
       <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="off"/>
-      <!-- 
-      
-      JSX fields (solo cuando el pickup sea JSX en Utah) -->
-<div id="jsxContainer" style="display:none; margin-top:10px;">
-  <label for="jsxFlightNumber">JSX Flight Number:</label>
-  <input id="jsxFlightNumber" placeholder="e.g. XE1234" />
-  <label for="jsxOrigin" style="margin-top:12px;">JSX Origin City:</label>
-  <input id="jsxOrigin" placeholder="e.g. Burbank (BUR)" />
-</div>
 
-<!-- Vuelo comercial (SLC / PVU / JSX comercial) -->
-<div id="flightContainer" style="display:none;">
-  <label for="flightNumber">Flight Number</label>
-  <input id="flightNumber" placeholder="e.g. DL1234" />
-  <div id="flightHint" class="hint warn" style="display:none"></div>
-
-  <label for="flightOrigin" style="margin-top:12px;">Flight Origin City</label>
-  <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
-  <div id="originHelp" class="hint" style="display:none"></div>
-</div>
-
-<!-- Resultado del backend (FlightCheck) -->
-<div id="backendResult" class="hint" style="display:block; margin-top:6px;"></div>
-
-<!-- Jet privado / FBO (aeropuertos privados en Utah) -->
-<div id="privateFlightContainer" style="display:none;">
-  <label for="tailNumber">Jet Tail Number (N-Number)</label>
-  <input id="tailNumber" placeholder="e.g., N123AB" />
-  <div id="tailHelp" class="hint" style="display:none"></div>
-
-  <label for="pvtOrigin" style="margin-top:12px;">Flight Origin City</label>
-  <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
-  <div id="pvtOriginHelp" class="hint" style="display:none"></div>
-</div>
-      <!-- Helpers base que usa updateFlightVisibility (deben existir ANTES) -->
-<script>
-(function () {
-  // ¿es aeropuerto?
-  window.isAirport = function (place) {
-    const t = place?.types || [];
-    return t.includes('airport') || /airport/i.test(place?.name || place?.formatted_address || '');
-  };
-  // ¿está en Utah?
-  window.isUtah = function (place) {
-    const a = (place?.formatted_address || '').toLowerCase();
-    return /\but\b/.test(a) || /, ut(ah)?\b/i.test(a);
-  };
-  // FBO privado en Utah
-  const FBO_RX = /\b(fbo|million air|signature( aviation| flight| support)?|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
-  window.isPrivateUtahAirport = function (place) {
-    if (!place) return false;
-    if (!window.isAirport(place) || !window.isUtah(place)) return false;
-    const text = `${place.name || ''} ${place.formatted_address || ''}`;
-    return FBO_RX.test(text);
-  };
-  // SLC comercial (no FBO)
-  window.isSLCInternational = function (place) {
-    if (!place) return false;
-    const name = (place.name || '').toLowerCase();
-    const addr = (place.formatted_address || '').toLowerCase();
-    const hits = /salt lake city international/.test(name) || /\bslc\b/.test(name) ||
-                 /salt lake city international/.test(addr) || /\bslc\b/.test(addr);
-    return hits && window.isAirport(place) && !window.isPrivateUtahAirport(place);
-  };
-})();
-</script>
-<script>
-// === Helpers extra (JSX + vuelo) ===
-const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
-const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
-let __flightSeq = 0;
-
-function normalizeFlight(v){
-  return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
-}
-function validateFlightValue(v){
-  const m = normalizeFlight(v).match(FLIGHT_REGEX);
-  if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
-  const code = m[1], num = m[2];
-  if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
-  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
-  return {ok:true,msg:''};
-}
-function parseOriginIata(text){
-  const t = (text || "").trim().toUpperCase();
-  const m = t.match(/\(([A-Z]{3})\)$/);
-  if (m) return m[1];
-  if (/^[A-Z]{3}$/.test(t)) return t;
-  return null;
-}
-function isJSXUtah(place){
-  if (!place) return false;
-  const text = (place.name || place.formatted_address || "").toUpperCase();
-  return text.includes("JSX");
-}
-function isProvoAirport(place){
-  if(!place) return false;
-  const name=(place.name||'').toLowerCase();
-  const addr=(place.formatted_address||'').toLowerCase();
-  const nameHit=/\bprovo\b/.test(name)||/\bpvu\b/.test(name)||/municipal|regional/.test(name);
-  const addrHit=(/\bprovo\b/.test(addr)&&/\but\b/.test(addr))||/\b84601\b/.test(addr)||/mike\s*jense\s*pkwy/.test(addr);
-  return (nameHit||addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
-}
-function isCommercialPickup(place){
-  return !!place && isUtah(place) && (isSLCInternational(place) || isProvoAirport(place) || isJSXUtah(place));
-}
-
-// ——— UI show/hide según pickup ———
-function updateFlightVisibility(){
-  const commWrap = document.getElementById('flightContainer');
-  const pvtWrap  = document.getElementById('privateFlightContainer');
-  const jsxWrap  = document.getElementById('jsxContainer');
-
- const place = pickupPlace || null;
-  const isAirportUT = !!place && isAirport(place) && isUtah(place);
-  const isComm      = isCommercialPickup(place);
-
-  // JSX: mostrar su bloque y ocultar el de vuelo comercial
-  if (jsxWrap) jsxWrap.style.display = (isJSXUtah(place) ? 'block' : 'none');
-
-  if (commWrap){
-    const showComm = isComm && !isJSXUtah(place);
-    commWrap.style.display = showComm ? 'block' : 'none';
-    if(!showComm){
-      const n = document.getElementById('flightNumber');
-      const o = document.getElementById('flightOrigin');
-      if(n){n.value=''; n.setCustomValidity('');}
-      if(o){o.value=''; o.setCustomValidity('');}
-      document.getElementById('flightHint')?.style?.setProperty('display','none');
-      document.getElementById('originHelp')?.style?.setProperty('display','none');
-    } else {
-      initFlightOriginAutocomplete();
-    }
-  }
-  if (pvtWrap){
-    const showPvt = isAirportUT && !isComm;
-    pvtWrap.style.display = showPvt ? 'block' : 'none';
-    if(!showPvt){
-      const t = document.getElementById('tailNumber');
-      const p = document.getElementById('pvtOrigin');
-      if(t){t.value=''; t.setCustomValidity('');}
-      if(p){p.value=''; p.setCustomValidity('');}
-      document.getElementById('tailHelp')?.style?.setProperty('display','none');
-      document.getElementById('pvtOriginHelp')?.style?.setProperty('display','none');
-    }
-  }
-}
-
-// ——— Autocomplete para Flight Origin (ciudades) ———
-function initFlightOriginAutocomplete() {
-  const input = document.getElementById("flightOrigin");
-  if (!input || !window.google?.maps?.places?.Autocomplete) return;
-  const ac = new google.maps.places.Autocomplete(input, {
-    types: ["(cities)"],
-    fields: ["name","place_id","geometry"],
-  });
-  ac.addListener("place_changed", () => {
-    window._flightOrigin = ac.getPlace();
-  });
-}
-
-// ——— Fecha en ISO por los IDs de reschedule ———
-const getResDateISO = () => {
-  const v = (document.getElementById('newDate')?.value || '').trim();
-  if (!v) return '';
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return v;
-  const localMs = d.getTime() - d.getTimezoneOffset()*60000;
-  return new Date(localMs).toISOString().slice(0,10);
-};
-
-// ——— Validación en vivo del Flight Number ———
-function wireFlightValidation(){
-  const input = document.getElementById('flightNumber');
-  const hint  = document.getElementById('flightHint');
-  if(!input || !hint) return;
-  function update(){
-    const r = validateFlightValue(input.value || "");
-    hint.textContent = r.ok ? "Format looks good" : r.msg;
-    hint.className   = "hint " + (r.ok ? "ok" : "err");
-    hint.style.display = 'block';
-    input.setCustomValidity(r.ok ? "" : r.msg);
-  }
-  input.addEventListener('input', update);
-  update();
-}
-
-// ——— Llamada a Cloud Run (FlightCheck) ———
-async function maybeCheckBackend(){
-  const fl  = (document.getElementById("flightNumber")?.value || "").trim();
-  const org = (document.getElementById("flightOrigin")?.value || "").trim();
-  const dt  = getResDateISO();   // 👈 usa newDate
-
-  if (!fl || !org || !dt) return;
-
-  const normFl = fl.replace(/\s+/g,'').toUpperCase();
-  const originIata = parseOriginIata(org) || "";
-
-  const mySeq = ++__flightSeq;
-  const hint = document.getElementById("flightHint");
-  const originHelp = document.getElementById("originHelp");
-  const backendRes = document.getElementById("backendResult");
-
-  try{
-    const qs = new URLSearchParams({ fn: normFl, originIata, date: dt });
-    const resp = await fetch(`${FLIGHTCHECK_URL}?${qs.toString()}`);
-    const data = await resp.json().catch(()=>({}));
-
-    if (mySeq !== __flightSeq) return;
-
-    if (!resp.ok || !data?.ok){
-      hint && (hint.textContent="✗ Flight not found", hint.className="hint err", hint.style.display="block");
-      originHelp && (originHelp.textContent=data?.msg||"✗ Invalid origin", originHelp.className="hint err", originHelp.style.display="block");
-      backendRes && (backendRes.textContent = data?.msg || `Service error (${resp.status})`);
-      return;
-    }
-
-    hint && (hint.textContent="✅ Flight confirmed", hint.className="hint ok", hint.style.display="block");
-    originHelp && (originHelp.textContent="✅ Origin city confirmed", originHelp.className="hint ok", originHelp.style.display="block");
-
-    // si viene arrivalLocal => propone hora local
-    const t = String(data.arrivalLocal||"").match(/T(\d{2}:\d{2})/);
-    if (t) document.getElementById('newTime')?.value = t[1];
-
-    backendRes && (backendRes.textContent = data.arrivalLocal ? `ETA: ${data.arrivalLocal}` : "No ETA provided");
-  }catch(e){
-    hint && (hint.textContent="⚠️ Network error", hint.className="hint err", hint.style.display="block");
-    backendRes && (backendRes.textContent = "⚠️ Error consultando backend: " + e.message);
-  }
-}
-
-// ——— Disparadores backend ———
-function wireFlightBackendTriggers(){
-  const fn = document.getElementById('flightNumber');
-  const org= document.getElementById('flightOrigin');
-  const d  = document.getElementById('newDate');   // 👈 newDate
-  const run = () => setTimeout(maybeCheckBackend, 200);
-  fn?.addEventListener('input', run);
-  org?.addEventListener('input', run);
-  d?.addEventListener('change', run);
-}
-</script>
-
-
-      <!-- ÚNICO BOTÓN DE CÁLCULO -->
-      <button id="btnRoute" style="margin-top:12px">Calculate Route</button>
-      <div id="map"></div>
-
-      <!-- Vehicle -->
-      <label style="margin-top:14px">Vehicle</label>
-      <div class="veh-toggle" id="vehToggle">
-        <div class="veh-btn active" data-type="suv">SUV (1–5)</div>
-        <div class="veh-btn" data-type="van">Van (up to 12)</div>
+      <!-- JSX (solo si pickup es JSX en Utah) -->
+      <div id="jsxContainer" style="display:none; margin-top:10px;">
+        <label for="jsxFlightNumber">JSX Flight Number:</label>
+        <input id="jsxFlightNumber" placeholder="e.g. XE1234" />
+        <label for="jsxOrigin" style="margin-top:12px;">JSX Origin City:</label>
+        <input id="jsxOrigin" placeholder="e.g. Burbank (BUR)" />
       </div>
 
-      <!-- Meet & Greet (SLC only) -->
-      <div id="mgWrap" style="display:none; margin-top:10px;">
-        <label>Meet & Greet — SLC Only</label>
-        <div class="mg-options">
-          <div class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</div>
-          <div class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</div>
-          <div class="mg-btn active" data-choice="none">No Meet & Greet</div>
-        </div>
+      <!-- Vuelo comercial (SLC / PVU / JSX comercial) -->
+      <div id="flightContainer" style="display:none;">
+        <label for="flightNumber">Flight Number</label>
+        <input id="flightNumber" placeholder="e.g. DL1234" />
+        <div id="flightHint" class="hint warn" style="display:none"></div>
+
+        <label for="flightOrigin" style="margin-top:12px;">Flight Origin City</label>
+        <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
+        <div id="originHelp" class="hint" style="display:none"></div>
       </div>
 
-      <div class="divider"></div>
+      <!-- Resultado del backend (FlightCheck) -->
+      <div id="backendResult" class="hint" style="display:block; margin-top:6px;"></div>
 
-      <h3 style="margin:6px 0 8px;color:#ffddae">New Quote</h3>
-      <div class="kpis">
-        <div class="kpi"><div class="label">New Total</div><div class="value">$<span id="kpiNew">—</span></div></div>
-        <div class="kpi"><div class="label">Difference</div><div class="value">$<span id="kpiDiff">—</span></div></div>
-        <div class="kpi"><div class="label">After-Hours</div><div class="value" id="kpiAH">No</div></div>
+      <!-- Jet privado / FBO (aeropuertos privados en Utah) -->
+      <div id="privateFlightContainer" style="display:none;">
+        <label for="tailNumber">Jet Tail Number (N-Number)</label>
+        <input id="tailNumber" placeholder="e.g., N123AB" />
+        <div id="tailHelp" class="hint" style="display:none"></div>
+
+        <label for="pvtOrigin" style="margin-top:12px;">Flight Origin City</label>
+        <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
+        <div id="pvtOriginHelp" class="hint" style="display:none"></div>
       </div>
-
-      <div id="breakdown" style="margin-top:6px"></div>
-      <div class="tax-note">Taxes & gratuity included</div>
-
-      <!-- YA NO EXISTE RECALCULATE -->
-      <button id="btnSave" disabled>Save Changes</button>
-      <div id="saveHint" class="hint muted">First, click “Calculate Route” to generate your full quote.</div>
     </div>
+
+    <div class="divider"></div>
+
+    <!-- ÚNICO BOTÓN DE CÁLCULO -->
+    <button id="btnRoute" style="margin-top:12px">Calculate Route</button>
+    <div id="map"></div>
+
+    <!-- Vehicle -->
+    <label style="margin-top:14px">Vehicle</label>
+    <div class="veh-toggle" id="vehToggle">
+      <div class="veh-btn active" data-type="suv">SUV (1–5)</div>
+      <div class="veh-btn" data-type="van">Van (up to 12)</div>
+    </div>
+
+    <!-- Meet & Greet (SLC only) -->
+    <div id="mgWrap" style="display:none; margin-top:10px;">
+      <label>Meet & Greet — SLC Only</label>
+      <div class="mg-options">
+        <div class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</div>
+        <div class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</div>
+        <div class="mg-btn active" data-choice="none">No Meet & Greet</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="margin:6px 0 8px;color:#ffddae">New Quote</h3>
+    <div class="kpis">
+      <div class="kpi"><div class="label">New Total</div><div class="value">$<span id="kpiNew">—</span></div></div>
+      <div class="kpi"><div class="label">Difference</div><div class="value">$<span id="kpiDiff">—</span></div></div>
+      <div class="kpi"><div class="label">After-Hours</div><div class="value" id="kpiAH">No</div></div>
+    </div>
+
+    <div id="breakdown" style="margin-top:6px"></div>
+    <div class="tax-note">Taxes & gratuity included</div>
+
+    <button id="btnSave" disabled>Save Changes</button>
+    <div id="saveHint" class="hint muted">First, click “Calculate Route” to generate your full quote.</div>
 
     <div class="card" id="resultCard" style="display:none">
       <h3 style="margin:0 0 8px;color:#ffddae">Result</h3>
@@ -394,207 +187,209 @@ function wireFlightBackendTriggers(){
 
   <!-- Stripe -->
   <script src="https://js.stripe.com/v3"></script>
+
+  <!-- Helpers base (isAirport/isUtah/...) -->
   <script>
-// === 1) Detección de modo actual según pickup (reutiliza tus helpers) ===
-function currentPickupMode(){
-  const p = window.pickupPlace || null;
-  if (!p || !isUtah(p) || !isAirport(p)) return 'NONE';
-  if (isJSXUtah(p))           return 'JSX';
-  if (isCommercialPickup(p))  return 'COMM'; // SLC / PVU
-  return 'PVT'; // FBO Utah
-}
+  (function () {
+    window.isAirport = function (place) {
+      const t = place?.types || [];
+      return t.includes('airport') || /airport/i.test(place?.name || place?.formatted_address || '');
+    };
+    window.isUtah = function (place) {
+      const a = (place?.formatted_address || '').toLowerCase();
+      return /\but\b/.test(a) || /, ut(ah)?\b/.test(a);
+    };
+    const FBO_RX = /\b(fbo|million air|signature( aviation| flight| support)?|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
+    window.isPrivateUtahAirport = function (place) {
+      if (!place) return false;
+      if (!window.isAirport(place) || !window.isUtah(place)) return false;
+      const text = `${place.name || ''} ${place.formatted_address || ''}`;
+      return FBO_RX.test(text);
+    };
+    window.isSLCInternational = function (place) {
+      if (!place) return false;
+      const name = (place.name || '').toLowerCase();
+      const addr = (place.formatted_address || '').toLowerCase();
+      const hits = /salt lake city international/.test(name) || /\bslc\b/.test(name) ||
+                   /salt lake city international/.test(addr) || /\bslc\b/.test(addr);
+      return hits && window.isAirport(place) && !window.isPrivateUtahAirport(place);
+    };
+  })();
+  </script>
 
-// === 2) Validadores simples por campo (apoya los tuyos) ===
-function nonEmpty(v){ return (v||'').trim().length > 0; }
+  <!-- Lógica JSX/COMM/PVT + validaciones + backend -->
+  <script>
+  const AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
+  const FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
+  let __flightSeq = 0;
 
-function markInvalid(el, helpEl, msg){
-  if (!el) return false;
-  el.classList.add('invalid');
-  if (helpEl){
-    helpEl.textContent = msg;
-    helpEl.className = 'hint err';
-    helpEl.style.display = 'block';
+  function normalizeFlight(v){ return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-'); }
+  function validateFlightValue(v){
+    const m = normalizeFlight(v).match(FLIGHT_REGEX);
+    if (!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
+    const code = m[1], num = m[2];
+    if(!AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
+    if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
+    return {ok:true,msg:''};
   }
-  if (typeof el.setCustomValidity === 'function') el.setCustomValidity(msg);
-  return false;
-}
-function markValid(el, helpEl, okMsg){
-  if (!el) return true;
-  el.classList.remove('invalid');
-  if (helpEl){
-    helpEl.textContent = okMsg || '';
-    helpEl.className = 'hint ok';
-    helpEl.style.display = okMsg ? 'block' : 'none';
+  function parseOriginIata(text){
+    const t = (text || "").trim().toUpperCase();
+    const m = t.match(/\(([A-Z]{3})\)$/);
+    if (m) return m[1];
+    if (/^[A-Z]{3}$/.test(t)) return t;
+    return null;
   }
-  if (typeof el.setCustomValidity === 'function') el.setCustomValidity('');
-  return true;
-}
-// ——— Validadores que faltaban (mismos del index) ———
-const N_NUMBER_REGEX = /^N[1-9]\d{0,4}([A-HJ-NP-Z]{1,2})?$/i;
-function validateNNumber(v){
-  const val=(v||"").toUpperCase().trim();
-  if(!val) return {ok:false,msg:"Please enter the aircraft tail number (e.g., N123AB)."};
-  if(!N_NUMBER_REGEX.test(val)) return {ok:false,msg:"Format: N + 1–5 digits + optional 1–2 letters (no I/O)."};
-  return {ok:true,msg:"Tail number captured."};
-}
-function validateCityLike(v, label="origin city"){
-  const val=(v||"").trim();
-  if(!val) return {ok:false,msg:`Please enter the ${label} (e.g., Van Nuys or Van Nuys (VNY)).`};
-  const ok = /^[A-Za-z .,'-]{2,}( \([A-Z]{3}\))?$/.test(val);
-  return ok ? {ok:true,msg:`${label[0].toUpperCase()+label.slice(1)} captured.`} : {ok:false,msg:`Use letters and optional airport code, e.g., Van Nuys (VNY).`};
-}
-// === 3) Validación dinámica condicional (la llamaremos antes de calcular/pagar)
-function validateAirportConditionalFields(){
-  const mode = currentPickupMode();
-
-  // Comercial
-  const fn   = document.getElementById('flightNumber');
-  const fnh  = document.getElementById('flightHint');
-  const org  = document.getElementById('flightOrigin');
-  const orgh = document.getElementById('originHelp');
-
-  // JSX
-  const jfn  = document.getElementById('jsxFlightNumber');
-  const jorg = document.getElementById('jsxOrigin');
-
-  // Privado
-  const tail = document.getElementById('tailNumber');
-  const tHelp= document.getElementById('tailHelp');
-  const porg = document.getElementById('pvtOrigin');
-  const porh = document.getElementById('pvtOriginHelp');
-
-  // Limpieza rápida de mensajes (evita “fantasmas”)
-  [fnh, orgh, tHelp, porh].forEach(h=>{ if(h){ h.style.display=''; h.textContent=''; } });
-
-  // Por defecto, no exigimos nada si no es aeropuerto de Utah
-  if (mode === 'NONE') return true;
-
-  // ——— COMMERCIAL (SLC/PVU) ———
-  if (mode === 'COMM'){
-    let ok = true;
-
-    // flightNumber requerido + formato (ya tienes validateFlightValue; lo usamos)
-    if (!fn || !nonEmpty(fn.value)) ok = markInvalid(fn, fnh, 'Flight Number is required.');
-    else {
-      const r = validateFlightValue(fn.value);
-      ok = r.ok ? markValid(fn, fnh, 'Format looks good') : markInvalid(fn, fnh, r.msg || 'Invalid flight');
-    }
-
-    // flightOrigin requerido (ciudad con opcional IATA)
-    if (!org || !nonEmpty(org.value)) ok = markInvalid(org, orgh, 'Origin city is required.');
-    else {
-      const ro = validateCityLike(org.value, 'origin city');
-      ok = ro.ok ? markValid(org, orgh, 'Origin captured.') : markInvalid(org, orgh, ro.msg);
-    }
-    return ok;
+  function isJSXUtah(place){
+    if (!place) return false;
+    const text = (place.name || place.formatted_address || "").toUpperCase();
+    return text.includes("JSX");
+  }
+  function isProvoAirport(place){
+    if(!place) return false;
+    const name=(place.name||'').toLowerCase();
+    const addr=(place.formatted_address||'').toLowerCase();
+    const nameHit=/\bprovo\b/.test(name)||/\bpvu\b/.test(name)||/municipal|regional/.test(name);
+    const addrHit=(/\bprovo\b/.test(addr)&&/\but\b/.test(addr))||/\b84601\b/.test(addr)||/mike\s*jense\s*pkwy/.test(addr);
+    return (nameHit||addrHit) && isAirport(place) && isUtah(place) && !isPrivateUtahAirport(place);
+  }
+  function isCommercialPickup(place){
+    return !!place && isUtah(place) && (isSLCInternational(place) || isProvoAirport(place) || isJSXUtah(place));
   }
 
-  // ——— JSX ——— (no llamamos backend, solo formato básico)
-  if (mode === 'JSX'){
-    let ok = true;
-    if (!jfn || !nonEmpty(jfn.value)) ok = markInvalid(jfn, null, 'JSX Flight Number is required.');
-    else {
-      const norm = normalizeFlight(jfn.value);
-      // Acepta “XE1234” o “JSX1234”; tu set AIRLINES ya incluye "XE"
-      const pat = /^((XE|JSX))\s?-?\s?\d{1,4}$/i;
-      ok = pat.test(norm) ? markValid(jfn, null, '') : markInvalid(jfn, null, 'Use XE1234 or JSX1234.');
-    }
+  function updateFlightVisibility(){
+    const commWrap = document.getElementById('flightContainer');
+    const pvtWrap  = document.getElementById('privateFlightContainer');
+    const jsxWrap  = document.getElementById('jsxContainer');
 
-    if (!jorg || !nonEmpty(jorg.value)) ok = markInvalid(jorg, null, 'JSX Origin city is required.');
-    else ok = markValid(jorg, null, '');
+    const place = window.pickupPlace || null;
+    const isAirportUT = !!place && isAirport(place) && isUtah(place);
+    const isComm      = isCommercialPickup(place);
 
-    // Mensaje informativo en backendResult
-    const backendRes = document.getElementById('backendResult');
-    if (backendRes) backendRes.textContent = 'JSX flight captured (manual verification).';
-    return ok;
-  }
+    if (jsxWrap) jsxWrap.style.display = (isJSXUtah(place) ? 'block' : 'none');
 
-  // ——— PRIVADO (FBO Utah) ———
-  if (mode === 'PVT'){
-    let ok = true;
-
-    if (!tail || !nonEmpty(tail.value)) ok = markInvalid(tail, tHelp, 'Tail number is required.');
-    else {
-      const r = validateNNumber(tail.value);
-      ok = r.ok ? markValid(tail, tHelp, r.msg) : markInvalid(tail, tHelp, r.msg);
-    }
-
-    if (!porg || !nonEmpty(porg.value)) ok = markInvalid(porg, porh, 'Origin city is required.');
-    else {
-      const ro = validateCityLike(porg.value, 'origin city');
-      ok = ro.ok ? markValid(porg, porh, ro.msg) : markInvalid(porg, porh, ro.msg);
-    }
-    return ok;
-  }
-
-  return true;
-}
-
-// === 4) Hook: revalidar cuando cambie la visibilidad (llámalo al final de updateFlightVisibility)
-(function patchUpdateFlightVisibility(){
-  const _orig = window.updateFlightVisibility;
-  if (typeof _orig !== 'function') return;
-  window.updateFlightVisibility = function(){
-    _orig.apply(this, arguments);
-    // Pequeño defer para que el DOM termine de mostrar/ocultar
-    setTimeout(()=>{ try{ validateAirportConditionalFields(); }catch(_){} }, 0);
-  };
-})();
-
-// === 5) Integración con “Calculate” y “Pay” (bloquear si falta algo condicional)
-(function hardenCalculateAndPay(){
-  // Calculate
-  const calc = document.getElementById('calculate');
-  if (calc){
-    const handler = calc.onclick || null;
-    calc.addEventListener('click', (e)=>{
-      if (!validateAirportConditionalFields()){
-        e.preventDefault();
-        alert('Please complete required flight fields.');
-        return;
+    if (commWrap){
+      const showComm = isComm && !isJSXUtah(place);
+      commWrap.style.display = showComm ? 'block' : 'none';
+      if(!showComm){
+        const n = document.getElementById('flightNumber');
+        const o = document.getElementById('flightOrigin');
+        if(n){n.value=''; n.setCustomValidity('');}
+        if(o){o.value=''; o.setCustomValidity('');}
+        document.getElementById('flightHint')?.style?.setProperty('display','none');
+        document.getElementById('originHelp')?.style?.setProperty('display','none');
+      } else {
+        initFlightOriginAutocomplete();
       }
-    }, true);
-    // Mantén tu lógica original (no removemos handlers previos)
-    if (handler) calc.addEventListener('click', handler);
-  }
-
-  // Pay
-  const pay = document.getElementById('pay');
-  if (pay){
-    pay.addEventListener('click', (e)=>{
-      if (!validateAirportConditionalFields()){
-        e.preventDefault();
-        alert('Please complete required flight fields.');
-        return;
+    }
+    if (pvtWrap){
+      const showPvt = isAirportUT && !isComm;
+      pvtWrap.style.display = showPvt ? 'block' : 'none';
+      if(!showPvt){
+        const t = document.getElementById('tailNumber');
+        const p = document.getElementById('pvtOrigin');
+        if(t){t.value=''; t.setCustomValidity('');}
+        if(p){p.value=''; p.setCustomValidity('');}
+        document.getElementById('tailHelp')?.style?.setProperty('display','none');
+        document.getElementById('pvtOriginHelp')?.style?.setProperty('display','none');
       }
-    }, true);
+    }
   }
-})();
-document.addEventListener('DOMContentLoaded', ()=>{
-  try { validateAirportConditionalFields(); } catch(_) {}
 
-  const ids = [
-    'flightNumber','flightOrigin',
-    'jsxFlightNumber','jsxOrigin',
-    'tailNumber','pvtOrigin',
-    'newDate','newTime'
-  ];
-  ids.forEach((id)=>{
-    const node = document.getElementById(id);
-    if (node) node.addEventListener('input', ()=>{
-      try { validateAirportConditionalFields(); } catch(_) {}
+  function initFlightOriginAutocomplete() {
+    const input = document.getElementById("flightOrigin");
+    if (!input || !window.google?.maps?.places?.Autocomplete) return;
+    const ac = new google.maps.places.Autocomplete(input, {
+      types: ["(cities)"],
+      fields: ["name","place_id","geometry"],
     });
-  });
-});
-    </script>
-    <script>
-  /***** CONFIG *****/
+    ac.addListener("place_changed", () => {
+      window._flightOrigin = ac.getPlace();
+    });
+  }
+
+  const getResDateISO = () => {
+    const v = (document.getElementById('newDate')?.value || '').trim();
+    if (!v) return '';
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    const localMs = d.getTime() - d.getTimezoneOffset()*60000;
+    return new Date(localMs).toISOString().slice(0,10);
+  };
+
+  function wireFlightValidation(){
+    const input = document.getElementById('flightNumber');
+    const hint  = document.getElementById('flightHint');
+    if(!input || !hint) return;
+    function update(){
+      const r = validateFlightValue(input.value || "");
+      hint.textContent = r.ok ? "Format looks good" : r.msg;
+      hint.className   = "hint " + (r.ok ? "ok" : "err");
+      hint.style.display = 'block';
+      input.setCustomValidity(r.ok ? "" : r.msg);
+    }
+    input.addEventListener('input', update);
+    update();
+  }
+
+  async function maybeCheckBackend(){
+    const fl  = (document.getElementById("flightNumber")?.value || "").trim();
+    const org = (document.getElementById("flightOrigin")?.value || "").trim();
+    const dt  = getResDateISO();
+    if (!fl || !org || !dt) return;
+
+    const normFl = fl.replace(/\s+/g,'').toUpperCase();
+    const originIata = parseOriginIata(org) || "";
+
+    const mySeq = ++__flightSeq;
+    const hint = document.getElementById("flightHint");
+    const originHelp = document.getElementById("originHelp");
+    const backendRes = document.getElementById("backendResult");
+
+    try{
+      const qs = new URLSearchParams({ fn: normFl, originIata, date: dt });
+      const resp = await fetch(`${FLIGHTCHECK_URL}?${qs.toString()}`);
+      const data = await resp.json().catch(()=>({}));
+
+      if (mySeq !== __flightSeq) return;
+
+      if (!resp.ok || !data?.ok){
+        hint && (hint.textContent="✗ Flight not found", hint.className="hint err", hint.style.display="block");
+        originHelp && (originHelp.textContent=data?.msg||"✗ Invalid origin", originHelp.className="hint err", originHelp.style.display="block");
+        backendRes && (backendRes.textContent = data?.msg || `Service error (${resp.status})`);
+        return;
+      }
+
+      hint && (hint.textContent="✅ Flight confirmed", hint.className="hint ok", hint.style.display="block");
+      originHelp && (originHelp.textContent="✅ Origin city confirmed", originHelp.className="hint ok", originHelp.style.display="block");
+
+      const t = String(data.arrivalLocal||"").match(/T(\d{2}:\d{2})/);
+      if (t) document.getElementById('newTime')?.value = t[1];
+
+      backendRes && (backendRes.textContent = data.arrivalLocal ? `ETA: ${data.arrivalLocal}` : "No ETA provided");
+    }catch(e){
+      hint && (hint.textContent="⚠️ Network error", hint.className="hint err", hint.style.display="block");
+      backendRes && (backendRes.textContent = "⚠️ Error consultando backend: " + e.message);
+    }
+  }
+
+  function wireFlightBackendTriggers(){
+    const fn = document.getElementById('flightNumber');
+    const org= document.getElementById('flightOrigin');
+    const d  = document.getElementById('newDate');
+    const run = () => setTimeout(maybeCheckBackend, 200);
+    fn?.addEventListener('input', run);
+    org?.addEventListener('input', run);
+    d?.addEventListener('change', run);
+  }
+  </script>
+
+  <!-- App principal -->
+  <script>
   const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
   const stripe = Stripe(STRIPE_PK);
   const MAX_RESCHEDULES = 2;
   const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
 
-  /***** STATE *****/
   let booking = null;
   let selectedVehicle = 'suv';
   let mgChoice = 'none';
@@ -604,11 +399,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   let calculatedOnce = false;
   let reachedLimit = false;
 
-  /***** UTIL *****/
   function fmtMoney(n){ return Number(n||0).toFixed(2); }
   const el = id => document.getElementById(id);
 
-  /***** PRICING (igual a tu base) *****/
   function calculateBase(mi){
     if (mi <= 10) return 120;
     if (mi <= 35) return 190;
@@ -636,7 +429,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
   function earliestAllowedDt(){ return nextQuarter(new Date(Date.now() + 24*60*60*1000)); }
 
-  /***** Meet & Greet (SLC) *****/
   const FBO_RX = /\b(fbo|million air|signature|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
   function isAirport(place){ return (place?.types||[]).includes('airport') || /airport/i.test(place?.name||place?.formatted_address||''); }
   function isUtah(place){ const a=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(a) || /, ut(ah)?\b/.test(a); }
@@ -656,7 +448,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   }
 
-  /***** DATE/TIME INIT *****/
   (function mountDateTime(){
     const dEl = el('newDate'), tEl = el('newTime');
     const minDt = earliestAllowedDt();
@@ -672,7 +463,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     upd();
   })();
 
-  /***** VEH & MG TOGGLES *****/
   (function wireVehicle(){
     const wrap = el('vehToggle');
     wrap.querySelectorAll('.veh-btn').forEach(b=>{
@@ -705,7 +495,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }));
   })();
 
-  /***** LOAD BY CN *****/
   function getQueryCN(){ const u = new URL(window.location.href); return (u.searchParams.get('cn')||'').trim(); }
   function extractRescheduleCount(bk){
     if (typeof bk?.reschedulesCount === 'number') return bk.reschedulesCount;
@@ -727,23 +516,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
     el('saveHint').textContent = 'You have reached the maximum number of reschedules for this reservation.';
   }
 
-  // ——— Única versión global de hydratePickupFromInput (robusta) ———
+  // --- HIDRATAR PICKUP DESDE TEXTO O GEOCODER ---
   async function hydratePickupFromInput(){
     const input = document.getElementById('pickup');
-    // Si no hay texto, limpiamos y actualizamos visibilidad
     if (!input || !input.value.trim()) {
       window.pickupPlace = null;
       try { updateFlightVisibility(); } catch(_) {}
       return;
     }
 
-    // Si Maps/Geocoder aún no cargó, NO rompemos; usamos heurística de texto
+    // Fallback sin Maps: inferir Utah y tipo aeropuerto por texto
     if (!window.google || !google.maps || !google.maps.Geocoder){
       const txt = input.value.trim();
-      // Heurística mínima para SLC / JSX / FBO por texto
+      const utahRx = /\b(ut|utah|slc|salt\s*lake|provo|pvu|park\s*city|heber|ogden|murray|lehi|orem)\b/i;
+      const isUT   = utahRx.test(txt);
       window.pickupPlace = {
         name: txt,
-        formatted_address: txt,
+        formatted_address: isUT ? `${txt}, UT` : txt,
         place_id: null,
         types: (/airport/i.test(txt) ? ['airport'] : [])
       };
@@ -765,11 +554,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
               address_components: results[0].address_components
             };
           } else {
+            const txt = input.value.trim();
+            const utahRx = /\b(ut|utah|slc|salt\s*lake|provo|pvu|park\s*city|heber)\b/i;
+            const isUT   = utahRx.test(txt);
             window.pickupPlace = {
-              name: input.value.trim(),
-              formatted_address: input.value.trim(),
+              name: txt,
+              formatted_address: isUT ? `${txt}, UT` : txt,
               place_id: null,
-              types: []
+              types: (/airport/i.test(txt) ? ['airport'] : [])
             };
           }
           try { updateFlightVisibility(); } catch(_) {}
@@ -778,32 +570,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       );
     });
   }
-<script>
-/* ===== Paso 3: hidratar por escritura ===== */
 
-/* 1) Debounce pequeño para no geocodificar en cada tecla */
-function _debounce(fn, ms=250){
-  let t; 
-  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
-}
-
-/* 2) Handler cuando el usuario escribe o sale del campo */
-const _onPickupTyped = _debounce(async ()=>{
-  await hydratePickupFromInput();     // ← crea/actualiza window.pickupPlace
-  updateMeetGreetVisibility();        // ← M&G según SLC
-  updateFlightVisibility();           // ← muestra/oculta Flight/JSX/Privado
-  // si usas verificación backend, vuelve a armar triggers por si el bloque apareció recién
-  try { wireFlightBackendTriggers(); } catch(_) {}
-}, 250);
-
-/* 3) Conecta eventos del input #pickup */
-(function wirePickupTyping(){
-  const p = document.getElementById('pickup');
-  if (!p) return;
-  // “input” cubre tecleo; “change/blur” cuando dejan el campo
-  ['input','change','blur'].forEach(ev => p.addEventListener(ev, _onPickupTyped));
-})();
-</script>
   async function loadBooking(cn){
     el('loadHint').textContent = 'Loading booking...';
     try{
@@ -831,16 +598,13 @@ const _onPickupTyped = _debounce(async ()=>{
       el('kpiMiles').textContent   = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
       el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || 0);
 
-      // Prefill
       el('pickup').value  = booking.pickup || '';
       el('dropoff').value = booking.dropoff || '';
 
-      // Hidrata pickup → muestra Flight/JSX/Private según reglas
       try { await hydratePickupFromInput(); } catch(_) {}
       updateMeetGreetVisibility();
       updateFlightVisibility();
 
-      // Límite de reschedules
       const used = extractRescheduleCount(booking);
       if (used >= MAX_RESCHEDULES){
         el('reschedWarn').style.display = 'block';
@@ -860,7 +624,6 @@ const _onPickupTyped = _debounce(async ()=>{
     }
   }
 
-  /***** PRICE ENGINE *****/
   function currentMiles(){
     if (routeMiles != null) return routeMiles;
     return Number(booking?.distanceMiles || 0);
@@ -896,7 +659,6 @@ const _onPickupTyped = _debounce(async ()=>{
     el('btnSave').disabled = !canSave;
   }
 
-  /***** SAVE *****/
   el('btnSave').addEventListener('click', async ()=>{
     if(!booking || reachedLimit) return;
     const { diff, newTotal, afterHours, miles, mgFee, dateStr, timeStr } = booking.__calc || {};
@@ -960,7 +722,6 @@ const _onPickupTyped = _debounce(async ()=>{
     }
   });
 
-  /***** LOAD BTN & URL PARAM *****/
   el('btnLoad').addEventListener('click', ()=>{
     const cn = el('cn').value.trim();
     if(!cn){ el('cn').classList.add('invalid'); return; }
@@ -973,7 +734,20 @@ const _onPickupTyped = _debounce(async ()=>{
     else { el('loadHint').textContent = 'Enter your confirmation number (CN) and click Load.'; }
   })();
 
-  /***** MAPS + AUTOCOMPLETE + ROUTE *****/
+  // === TIPING PICKUP: hidratar por escritura con debounce ===
+  function _debounce(fn, ms=250){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+  const _onPickupTyped = _debounce(async ()=>{
+    await hydratePickupFromInput();
+    updateMeetGreetVisibility();
+    updateFlightVisibility();
+    try { wireFlightBackendTriggers(); } catch(_) {}
+  }, 250);
+  (function wirePickupTyping(){
+    const p = document.getElementById('pickup');
+    if (!p) return;
+    ['input','change','blur'].forEach(ev => p.addEventListener(ev, _onPickupTyped));
+  })();
+
   function routeAsync(opts){
     return new Promise((res,rej)=>{
       directionsService.route(opts,(r,s)=> s==='OK'&&r?res(r):rej(s||'ROUTE_ERROR'));
@@ -991,10 +765,11 @@ const _onPickupTyped = _debounce(async ()=>{
     const acPickup  = new google.maps.places.Autocomplete(document.getElementById('pickup'),  opts);
     const acDropoff = new google.maps.places.Autocomplete(document.getElementById('dropoff'), opts);
 
-    acPickup.addListener('place_changed', ()=>{
+    acPickup.addListener('place_changed', async ()=>{
       pickupPlace = acPickup.getPlace() || null;
       updateMeetGreetVisibility();
-      updateFlightVisibility();       // << asegura visibilidad de bloques
+      updateFlightVisibility();
+      try { wireFlightBackendTriggers(); } catch(_) {}
     });
     acDropoff.addListener('place_changed', ()=>{
       dropoffPlace = acDropoff.getPlace() || null;
@@ -1042,13 +817,15 @@ const _onPickupTyped = _debounce(async ()=>{
     });
   }
   window.initMapReschedule = initMapReschedule;
-// --- EXponer helpers del primer bloque al scope global ---
-window.updateFlightVisibility   = updateFlightVisibility;
-window.wireFlightValidation     = wireFlightValidation;
-window.wireFlightBackendTriggers= wireFlightBackendTriggers;
-window.maybeCheckBackend        = maybeCheckBackend;
-</script>
-  <!-- Google Maps Loader (usa tu misma key pública de index.html) -->
+
+  // Exponer helpers
+  window.updateFlightVisibility   = updateFlightVisibility;
+  window.wireFlightValidation     = wireFlightValidation;
+  window.wireFlightBackendTriggers= wireFlightBackendTriggers;
+  window.maybeCheckBackend        = maybeCheckBackend;
+  </script>
+
+  <!-- Google Maps -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
 </body>
 </html>
