@@ -62,54 +62,51 @@
   }
   #flightNumber::placeholder,#flightOrigin::placeholder,#jsxFlightNumber::placeholder,#jsxOrigin::placeholder,#tailNumber::placeholder,#pvtOrigin::placeholder{
     color:#c9a97c!important;opacity:.85!important;
+  }  #flightNumber::placeholder,
+  #flightOrigin::placeholder {
+    color:#c9a97c!important;
+    opacity:.85!important;
   }
 
-  /* === Date & Time pickers en BLANCO (ícono calendario y reloj) === */
-input[type="date"],
-input[type="time"] {
-  background-color: #1a1a1a !important;  /* Fondo oscuro */
-  color: #ffffff !important;             /* Texto blanco */
-  border: 1px solid #444 !important;
-  border-radius: 10px !important;
-  padding: 10px 12px !important;
-  height: 44px !important;
+/* === ICONOS BLANCOS DE FECHA Y HORA === */
+#newDate,
+#newTime {
+  padding-right: 38px !important; /* deja espacio para el icono */
 }
 
-/* Íconos (calendario y reloj) en blanco */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(2); /* Forza a blanco */
+/* Calendario blanco */
+#newDate::-webkit-calendar-picker-indicator {
+  background: no-repeat center / 18px 18px
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+  <rect x='3' y='4' width='18' height='18' rx='2' ry='2'/>\
+  <line x1='16' y1='2' x2='16' y2='6'/>\
+  <line x1='8' y1='2' x2='8' y2='6'/>\
+  <line x1='3' y1='10' x2='21' y2='10'/>\
+</svg>");
+  opacity: 1 !important;
+  filter: none !important;
   cursor: pointer;
 }
 
-input[type="time"]::-webkit-inner-spin-button {
-  filter: invert(1) brightness(2); /* Flechas de hora en blanco */
-}
-
-/* Para Firefox */
-input[type="date"],
-input[type="time"] {
-  color-scheme: dark;
-}
-  /* === Forzar ICONOS de calendario y reloj a blanco === */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(2);
-  opacity: 1 !important; /* más visibles */
+/* Reloj blanco */
+#newTime::-webkit-calendar-picker-indicator {
+  background: no-repeat center / 18px 18px
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
+  <circle cx='12' cy='13' r='8'/>\
+  <line x1='12' y1='13' x2='12' y2='9'/>\
+  <line x1='12' y1='13' x2='15' y2='15'/>\
+</svg>");
+  opacity: 1 !important;
+  filter: none !important;
   cursor: pointer;
 }
 
-/* Flechas internas del selector de hora (Chrome) */
-input[type="time"]::-webkit-inner-spin-button {
-  filter: invert(1) brightness(2);
-}
-
-/* Para Firefox (usa color-scheme) */
-input[type="date"],
-input[type="time"] {
-  color-scheme: dark; /* obliga a íconos claros */
-}
+/* Mantener esquema oscuro (Firefox + WebKit) */
+#newDate, #newTime { color-scheme: dark; }
 </style>
+  
 </head>
 <body>
   <header>
