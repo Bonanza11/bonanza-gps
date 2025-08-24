@@ -745,7 +745,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         name: txt,
         formatted_address: txt,
         place_id: null,
-        types: [/airport/i.test(txt) ? ['airport'] : []]
+        types: (/airport/i.test(txt) ? ['airport'] : [])
       };
       try { updateFlightVisibility(); } catch(_) {}
       return;
