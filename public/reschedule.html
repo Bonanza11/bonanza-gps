@@ -64,39 +64,6 @@
     color:#c9a97c!important;opacity:.85!important;
   }
 
- /* === Date & Time pickers — iconos en BLANCO === */
-input[type="date"],
-input[type="time"] {
-  background: #1a1a1a;           /* mismo fondo oscuro que usas */
-  color: #ffddae;                 /* tu texto cobre */
-  color-scheme: dark;             /* fuerza popup oscuro coherente */
-  accent-color: var(--copper);
-}
-
-/* Icono del calendario y del reloj en navegadores WebKit (Chrome, Edge, Safari) */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(2); /* -> blanco brillante */
-  opacity: 1;
-  cursor: pointer;
-}
-
-/* Spinner de la hora en blanco (Chrome/Edge/Safari) */
-input[type="time"]::-webkit-inner-spin-button {
-  filter: invert(1) brightness(2); /* -> blanco brillante */
-  opacity: 1;
-}
-
-/* (Opcional) Evita que Windows/Edge meta un desplegable heredado oscuro */
-input[type="date"]::-ms-expand,
-input[type="time"]::-ms-expand { display: none; }
-
-/* Firefox: no permite recolorear el icono directamente.
-   Aseguramos tema oscuro coherente del popup */
-@-moz-document url-prefix() {
-  input[type="date"],
-  input[type="time"] { color-scheme: dark; }
-}
   /* === Date & Time pickers en BLANCO (ícono calendario y reloj) === */
 input[type="date"],
 input[type="time"] {
@@ -130,7 +97,6 @@ input[type="time"] {
   <header>
     <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo"/>
   </header>
-
   <main>
     <!-- LOAD -->
     <div class="card" id="loadCard">
