@@ -51,6 +51,60 @@
     .invalid{border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(255,107,107,.25) !important;}
     #map{height:360px;border-radius:12px;overflow:hidden;margin-top:10px}
     .disabled{ pointer-events:none; opacity:.6; }
+    /* ===== Force DARK on flight-related inputs (with autofill fix) ===== */
+#flightNumber,
+#flightOrigin,
+#jsxFlightNumber,
+#jsxOrigin,
+#tailNumber,
+#pvtOrigin {
+  background-color: #1a1a1a !important;
+  color: #ffddae !important;
+  border: 1px solid #444 !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  height: 44px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Focus glow same as other inputs */
+#flightNumber:focus,
+#flightOrigin:focus,
+#jsxFlightNumber:focus,
+#jsxOrigin:focus,
+#tailNumber:focus,
+#pvtOrigin:focus {
+  border-color: var(--copper) !important;
+  box-shadow: 0 0 0 3px rgba(168,116,79,.18) !important;
+  outline: none !important;
+}
+
+/* Placeholder color */
+#flightNumber::placeholder,
+#flightOrigin::placeholder,
+#jsxFlightNumber::placeholder,
+#jsxOrigin::placeholder,
+#tailNumber::placeholder,
+#pvtOrigin::placeholder {
+  color: #c9a97c !important;
+  opacity: .85 !important;
+}
+
+/* Autofill fix (Chrome/Safari) */
+#flightNumber:-webkit-autofill,
+#flightOrigin:-webkit-autofill,
+#jsxFlightNumber:-webkit-autofill,
+#jsxOrigin:-webkit-autofill,
+#tailNumber:-webkit-autofill,
+#pvtOrigin:-webkit-autofill {
+  -webkit-text-fill-color: #ffddae !important;
+  -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+  box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+  border: 1px solid #444 !important;
+}
   </style>
 </head>
 <body>
