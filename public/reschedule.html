@@ -48,9 +48,9 @@
     .mg-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
     .tax-note{font-size:13px;color:#c9a97c;font-style:italic;text-align:right;opacity:.85}
     .muted{opacity:.8}
-    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important;}
+    .invalid{border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(255,107,107,.25) !important;}
     #map{height:360px;border-radius:12px;overflow:hidden;margin-top:10px}
-    .disabled{pointer-events:none;opacity:.6;}
+    .disabled{ pointer-events:none; opacity:.6; }
   </style>
 </head>
 <body>
@@ -59,8 +59,6 @@
   </header>
 
   <main>
-    <h1>Reschedule</h1>
-
     <!-- LOAD -->
     <div class="card" id="loadCard">
       <label for="cn">Reservation Code (CN)</label>
@@ -114,25 +112,24 @@
         <input id="jsxOrigin" placeholder="e.g. Burbank (BUR)" />
       </div>
 
-      <!-- Comercial -->
+      <!-- Vuelo comercial -->
       <div id="flightContainer" style="display:none;">
         <label for="flightNumber">Flight Number</label>
         <input id="flightNumber" placeholder="e.g. DL1234" />
         <div id="flightHint" class="hint warn" style="display:none"></div>
-
         <label for="flightOrigin" style="margin-top:12px;">Flight Origin City</label>
         <input id="flightOrigin" placeholder="e.g. Miami (MIA)" />
         <div id="originHelp" class="hint" style="display:none"></div>
       </div>
 
+      <!-- Resultado backend -->
       <div id="backendResult" class="hint" style="display:block; margin-top:6px;"></div>
 
-      <!-- Privado -->
+      <!-- Jet privado -->
       <div id="privateFlightContainer" style="display:none;">
         <label for="tailNumber">Jet Tail Number (N-Number)</label>
         <input id="tailNumber" placeholder="e.g., N123AB" />
         <div id="tailHelp" class="hint" style="display:none"></div>
-
         <label for="pvtOrigin" style="margin-top:12px;">Flight Origin City</label>
         <input id="pvtOrigin" placeholder="e.g., Van Nuys (VNY)" />
         <div id="pvtOriginHelp" class="hint" style="display:none"></div>
