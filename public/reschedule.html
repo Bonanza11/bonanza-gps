@@ -197,6 +197,16 @@
   /************ CONFIG ************/
   const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
   const stripe = Stripe(STRIPE_PK);
+      /* ==== Money helpers (evitan montos locos) ==== */
+  function roundUSD(n){
+    return Math.round((Number(n)||0) * 100) / 100; // 2 decimales
+  }
+  function assertDiffUSD(usd){
+    if (!Number.isFinite(usd)) throw new Error('Invalid amount');
+    if (usd < 0) throw new Error('Negative amount');
+    // Límite de seguridad (ajusta si quieres)
+    if (usd > 5000) throw new Error('Amount too large for reschedule diff');
+  }
   const MAX_RESCHEDULES = 2;
   const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
 
@@ -800,66 +810,93 @@
     setTimeout(rsMaybeCheckBackend, 150);
   });
   </script>
-
-  <!-- >>> INTEGRACIÓN: handler Save Changes (no reembolsos + Stripe diff) <<< -->
   <script>
-    el('btnSave').addEventListener('click', async ()=>{
-      try{
-        if (!booking?.__calc) {
-          alert('Please calculate the route first.');
-          return;
-        }
-        const cn = booking?.cn || el('cn')?.value?.trim();
-        if (!cn){ alert('Missing reservation code (CN).'); return; }
+  // Handler ÚNICO para "Save Changes" (cobra SOLO la diferencia positiva)
+  el('btnSave').addEventListener('click', async ()=>{
+    try{
+      if (!booking?.__calc) { alert('Please calculate the route first.'); return; }
 
-        const { newTotal, diff, diffForUI, dateStr, timeStr, miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours } = booking.__calc;
+      const cn = booking?.cn || el('cn')?.value?.trim();
+      if (!cn) { alert('Missing reservation code (CN).'); return; }
 
-        // 1) Guardar reschedule primero
-        const saveResp = await fetch('/api/book/reschedule', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            cn,
-            newDate: dateStr || el('newDate')?.value || '',
-            newTime: timeStr || el('newTime')?.value || '',
-            quote: { newTotal, miles, afterHours, surcharge, mgFee, vehicleType: selectedVehicle, meetAndGreet: mgChoice }
-          })
-        });
-        const saveData = await saveResp.json().catch(()=> ({}));
-        if (!saveResp.ok || !saveData?.ok) throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
+      const {
+        newTotal,       // número en USD (float)
+        diff,           // puede ser negativo (real)
+        diffForUI,      // NUNCA negativo (lo que cobraremos)
+        dateStr, timeStr,
+        miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours
+      } = booking.__calc;
 
-        // 2) NO REFUND rule: si la diferencia es ≤ 0, solo confirmar
-        if ((diffForUI ?? 0) <= 0){
-          el('resultCard').style.display = 'block';
-          el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
-          return;
-        }
-
-        // 3) Stripe checkout para la diferencia positiva
-        const cents = Math.round(diffForUI * 100);
-        const desc  = `Reschedule difference for ${cn}`;
-
-        const sessionResp = await fetch('/api/create-checkout-session-diff', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            cn,
-            diffAmount: cents,
-            description: desc,
-            metadata: { cn, kind:'reschedule_diff', newTotal, diffShown: diffForUI, vehicle: selectedVehicle, meetGreet: mgChoice, afterHours: afterHours ? 'yes':'no' }
-          })
-        });
-        const sessionData = await sessionResp.json().catch(()=> ({}));
-        if (!sessionResp.ok || !sessionData?.id) throw new Error(sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
-
-        const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
-        if (error) throw error;
-
-      }catch(e){
-        console.error(e);
-        alert('Error: ' + (e?.message || e));
+      // 1) Guarda la reprogramación primero (sin cobrar aún)
+      const saveResp = await fetch('/api/book/reschedule', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          cn,
+          newDate: dateStr || el('newDate')?.value || '',
+          newTime: timeStr || el('newTime')?.value || '',
+          quote: {
+            newTotal,
+            miles,
+            afterHours,
+            surcharge,
+            mgFee,
+            vehicleType: selectedVehicle,
+            meetAndGreet: mgChoice
+          }
+        })
+      });
+      const saveData = await saveResp.json().catch(()=> ({}));
+      if (!saveResp.ok || !saveData?.ok) {
+        throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
       }
-    });
-  </script>
+
+      // 2) Regla: NO REFUND → si la diferencia es <= 0, no cobras nada
+      const payableUSD = roundUSD(Math.max(diffForUI ?? 0, 0));
+      if (payableUSD <= 0) {
+        el('resultCard').style.display = 'block';
+        el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
+        return;
+      }
+
+      // 3) Validación fuerte + conversión EXACTA a centavos (UNA sola vez)
+      assertDiffUSD(payableUSD);
+      const diffAmount = Math.round(payableUSD * 100); // centavos
+
+      // 4) Crea sesión de Stripe para COBRAR SOLO la diferencia positiva
+      const desc = `Reschedule difference for ${cn}`;
+      const sessionResp = await fetch('/api/create-checkout-session-diff', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          cn,
+          diffAmount,           // << EN CENTAVOS, ya convertido aquí
+          description: desc,
+          metadata: {
+            cn,
+            kind: 'reschedule_diff',
+            newTotal: newTotal,
+            diffShown: payableUSD,
+            vehicle: selectedVehicle,
+            meetGreet: mgChoice,
+            afterHours: afterHours ? 'yes' : 'no'
+          }
+        })
+      });
+
+      const sessionData = await sessionResp.json().catch(()=> ({}));
+      if (!sessionResp.ok || !sessionData?.id) {
+        throw new Error(sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
+      if (error) throw error;
+
+    } catch (e) {
+      console.error(e);
+      alert('Error: ' + (e?.message || e));
+    }
+  });
+</script>
 </body>
 </html>
