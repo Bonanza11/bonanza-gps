@@ -450,35 +450,159 @@ function isAfterHours(dateStr, timeStr){
   return (d<start)||(d>end);
 }
 
-function recalc(){
+<script>
+/* ===== Reschedule pricing with outside‑county surcharge (drop‑in) =====
+   Paste this block anywhere after Google Maps has loaded on the reschedule page.
+   It replaces the existing `recalc()` and adds the helpers it needs.
+   Assumes these globals already exist on your page:
+   - booking, selectedVehicle, mgChoice, pickupPlace, dropoffPlace,
+     directionsService, routeMiles, calculatedOnce, reachedLimit
+   - isAirport(place) and isUtah(place) (already defined in your file)
+*/
+
+/* === Base address used to measure surcharge miles === */
+const RS_BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
+
+/* === Helpers (counties, miles from base) === */
+let __rsGeocoder = null;
+function rsGetGeocoder(){ if(!__rsGeocoder) __rsGeocoder = new google.maps.Geocoder(); return __rsGeocoder; }
+
+function rsCountyFromPlace(p){
+  const comps = p?.address_components || [];
+  const c = comps.find(x => (x.types||[]).includes("administrative_area_level_2"));
+  return c?.long_name || "";
+}
+async function rsCountyByPlaceId(placeId){
+  if(!placeId) return "";
+  try{
+    const res = await new Promise((resolve,reject)=>
+      rsGetGeocoder().geocode({ placeId }, (results,status)=>
+        status==="OK" && results?.[0] ? resolve(results[0]) : reject(status)
+      )
+    );
+    const c = res.address_components.find(x => (x.types||[]).includes("administrative_area_level_2"));
+    return c?.long_name || "";
+  }catch(_){ return ""; }
+}
+function rsIsAllowedCounty(name){ return /Summit County|Wasatch County/i.test(name||""); }
+
+async function rsMilesFromBase(placeId){
+  const trip = await new Promise((resolve,reject)=>
+    directionsService.route({
+      origin: RS_BASE_ADDRESS,
+      destination: { placeId },
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (r,s)=> s==="OK" && r ? resolve(r) : reject(s||"ROUTE_ERROR"))
+  );
+  return trip.routes[0].legs[0].distance.value / 1609.34;
+}
+
+/* === Pricing pieces (same tiers & multipliers as booking) === */
+function rsCalculateBase(mi){
+  if (mi <= 10) return 120;
+  if (mi <= 35) return 190;
+  if (mi <= 39) return 210;
+  if (mi <= 48) return 230;
+  if (mi <= 55) return 250;
+  return mi * 5.4;
+}
+function rsApplyVehicle(total){ return (selectedVehicle === 'van') ? Math.round(total * 1.30) : total; }
+function rsGetMGFee(){ return (typeof mgChoice !== 'undefined' && mgChoice !== 'none') ? 50 : 0; }
+function rsIsAfterHours(dateStr,timeStr){
+  if(!dateStr || !timeStr) return false;
+  const d = new Date(`${dateStr}T${timeStr}:00`);
+  const start = new Date(d); start.setHours(6,0,0,0);
+  const end   = new Date(d); end.setHours(23,0,0,0);
+  return d < start || d > end;
+}
+const fmtMoney = n => Number(n||0).toFixed(2);
+
+/* === REPLACEMENT: recalc() with county surcharge === */
+async function recalc(){
   if(!booking) return;
-  const miles = routeMiles != null ? routeMiles : Number(booking?.distanceMiles||0);
-  const base  = calculateBase(miles||0);
-  const dateStr = el('newDate').value;
-  const timeStr = el('newTime').value;
-  const afterHours = isAfterHours(dateStr,timeStr);
-  const ahFee = afterHours ? (base*0.20) : 0;
-  const mgFee = getMGFee();
-  const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
-  const original = Number(booking.quotedTotal || 0);
-  const diff = Math.round((newTotal - original)*100)/100;
 
-  el('kpiNew').textContent  = fmtMoney(newTotal);
-  el('kpiDiff').textContent = fmtMoney(diff);
-  el('kpiAH').textContent   = afterHours ? 'Yes (+20%)' : 'No';
-  el('kpiMiles').textContent= miles ? miles.toFixed(1) : '—';
+  // Distance to price against
+  const miles = (routeMiles != null)
+    ? routeMiles
+    : Number(booking?.distanceMiles || booking?.distance_miles || 0);
 
+  const base = rsCalculateBase(miles || 0);
+
+  // Figure out counties (use inline components first, fallback to Geocoder)
+  const pickCountyRaw = rsCountyFromPlace(pickupPlace) || await rsCountyByPlaceId(pickupPlace?.place_id);
+  const dropCountyRaw = rsCountyFromPlace(dropoffPlace) || await rsCountyByPlaceId(dropoffPlace?.place_id);
+  const pickupAllowed = rsIsAllowedCounty(pickCountyRaw);
+  const dropAllowed   = rsIsAllowedCounty(dropCountyRaw);
+
+  // Compute surcharge rule:
+  // - If pickup is an airport and drop-off is outside Summit/Wasatch -> surcharge from BASE to drop-off
+  // - Else if pickup is outside Summit/Wasatch -> surcharge from BASE to pickup
+  let surcharge = 0;
+  const pickupIsAirport = isAirport(pickupPlace||null);
+
+  try{
+    if (pickupIsAirport){
+      if (!dropAllowed && dropoffPlace?.place_id){
+        const m = await rsMilesFromBase(dropoffPlace.place_id);
+        surcharge = m * 3;
+      }
+    } else {
+      if (!pickupAllowed && pickupPlace?.place_id){
+        const m = await rsMilesFromBase(pickupPlace.place_id);
+        surcharge = m * 3;
+      }
+    }
+  }catch(_){
+    // If routing to base fails, just keep surcharge 0 (don’t block quoting)
+    surcharge = 0;
+  }
+
+  // Date/Time & fees
+  const dateStr = document.getElementById('newDate')?.value || "";
+  const timeStr = document.getElementById('newTime')?.value || "";
+  const afterHours = rsIsAfterHours(dateStr, timeStr);
+
+  // After-hours is 20% of (base + surcharge), like booking page
+  const ahFee = afterHours ? (base + surcharge) * 0.20 : 0;
+  const mgFee = rsGetMGFee();
+
+  // Vehicle multiplier at the end
+  const newTotal = rsApplyVehicle(base + surcharge + ahFee + mgFee);
+  const original = Number(booking.quotedTotal || booking.quoted_total || 0);
+  const diff = Math.round((newTotal - original) * 100) / 100;
+
+  // === Update KPIs ===
+  const kmi = document.getElementById('kpiMiles');
+  const knew= document.getElementById('kpiNew');
+  const kdif= document.getElementById('kpiDiff');
+  const kah = document.getElementById('kpiAH');
+  if (kmi)  kmi.textContent  = miles ? miles.toFixed(1) : '—';
+  if (knew) knew.textContent = fmtMoney(newTotal);
+  if (kdif) kdif.textContent = fmtMoney(diff);
+  if (kah)  kah.textContent  = afterHours ? 'Yes (+20%)' : 'No';
+
+  // === Breakdown ===
   const rows = [];
   rows.push(`<div class="row"><span>Base (${miles?miles.toFixed(1):'—'} mi)</span><span>$${fmtMoney(base)}</span></div>`);
-  if (ahFee>0) rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
-  if (mgFee>0) rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
+  if (surcharge > 0) rows.push(`<div class="row"><span>Distance Surcharge</span><span>$${fmtMoney(surcharge)}</span></div>`);
+  if (ahFee > 0)     rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
+  if (mgFee > 0)     rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
   rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
-  el('breakdown').innerHTML = rows.join('');
+  const bd = document.getElementById('breakdown');
+  if (bd) bd.innerHTML = rows.join('');
 
-  booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice, dateStr, timeStr };
+  // Cache for Save
+  booking.__calc = {
+    newTotal, diff, afterHours, miles, surcharge,
+    mgFee, selectedVehicle, mgChoice, dateStr, timeStr
+  };
+
+  // Enable Save when user has calculated at least once and set date/time
   const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
-  el('btnSave').disabled = !canSave;
+  const btnSave = document.getElementById('btnSave');
+  if (btnSave) btnSave.disabled = !canSave;
 }
+</script>
 
 /* —— Eventos DOM —— */
 document.addEventListener('DOMContentLoaded', ()=>{
