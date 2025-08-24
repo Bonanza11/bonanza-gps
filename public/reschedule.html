@@ -91,6 +91,24 @@ input[type="date"],
 input[type="time"] {
   color-scheme: dark;
 }
+  /* === Forzar ICONOS de calendario y reloj a blanco === */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  opacity: 1 !important; /* más visibles */
+  cursor: pointer;
+}
+
+/* Flechas internas del selector de hora (Chrome) */
+input[type="time"]::-webkit-inner-spin-button {
+  filter: invert(1) brightness(2);
+}
+
+/* Para Firefox (usa color-scheme) */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark; /* obliga a íconos claros */
+}
 </style>
 </head>
 <body>
