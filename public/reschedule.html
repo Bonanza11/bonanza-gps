@@ -106,7 +106,27 @@
     box-shadow: 0 0 0 1000px #1a1a1a inset !important;
     border: 1px solid #444 !important;
   }
+  /* === Fix dark mode for Date & Time picker icons (copper color) === */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: none !important;
+    color: var(--copper) !important;
+    opacity: 0.95;
+    cursor: pointer;
+  }
 
+  input[type="time"]::-webkit-inner-spin-button {
+    filter: none !important;
+    color: var(--copper) !important;
+    opacity: 0.95;
+  }
+
+  /* Firefox */
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+    accent-color: var(--copper);
+  }
   /* === Fix dark mode for Date & Time picker icons === */
   input[type="date"]::-webkit-calendar-picker-indicator,
   input[type="time"]::-webkit-calendar-picker-indicator {
