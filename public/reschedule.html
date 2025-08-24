@@ -53,24 +53,70 @@
   .disabled{ pointer-events:none; opacity:.6; }
 
   /* ===== Force DARK on flight-related inputs (with autofill fix) ===== */
-  #flightNumber,#flightOrigin,#jsxFlightNumber,#jsxOrigin,#tailNumber,#pvtOrigin{
-    background-color:#1a1a1a!important;color:#ffddae!important;border:1px solid #444!important;border-radius:10px!important;
-    padding:10px 12px!important;height:44px!important;appearance:none!important;-webkit-appearance:none!important;background-image:none!important;box-shadow:none!important;
+  #flightNumber,
+  #flightOrigin,
+  #jsxFlightNumber,
+  #jsxOrigin,
+  #tailNumber,
+  #pvtOrigin {
+    background-color: #1a1a1a !important;
+    color: #ffddae !important;
+    border: 1px solid #444 !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    height: 44px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background-image: none !important;
+    box-shadow: none !important;
   }
-  #flightNumber::placeholder,#flightOrigin::placeholder,#jsxFlightNumber::placeholder,#jsxOrigin::placeholder,#tailNumber::placeholder,#pvtOrigin::placeholder{color:#c9a97c!important;opacity:.85!important}
-  #flightNumber:-webkit-autofill,#flightOrigin:-webkit-autofill,#jsxFlightNumber:-webkit-autofill,#jsxOrigin:-webkit-autofill,#tailNumber:-webkit-autofill,#pvtOrigin:-webkit-autofill{
-    -webkit-text-fill-color:#ffddae!important;-webkit-box-shadow:0 0 0 1000px #1a1a1a inset!important;box-shadow:0 0 0 1000px #1a1a1a inset!important;border:1px solid #444!important;
+  #flightNumber:focus,
+  #flightOrigin:focus,
+  #jsxFlightNumber:focus,
+  #jsxOrigin:focus,
+  #tailNumber:focus,
+  #pvtOrigin:focus {
+    border-color: var(--copper) !important;
+    box-shadow: 0 0 0 3px rgba(168,116,79,.18) !important;
+    outline: none !important;
+  }
+  #flightNumber::placeholder,
+  #flightOrigin::placeholder,
+  #jsxFlightNumber::placeholder,
+  #jsxOrigin::placeholder,
+  #tailNumber::placeholder,
+  #pvtOrigin::placeholder {
+    color: #c9a97c !important;
+    opacity: .85 !important;
+  }
+  #flightNumber:-webkit-autofill,
+  #flightOrigin:-webkit-autofill,
+  #jsxFlightNumber:-webkit-autofill,
+  #jsxOrigin:-webkit-autofill,
+  #tailNumber:-webkit-autofill,
+  #pvtOrigin:-webkit-autofill {
+    -webkit-text-fill-color: #ffddae !important;
+    -webkit-box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+    box-shadow: 0 0 0 1000px #1a1a1a inset !important;
+    border: 1px solid #444 !important;
   }
 
-  /* === Date/Time picker icons — blanco en dark === */
+  /* === Date & Time pickers visibles (iconos claros, spinner claro) === */
   input[type="date"]::-webkit-calendar-picker-indicator,
-  input[type="time"]::-webkit-calendar-picker-indicator{
-    filter:brightness(0) invert(1)!important; opacity:1!important; cursor:pointer;
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(10deg);
+    opacity: 0.92;
+    cursor: pointer;
   }
-  input[type="time"]::-webkit-inner-spin-button{
-    filter:brightness(0) invert(1)!important; opacity:1!important;
+  input[type="time"]::-webkit-inner-spin-button {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(10deg);
+    opacity: 0.92;
   }
-  input[type="date"],input[type="time"]{ color-scheme:dark; }
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+    accent-color: var(--copper);
+  }
 </style>
 </head>
 <body>
@@ -356,7 +402,7 @@
       document.querySelectorAll('.veh-btn').forEach(b=> b.classList.toggle('active', b.dataset.type===selectedVehicle));
       el('kpiVehicle').textContent = (selectedVehicle==='van'?'Van':'SUV');
       el('kpiMiles').textContent   = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
-      el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || booking.quoted_total || 0);
+      el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || 0);
 
       el('pickup').value  = booking.pickup || '';
       el('dropoff').value = booking.dropoff || '';
@@ -448,7 +494,7 @@
     return d < start || d > end;
   }
 
-  /* REPLACEMENT: recalc() with county surcharge + NO REFUNDS rule */
+  /* REPLACEMENT: recalc() with county surcharge and NO REFUND rule display */
   async function recalc(){
     if(!booking) return;
 
@@ -492,19 +538,15 @@
 
     const newTotal = rsApplyVehicle(base + surcharge + ahFee + mgFee);
     const original = Number(booking.quotedTotal || booking.quoted_total || 0);
-    const diff = Math.round((newTotal - original) * 100) / 100;
 
-    /* ======== NO REFUNDS RULE (reprogramación) ========
-       Si diff < 0 (nuevo total menor), NO se reembolsa.
-       - Mostramos Difference = $0.00
-       - El pago solo ocurre si diff > 0
-    */
-    const displayDiff = diff > 0 ? diff : 0;
+    // === REGLA DE RESCHEDULE: nunca devolvemos si baja ===
+    let diffRaw = Math.round((newTotal - original) * 100) / 100;
+    const diffForUI = Math.max(diffRaw, 0);
 
     // KPIs
     el('kpiMiles').textContent = miles ? miles.toFixed(1) : '—';
     el('kpiNew').textContent   = fmtMoney(newTotal);
-    el('kpiDiff').textContent  = fmtMoney(displayDiff);
+    el('kpiDiff').textContent  = fmtMoney(diffForUI);
     el('kpiAH').textContent    = afterHours ? 'Yes (+20%)' : 'No';
 
     // Breakdown
@@ -516,15 +558,13 @@
     rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
     el('breakdown').innerHTML = rows.join('');
 
-    // Hint con regla
-    if (diff <= 0){
-      el('saveHint').textContent = 'Rule: No refunds on reschedules. If the new route costs less, your original total remains.';
-    } else {
-      el('saveHint').textContent = `Difference to pay: $${fmtMoney(diff)}. Click “Save Changes” to proceed to payment.`;
-    }
-
     // Cache + Save enable
-    booking.__calc = { newTotal, diff, displayDiff, afterHours, miles, surcharge, mgFee, selectedVehicle, mgChoice, dateStr, timeStr };
+    booking.__calc = {
+      newTotal,
+      diff: diffRaw,            // real (puede ser negativo)
+      diffForUI,                // mostrado/cobrado (nunca < 0)
+      afterHours, miles, surcharge, mgFee, selectedVehicle, mgChoice, dateStr, timeStr
+    };
     const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
     el('btnSave').disabled = !canSave;
   }
@@ -559,20 +599,6 @@
         document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
         if (calculatedOnce) recalc();
       });
-    });
-
-    // Guardar (pago de diferencia si aplica)
-    el('btnSave').addEventListener('click', async ()=>{
-      if (!booking?.__calc) return;
-      if (booking.__calc.diff <= 0){
-        // No hay pago (o menor) — solo registramos reprogramación sin refund
-        el('resultCard').style.display = 'block';
-        el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
-        return;
-      }
-      // Aquí iría tu flujo a Stripe para cobrar booking.__calc.diff
-      el('resultCard').style.display = 'block';
-      el('result').textContent = `Proceed to payment of $${fmtMoney(booking.__calc.diff)} (hook up your checkout here).`;
     });
   });
 
@@ -650,10 +676,9 @@
   window.initMapReschedule = initMapReschedule;
   </script>
 
-  <!-- Google Maps (usa tu clave) -->
+  <!-- Google Maps (después de definir initMapReschedule) -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
-
-  <!-- Flight + Origin confirmation (Reschedule) -->
+    <!-- Flight + Origin confirmation (Reschedule) -->
   <script>
   const RS_AIRLINES = new Set([
     "AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK",
@@ -822,6 +847,81 @@
     rsWireFlightBackendTriggers();
     setTimeout(rsMaybeCheckBackend, 150);
   });
+  </script>
+
+  <!-- >>> INTEGRACIÓN: handler Save Changes (no reembolsos + Stripe diff) <<< -->
+  <script>
+    el('btnSave').addEventListener('click', async ()=>{
+      try{
+        if (!booking?.__calc) {
+          alert('Please calculate the route first.');
+          return;
+        }
+        const cn = booking?.cn || el('cn')?.value?.trim();
+        if (!cn){ alert('Missing reservation code (CN).'); return; }
+
+        const { newTotal, diff, diffForUI, dateStr, timeStr, miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours } = booking.__calc;
+
+        // 1) Guardar reschedule primero
+        const saveResp = await fetch('/api/book/reschedule', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            cn,
+            newDate: dateStr || el('newDate')?.value || '',
+            newTime: timeStr || el('newTime')?.value || '',
+            quote: {
+              newTotal, miles, afterHours, surcharge, mgFee,
+              vehicleType: selectedVehicle, meetAndGreet: mgChoice
+            }
+          })
+        });
+        const saveData = await saveResp.json().catch(()=> ({}));
+        if (!saveResp.ok || !saveData?.ok) throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
+
+        // 2) Regla: NO REFUND en reprogramación → solo cobramos si diff>0
+        if ((diffForUI ?? 0) <= 0){
+          el('resultCard').style.display = 'block';
+          el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
+          return;
+        }
+
+        // 3) Stripe Checkout para la diferencia positiva
+        const cents = Math.round(Math.max(diffForUI,0) * 100);
+        const desc  = `Reschedule difference for ${cn}`;
+
+        const sessionResp = await fetch('/api/create-checkout-session-diff', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            cn,
+            amount: cents,
+            description: desc,
+            metadata: {
+              cn,
+              kind: 'reschedule_diff',
+              newDate: dateStr || el('newDate')?.value || '',
+              newTime: timeStr || el('newTime')?.value || '',
+              vehicleType: selectedVehicle,
+              mgChoice,
+              miles: String(miles ?? ''),
+              newTotal: String(newTotal ?? ''),
+            }
+          })
+        });
+        const sessionData = await sessionResp.json().catch(()=> ({}));
+        if (!sessionResp.ok || !sessionData?.id){
+          throw new Error(sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
+        }
+
+        const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
+        if (error) throw error;
+
+      }catch(e){
+        console.error(e);
+        alert('Error: ' + (e?.message || e));
+      }
+    });
   </script>
 </body>
 </html>
