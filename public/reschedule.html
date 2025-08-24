@@ -540,5 +540,124 @@
 
   <!-- Google Maps -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
+  <script>
+/* ========= Flight + Origin confirmation (Reschedule) ========= */
+
+const RS_AIRLINES = new Set(["AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK","CM","AV","QF","CX","AZ","SK","LA","AR","TS","WS","DY","NH","JL","KE","XE"]);
+const RS_FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
+let __rsFlightSeq = 0;
+
+function rsNormalizeFlight(v){
+  return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
+}
+function rsValidateFlightValue(v){
+  const m = rsNormalizeFlight(v).match(RS_FLIGHT_REGEX);
+  if(!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
+  const code=m[1], num=m[2];
+  if(!RS_AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
+  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
+  return {ok:true,msg:''};
+}
+function rsParseOriginIata(text){
+  const t=(text||"").trim().toUpperCase();
+  const m=t.match(/\(([A-Z]{3})\)$/);
+  if(m) return m[1];
+  if(/^[A-Z]{3}$/.test(t)) return t;
+  return null;
+}
+function rsGetDateISO(){
+  const v=(document.getElementById('newDate')?.value||'').trim();
+  if(!v) return '';
+  const d=new Date(v);
+  if(Number.isNaN(d.getTime())) return v;
+  const localMs=d.getTime()-d.getTimezoneOffset()*60000;
+  return new Date(localMs).toISOString().slice(0,10);
+}
+
+/* Live validation (number) */
+function rsWireFlightValidation(){
+  const input=document.getElementById('flightNumber');
+  const hint =document.getElementById('flightHint');
+  if(!input||!hint) return;
+  function update(){
+    const r=rsValidateFlightValue(input.value||'');
+    hint.textContent=r.ok?'Format looks good':r.msg;
+    hint.className='hint '+(r.ok?'ok':'err');
+    hint.style.display='block';
+    input.setCustomValidity(r.ok?'':r.msg);
+  }
+  input.addEventListener('input', update);
+  update();
+}
+
+/* Backend call to Cloud Run */
+async function rsMaybeCheckBackend(){
+  const fl =(document.getElementById('flightNumber')?.value||'').trim();
+  const org=(document.getElementById('flightOrigin')?.value||'').trim();
+  const dt = rsGetDateISO();
+  if(!fl||!org||!dt) return;
+
+  const normFl=fl.replace(/\s+/g,'').toUpperCase();
+  const originIata=rsParseOriginIata(org)||'';
+
+  const mySeq=++__rsFlightSeq;
+
+  const hint=document.getElementById('flightHint');
+  const originHelp=document.getElementById('originHelp');
+  const backendRes=document.getElementById('backendResult');
+
+  try{
+    const qs=new URLSearchParams({ fn:normFl, originIata, date:dt });
+    const resp=await fetch(`${FLIGHTCHECK_URL}?${qs.toString()}`);
+
+    if(!resp.ok){
+      if(hint){ hint.textContent='✗ Flight not found'; hint.className='hint err'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent='✗ Invalid origin'; originHelp.className='hint err'; originHelp.style.display='block'; }
+      if(backendRes) backendRes.textContent=`Service error (${resp.status})`;
+      return;
+    }
+
+    const data=await resp.json().catch(()=>({}));
+    if(mySeq!==__rsFlightSeq) return; // stale response
+
+    if(data.ok){
+      if(hint){ hint.textContent='✅ Flight confirmed'; hint.className='hint ok'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent='✅ Origin city confirmed'; originHelp.className='hint ok'; originHelp.style.display='block'; }
+      const t=String(data.arrivalLocal||'').match(/T(\d{2}:\d{2})/);
+      if(t){
+        const timeEl=document.getElementById('newTime');
+        if(timeEl) timeEl.value=t[1];
+      }
+      if(backendRes) backendRes.textContent=data.arrivalLocal?`ETA: ${data.arrivalLocal}`:'No ETA provided';
+    }else{
+      if(hint){ hint.textContent='✗ Flight not found'; hint.className='hint err'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent=data.msg||'✗ Invalid origin'; originHelp.className='hint err'; originHelp.style.display='block'; }
+      if(backendRes) backendRes.textContent=data.msg||'Invalid flight';
+    }
+  }catch(e){
+    console.error(e);
+    if(hint){ hint.textContent='⚠️ Network error'; hint.className='hint err'; hint.style.display='block'; }
+    if(backendRes) backendRes.textContent='⚠️ Error contacting backend: '+(e?.message||e);
+  }
+}
+
+/* Triggers */
+function rsWireFlightBackendTriggers(){
+  const fn  =document.getElementById('flightNumber');
+  const org =document.getElementById('flightOrigin');
+  const date=document.getElementById('newDate'); // reschedule uses newDate
+  const run =()=> setTimeout(rsMaybeCheckBackend,200);
+  if(fn)   fn.addEventListener('input', run);
+  if(org)  org.addEventListener('input', run);
+  if(date) date.addEventListener('change', run);
+}
+
+/* Boot */
+document.addEventListener('DOMContentLoaded', ()=>{
+  rsWireFlightValidation();
+  rsWireFlightBackendTriggers();
+  setTimeout(rsMaybeCheckBackend,150);
+});
+</script>
 </body>
 </html>
