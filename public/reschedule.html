@@ -891,24 +891,19 @@
         const desc  = `Reschedule difference for ${cn}`;
 
         const sessionResp = await fetch('/api/create-checkout-session-diff', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            cn,
-            amount: cents,
-            description: desc,
-            metadata: {
-              cn,
-              kind: 'reschedule_diff',
-              newDate: dateStr || el('newDate')?.value || '',
-              newTime: timeStr || el('newTime')?.value || '',
-              vehicleType: selectedVehicle,
-              mgChoice,
-              miles: String(miles ?? ''),
-              newTotal: String(newTotal ?? ''),
-            }
-          })
-        });
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({
+    cn,
+    diffAmount: cents,  // ✅ así lo espera tu backend
+    description: desc,
+    metadata: {
+      cn,
+      kind: 'reschedule_diff',
+      ...
+    }
+  })
+});
         const sessionData = await sessionResp.json().catch(()=> ({}));
         if (!sessionResp.ok || !sessionData?.id){
           throw new Error(sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
