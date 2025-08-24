@@ -812,7 +812,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
       // Hidrata pickup → muestra Flight/JSX/Private según reglas
       try { await hydratePickupFromInput(); } catch(_) {}
-updateMeetGreetVisibility();
+      updateMeetGreetVisibility();
+      updateFlightVisibility();
 
       // Límite de reschedules
       const used = extractRescheduleCount(booking);
