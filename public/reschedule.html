@@ -525,10 +525,9 @@ window.initMapReschedule = initMapReschedule;
 
 <!-- Google Maps: nota, este <script> va FUERA del bloque anterior -->
 <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
-
-<script>
-/* ========= Confirmación de Vuelo + Ciudad de Origen (Reschedule) ========= */
-/* Requiere que FLIGHTCHECK_URL esté definido en el <script> superior.       */
+  <script>
+/* ========= Flight + Origin confirmation (Reschedule) ========= */
+/* Requires FLIGHTCHECK_URL defined earlier in the page.        */
 
 const RS_AIRLINES = new Set([
   "AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK",
@@ -537,25 +536,27 @@ const RS_AIRLINES = new Set([
 const RS_FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
 let __rsFlightSeq = 0;
 
+/* Normalizers & Validators */
 function rsNormalizeFlight(v){
   return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
 }
 function rsValidateFlightValue(v){
   const m = rsNormalizeFlight(v).match(RS_FLIGHT_REGEX);
-  if(!m) return {ok:false,msg:'Formato inválido. Usa AA1234 o WN 987.'};
+  if(!m) return {ok:false,msg:'Invalid format. Use AA1234 or WN 987.'};
   const code=m[1], num=m[2];
-  if(!RS_AIRLINES.has(code)) return {ok:false,msg:'Código de aerolínea desconocido.'};
-  if(/^0+$/.test(num)) return {ok:false,msg:'Número de vuelo inválido.'};
+  if(!RS_AIRLINES.has(code)) return {ok:false,msg:'Unknown airline code.'};
+  if(/^0+$/.test(num)) return {ok:false,msg:'Invalid flight number.'};
   return {ok:true,msg:''};
 }
 function rsParseOriginIata(text){
   const t=(text||"").trim().toUpperCase();
-  const m=t.match(/\(([A-Z]{3})\)$/);
+  const m=t.match(/\(([A-Z]{3})\)$/);  // "(MIA)"
   if(m) return m[1];
-  if(/^[A-Z]{3}$/.test(t)) return t;
+  if(/^[A-Z]{3}$/.test(t)) return t;   // "MIA"
   return null;
 }
 
+/* Simple City → IATA map as fallback when a city (no IATA) is selected */
 const RS_CITY_TO_IATA = {
   "MIAMI":"MIA","LAS VEGAS":"LAS","BOSTON":"BOS","LOS ANGELES":"LAX",
   "NEW YORK":"JFK","SAN FRANCISCO":"SFO","DALLAS":"DFW","DENVER":"DEN",
@@ -565,6 +566,8 @@ function rsCityPlaceToIata(place){
   if(!place) return "";
   const name=(place.name||"").toUpperCase();
   if(RS_CITY_TO_IATA[name]) return RS_CITY_TO_IATA[name];
+
+  // Light heuristics
   if(/MIAMI/.test(name)) return "MIA";
   if(/LAS\s*VEGAS/.test(name)) return "LAS";
   if(/BOSTON/.test(name)) return "BOS";
@@ -581,6 +584,7 @@ function rsCityPlaceToIata(place){
   return "";
 }
 
+/* Selected date (reschedule uses newDate) → YYYY-MM-DD local */
 function rsGetDateISO(){
   const v=(document.getElementById('newDate')?.value||'').trim();
   if(!v) return '';
@@ -590,14 +594,14 @@ function rsGetDateISO(){
   return new Date(localMs).toISOString().slice(0,10);
 }
 
-/* Validación en vivo del número de vuelo */
+/* Live validation (flight number) */
 function rsWireFlightValidation(){
   const input=document.getElementById('flightNumber');
   const hint =document.getElementById('flightHint');
   if(!input||!hint) return;
   function update(){
     const r=rsValidateFlightValue(input.value||'');
-    hint.textContent = r.ok ? 'Formato correcto' : r.msg;
+    hint.textContent = r.ok ? 'Format looks good' : r.msg;
     hint.className   = 'hint ' + (r.ok ? 'ok' : 'err');
     hint.style.display='block';
     input.setCustomValidity(r.ok ? '' : r.msg);
@@ -606,7 +610,7 @@ function rsWireFlightValidation(){
   update();
 }
 
-/* Llamada al backend */
+/* Backend call (Cloud Run) */
 async function rsMaybeCheckBackend(){
   const fl  =(document.getElementById('flightNumber')?.value||'').trim();
   const org =(document.getElementById('flightOrigin')?.value||'').trim();
@@ -615,7 +619,7 @@ async function rsMaybeCheckBackend(){
 
   const normFl = fl.replace(/\s+/g,'').toUpperCase();
 
-  // Resolver código IATA del origen
+  // ---- Resolve origin IATA ----
   let originIata = rsParseOriginIata(org) || "";
   if (!originIata && window._flightOrigin) {
     originIata = rsCityPlaceToIata(window._flightOrigin) || "";
@@ -623,17 +627,19 @@ async function rsMaybeCheckBackend(){
   const originHelp = document.getElementById('originHelp');
   if (!originIata) {
     if (originHelp) {
-      originHelp.textContent = "Incluye el código IATA, p. ej., Miami (MIA).";
+      originHelp.textContent = "Please include the airport code, e.g., Miami (MIA).";
       originHelp.className   = "hint err";
+      originHelp.style.display = "block";
     }
     const o = document.getElementById('flightOrigin');
-    if (o) o.setCustomValidity("Falta el código IATA (ej.: MIA).");
+    if (o) o.setCustomValidity("Missing IATA code (e.g., MIA).");
     return;
   } else {
     const o = document.getElementById('flightOrigin');
     if (o) o.setCustomValidity("");
     if (originHelp){ originHelp.textContent=''; originHelp.style.display='none'; }
   }
+  // ------------------------------
 
   const mySeq = ++__rsFlightSeq;
   const hint  = document.getElementById('flightHint');
@@ -644,45 +650,45 @@ async function rsMaybeCheckBackend(){
     const resp = await fetch(`${FLIGHTCHECK_URL}?${qs.toString()}`);
 
     if(!resp.ok){
-      if(hint){ hint.textContent='✗ Vuelo no encontrado'; hint.className='hint err'; hint.style.display='block'; }
-      if(originHelp){ originHelp.textContent='✗ Origen inválido'; originHelp.className='hint err'; originHelp.style.display='block'; }
-      if(backendRes) backendRes.textContent=`Error del servicio (${resp.status})`;
+      if(hint){ hint.textContent='✗ Flight not found'; hint.className='hint err'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent='✗ Invalid origin'; originHelp.className='hint err'; originHelp.style.display='block'; }
+      if(backendRes) backendRes.textContent=`Service error (${resp.status})`;
       return;
     }
 
     const data = await resp.json().catch(()=>({}));
-    if (mySeq !== __rsFlightSeq) return;
+    if (mySeq !== __rsFlightSeq) return; // stale response
 
     if (data.ok){
-      if(hint){ hint.textContent='✅ Vuelo confirmado'; hint.className='hint ok'; hint.style.display='block'; }
-      if(originHelp){ originHelp.textContent='✅ Ciudad de origen confirmada'; originHelp.className='hint ok'; originHelp.style.display='block'; }
+      if(hint){ hint.textContent='✅ Flight confirmed'; hint.className='hint ok'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent='✅ Origin city confirmed'; originHelp.className='hint ok'; originHelp.style.display='block'; }
       const t = String(data.arrivalLocal||'').match(/T(\d{2}:\d{2})/);
       if(t){ const timeEl=document.getElementById('newTime'); if(timeEl) timeEl.value=t[1]; }
-      if(backendRes) backendRes.textContent = data.arrivalLocal ? `ETA: ${data.arrivalLocal}` : 'No se recibió ETA';
+      if(backendRes) backendRes.textContent = data.arrivalLocal ? `ETA: ${data.arrivalLocal}` : 'No ETA provided';
     }else{
-      if(hint){ hint.textContent='✗ Vuelo no encontrado'; hint.className='hint err'; hint.style.display='block'; }
-      if(originHelp){ originHelp.textContent=data.msg||'✗ Origen inválido'; originHelp.className='hint err'; originHelp.style.display='block'; }
-      if(backendRes) backendRes.textContent=data.msg||'Vuelo inválido';
+      if(hint){ hint.textContent='✗ Flight not found'; hint.className='hint err'; hint.style.display='block'; }
+      if(originHelp){ originHelp.textContent=data.msg||'✗ Invalid origin'; originHelp.className='hint err'; originHelp.style.display='block'; }
+      if(backendRes) backendRes.textContent=data.msg||'Invalid flight';
     }
   }catch(e){
     console.error(e);
-    if(hint){ hint.textContent='⚠️ Error de red'; hint.className='hint err'; hint.style.display='block'; }
-    if(backendRes) backendRes.textContent='⚠️ Error consultando backend: '+(e?.message||e);
+    if(hint){ hint.textContent='⚠️ Network error'; hint.className='hint err'; hint.style.display='block'; }
+    if(backendRes) backendRes.textContent='⚠️ Error contacting backend: '+(e?.message||e);
   }
 }
 
-/* Disparadores */
+/* Triggers */
 function rsWireFlightBackendTriggers(){
   const fn   = document.getElementById('flightNumber');
   const org  = document.getElementById('flightOrigin');
-  const date = document.getElementById('newDate');
+  const date = document.getElementById('newDate');   // reschedule uses newDate
   const run  = () => setTimeout(rsMaybeCheckBackend, 200);
   if(fn)   fn.addEventListener('input', run);
   if(org)  org.addEventListener('input', run);
   if(date) date.addEventListener('change', run);
 }
 
-/* Vincular Autocomplete para revalidar al seleccionar */
+/* Hook Autocomplete selection to re-check backend */
 (function rsHookFlightOriginPlaceChanged(){
   const input = document.getElementById("flightOrigin");
   if (!input) return;
@@ -693,8 +699,8 @@ function rsWireFlightBackendTriggers(){
   });
 
   ac.addListener("place_changed", ()=>{
-    window._flightOrigin = ac.getPlace();
-    setTimeout(rsMaybeCheckBackend, 50);
+    window._flightOrigin = ac.getPlace(); // store selected city
+    setTimeout(rsMaybeCheckBackend, 50);  // re-validate right away
   });
 })();
 
@@ -705,6 +711,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setTimeout(rsMaybeCheckBackend, 150);
 });
 </script>
-
 </body>
 </html>
