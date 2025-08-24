@@ -848,75 +848,102 @@
     setTimeout(rsMaybeCheckBackend, 150);
   });
   </script>
+<!-- >>> INTEGRACIÓN: handler Save Changes (no reembolsos + Stripe diff) <<< -->
+<script>
+  // Asegúrate de que la función el(id) y la variable 'stripe' ya existen (definidas arriba)
 
-  <!-- >>> INTEGRACIÓN: handler Save Changes (no reembolsos + Stripe diff) <<< -->
-  <script>
-    el('btnSave').addEventListener('click', async ()=>{
-      try{
-        if (!booking?.__calc) {
-          alert('Please calculate the route first.');
-          return;
-        }
-        const cn = booking?.cn || el('cn')?.value?.trim();
-        if (!cn){ alert('Missing reservation code (CN).'); return; }
-
-        const { newTotal, diff, diffForUI, dateStr, timeStr, miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours } = booking.__calc;
-
-        // 1) Guardar reschedule primero
-        const saveResp = await fetch('/api/book/reschedule', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            cn,
-            newDate: dateStr || el('newDate')?.value || '',
-            newTime: timeStr || el('newTime')?.value || '',
-            quote: {
-              newTotal, miles, afterHours, surcharge, mgFee,
-              vehicleType: selectedVehicle, meetAndGreet: mgChoice
-            }
-          })
-        });
-        const saveData = await saveResp.json().catch(()=> ({}));
-        if (!saveResp.ok || !saveData?.ok) throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
-
-        // 2) Regla: NO REFUND en reprogramación → solo cobramos si diff>0
-        if ((diffForUI ?? 0) <= 0){
-          el('resultCard').style.display = 'block';
-          el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
-          return;
-        }
-
-        // 3) Stripe Checkout para la diferencia positiva
-        const cents = Math.round(Math.max(diffForUI,0) * 100);
-        const desc  = `Reschedule difference for ${cn}`;
-
-        const sessionResp = await fetch('/api/create-checkout-session-diff', {
-  method:'POST',
-  headers:{'Content-Type':'application/json'},
-  body: JSON.stringify({
-    cn,
-    diffAmount: cents,  // ✅ así lo espera tu backend
-    description: desc,
-    metadata: {
-      cn,
-      kind: 'reschedule_diff',
-      ...
-    }
-  })
-});
-        const sessionData = await sessionResp.json().catch(()=> ({}));
-        if (!sessionResp.ok || !sessionData?.id){
-          throw new Error(sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
-        }
-
-        const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
-        if (error) throw error;
-
-      }catch(e){
-        console.error(e);
-        alert('Error: ' + (e?.message || e));
+  el('btnSave').addEventListener('click', async () => {
+    try {
+      // Debe existir booking y un cálculo previo
+      if (!booking?.__calc) {
+        alert('Please calculate the route first.');
+        return;
       }
-    });
-  </script>
+
+      const cn = booking?.cn || el('cn')?.value?.trim();
+      if (!cn) {
+        alert('Missing reservation code (CN).');
+        return;
+      }
+
+      const {
+        newTotal,       // nuevo total calculado
+        diff,           // diferencia real (puede ser negativa)
+        diffForUI,      // diferencia a cobrar (nunca < 0 por la regla de no reembolso)
+        dateStr, timeStr,
+        miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours
+      } = booking.__calc;
+
+      // 1) Guardar la reprogramación primero
+      const saveResp = await fetch('/api/book/reschedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cn,
+          newDate: dateStr || el('newDate')?.value || '',
+          newTime: timeStr || el('newTime')?.value || '',
+          quote: {
+            newTotal,
+            miles,
+            afterHours,
+            surcharge,
+            mgFee,
+            vehicleType: selectedVehicle,
+            meetAndGreet: mgChoice
+          }
+        })
+      });
+
+      const saveData = await saveResp.json().catch(() => ({}));
+      if (!saveResp.ok || !saveData?.ok) {
+        throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
+      }
+
+      // 2) Regla: en reprogramación nunca devolvemos si baja el precio
+      //    Si diffForUI <= 0, se confirma y listo, sin pago adicional.
+      if ((diffForUI ?? 0) <= 0) {
+        el('resultCard').style.display = 'block';
+        el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
+        return;
+      }
+
+      // 3) Crear sesión de Stripe para cobrar SOLO la diferencia positiva
+      const cents = Math.round(diffForUI * 100);
+      const desc  = `Reschedule difference for ${cn}`;
+
+      const sessionResp = await fetch('/api/create-checkout-session-diff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cn,
+          // ⚠️ Tu backend esperaba diffAmount (no "amount")
+          diffAmount: cents,
+          description: desc,
+          metadata: {
+            cn,
+            kind: 'reschedule_diff',
+            newTotal: newTotal,
+            diffShown: diffForUI,
+            vehicle: selectedVehicle,
+            meetGreet: mgChoice,
+            afterHours: afterHours ? 'yes' : 'no'
+          }
+        })
+      });
+
+      const sessionData = await sessionResp.json().catch(() => ({}));
+      if (!sessionResp.ok || !sessionData?.id) {
+        throw new Error(sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
+      if (error) throw error;
+
+    } catch (e) {
+      console.error(e);
+      alert('Error: ' + (e?.message || e));
+    }
+  });
+</script>
 </body>
 </html>
