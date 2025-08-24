@@ -174,293 +174,356 @@
       <div id="result" class="hint"></div>
     </div>
   </main>
+<script src="https://js.stripe.com/v3"></script>
 
-  <script src="https://js.stripe.com/v3"></script>
+<script>
+/************ CONFIG ************/
+const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
+const stripe = Stripe(STRIPE_PK);
+const MAX_RESCHEDULES = 2;
+const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
 
-  <script>
-  /************ CONFIG ************/
-  const STRIPE_PK = 'pk_live_51Rr9g0LxdVPME4zrYzx4WKgoT3NUZBSkWbwMnSmGPQCyE4MzzIufo6gM8EvLeTHOjQ5Vcn2V1GY0D9RrcJrOjRCd002MQFljOF';
-  const stripe = Stripe(STRIPE_PK);
-  const MAX_RESCHEDULES = 2;
-  const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
+/************ STATE ************/
+let booking = null;
+let selectedVehicle = 'suv';
+let mgChoice = 'none';
+let map, directionsService, directionsRenderer;
+let pickupPlace = null, dropoffPlace = null;
+let routeMiles = null;
+let calculatedOnce = false;
+let reachedLimit = false;
 
-  /************ STATE ************/
-  let booking = null;
-  let selectedVehicle = 'suv';
-  let mgChoice = 'none';
-  let map, directionsService, directionsRenderer;
-  let pickupPlace = null, dropoffPlace = null;
-  let routeMiles = null;
-  let calculatedOnce = false;
-  let reachedLimit = false;
+/************ UTILS ************/
+const el = id => document.getElementById(id);
+const fmtMoney = n => Number(n||0).toFixed(2);
 
-  /************ UTILS ************/
-  const el = id => document.getElementById(id);
-  const fmtMoney = n => Number(n||0).toFixed(2);
+function isAirport(place){ const t=place?.types||[]; return t.includes('airport') || /airport/i.test(place?.name||place?.formatted_address||''); }
+function isUtah(place){ const a=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(a) || /, ut(ah)?\b/.test(a); }
 
-  function isAirport(place){ const t=place?.types||[]; return t.includes('airport') || /airport/i.test(place?.name||place?.formatted_address||''); }
-  function isUtah(place){ const a=(place?.formatted_address||'').toLowerCase(); return /\but\b/.test(a) || /, ut(ah)?\b/.test(a); }
+const FBO_RX = /\b(fbo|million air|signature( aviation| flight| support)?|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
+function isPrivateUtahAirport(place){ if(!place) return false; if(!isAirport(place)||!isUtah(place)) return false; const t=`${place.name||''} ${place.formatted_address||''}`; return FBO_RX.test(t); }
+function isSLCInternational(place){
+  if(!place) return false;
+  const name=(place.name||'').toLowerCase(), addr=(place.formatted_address||'').toLowerCase();
+  const hits=/salt lake city international/.test(name)||/\bslc\b/.test(name)||/salt lake city international/.test(addr)||/\bslc\b/.test(addr);
+  return hits && isAirport(place) && !isPrivateUtahAirport(place);
+}
 
-  const FBO_RX = /\b(fbo|million air|signature( aviation| flight| support)?|atlantic aviation|ok3 air|ross aviation|tac air|jet center|hangar)\b/i;
-  function isPrivateUtahAirport(place){ if(!place) return false; if(!isAirport(place)||!isUtah(place)) return false; const t=`${place.name||''} ${place.formatted_address||''}`; return FBO_RX.test(t); }
-  function isSLCInternational(place){
-    if(!place) return false;
-    const name=(place.name||'').toLowerCase(), addr=(place.formatted_address||'').toLowerCase();
-    const hits=/salt lake city international/.test(name)||/\bslc\b/.test(name)||/salt lake city international/.test(addr)||/\bslc\b/.test(addr);
-    return hits && isAirport(place) && !isPrivateUtahAirport(place);
+function updateMeetGreetVisibility(){
+  const show = selectedVehicle==='suv' && isSLCInternational(pickupPlace||null);
+  el('mgWrap').style.display = show ? 'block' : 'none';
+  if (!show){
+    mgChoice='none';
+    document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>b.classList.toggle('active', b.dataset.choice==='none'));
   }
+}
 
-  function updateMeetGreetVisibility(){
-    const show = selectedVehicle==='suv' && isSLCInternational(pickupPlace||null);
-    el('mgWrap').style.display = show ? 'block' : 'none';
-    if (!show){
-      mgChoice='none';
-      document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>b.classList.toggle('active', b.dataset.choice==='none'));
+/* ===== Mostrar/ocultar bloques de vuelo ===== */
+window.updateFlightVisibility = function(){
+  const commWrap = el('flightContainer');
+  const pvtWrap  = el('privateFlightContainer');
+  const jsxWrap  = el('jsxContainer');
+
+  const place = pickupPlace || null;
+  const isAirportUT = !!place && isAirport(place) && isUtah(place);
+
+  const isJSX = !!place && (place.name||place.formatted_address||'').toUpperCase().includes('JSX');
+  const isProvo = !!place && /provo|pvu/i.test(place.name||'') && isUtah(place) && !isPrivateUtahAirport(place);
+  const isSLC  = isSLCInternational(place);
+  const isComm = isAirportUT && (isSLC || isProvo) && !isJSX;
+
+  if (jsxWrap) jsxWrap.style.display = isJSX ? 'block' : 'none';
+
+  if (commWrap){
+    commWrap.style.display = isComm && !isJSX ? 'block' : 'none';
+    if (!(isComm && !isJSX)){
+      const n = el('flightNumber'), o = el('flightOrigin');
+      if(n){ n.value=''; n.setCustomValidity(''); }
+      if(o){ o.value=''; o.setCustomValidity(''); }
+      el('flightHint')?.style?.setProperty('display','none');
+      el('originHelp')?.style?.setProperty('display','none');
+    } else {
+      initFlightOriginAutocomplete();
     }
   }
+  if (pvtWrap){
+    const showPvt = isAirportUT && !isComm && !isJSX;
+    pvtWrap.style.display = showPvt ? 'block' : 'none';
+    if (!showPvt){
+      const t = el('tailNumber'), p = el('pvtOrigin');
+      if(t){ t.value=''; t.setCustomValidity(''); }
+      if(p){ p.value=''; p.setCustomValidity(''); }
+      el('tailHelp')?.style?.setProperty('display','none');
+      el('pvtOriginHelp')?.style?.setProperty('display','none');
+    }
+  }
+};
 
-  // === Mostrar/ocultar bloques de vuelo (GLOBAL) ===
-  window.updateFlightVisibility = function(){
-    const commWrap = el('flightContainer');
-    const pvtWrap  = el('privateFlightContainer');
-    const jsxWrap  = el('jsxContainer');
+/* Autocomplete para ciudad de origen (comercial) */
+function initFlightOriginAutocomplete(){
+  const input = el("flightOrigin");
+  if (!input || !window.google?.maps?.places?.Autocomplete) return;
+  const ac = new google.maps.places.Autocomplete(input, {
+    types:["(cities)"], fields:["name","place_id","geometry"]
+  });
+  ac.addListener("place_changed", ()=>{ window._flightOrigin = ac.getPlace(); });
+}
 
-    const place = pickupPlace || null;
-    const isAirportUT = !!place && isAirport(place) && isUtah(place);
-
-    const isJSX = !!place && (place.name||place.formatted_address||'').toUpperCase().includes('JSX');
-    const isProvo = !!place && /provo|pvu/i.test(place.name||'') && isUtah(place) && !isPrivateUtahAirport(place);
-    const isSLC  = isSLCInternational(place);
-    const isComm = isAirportUT && (isSLC || isProvo) && !isJSX;
-
-    if (jsxWrap) jsxWrap.style.display = isJSX ? 'block' : 'none';
-
-    if (commWrap){
-      commWrap.style.display = isComm && !isJSX ? 'block' : 'none';
-      if (!(isComm && !isJSX)){
-        const n = el('flightNumber'), o = el('flightOrigin');
-        if(n){ n.value=''; n.setCustomValidity(''); }
-        if(o){ o.value=''; o.setCustomValidity(''); }
-        el('flightHint')?.style?.setProperty('display','none');
-        el('originHelp')?.style?.setProperty('display','none');
+/* —— Geocode helpers —— */
+async function geocodeToPlace(text){
+  if (!text?.trim()) return null;
+  if (!window.google?.maps?.Geocoder) {
+    return { name:text, formatted_address:text, place_id:null, types: (/airport/i.test(text)?['airport']:[]) };
+  }
+  const geocoder = new google.maps.Geocoder();
+  return new Promise(res=>{
+    geocoder.geocode({ address:text.trim(), componentRestrictions:{country:'US'} }, (results,status)=>{
+      if (status==='OK' && results && results[0]){
+        res({
+          name: results[0].name || results[0].formatted_address,
+          formatted_address: results[0].formatted_address,
+          place_id: results[0].place_id,
+          types: results[0].types || [],
+          address_components: results[0].address_components
+        });
       } else {
-        initFlightOriginAutocomplete();
+        res({ name:text.trim(), formatted_address:text.trim(), place_id:null, types:[] });
       }
-    }
-    if (pvtWrap){
-      const showPvt = isAirportUT && !isComm && !isJSX;
-      pvtWrap.style.display = showPvt ? 'block' : 'none';
-      if (!showPvt){
-        const t = el('tailNumber'), p = el('pvtOrigin');
-        if(t){ t.value=''; t.setCustomValidity(''); }
-        if(p){ p.value=''; p.setCustomValidity(''); }
-        el('tailHelp')?.style?.setProperty('display','none');
-        el('pvtOriginHelp')?.style?.setProperty('display','none');
-      }
-    }
-  };
-
-  // Autocomplete para ciudad de origen (comercial)
-  function initFlightOriginAutocomplete(){
-    const input = el("flightOrigin");
-    if (!input || !window.google?.maps?.places?.Autocomplete) return;
-    const ac = new google.maps.places.Autocomplete(input, {
-      types:["(cities)"], fields:["name","place_id","geometry"]
-    });
-    ac.addListener("place_changed", ()=>{ window._flightOrigin = ac.getPlace(); });
-  }
-
-  // ——— Geocode helpers (pickup y dropoff) ———
-  async function geocodeToPlace(text){
-    if (!text?.trim()) return null;
-    if (!window.google?.maps?.Geocoder) {
-      // fallback mínimo
-      return { name:text, formatted_address:text, place_id:null, types: (/airport/i.test(text)?['airport']:[]) };
-    }
-    const geocoder = new google.maps.Geocoder();
-    return new Promise(res=>{
-      geocoder.geocode({ address:text.trim(), componentRestrictions:{country:'US'} }, (results,status)=>{
-        if (status==='OK' && results && results[0]){
-          res({
-            name: results[0].name || results[0].formatted_address,
-            formatted_address: results[0].formatted_address,
-            place_id: results[0].place_id,
-            types: results[0].types || [],
-            address_components: results[0].address_components
-          });
-        } else {
-          res({ name:text.trim(), formatted_address:text.trim(), place_id:null, types:[] });
-        }
-      });
-    });
-  }
-
-  async function hydratePickupFromInput(){
-    pickupPlace = await geocodeToPlace(el('pickup')?.value);
-    try { updateFlightVisibility(); } catch(_){}
-  }
-  async function hydrateDropoffFromInput(){
-    dropoffPlace = await geocodeToPlace(el('dropoff')?.value);
-  }
-
-  // ——— Booking loader ———
-  function extractRescheduleCount(bk){
-    if (typeof bk?.reschedulesCount === 'number') return bk.reschedulesCount;
-    if (Array.isArray(bk?.reschedules)) return bk.reschedules.length;
-    if (typeof bk?.reschedules_count === 'number') return bk.reschedules_count;
-    return 0;
-  }
-  function lockForLimit(){
-    reachedLimit = true;
-    document.querySelectorAll('#changeCard input, #btnRoute, #btnSave').forEach(n=>{
-      n.setAttribute('disabled','disabled'); n.classList.add('muted'); n.setAttribute('aria-disabled','true');
-    });
-    document.querySelectorAll('#changeCard .veh-btn, #changeCard .mg-btn').forEach(n=>{
-      n.classList.add('disabled','muted'); n.setAttribute('aria-disabled','true');
-    });
-    el('saveHint').textContent = 'You have reached the maximum number of reschedules for this reservation.';
-  }
-
-  async function loadBooking(cn){
-    el('loadHint').textContent = 'Loading booking...';
-    try{
-      const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
-      const data = await resp.json();
-      if(!resp.ok || !data?.ok) throw new Error(data?.error || `Error ${resp.status}`);
-      booking = data.booking || data;
-
-      el('currentCard').style.display = 'block';
-      el('changeCard').style.display = 'block';
-
-      el('bookingSummary').innerHTML = `
-        <div><strong>Name:</strong> ${booking.fullname || '-'}</div>
-        <div><strong>Phone:</strong> ${booking.phone || '-'}</div>
-        <div><strong>Email:</strong> ${booking.email || '-'}</div>
-        <div><strong>Pickup:</strong> ${booking.pickup || '-'}</div>
-        <div><strong>Drop-off:</strong> ${booking.dropoff || '-'}</div>
-        <div><strong>Date/Time:</strong> ${(booking.date_iso||booking.date||'-')} ${(booking.time_hhmm||booking.time||'')}</div>
-        <div><strong>CN:</strong> ${booking.cn || cn}</div>
-      `;
-
-      selectedVehicle = (booking.vehicleType || 'suv');
-      document.querySelectorAll('.veh-btn').forEach(b=> b.classList.toggle('active', b.dataset.type===selectedVehicle));
-      el('kpiVehicle').textContent = (selectedVehicle==='van'?'Van':'SUV');
-      el('kpiMiles').textContent   = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
-      el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || 0);
-
-      // Prefill inputs
-      el('pickup').value  = booking.pickup || '';
-      el('dropoff').value = booking.dropoff || '';
-
-      // Hidratar ambos
-      await hydratePickupFromInput();
-      await hydrateDropoffFromInput();
-      updateMeetGreetVisibility();
-      updateFlightVisibility();
-
-      // Límite
-      const used = extractRescheduleCount(booking);
-      el('reschedWarn').style.display = 'block';
-      if (used >= MAX_RESCHEDULES){
-        el('reschedWarn').textContent = `Limit reached: you have already rescheduled ${used} time(s). Further changes are not allowed.`;
-        lockForLimit();
-      } else {
-        el('reschedWarn').textContent = `You have used ${used}/${MAX_RESCHEDULES} reschedules.`;
-      }
-
-      el('loadHint').textContent = 'Booking loaded ✔︎';
-      calculatedOnce = false;
-      el('btnSave').disabled = true;
-      el('saveHint').textContent = 'First, click “Calculate Route” to generate your full quote.';
-    }catch(e){
-      el('loadHint').textContent = '❌ ' + (e.message || e);
-    }
-  }
-
-  // ——— Precio ———
-  function calculateBase(mi){
-    if (mi <= 10) return 120;
-    if (mi <= 35) return 190;
-    if (mi <= 39) return 210;
-    if (mi <= 48) return 230;
-    if (mi <= 55) return 250;
-    return mi * 5.4;
-  }
-  function applyVehicleMultiplier(total){ return (selectedVehicle==='van') ? Math.round(total*1.30) : total; }
-  function getMGFee(){ return mgChoice!=='none' ? 50 : 0; }
-  const OPERATING_START="06:00", OPERATING_END="23:00";
-  function isAfterHours(dateStr, timeStr){
-    if(!dateStr || !timeStr) return false;
-    const d = new Date(`${dateStr}T${timeStr}:00`);
-    const [sh,sm]=OPERATING_START.split(':').map(Number), [eh,em]=OPERATING_END.split(':').map(Number);
-    const start=new Date(d); start.setHours(sh,sm,0,0);
-    const end  =new Date(d); end.setHours(eh,em,0,0);
-    return (d<start)||(d>end);
-  }
-
-  function recalc(){
-    if(!booking) return;
-    const miles = routeMiles != null ? routeMiles : Number(booking?.distanceMiles||0);
-    const base  = calculateBase(miles||0);
-    const dateStr = el('newDate').value;
-    const timeStr = el('newTime').value;
-    const afterHours = isAfterHours(dateStr,timeStr);
-    const ahFee = afterHours ? (base*0.20) : 0;
-    const mgFee = getMGFee();
-    const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
-    const original = Number(booking.quotedTotal || 0);
-    const diff = Math.round((newTotal - original)*100)/100;
-
-    el('kpiNew').textContent  = fmtMoney(newTotal);
-    el('kpiDiff').textContent = fmtMoney(diff);
-    el('kpiAH').textContent   = afterHours ? 'Yes (+20%)' : 'No';
-    el('kpiMiles').textContent= miles ? miles.toFixed(1) : '—';
-
-    const rows = [];
-    rows.push(`<div class="row"><span>Base (${miles?miles.toFixed(1):'—'} mi)</span><span>$${fmtMoney(base)}</span></div>`);
-    if (ahFee>0) rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
-    if (mgFee>0) rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
-    rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
-    el('breakdown').innerHTML = rows.join('');
-
-    booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice, dateStr, timeStr };
-    const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
-    el('btnSave').disabled = !canSave;
-  }
-
-  // ——— Eventos DOM ———
-  document.addEventListener('DOMContentLoaded', ()=>{
-    // LOAD
-    el('btnLoad').addEventListener('click', ()=>{
-      const cn = el('cn').value.trim();
-      if(!cn){ el('cn').classList.add('invalid'); return; }
-      loadBooking(cn);
-      const u = new URL(window.location.href); u.searchParams.set('cn', cn); window.history.replaceState({}, '', u.toString());
-    });
-    const qcn = new URL(window.location.href).searchParams.get('cn');
-    if (qcn){ el('cn').value=qcn; loadBooking(qcn); }
-
-    // Vehicle & M&G
-    document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        if (reachedLimit) return;
-        document.querySelectorAll('#vehToggle .veh-btn').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        selectedVehicle = b.dataset.type || 'suv';
-        updateMeetGreetVisibility();
-        if (calculatedOnce) recalc();
-      });
-    });
-    document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        if (reachedLimit) return;
-        mgChoice = b.dataset.choice;
-        document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
-        if (calculatedOnce) recalc();
-      });
     });
   });
- <!-- Google Maps -->
+}
+async function hydratePickupFromInput(){ pickupPlace = await geocodeToPlace(el('pickup')?.value); try{ updateFlightVisibility(); }catch(_){} }
+async function hydrateDropoffFromInput(){ dropoffPlace = await geocodeToPlace(el('dropoff')?.value); }
+
+/* —— Booking loader —— */
+function extractRescheduleCount(bk){
+  if (typeof bk?.reschedulesCount === 'number') return bk.reschedulesCount;
+  if (Array.isArray(bk?.reschedules)) return bk.reschedules.length;
+  if (typeof bk?.reschedules_count === 'number') return bk.reschedules_count;
+  return 0;
+}
+function lockForLimit(){
+  reachedLimit = true;
+  document.querySelectorAll('#changeCard input, #btnRoute, #btnSave').forEach(n=>{
+    n.setAttribute('disabled','disabled'); n.classList.add('muted'); n.setAttribute('aria-disabled','true');
+  });
+  document.querySelectorAll('#changeCard .veh-btn, #changeCard .mg-btn').forEach(n=>{
+    n.classList.add('disabled','muted'); n.setAttribute('aria-disabled','true');
+  });
+  el('saveHint').textContent = 'You have reached the maximum number of reschedules for this reservation.';
+}
+async function loadBooking(cn){
+  el('loadHint').textContent = 'Loading booking...';
+  try{
+    const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+    const data = await resp.json();
+    if(!resp.ok || !data?.ok) throw new Error(data?.error || `Error ${resp.status}`);
+    booking = data.booking || data;
+
+    el('currentCard').style.display = 'block';
+    el('changeCard').style.display = 'block';
+
+    el('bookingSummary').innerHTML = `
+      <div><strong>Name:</strong> ${booking.fullname || '-'}</div>
+      <div><strong>Phone:</strong> ${booking.phone || '-'}</div>
+      <div><strong>Email:</strong> ${booking.email || '-'}</div>
+      <div><strong>Pickup:</strong> ${booking.pickup || '-'}</div>
+      <div><strong>Drop-off:</strong> ${booking.dropoff || '-'}</div>
+      <div><strong>Date/Time:</strong> ${(booking.date_iso||booking.date||'-')} ${(booking.time_hhmm||booking.time||'')}</div>
+      <div><strong>CN:</strong> ${booking.cn || cn}</div>
+    `;
+
+    selectedVehicle = (booking.vehicleType || 'suv');
+    document.querySelectorAll('.veh-btn').forEach(b=> b.classList.toggle('active', b.dataset.type===selectedVehicle));
+    el('kpiVehicle').textContent = (selectedVehicle==='van'?'Van':'SUV');
+    el('kpiMiles').textContent   = (booking.distanceMiles!=null) ? Number(booking.distanceMiles).toFixed(1) : '—';
+    el('kpiOriginal').textContent= fmtMoney(booking.quotedTotal || 0);
+
+    el('pickup').value  = booking.pickup || '';
+    el('dropoff').value = booking.dropoff || '';
+
+    await hydratePickupFromInput();
+    await hydrateDropoffFromInput();
+    updateMeetGreetVisibility();
+    updateFlightVisibility();
+
+    const used = extractRescheduleCount(booking);
+    el('reschedWarn').style.display = 'block';
+    if (used >= MAX_RESCHEDULES){
+      el('reschedWarn').textContent = `Limit reached: you have already rescheduled ${used} time(s). Further changes are not allowed.`;
+      lockForLimit();
+    } else {
+      el('reschedWarn').textContent = `You have used ${used}/${MAX_RESCHEDULES} reschedules.`;
+    }
+
+    el('loadHint').textContent = 'Booking loaded ✔︎';
+    calculatedOnce = false;
+    el('btnSave').disabled = true;
+    el('saveHint').textContent = 'First, click “Calculate Route” to generate your full quote.';
+  }catch(e){
+    el('loadHint').textContent = '❌ ' + (e.message || e);
+  }
+}
+
+/* —— Precio —— */
+function calculateBase(mi){
+  if (mi <= 10) return 120;
+  if (mi <= 35) return 190;
+  if (mi <= 39) return 210;
+  if (mi <= 48) return 230;
+  if (mi <= 55) return 250;
+  return mi * 5.4;
+}
+function applyVehicleMultiplier(total){ return (selectedVehicle==='van') ? Math.round(total*1.30) : total; }
+function getMGFee(){ return mgChoice!=='none' ? 50 : 0; }
+const OPERATING_START="06:00", OPERATING_END="23:00";
+function isAfterHours(dateStr, timeStr){
+  if(!dateStr || !timeStr) return false;
+  const d = new Date(`${dateStr}T${timeStr}:00`);
+  const [sh,sm]=OPERATING_START.split(':').map(Number), [eh,em]=OPERATING_END.split(':').map(Number);
+  const start=new Date(d); start.setHours(sh,sm,0,0);
+  const end  =new Date(d); end.setHours(eh,em,0,0);
+  return (d<start)||(d>end);
+}
+
+function recalc(){
+  if(!booking) return;
+  const miles = routeMiles != null ? routeMiles : Number(booking?.distanceMiles||0);
+  const base  = calculateBase(miles||0);
+  const dateStr = el('newDate').value;
+  const timeStr = el('newTime').value;
+  const afterHours = isAfterHours(dateStr,timeStr);
+  const ahFee = afterHours ? (base*0.20) : 0;
+  const mgFee = getMGFee();
+  const newTotal = applyVehicleMultiplier(base + ahFee + mgFee);
+  const original = Number(booking.quotedTotal || 0);
+  const diff = Math.round((newTotal - original)*100)/100;
+
+  el('kpiNew').textContent  = fmtMoney(newTotal);
+  el('kpiDiff').textContent = fmtMoney(diff);
+  el('kpiAH').textContent   = afterHours ? 'Yes (+20%)' : 'No';
+  el('kpiMiles').textContent= miles ? miles.toFixed(1) : '—';
+
+  const rows = [];
+  rows.push(`<div class="row"><span>Base (${miles?miles.toFixed(1):'—'} mi)</span><span>$${fmtMoney(base)}</span></div>`);
+  if (ahFee>0) rows.push(`<div class="row"><span>After-Hours (20%)</span><span>$${fmtMoney(ahFee)}</span></div>`);
+  if (mgFee>0) rows.push(`<div class="row"><span>Meet & Greet (SLC)</span><span>$${fmtMoney(mgFee)}</span></div>`);
+  rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
+  el('breakdown').innerHTML = rows.join('');
+
+  booking.__calc = { newTotal, diff, afterHours, miles, mgFee, selectedVehicle, mgChoice, dateStr, timeStr };
+  const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
+  el('btnSave').disabled = !canSave;
+}
+
+/* —— Eventos DOM —— */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // LOAD
+  el('btnLoad').addEventListener('click', ()=>{
+    const cn = el('cn').value.trim();
+    if(!cn){ el('cn').classList.add('invalid'); return; }
+    loadBooking(cn);
+    const u = new URL(window.location.href); u.searchParams.set('cn', cn); window.history.replaceState({}, '', u.toString());
+  });
+  const qcn = new URL(window.location.href).searchParams.get('cn');
+  if (qcn){ el('cn').value=qcn; loadBooking(qcn); }
+
+  // Vehicle & M&G
+  document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if (reachedLimit) return;
+      document.querySelectorAll('#vehToggle .veh-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      selectedVehicle = b.dataset.type || 'suv';
+      updateMeetGreetVisibility();
+      if (calculatedOnce) recalc();
+    });
+  });
+  document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if (reachedLimit) return;
+      mgChoice = b.dataset.choice;
+      document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
+      if (calculatedOnce) recalc();
+    });
+  });
+});
+
+/* —— Google Maps —— */
+function routeAsync(opts){
+  return new Promise((res,rej)=>{
+    directionsService.route(opts,(r,s)=> s==='OK'&&r?res(r):rej(s||'ROUTE_ERROR'));
+  });
+}
+function locationFromPlace(p){
+  if (!p) return null;
+  if (p.place_id) return { placeId: p.place_id };
+  return p.formatted_address || p.name || null;
+}
+function initMapReschedule(){
+  map = new google.maps.Map(el('map'), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({ map });
+
+  const opts = {
+    componentRestrictions:{country:['us']},
+    fields:["place_id","name","types","formatted_address","geometry","address_components"]
+  };
+  const acPickup  = new google.maps.places.Autocomplete(el('pickup'),  opts);
+  const acDropoff = new google.maps.places.Autocomplete(el('dropoff'), opts);
+
+  acPickup.addListener('place_changed', ()=>{
+    pickupPlace = acPickup.getPlace() || null;
+    updateMeetGreetVisibility();
+    updateFlightVisibility();
+  });
+  acDropoff.addListener('place_changed', ()=>{
+    dropoffPlace = acDropoff.getPlace() || null;
+  });
+
+  updateFlightVisibility();
+
+  el('btnRoute').addEventListener('click', async ()=>{
+    if(reachedLimit) return;
+
+    if(!pickupPlace)  await hydratePickupFromInput();
+    if(!dropoffPlace) await hydrateDropoffFromInput();
+
+    const origin = locationFromPlace(pickupPlace);
+    const destination = locationFromPlace(dropoffPlace);
+
+    if(!origin || !destination){
+      alert('Please set Pickup and Drop-off.');
+      return;
+    }
+
+    try{
+      const trip = await routeAsync({
+        origin, destination,
+        travelMode: google.maps.TravelMode.DRIVING
+      });
+      directionsRenderer.setDirections(trip);
+      const leg = trip.routes[0].legs[0];
+      routeMiles = leg.distance.value / 1609.34;
+    }catch(err){
+      alert('Could not calculate route: ' + err);
+      return;
+    }
+
+    updateMeetGreetVisibility();
+    calculatedOnce = true;
+    recalc();
+
+    const dOk = !!el('newDate').value;
+    const tOk = !!el('newTime').value;
+    el('btnSave').disabled = !(dOk && tOk) || reachedLimit;
+    el('saveHint').textContent = 'Review the quote and click “Save Changes” to confirm.';
+  });
+}
+window.initMapReschedule = initMapReschedule;
+</script>
+
+<!-- Google Maps: nota, este <script> va FUERA del bloque anterior -->
 <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
 
 <script>
@@ -474,7 +537,6 @@ const RS_AIRLINES = new Set([
 const RS_FLIGHT_REGEX = /^([A-Z0-9]{2})\s?-?\s?(\d{1,4})([A-Z])?$/;
 let __rsFlightSeq = 0;
 
-/* Normalizadores y validadores */
 function rsNormalizeFlight(v){
   return (v||'').toUpperCase().trim().replace(/\s+/g,' ').replace('–','-');
 }
@@ -488,13 +550,12 @@ function rsValidateFlightValue(v){
 }
 function rsParseOriginIata(text){
   const t=(text||"").trim().toUpperCase();
-  const m=t.match(/\(([A-Z]{3})\)$/);     // "(MIA)"
+  const m=t.match(/\(([A-Z]{3})\)$/);
   if(m) return m[1];
-  if(/^[A-Z]{3}$/.test(t)) return t;      // "MIA"
+  if(/^[A-Z]{3}$/.test(t)) return t;
   return null;
 }
 
-/* Mapa básico Ciudad → IATA (cuando el usuario elige una ciudad sin IATA) */
 const RS_CITY_TO_IATA = {
   "MIAMI":"MIA","LAS VEGAS":"LAS","BOSTON":"BOS","LOS ANGELES":"LAX",
   "NEW YORK":"JFK","SAN FRANCISCO":"SFO","DALLAS":"DFW","DENVER":"DEN",
@@ -504,8 +565,6 @@ function rsCityPlaceToIata(place){
   if(!place) return "";
   const name=(place.name||"").toUpperCase();
   if(RS_CITY_TO_IATA[name]) return RS_CITY_TO_IATA[name];
-
-  // Heurísticas mínimas
   if(/MIAMI/.test(name)) return "MIA";
   if(/LAS\s*VEGAS/.test(name)) return "LAS";
   if(/BOSTON/.test(name)) return "BOS";
@@ -522,7 +581,6 @@ function rsCityPlaceToIata(place){
   return "";
 }
 
-/* Fecha seleccionada (reschedule usa newDate) → YYYY-MM-DD local */
 function rsGetDateISO(){
   const v=(document.getElementById('newDate')?.value||'').trim();
   if(!v) return '';
@@ -548,7 +606,7 @@ function rsWireFlightValidation(){
   update();
 }
 
-/* Llamada al backend (Cloud Run) */
+/* Llamada al backend */
 async function rsMaybeCheckBackend(){
   const fl  =(document.getElementById('flightNumber')?.value||'').trim();
   const org =(document.getElementById('flightOrigin')?.value||'').trim();
@@ -557,7 +615,7 @@ async function rsMaybeCheckBackend(){
 
   const normFl = fl.replace(/\s+/g,'').toUpperCase();
 
-  // ---- Resolver IATA del origen ----
+  // Resolver código IATA del origen
   let originIata = rsParseOriginIata(org) || "";
   if (!originIata && window._flightOrigin) {
     originIata = rsCityPlaceToIata(window._flightOrigin) || "";
@@ -567,7 +625,6 @@ async function rsMaybeCheckBackend(){
     if (originHelp) {
       originHelp.textContent = "Incluye el código IATA, p. ej., Miami (MIA).";
       originHelp.className   = "hint err";
-      originHelp.style.display = "block";
     }
     const o = document.getElementById('flightOrigin');
     if (o) o.setCustomValidity("Falta el código IATA (ej.: MIA).");
@@ -575,8 +632,8 @@ async function rsMaybeCheckBackend(){
   } else {
     const o = document.getElementById('flightOrigin');
     if (o) o.setCustomValidity("");
+    if (originHelp){ originHelp.textContent=''; originHelp.style.display='none'; }
   }
-  // ----------------------------------
 
   const mySeq = ++__rsFlightSeq;
   const hint  = document.getElementById('flightHint');
@@ -594,7 +651,7 @@ async function rsMaybeCheckBackend(){
     }
 
     const data = await resp.json().catch(()=>({}));
-    if (mySeq !== __rsFlightSeq) return; // respuesta obsoleta
+    if (mySeq !== __rsFlightSeq) return;
 
     if (data.ok){
       if(hint){ hint.textContent='✅ Vuelo confirmado'; hint.className='hint ok'; hint.style.display='block'; }
@@ -618,14 +675,14 @@ async function rsMaybeCheckBackend(){
 function rsWireFlightBackendTriggers(){
   const fn   = document.getElementById('flightNumber');
   const org  = document.getElementById('flightOrigin');
-  const date = document.getElementById('newDate');   // en reprogramación usamos newDate
+  const date = document.getElementById('newDate');
   const run  = () => setTimeout(rsMaybeCheckBackend, 200);
   if(fn)   fn.addEventListener('input', run);
   if(org)  org.addEventListener('input', run);
   if(date) date.addEventListener('change', run);
 }
 
-/* Vincular Autocomplete de ciudades para revalidar al seleccionar */
+/* Vincular Autocomplete para revalidar al seleccionar */
 (function rsHookFlightOriginPlaceChanged(){
   const input = document.getElementById("flightOrigin");
   if (!input) return;
@@ -636,8 +693,8 @@ function rsWireFlightBackendTriggers(){
   });
 
   ac.addListener("place_changed", ()=>{
-    window._flightOrigin = ac.getPlace(); // guardamos la ciudad elegida
-    setTimeout(rsMaybeCheckBackend, 50);  // revalidar al instante
+    window._flightOrigin = ac.getPlace();
+    setTimeout(rsMaybeCheckBackend, 50);
   });
 })();
 
@@ -648,5 +705,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setTimeout(rsMaybeCheckBackend, 150);
 });
 </script>
+
 </body>
 </html>
