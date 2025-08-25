@@ -2,31 +2,202 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Bonanza Admin Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bonanza — Admin Login</title>
+  <link rel="icon" href="/images/bonanza-logo.PNG" />
   <style>
-    body { font-family: Arial; background:#111; color:#eee; display:flex; justify-content:center; align-items:center; height:100vh; }
-    .box { background:#222; padding:30px; border-radius:8px; text-align:center; }
-    input { padding:10px; margin:8px; }
-    button { padding:10px 20px; }
-    .err { color:#f55; }
+    :root{
+      --copper:#a8744f; --copper-2:#c89267;
+      --ink:#0b0e14; --ink-2:#111522; --ink-3:#171c2b;
+      --text:#f7f2ea; --muted:#cfc5b6; --danger:#ff6b6b;
+      --ok:#17c964;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:
+        radial-gradient(1200px 800px at 80% -10%, #24304b 0%, transparent 60%),
+        radial-gradient(1000px 800px at -20% 110%, #1b2439 0%, transparent 55%),
+        linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 60%, var(--ink-3) 100%);
+      color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      display:grid; place-items:center; padding:28px;
+    }
+
+    .card{
+      width:min(880px, 100%); background:linear-gradient(180deg, #0f1423, #0d1220);
+      border:1px solid #ffffff1a; border-radius:18px; padding:0; overflow:hidden;
+      box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:0;
+    }
+    @media (max-width: 850px){ .card{ grid-template-columns:1fr } }
+
+    /* Left: brand */
+    .brand{
+      padding:28px 26px 22px; position:relative;
+      background:
+        radial-gradient(600px 240px at 10% 0%, #0f1a28 0%, transparent 60%),
+        linear-gradient(180deg, #0d1626 0%, #0b111e 100%);
+      border-right:1px solid #ffffff10;
+    }
+    .brand-head{ display:flex; gap:14px; align-items:center; }
+    .logo{
+      width:72px; height:72px; border-radius:50%;
+      border:2px solid var(--copper-2); background:#000;
+      display:grid; place-items:center; overflow:hidden;
+    }
+    .logo img{ width:100%; height:100%; object-fit:cover }
+    .brand h1{ margin:0; font-size:22px; letter-spacing:.3px }
+    .subtitle{ margin-top:4px; color:var(--muted); font-size:13px }
+    .perks{ margin-top:18px; display:grid; gap:8px; color:#e9e3d9; }
+    .perk{ display:flex; align-items:center; gap:10px; font-size:14px }
+    .dot{ width:8px; height:8px; border-radius:999px; background:var(--copper) }
+
+    /* Right: form */
+    .pane{ padding:28px 24px }
+    .card h2{ margin:0 0 14px; font-size:18px }
+    form{ display:grid; gap:12px; margin-top:6px }
+    label{ font-size:13px; color:#eaddcf }
+    .input{
+      background:#0d1322; border:1px solid #ffffff24; border-radius:12px; padding:12px 12px;
+      color:var(--text); font-size:16px; width:100%;
+      outline:none; transition:border .15s ease, box-shadow .15s ease;
+    }
+    .input:focus{ border-color:var(--copper-2); box-shadow:0 0 0 4px #c8926730 }
+    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between }
+    .hint{ font-size:12px; color:var(--muted) }
+    .caps{ font-size:12px; color:var(--danger); visibility:hidden }
+    .actions{ display:flex; gap:10px; align-items:center; margin-top:6px }
+    .btn{
+      border:0; border-radius:12px; padding:12px 16px; cursor:pointer; font-weight:700;
+      background:linear-gradient(180deg, var(--copper-2), var(--copper));
+      color:#1a1007; box-shadow:0 10px 24px #a8744f33;
+    }
+    .btn.secondary{ background:#1b2236; color:var(--text); box-shadow:none; border:1px solid #ffffff20 }
+    .err{ color:var(--danger); font-size:13px; min-height:18px }
+    .ok{ color:var(--ok); font-size:13px; min-height:18px }
+    .muted{ color:var(--muted) }
+    .foot{ margin-top:10px; font-size:12px; color:var(--muted) }
+    .toggle-eye{ position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#d6cabd }
+    .field{ position:relative }
+    .spinner{
+      width:16px; height:16px; border:2px solid #ffffff44; border-top-color:#fff; border-radius:50%;
+      display:none; animation:spin .9s linear infinite;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>Admin Login</h2>
-    <input id="key" type="password" placeholder="API Key" />
-    <button onclick="login()">Enter</button>
-    <p id="msg"></p>
+
+  <div class="card">
+    <!-- Brand side -->
+    <section class="brand">
+      <div class="brand-head">
+        <div class="logo"><img src="/images/bonanza-logo.PNG" alt="Bonanza"></div>
+        <div>
+          <h1>Bonanza Transportation</h1>
+          <div class="subtitle">Cuartel General — Acceso interno</div>
+        </div>
+      </div>
+
+      <div class="perks">
+        <div class="perk"><span class="dot"></span><span>Agenda de vehículos en tiempo real</span></div>
+        <div class="perk"><span class="dot"></span><span>Reglas por temporada y excepción SLC</span></div>
+        <div class="perk"><span class="dot"></span><span>Lectura segura de pagos Stripe</span></div>
+        <div class="perk"><span class="dot"></span><span>Bloqueos y disponibilidad instantánea</span></div>
+      </div>
+    </section>
+
+    <!-- Form side -->
+    <section class="pane">
+      <h2>Admin Login</h2>
+      <div class="hint">Usa tu clave de administrador para continuar.</div>
+
+      <form id="form">
+        <div class="field">
+          <label for="key">Admin Key</label>
+          <input id="key" class="input" type="password" autocomplete="current-password" required />
+          <span id="eye" class="toggle-eye" title="Mostrar/Ocultar">👁️</span>
+        </div>
+
+        <div class="row">
+          <label class="hint"><input type="checkbox" id="remember" checked /> Recordar en este equipo</label>
+          <span id="caps" class="caps">Caps Lock activo</span>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn">Entrar</button>
+          <button type="button" class="btn secondary" id="goHome">Volver al sitio</button>
+          <div class="spinner" id="spin"></div>
+        </div>
+
+        <div id="msg" class="err"></div>
+        <div id="ok" class="ok"></div>
+
+        <div class="foot">
+          Soporte: <strong>(786) 683-5128</strong> ·
+          <a class="muted" href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a>
+        </div>
+      </form>
+    </section>
   </div>
 
 <script>
-function login(){
-  const key = document.getElementById("key").value;
-  // Guardar en localStorage
-  localStorage.setItem("ADMIN_KEY", key);
-  // Redirigir al Cuartel General
-  window.location.href = "/admin.html";
-}
+  // Si ya hay clave guardada, pasa directo al Cuartel
+  const saved = localStorage.getItem('ADMIN_KEY');
+  if (saved) {
+    location.replace('/admin.html');
+  }
+
+  const el = (id)=>document.getElementById(id);
+  const form = el('form');
+  const keyInput = el('key');
+  const msg = el('msg');
+  const ok = el('ok');
+  const caps = el('caps');
+  const spin = el('spin');
+  const eye = el('eye');
+
+  // Mostrar/Ocultar clave
+  eye.addEventListener('click', () => {
+    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+  });
+
+  // Aviso de Caps Lock
+  keyInput.addEventListener('keyup', (e)=>{
+    const cap = e.getModifierState && e.getModifierState('CapsLock');
+    caps.style.visibility = cap ? 'visible' : 'hidden';
+  });
+
+  // Volver al home público
+  el('goHome').onclick = ()=> location.href = '/';
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    msg.textContent = ''; ok.textContent='';
+    const key = keyInput.value.trim();
+    if (!key) { msg.textContent = 'Ingresa tu Admin Key.'; return; }
+
+    // feedback
+    spin.style.display='inline-block';
+
+    try{
+      // Probar la clave con un GET a /api/admin/vehicles
+      const r = await fetch('/api/admin/vehicles', { headers: { 'x-admin-key': key } });
+      if (r.status === 401) throw new Error('Clave inválida.');
+      if (!r.ok) throw new Error('Error de servidor.');
+
+      // Guardar si corresponde
+      if (el('remember').checked) localStorage.setItem('ADMIN_KEY', key);
+
+      ok.textContent = 'Acceso concedido. Entrando…';
+      // Redirigir al Cuartel General
+      setTimeout(()=> location.replace('/admin.html'), 300);
+    }catch(err){
+      msg.textContent = err.message || 'No se pudo validar la clave.';
+    }finally{
+      spin.style.display='none';
+    }
+  });
 </script>
 </body>
 </html>
