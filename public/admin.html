@@ -3,47 +3,167 @@
 <head>
   <meta charset="utf-8" />
   <title>Bonanza Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; background:#111; color:#eee; padding:20px; }
-    input, button { padding:8px; margin:4px; }
-    table { border-collapse: collapse; margin-top:20px; width:100%; }
-    th, td { border:1px solid #555; padding:8px; }
-    th { background:#222; }
-    .ok { color:#0f0; }
-    .err { color:#f55; }
+    :root{ --bg:#0f1115; --card:#141821; --line:#3a3f4b; --txt:#eee; --muted:#a8b0bf; --ok:#25d366; --bad:#ff6b6b; --brand:#a8744f }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--txt) }
+    header{ padding:20px; display:flex; align-items:center; gap:12px }
+    h1{ margin:0; font-size:24px; }
+    .bar{ padding:0 20px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+    input,button,select{ background:#1c2230; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+    button{ cursor:pointer }
+    button.primary{ background:var(--brand); color:#000; font-weight:700; border-color:#000 }
+    button.ghost{ background:transparent }
+    .chips button{ padding:6px 10px; border-radius:999px }
+    .chips button.active{ background:var(--brand); color:#000; border-color:#000 }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:12px; margin:0 20px 24px; overflow:hidden }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ border-bottom:1px solid var(--line); padding:10px 12px; text-align:left; }
+    th{ background:#1a2030; position:sticky; top:0; z-index:1 }
+    .muted{ color:var(--muted) }
+    .pill{ display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line) }
+    .pill.ok{ color:#000; background:var(--ok); border-color:#0a4f2b }
+    .pill.bad{ color:#000; background:var(--bad); border-color:#7a1e1e }
+    .row-actions{ display:flex; gap:6px; }
+    .sr{ position:absolute; left:-9999px }
+    .footer{ padding:12px 20px; color:var(--muted); font-size:12px }
+    .msg{ margin-left:10px; font-size:13px }
   </style>
 </head>
 <body>
-  <h1>Bonanza Admin Panel</h1>
-  <div>
-    <label>API Key: <input id="key" type="password" /></label>
-    <button onclick="loadVehicles()">Load Vehicles</button>
+  <header>
+    <h1>Bonanza Admin Panel</h1>
+  </header>
+
+  <div class="bar">
+    <label>API Key: <input id="key" type="password" placeholder="••••••••" /></label>
+    <button class="primary" id="btnLoad">Load Vehicles</button>
+    <span id="status" class="msg muted"></span>
   </div>
 
-  <div id="result"></div>
+  <div class="bar chips">
+    <button class="ghost active" data-kind="ALL">All</button>
+    <button class="ghost" data-kind="suv">SUV</button>
+    <button class="ghost" data-kind="van">VAN</button>
+  </div>
+
+  <div class="card">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th style="width:120px">Plate</th>
+          <th>Driver</th>
+          <th style="width:120px">Type</th>
+          <th style="width:120px">Active</th>
+          <th style="width:160px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="5" class="muted">Load vehicles…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer muted">Tip: guarda esta página en marcadores. Cambios de “Active” se aplican en tiempo real.</div>
 
 <script>
-async function loadVehicles(){
-  const key = document.getElementById("key").value;
-  const res = await fetch("/api/admin/vehicles", {
-    headers: { "x-admin-key": key }
+let ALL = [];        // cache desde API
+let FILTER = "ALL";  // ALL | suv | van
+
+document.querySelectorAll('.chips button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.chips button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    FILTER = btn.dataset.kind;
+    render();
   });
-  const data = await res.json();
-  if (!data.ok) {
-    document.getElementById("result").innerHTML = "<p class='err'>Error: " + (data.error||"") + "</p>";
+});
+
+document.getElementById('btnLoad').addEventListener('click', load);
+
+async function load(){
+  const key = document.getElementById('key').value.trim();
+  setStatus('Loading…');
+  try{
+    const r = await fetch('/api/admin/vehicles', { headers:{'x-admin-key':key}});
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
+    ALL = j.vehicles || [];
+    setStatus(`Loaded ${ALL.length} vehicles`);
+    render();
+  }catch(err){
+    setStatus('Error: '+(err.message||err), true);
+    document.getElementById('tbody').innerHTML =
+      `<tr><td colspan="5" class="muted">Failed to load vehicles.</td></tr>`;
+  }
+}
+
+function render(){
+  const rows = (FILTER==='ALL') ? ALL : ALL.filter(v=> (v.kind||'').toLowerCase()===FILTER);
+  if(!rows.length){
+    document.getElementById('tbody').innerHTML =
+      `<tr><td colspan="5" class="muted">No vehicles for filter: ${FILTER}.</td></tr>`;
     return;
   }
-  let html = "<table><tr><th>Plate</th><th>Driver</th><th>Type</th><th>Active</th></tr>";
-  for (let v of data.vehicles){
-    html += `<tr>
-      <td>${v.plate}</td>
-      <td>${v.driver_name}</td>
-      <td>${v.kind}</td>
-      <td>${v.active ? "✅" : "❌"}</td>
-    </tr>`;
+  const key = document.getElementById('key').value.trim();
+
+  let html = '';
+  for(const v of rows){
+    const pill = v.active ? `<span class="pill ok">ACTIVE</span>` : `<span class="pill bad">OFF</span>`;
+    html += `
+      <tr>
+        <td class="mono">${esc(v.plate)}</td>
+        <td>${esc(v.driver_name||'')}</td>
+        <td class="muted">${(v.kind||'').toUpperCase()}</td>
+        <td>${pill}</td>
+        <td class="row-actions">
+          <button data-id="${v.id}" data-active="${v.active?1:0}" class="ghost">
+            ${v.active ? 'Turn OFF' : 'Turn ON'}
+          </button>
+        </td>
+      </tr>`;
   }
-  html += "</table>";
-  document.getElementById("result").innerHTML = html;
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = html;
+
+  // bind switches
+  tbody.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.getAttribute('data-id');
+      const current = btn.getAttribute('data-active')==='1';
+      btn.disabled = true;
+      try{
+        const key = document.getElementById('key').value.trim();
+        const r = await fetch('/api/admin/vehicles', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-admin-key':key},
+          body: JSON.stringify({ id, active: !current })
+        });
+        const j = await r.json();
+        if(!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
+        // actualiza cache y re-render
+        const idx = ALL.findIndex(x=>String(x.id)===String(id));
+        if(idx>=0) ALL[idx].active = !current;
+        render();
+        setStatus('Saved.');
+      }catch(err){
+        setStatus('Save failed: '+(err.message||err), true);
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function setStatus(msg, isErr=false){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.style.color = isErr ? '#ff6b6b' : '#a8b0bf';
+}
+
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 </script>
 </body>
