@@ -1,3 +1,4 @@
+// /api/create-checkout-session.js
 import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -8,8 +9,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log("👉 Body recibido:", req.body);
-
+    // ----- Body esperado -----
+    // amount          -> en CENTAVOS (integer). Ej: $1.00 => 100
+    // fullname, phone, email, pickup, dropoff, date, time, ...
+    // confirmationNumber -> tu CN (lo usaremos en la URL de success)
     const {
       amount,
       fullname, phone, email,
@@ -19,45 +22,54 @@ export default async function handler(req, res) {
       vehicleType, distanceMiles, quotedTotal, confirmationNumber
     } = req.body || {};
 
-    const cents = Number(amount);
-    if (!Number.isInteger(cents) || cents < 5000) {
-      console.error("❌ Monto inválido:", cents);
-      return res.status(400).json({ error: 'Invalid amount' });
+    // === Validación de monto: permitir $1+ (100 centavos) ===
+    const cents = Number.parseInt(amount, 10);
+    if (!Number.isFinite(cents) || cents <= 0) {
+      return res.status(400).json({ error: 'Invalid amount (must be positive integer cents)' });
     }
 
-    console.log("✅ Creando sesión con:", { cents, email });
+    // Armamos URLs dinámicas y pasamos CN + session_id
+    const origin = req.headers.origin || 'https://bonanza-gps.vercel.app';
+    const cn = confirmationNumber || '';
+    const successUrl = `${origin}/reschedule-success.html?cn=${encodeURIComponent(cn)}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl  = `${origin}/reschedule.html?cn=${encodeURIComponent(cn)}`;
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
+      customer_email: email || undefined,
       line_items: [{
         price_data: {
           currency: 'usd',
-          product_data: { name: 'Bonanza Transportation Ride' },
-          unit_amount: cents,
+          unit_amount: cents, // << ya viene en centavos
+          product_data: { name: `Bonanza Transportation — ${cn || 'Reschedule'}` }
         },
         quantity: 1,
       }],
-      customer_email: email || undefined,
-      success_url: 'https://bonanza-gps.vercel.app/success',
-      cancel_url: 'https://bonanza-gps.vercel.app/cancel',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
-        fullname, phone, email,
-        pickup, dropoff, date, time,
-        flightNumber, flightOriginCity,
-        tailNumber, privateFlightOriginCity,
-        vehicleType,
+        fullname: fullname || '',
+        phone: phone || '',
+        email: email || '',
+        pickup: pickup || '',
+        dropoff: dropoff || '',
+        date: date || '',
+        time: time || '',
+        flightNumber: flightNumber || '',
+        flightOriginCity: flightOriginCity || '',
+        tailNumber: tailNumber || '',
+        privateFlightOriginCity: privateFlightOriginCity || '',
+        vehicleType: vehicleType || '',
         distanceMiles: String(distanceMiles ?? ''),
         quotedTotal: String(quotedTotal ?? ''),
-        confirmationNumber: confirmationNumber || '',
+        confirmationNumber: cn,
+        kind: 'reschedule_or_full'
       }
     });
 
-    console.log("✅ Sesión creada:", session.id);
-    return res.status(200).json({ id: session.id });
+    return res.status(200).json({ ok: true, id: session.id, url: session.url });
   } catch (err) {
     console.error("❌ Stripe ERROR:", err);
-    // devuelve el detalle para depurar desde el cliente (temporal)
     return res.status(500).json({ error: 'Stripe session failed', details: err?.message || String(err) });
   }
 }
