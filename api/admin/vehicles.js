@@ -1,12 +1,7 @@
 // /api/admin/vehicles.js
-import { Pool } from 'pg';
+import pool from "../_db.js"; // usamos el conector centralizado
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // tu Neon DB
-  ssl: { rejectUnauthorized: false },
-});
-
-// clave secreta para admin
+// clave secreta para admin (ponla en Vercel como variable de entorno ADMIN_KEY)
 const ADMIN_KEY = process.env.ADMIN_KEY || "changeme";
 
 export default async function handler(req, res) {
@@ -26,8 +21,11 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "POST") {
-      // toggle activo/inactivo
+      // cambiar estado activo/inactivo
       const { id, active } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: "Missing vehicle id" });
+      }
       await pool.query("UPDATE vehicles SET active=$1 WHERE id=$2", [active, id]);
       return res.status(200).json({ ok: true });
     }
