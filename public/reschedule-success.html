@@ -40,12 +40,27 @@
     </header>
 
     <div id="box" class="card">
+      <!-- ===== Sección Pago (base existente) ===== -->
       <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
       <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
       <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
       <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
       <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
       <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
+
+      <div class="hr"></div>
+
+      <!-- ===== NUEVO: datos del cliente ===== -->
+      <div class="row"><div class="label">Customer Name</div><div class="value" id="v_cust_name">—</div></div>
+      <div class="row"><div class="label">Customer Phone</div><div class="value" id="v_cust_phone">—</div></div>
+
+      <div class="hr"></div>
+
+      <!-- ===== NUEVO: detalles de viaje ===== -->
+      <div class="row"><div class="label">Pickup</div><div class="value" id="v_pickup">—</div></div>
+      <div class="row"><div class="label">Drop‑off</div><div class="value" id="v_dropoff">—</div></div>
+      <div class="row"><div class="label">Date / Time</div><div class="value" id="v_datetime">—</div></div>
+      <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
 
       <div class="hr"></div>
 
@@ -85,14 +100,15 @@
           const txt = await r.text();
           throw new Error(`HTTP ${r.status}: ${txt}`);
         }
-        const s = await r.json();
+        const s = await r.json(); // ← la API devuelve el objeto Session directo
+        const md = s.metadata || {};
 
-        // Fill basic info
+        // ===== Base existente =====
         const paidCents = s.amount_total ?? s.amount_subtotal ?? 0;
         const usd = (paidCents/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
         document.getElementById('v_status').textContent = (s.payment_status||'').toUpperCase() || 'PAID';
         document.getElementById('v_amount').textContent = usd;
-        document.getElementById('v_email').textContent = s.customer_details?.email || s.customer_email || '—';
+        document.getElementById('v_email').textContent = s.customer_details?.email || s.customer_email || md.email || '—';
         document.getElementById('v_sid').textContent = s.id || sessionId;
 
         let pm = '—';
@@ -105,7 +121,18 @@
         }
         document.getElementById('v_pm').textContent = pm;
 
-        // Nice note
+        // ===== NUEVO: rellenar datos de cliente =====
+        document.getElementById('v_cust_name').textContent  = md.fullname || '—';
+        document.getElementById('v_cust_phone').textContent = md.phone || '—';
+
+        // ===== NUEVO: rellenar detalles de viaje =====
+        document.getElementById('v_pickup').textContent   = md.pickup || '—';
+        document.getElementById('v_dropoff').textContent  = md.dropoff || '—';
+        const dtStr = [md.date||'', md.time||''].filter(Boolean).join(' ');
+        document.getElementById('v_datetime').textContent = dtStr || '—';
+        document.getElementById('v_vehicle').textContent  = md.vehicleType || '—';
+
+        // Nota amigable
         document.getElementById('v_note').innerHTML =
           `Receipt stored. Session <span class="mono">${s.id}</span>. You will receive an email confirmation shortly.`;
 
@@ -122,6 +149,12 @@
       document.getElementById('v_email').textContent = '—';
       document.getElementById('v_pm').textContent = '—';
       document.getElementById('v_sid').textContent = sessionId || '—';
+      document.getElementById('v_cust_name').textContent = '—';
+      document.getElementById('v_cust_phone').textContent = '—';
+      document.getElementById('v_pickup').textContent = '—';
+      document.getElementById('v_dropoff').textContent = '—';
+      document.getElementById('v_datetime').textContent = '—';
+      document.getElementById('v_vehicle').textContent = '—';
       document.getElementById('v_note').textContent = 'Error loading receipt: ' + msg;
     }
 
