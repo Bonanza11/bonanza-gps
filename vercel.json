@@ -7,6 +7,7 @@
     { "src": "^/success/?$", "dest": "/public/success.html" },
     { "src": "^/cancel/?$", "dest": "/public/cancel.html" },
     { "src": "^/admin/?$", "dest": "/public/admin.html" },
+    { "src": "^/admin.html$", "dest": "/public/admin.html" },
 
     { "src": "^/(?!api)(.*)$", "dest": "/public/$1" }
   ]
