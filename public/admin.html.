@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Bonanza Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111; color:#eee; padding:20px; }
+    input, button { padding:8px; margin:4px; }
+    table { border-collapse: collapse; margin-top:20px; width:100%; }
+    th, td { border:1px solid #555; padding:8px; }
+    th { background:#222; }
+    .ok { color:#0f0; }
+    .err { color:#f55; }
+  </style>
+</head>
+<body>
+  <h1>Bonanza Admin Panel</h1>
+  <div>
+    <label>API Key: <input id="key" type="password" /></label>
+    <button onclick="loadVehicles()">Load Vehicles</button>
+  </div>
+
+  <div id="result"></div>
+
+<script>
+async function loadVehicles(){
+  const key = document.getElementById("key").value;
+  const res = await fetch("/api/admin/vehicles", {
+    headers: { "x-admin-key": key }
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    document.getElementById("result").innerHTML = "<p class='err'>Error: " + (data.error||"") + "</p>";
+    return;
+  }
+  let html = "<table><tr><th>Plate</th><th>Driver</th><th>Type</th><th>Active</th></tr>";
+  for (let v of data.vehicles){
+    html += `<tr>
+      <td>${v.plate}</td>
+      <td>${v.driver_name}</td>
+      <td>${v.kind}</td>
+      <td>${v.active ? "✅" : "❌"}</td>
+    </tr>`;
+  }
+  html += "</table>";
+  document.getElementById("result").innerHTML = html;
+}
+</script>
+</body>
+</html>
