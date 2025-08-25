@@ -6,6 +6,7 @@
   "engines": { "node": "18.x" },
   "dependencies": {
     "stripe": "^13.6.0",
-    "@neondatabase/serverless": "^0.10.4"
+    "@neondatabase/serverless": "^0.10.4",
+    "pg": "^8.11.3"
   }
 }
