@@ -1,10 +1,10 @@
 {
   "rewrites": [
-    { "source": "/",                    "destination": "/index.html" },
-    { "source": "/success",             "destination": "/success.html" },
-    { "source": "/cancel",              "destination": "/cancel.html" },
-    { "source": "/reschedule",          "destination": "/reschedule.html" },
-    { "source": "/reschedule-success",  "destination": "/reschedule-success.html" },
-    { "source": "/admin",               "destination": "/admin.html" }
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/success", "destination": "/success.html" },
+    { "source": "/cancel", "destination": "/cancel.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/reschedule", "destination": "/reschedule.html" },
+    { "source": "/reschedule-success", "destination": "/reschedule-success.html" }
   ]
 }
