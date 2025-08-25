@@ -1,142 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Payment Confirmation — Bonanza Transportation</title>
-  <style>
-    :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
-    *{box-sizing:border-box}
-    html,body{margin:0;background:#000;color:#ffddae;font-family:Arial,Helvetica,sans-serif}
-    .wrap{max-width:900px;margin:32px auto 80px;padding:0 16px}
-    header{display:flex;align-items:center;gap:18px;margin-bottom:20px}
-    header img{width:140px;height:140px;border-radius:50%;border:3px solid var(--copper)} /* LOGO MÁS GRANDE */
-    h1{margin:0;color:#ffe3bf;font-size:1.8rem}
-    .card{background:linear-gradient(180deg,#121212,#0b0b0b);border:1px solid rgba(168,116,79,.45);
-          border-radius:14px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.45)}
-    .row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
-    .row:last-child{border-bottom:0}
-    .label{opacity:.9}
-    .value{font-weight:700;color:#ffe3bf}
-    .kudos{margin:10px 0 0;color:var(--ok)}
-    .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
-    .actions{display:flex;gap:10px;margin-top:14px}
-    button{background:var(--copper);color:#000;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
-    a.btn{display:inline-block;text-decoration:none}
-    .muted{opacity:.85}
-    .small{font-size:.9rem}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:12px 0}
-    .vehicle-photo{text-align:center;margin-top:20px}
-    .vehicle-photo img{max-width:400px;border-radius:12px;border:2px solid var(--copper)}
-  </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Payment Confirmation — Bonanza Transportation</title>
+
+  <!-- Fuente elegante desde Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#000;color:#ffddae;font-family:Arial,Helvetica,sans-serif}
+    .wrap{max-width:900px;margin:32px auto 80px;padding:0 16px}
+    header{display:flex;align-items:center;gap:18px;margin-bottom:20px}
+    header img{width:140px;height:140px;border-radius:50%;border:3px solid var(--copper)} /* LOGO MÁS GRANDE */
+    h1{margin:0;color:#ffe3bf;font-size:1.8rem}
+    .card{background:linear-gradient(180deg,#121212,#0b0b0b);border:1px solid rgba(168,116,79,.45);
+          border-radius:14px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.45)}
+    .row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
+    .row:last-child{border-bottom:0}
+    .label{opacity:.9}
+    .value{font-weight:700;color:#ffe3bf}
+    .kudos{margin:10px 0 0;color:var(--ok)}
+    .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
+    .actions{display:flex;gap:10px;margin-top:14px}
+    button{background:var(--copper);color:#000;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+    a.btn{display:inline-block;text-decoration:none}
+    .muted{opacity:.85}
+    .small{font-size:.9rem}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:12px 0}
+    .vehicle-photo{text-align:center;margin-top:20px}
+    .vehicle-photo img{max-width:400px;border-radius:12px;border:2px solid var(--copper)}
+
+    /* === Elegant WHITE values on receipt === */
+    .value{
+      color:#fff !important;
+      font-family:"Playfair Display", Georgia, serif !important;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .value.mono{
+      color:#fff !important;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+      font-weight:600;
+    }
+    /* “PAID” (u otro estado) en blanco elegante */
+    #v_status{
+      color:#fff !important;
+      font-family:"Playfair Display", Georgia, serif !important;
+      font-weight:700;
+      letter-spacing:.3px;
+    }
+    /* Etiquetas se mantienen igual */
+    .label{ color:inherit; }
+    /* Valores un poco más grandes */
+    .row .value{ font-size:1.05rem; }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
-      <div>
-        <h1>Payment Confirmed</h1>
-        <div class="small muted">Thank you for choosing Bonanza Transportation.</div>
-      </div>
-    </header>
+  <div class="wrap">
+    <header>
+      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
+      <div>
+        <h1>Payment Confirmed</h1>
+        <div class="small muted">Thank you for choosing Bonanza Transportation.</div>
+      </div>
+    </header>
 
-    <div id="box" class="card">
-      <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
-      <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
-      <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
-      <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
-      <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
-      <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
+    <div id="box" class="card">
+      <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
+      <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
+      <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
+      <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
+      <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
+      <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
 
-      <div class="row"><div class="label">Customer Name</div><div class="value" id="v_name">—</div></div>
-      <div class="row"><div class="label">Customer Phone</div><div class="value" id="v_phone">—</div></div>
+      <div class="row"><div class="label">Customer Name</div><div class="value" id="v_name">—</div></div>
+      <div class="row"><div class="label">Customer Phone</div><div class="value" id="v_phone">—</div></div>
 
-      <div class="row"><div class="label">Pickup</div><div class="value" id="v_pickup">—</div></div>
-      <div class="row"><div class="label">Drop-off</div><div class="value" id="v_dropoff">—</div></div>
-      <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
-      <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
+      <div class="row"><div class="label">Pickup</div><div class="value" id="v_pickup">—</div></div>
+      <div class="row"><div class="label">Drop-off</div><div class="value" id="v_dropoff">—</div></div>
+      <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
+      <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
 
-      <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
-        <img id="vehicleImg" src="" alt="Selected Vehicle"/>
-      </div>
+      <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
+        <img id="vehicleImg" src="" alt="Selected Vehicle"/>
+      </div>
 
-      <div class="hr"></div>
+      <div class="hr"></div>
 
-      <div class="small muted" id="v_note">
-        A copy of this receipt has been saved. You can print or download it.
-      </div>
+      <div class="small muted" id="v_note">
+        A copy of this receipt has been saved. You can print or download it.
+      </div>
 
-      <div class="actions">
-        <button onclick="window.print()">Print / Save PDF</button>
-        <a id="backLink" class="btn"><button type="button">Back to Reschedule</button></a>
-        <a href="/index.html" class="btn"><button type="button">Go to Main Page</button></a>
-      </div>
-    </div>
+      <div class="actions">
+        <button onclick="window.print()">Print / Save PDF</button>
+        <a id="backLink" class="btn"><button type="button">Back to Reschedule</button></a>
+        <a href="/index.html" class="btn"><button type="button">Go to Main Page</button></a>
+      </div>
+    </div>
 
-    <p class="small muted" style="margin-top:12px">
-      Need help? Just Text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
-    </p>
-  </div>
+    <p class="small muted" style="margin-top:12px">
+      Need help? Just Text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
+    </p>
+  </div>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const sessionId = params.get('session_id') || '';
-    const cn = params.get('cn') || '';
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('session_id') || '';
+    const cn = params.get('cn') || '';
 
-    document.getElementById('v_cn').textContent = cn || '—';
-    document.getElementById('backLink').href = '/reschedule.html' + (cn ? ('?cn=' + encodeURIComponent(cn)) : '');
+    document.getElementById('v_cn').textContent = cn || '—';
+    document.getElementById('backLink').href = '/reschedule.html' + (cn ? ('?cn=' + encodeURIComponent(cn)) : '');
 
-    async function loadSession(){
-      if (!sessionId){
-        showError('Missing session_id in URL.');
-        return;
-      }
-      try{
-        const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const s = await r.json();
+    async function loadSession(){
+      if (!sessionId){
+        showError('Missing session_id in URL.');
+        return;
+      }
+      try{
+        const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const s = await r.json();
 
-        const md = s.metadata || {};
-        document.getElementById('v_status').textContent = (s.payment_status||'PAID').toUpperCase();
-        const usd = (s.amount_total/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
-        document.getElementById('v_amount').textContent = usd;
-        document.getElementById('v_email').textContent = s.customer_details?.email || md.email || '—';
-        document.getElementById('v_sid').textContent = s.id || sessionId;
-        document.getElementById('v_name').textContent = md.fullname || '—';
-        document.getElementById('v_phone').textContent = md.phone || '—';
-        document.getElementById('v_pickup').textContent = md.pickup || '—';
-        document.getElementById('v_dropoff').textContent = md.dropoff || '—';
-        document.getElementById('v_dt').textContent = [md.date, md.time].filter(Boolean).join(' ') || '—';
-        document.getElementById('v_vehicle').textContent = md.vehicleType || '—';
+        const md = s.metadata || {};
+        document.getElementById('v_status').textContent = (s.payment_status||'PAID').toUpperCase();
+        const usd = (s.amount_total/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
+        document.getElementById('v_amount').textContent = usd;
+        document.getElementById('v_email').textContent = s.customer_details?.email || md.email || '—';
+        document.getElementById('v_sid').textContent = s.id || sessionId;
+        document.getElementById('v_name').textContent = md.fullname || '—';
+        document.getElementById('v_phone').textContent = md.phone || '—';
+        document.getElementById('v_pickup').textContent = md.pickup || '—';
+        document.getElementById('v_dropoff').textContent = md.dropoff || '—';
+        document.getElementById('v_dt').textContent = [md.date, md.time].filter(Boolean).join(' ') || '—';
+        document.getElementById('v_vehicle').textContent = md.vehicleType || '—';
 
-        // Mostrar imagen del vehículo
-        const vehicleImg = document.getElementById('vehicleImg');
-        const vehiclePhoto = document.getElementById('vehiclePhoto');
-        if (md.vehicleType?.toLowerCase().includes('suv')){
-          vehicleImg.src = '/images/suburban.png';
-          vehiclePhoto.style.display = 'block';
-        } else if (md.vehicleType?.toLowerCase().includes('van')){
-          vehicleImg.src = '/images/van-sprinter.png';
-          vehiclePhoto.style.display = 'block';
-        }
+        // Mostrar imagen del vehículo
+        const vehicleImg = document.getElementById('vehicleImg');
+        const vehiclePhoto = document.getElementById('vehiclePhoto');
+        if (md.vehicleType?.toLowerCase().includes('suv')){
+          vehicleImg.src = '/images/suburban.png';
+          vehiclePhoto.style.display = 'block';
+        } else if (md.vehicleType?.toLowerCase().includes('van')){
+          vehicleImg.src = '/images/van-sprinter.png';
+          vehiclePhoto.style.display = 'block';
+        }
 
-        document.getElementById('v_note').innerHTML =
-          `Receipt stored. Session <span class="mono">${s.id}</span>. You will receive an email confirmation shortly.`;
+        document.getElementById('v_note').innerHTML =
+          `Receipt stored. Session <span class="mono">${s.id}</span>. You will receive an email confirmation shortly.`;
 
-      }catch(err){
-        showError(err.message);
-      }
-    }
+      }catch(err){
+        showError(err.message);
+      }
+    }
 
-    function showError(msg){
-      const card = document.getElementById('box');
-      card.classList.add('err');
-      document.getElementById('v_status').textContent = 'ERROR';
-      document.getElementById('v_note').textContent = 'Error loading receipt: ' + msg;
-    }
+    function showError(msg){
+      const card = document.getElementById('box');
+      card.classList.add('err');
+      document.getElementById('v_status').textContent = 'ERROR';
+      document.getElementById('v_note').textContent = 'Error loading receipt: ' + msg;
+    }
 
-    loadSession();
-  </script>
+    loadSession();
+  </script>
 </body>
 </html>
