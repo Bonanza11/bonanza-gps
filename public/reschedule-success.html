@@ -3,95 +3,129 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Payment Confirmation — Bonanza</title>
+  <title>Payment Confirmation — Bonanza Transportation</title>
   <style>
-    :root{ --c:#a8744f; }
-    body{ background:#000; color:#f5e7d3; font-family:Arial,Helvetica,sans-serif; margin:0; padding:24px; }
-    .card{ max-width:760px; margin:0 auto; background:#0e0e0e; border:1px solid rgba(168,116,79,.45);
-           border-radius:14px; padding:20px; box-shadow:0 12px 28px rgba(0,0,0,.45) }
-    h1{ margin:0 0 8px; color:#ffddae }
-    .row{ display:flex; justify-content:space-between; margin:6px 0 }
-    .muted{ opacity:.85 }
-    .ok{ color:#17c964 } .err{ color:#ff6b6b }
-    .divider{ height:1px; margin:12px 0; background:linear-gradient(90deg,transparent,rgba(168,116,79,.45),transparent) }
-    button{ background:var(--c); color:#000; font-weight:800; padding:10px 14px; border:0; border-radius:10px; cursor:pointer }
-    .actions{ display:flex; gap:8px; margin-top:14px }
-    @media print{ .actions{ display:none } body{ background:#fff; color:#000 } .card{ box-shadow:none } }
+    :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#000;color:#ffddae;font-family:Arial,Helvetica,sans-serif}
+    .wrap{max-width:860px;margin:32px auto 80px;padding:0 16px}
+    header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+    header img{width:64px;height:64px;border-radius:50%;border:2px solid var(--copper)}
+    h1{margin:0;color:#ffe3bf;font-size:1.6rem}
+    .card{background:linear-gradient(180deg,#121212,#0b0b0b);border:1px solid rgba(168,116,79,.45);
+          border-radius:14px;padding:18px;box-shadow:0 12px 28px rgba(0,0,0,.45)}
+    .row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
+    .row:last-child{border-bottom:0}
+    .label{opacity:.9}
+    .value{font-weight:700;color:#ffe3bf}
+    .kudos{margin:10px 0 0;color:var(--ok)}
+    .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
+    .actions{display:flex;gap:10px;margin-top:14px}
+    button{background:var(--copper);color:#000;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+    a.btn{display:inline-block;text-decoration:none}
+    .muted{opacity:.85}
+    .small{font-size:.9rem}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:12px 0}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Payment Confirmed</h1>
-    <div id="status" class="muted">Loading...</div>
-    <div class="divider"></div>
+  <div class="wrap">
+    <header>
+      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
+      <div>
+        <h1>Payment Confirmed</h1>
+        <div class="small muted">Thank you for choosing Bonanza Transportation.</div>
+      </div>
+    </header>
 
-    <div id="receipt" style="display:none">
-      <div class="row"><div>Customer</div><div id="r_name"></div></div>
-      <div class="row"><div>Email</div><div id="r_email"></div></div>
-      <div class="row"><div>Confirmation (CN)</div><div id="r_cn"></div></div>
-      <div class="row"><div>Amount</div><div id="r_amount"></div></div>
-      <div class="divider"></div>
-      <div class="row"><div>Pickup</div><div id="r_pickup"></div></div>
-      <div class="row"><div>Drop‑off</div><div id="r_dropoff"></div></div>
-      <div class="row"><div>Date/Time</div><div id="r_dt"></div></div>
-      <div class="row"><div>Vehicle</div><div id="r_vehicle"></div></div>
-      <div class="divider"></div>
-      <div class="muted" id="r_pi"></div>
+    <div id="box" class="card">
+      <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
+      <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
+      <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
+      <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
+      <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
+      <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
+
+      <div class="hr"></div>
+
+      <div class="small muted" id="v_note">
+        A copy of this receipt has been saved. You can print or download it.
+      </div>
+
       <div class="actions">
-        <button onclick="window.print()">Print</button>
-        <button id="btnBack">Back to Reschedule</button>
+        <button onclick="window.print()">Print / Save PDF</button>
+        <a id="backLink" class="btn"><button type="button">Back to Reschedule</button></a>
       </div>
     </div>
+
+    <p class="small muted" style="margin-top:12px">
+      Need help? Text or call <strong>(201) 555‑0123</strong> or email <strong>support@bonanzatransportation.com</strong>.
+    </p>
   </div>
 
-<script>
-(async function(){
-  const qs = new URLSearchParams(location.search);
-  const sessionId = qs.get('session_id');
-  const cn = qs.get('cn') || '';
-  const status = document.getElementById('status');
-  const back = document.getElementById('btnBack');
-  back.onclick = () => location.href = `/reschedule.html?cn=${encodeURIComponent(cn)}`;
+  <script>
+    // Helper: query params
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('session_id') || '';
+    const cn = params.get('cn') || '';
 
-  if(!sessionId){
-    status.className='err';
-    status.textContent='Missing session_id.';
-    return;
-  }
+    // Put CN & back link
+    document.getElementById('v_cn').textContent = cn || '—';
+    document.getElementById('backLink').href = '/reschedule.html' + (cn ? ('?cn=' + encodeURIComponent(cn)) : '');
 
-  try{
-    const resp = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
-    const data = await resp.json();
-    if(!resp.ok || !data?.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+    async function loadSession(){
+      if (!sessionId){
+        showError('Missing session_id in URL. Return to the reschedule page and try again.');
+        return;
+      }
+      try{
+        const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
+        if (!r.ok){
+          const txt = await r.text();
+          throw new Error(`HTTP ${r.status}: ${txt}`);
+        }
+        const s = await r.json();
 
-    const s = data.session;
-    const md = s.metadata || {};
-    const amount = (s.amount_total ?? s.line_items?.data?.[0]?.amount_total ?? 0) / 100;
+        // Fill basic info
+        const paidCents = s.amount_total ?? s.amount_subtotal ?? 0;
+        const usd = (paidCents/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
+        document.getElementById('v_status').textContent = (s.payment_status||'').toUpperCase() || 'PAID';
+        document.getElementById('v_amount').textContent = usd;
+        document.getElementById('v_email').textContent = s.customer_details?.email || s.customer_email || '—';
+        document.getElementById('v_sid').textContent = s.id || sessionId;
 
-    // Rellenar recibo
-    document.getElementById('r_name').textContent   = md.fullname || '—';
-    document.getElementById('r_email').textContent  = s.customer_details?.email || md.email || '—';
-    document.getElementById('r_cn').textContent     = md.confirmationNumber || cn || '—';
-    document.getElementById('r_amount').textContent = `$${amount.toFixed(2)}`;
+        let pm = '—';
+        const pi = s.payment_intent;
+        if (pi && typeof pi === 'object' && pi.charges?.data?.length){
+          const ch = pi.charges.data[0];
+          const brand = ch.payment_method_details?.card?.brand || '';
+          const last4 = ch.payment_method_details?.card?.last4 || '';
+          pm = brand ? `${brand.toUpperCase()} •••• ${last4}` : (last4 ? `•••• ${last4}` : 'Card');
+        }
+        document.getElementById('v_pm').textContent = pm;
 
-    document.getElementById('r_pickup').textContent   = md.pickup || '—';
-    document.getElementById('r_dropoff').textContent  = md.dropoff || '—';
-    const dt = [md.date||'', md.time||''].filter(Boolean).join(' ');
-    document.getElementById('r_dt').textContent       = dt || '—';
-    document.getElementById('r_vehicle').textContent  = md.vehicleType || '—';
+        // Nice note
+        document.getElementById('v_note').innerHTML =
+          `Receipt stored. Session <span class="mono">${s.id}</span>. You will receive an email confirmation shortly.`;
 
-    const pi = s.payment_intent;
-    document.getElementById('r_pi').textContent =
-      pi ? `Payment Intent: ${pi.id} • Status: ${pi.status}` : '';
+      }catch(err){
+        showError(err?.message || String(err));
+      }
+    }
 
-    status.className='ok';
-    status.textContent='Thank you! Your payment was successful.';
-    document.getElementById('receipt').style.display='block';
-  }catch(e){
-    status.className='err';
-    status.textContent='Error loading receipt: ' + (e.message||e);
-  }
-})();
-</script>
+    function showError(msg){
+      const card = document.getElementById('box');
+      card.classList.add('err');
+      document.getElementById('v_status').textContent = 'ERROR';
+      document.getElementById('v_amount').textContent = '—';
+      document.getElementById('v_email').textContent = '—';
+      document.getElementById('v_pm').textContent = '—';
+      document.getElementById('v_sid').textContent = sessionId || '—';
+      document.getElementById('v_note').textContent = 'Error loading receipt: ' + msg;
+    }
+
+    loadSession();
+  </script>
 </body>
 </html>
