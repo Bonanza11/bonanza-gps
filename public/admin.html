@@ -2,169 +2,188 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Bonanza Admin</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bonanza Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{ --bg:#0f1115; --card:#141821; --line:#3a3f4b; --txt:#eee; --muted:#a8b0bf; --ok:#25d366; --bad:#ff6b6b; --brand:#a8744f }
+    :root{
+      --bg:#0f1220; --card:#171a2b; --line:#344158;
+      --text:#e9eef7; --muted:#a7b0c3; --ok:#28d07f; --bad:#ff5d5d; --accent:#f7b06a;
+    }
     *{ box-sizing:border-box }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--txt) }
-    header{ padding:20px; display:flex; align-items:center; gap:12px }
-    h1{ margin:0; font-size:24px; }
-    .bar{ padding:0 20px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center }
-    input,button,select{ background:#1c2230; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
-    button{ cursor:pointer }
-    button.primary{ background:var(--brand); color:#000; font-weight:700; border-color:#000 }
-    button.ghost{ background:transparent }
-    .chips button{ padding:6px 10px; border-radius:999px }
-    .chips button.active{ background:var(--brand); color:#000; border-color:#000 }
-    .card{ background:var(--card); border:1px solid var(--line); border-radius:12px; margin:0 20px 24px; overflow:hidden }
-    table{ width:100%; border-collapse:collapse; }
-    th,td{ border-bottom:1px solid var(--line); padding:10px 12px; text-align:left; }
-    th{ background:#1a2030; position:sticky; top:0; z-index:1 }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
+    header{ display:flex; gap:10px; align-items:center; padding:14px 18px; background:rgba(0,0,0,.25); position:sticky; top:0; border-bottom:1px solid #0002 }
+    header h1{ font-size:18px; margin:0; font-weight:700; letter-spacing:.3px }
+    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff10; color:var(--muted); border:1px solid #ffffff14 }
+    .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
+    .controls{ display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap }
+    button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer }
+    button:hover{ filter:brightness(1.08) }
+    .danger{ background:#3a2030; border-color:#ffffff22 }
+    .link{ color:var(--accent); text-decoration:none }
+    table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
+    th{ background:#11162a; color:#cdd6ea; position:sticky; top:50px; z-index:1 }
+    tbody tr:hover{ background:#1b2136 }
+    .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
+    .on{ background:#173523; color:var(--ok); border:1px solid #25a866 }
+    .off{ background:#3a2323; color:var(--bad); border:1px solid #b84a4a }
+    .right{ text-align:right }
     .muted{ color:var(--muted) }
-    .pill{ display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line) }
-    .pill.ok{ color:#000; background:var(--ok); border-color:#0a4f2b }
-    .pill.bad{ color:#000; background:var(--bad); border-color:#7a1e1e }
-    .row-actions{ display:flex; gap:6px; }
-    .sr{ position:absolute; left:-9999px }
-    .footer{ padding:12px 20px; color:var(--muted); font-size:12px }
-    .msg{ margin-left:10px; font-size:13px }
+    .count{ margin-left:8px; color:var(--muted); font-size:13px }
+    .spacer{ flex:1 }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Bonanza Admin Panel</h1>
-  </header>
 
-  <div class="bar">
-    <label>API Key: <input id="key" type="password" placeholder="••••••••" /></label>
-    <button class="primary" id="btnLoad">Load Vehicles</button>
-    <span id="status" class="msg muted"></span>
+<header>
+  <h1>Bonanza Admin — Cuartel General</h1>
+  <span class="pill" id="envInfo"></span>
+  <div class="spacer"></div>
+  <button class="danger" id="btnLogout">Logout</button>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <button id="btnAll">All</button>
+    <button id="btnSUV">SUV</button>
+    <button id="btnVAN">VAN</button>
+    <button id="btnReload">Reload</button>
+    <span class="count" id="count"></span>
+    <span class="spacer"></span>
+    <span class="muted">Ruta API: <code>/api/admin/vehicles</code></span>
   </div>
 
-  <div class="bar chips">
-    <button class="ghost active" data-kind="ALL">All</button>
-    <button class="ghost" data-kind="suv">SUV</button>
-    <button class="ghost" data-kind="van">VAN</button>
-  </div>
+  <div id="msg" class="muted" style="margin:8px 0 12px;"></div>
 
-  <div class="card">
-    <table id="tbl">
-      <thead>
-        <tr>
-          <th style="width:120px">Plate</th>
-          <th>Driver</th>
-          <th style="width:120px">Type</th>
-          <th style="width:120px">Active</th>
-          <th style="width:160px">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="5" class="muted">Load vehicles…</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="footer muted">Tip: guarda esta página en marcadores. Cambios de “Active” se aplican en tiempo real.</div>
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th style="width:120px">Plate</th>
+        <th>Driver</th>
+        <th style="width:110px">Type</th>
+        <th style="width:120px">Active</th>
+        <th class="right" style="width:160px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
 
 <script>
-let ALL = [];        // cache desde API
-let FILTER = "ALL";  // ALL | suv | van
-
-document.querySelectorAll('.chips button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.chips button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    FILTER = btn.dataset.kind;
-    render();
-  });
-});
-
-document.getElementById('btnLoad').addEventListener('click', load);
-
-async function load(){
-  const key = document.getElementById('key').value.trim();
-  setStatus('Loading…');
-  try{
-    const r = await fetch('/api/admin/vehicles', { headers:{'x-admin-key':key}});
-    const j = await r.json();
-    if(!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
-    ALL = j.vehicles || [];
-    setStatus(`Loaded ${ALL.length} vehicles`);
-    render();
-  }catch(err){
-    setStatus('Error: '+(err.message||err), true);
-    document.getElementById('tbody').innerHTML =
-      `<tr><td colspan="5" class="muted">Failed to load vehicles.</td></tr>`;
+  // === Login obligatorio via localStorage ===
+  const ADMIN_KEY = localStorage.getItem("ADMIN_KEY");
+  if (!ADMIN_KEY) {
+    // Si no hay clave guardada, forzar login
+    location.href = "/login.html";
   }
-}
 
-function render(){
-  const rows = (FILTER==='ALL') ? ALL : ALL.filter(v=> (v.kind||'').toLowerCase()===FILTER);
-  if(!rows.length){
-    document.getElementById('tbody').innerHTML =
-      `<tr><td colspan="5" class="muted">No vehicles for filter: ${FILTER}.</td></tr>`;
-    return;
-  }
-  const key = document.getElementById('key').value.trim();
+  // UI elementos
+  const rowsEl  = document.getElementById('rows');
+  const countEl = document.getElementById('count');
+  const msgEl   = document.getElementById('msg');
+  const envInfo = document.getElementById('envInfo');
 
-  let html = '';
-  for(const v of rows){
-    const pill = v.active ? `<span class="pill ok">ACTIVE</span>` : `<span class="pill bad">OFF</span>`;
-    html += `
-      <tr>
-        <td class="mono">${esc(v.plate)}</td>
-        <td>${esc(v.driver_name||'')}</td>
-        <td class="muted">${(v.kind||'').toUpperCase()}</td>
-        <td>${pill}</td>
-        <td class="row-actions">
-          <button data-id="${v.id}" data-active="${v.active?1:0}" class="ghost">
-            ${v.active ? 'Turn OFF' : 'Turn ON'}
-          </button>
-        </td>
-      </tr>`;
-  }
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = html;
+  // Mostrar si estamos en prod/preview (simple heurística)
+  envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-  // bind switches
-  tbody.querySelectorAll('button[data-id]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const id = btn.getAttribute('data-id');
-      const current = btn.getAttribute('data-active')==='1';
-      btn.disabled = true;
-      try{
-        const key = document.getElementById('key').value.trim();
-        const r = await fetch('/api/admin/vehicles', {
-          method:'POST',
-          headers:{'Content-Type':'application/json','x-admin-key':key},
-          body: JSON.stringify({ id, active: !current })
-        });
-        const j = await r.json();
-        if(!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
-        // actualiza cache y re-render
-        const idx = ALL.findIndex(x=>String(x.id)===String(id));
-        if(idx>=0) ALL[idx].active = !current;
-        render();
-        setStatus('Saved.');
-      }catch(err){
-        setStatus('Save failed: '+(err.message||err), true);
-      }finally{
-        btn.disabled = false;
+  // Estado en memoria
+  let allVehicles = [];
+  let filterKind = 'ALL';
+
+  // Cargar y pintar
+  async function loadVehicles() {
+    msgEl.textContent = 'Loading vehicles…';
+    try {
+      const r = await fetch('/api/admin/vehicles', {
+        headers: { 'x-admin-key': ADMIN_KEY }
+      });
+      if (r.status === 401) {
+        localStorage.removeItem('ADMIN_KEY');
+        return location.href = '/login.html';
       }
-    });
-  });
-}
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || 'Unknown error');
 
-function setStatus(msg, isErr=false){
-  const el = document.getElementById('status');
-  el.textContent = msg;
-  el.style.color = isErr ? '#ff6b6b' : '#a8b0bf';
-}
+      allVehicles = data.vehicles || [];
+      render();
+      msgEl.textContent = 'Loaded successfully.';
+    } catch (e) {
+      msgEl.textContent = 'Error: ' + (e.message || e);
+    }
+  }
 
-function esc(s){
-  return String(s ?? '').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
+  function visibleList() {
+    if (filterKind === 'ALL') return allVehicles;
+    return allVehicles.filter(v => (v.kind || '').toUpperCase() === filterKind);
+  }
+
+  function render() {
+    const list = visibleList();
+    countEl.textContent = `Loaded ${list.length} vehicles`;
+    rowsEl.innerHTML = list.map(v => {
+      const on = !!v.active;
+      return `
+        <tr>
+          <td>${escapeHtml(v.plate || '')}</td>
+          <td>${escapeHtml(v.driver_name || '')}</td>
+          <td>${escapeHtml((v.kind || '').toUpperCase())}</td>
+          <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
+          <td class="right">
+            <button onclick="toggleActive('${v.id}', ${on? 'false':'true'})">
+              ${on ? 'Turn Off' : 'Turn On'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Cambiar estado activo/inactivo
+  async function toggleActive(id, active) {
+    try {
+      const r = await fetch('/api/admin/vehicles', {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'x-admin-key': ADMIN_KEY
+        },
+        body: JSON.stringify({ id, active })
+      });
+      if (r.status === 401) {
+        localStorage.removeItem('ADMIN_KEY');
+        return location.href = '/login.html';
+      }
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || 'Toggle failed');
+
+      // Actualizar local sin recargar todo
+      const v = allVehicles.find(x => x.id === id);
+      if (v) v.active = !!active;
+      render();
+      msgEl.textContent = 'Updated.';
+    } catch (e) {
+      msgEl.textContent = 'Error: ' + (e.message || e);
+    }
+  }
+  window.toggleActive = toggleActive; // para inline onclick
+
+  // Util
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+  // Filtros y acciones
+  document.getElementById('btnAll').onclick  = () => { filterKind='ALL'; render(); };
+  document.getElementById('btnSUV').onclick  = () => { filterKind='SUV'; render(); };
+  document.getElementById('btnVAN').onclick  = () => { filterKind='VAN'; render(); };
+  document.getElementById('btnReload').onclick = () => loadVehicles();
+
+  // Logout
+  document.getElementById('btnLogout').onclick = () => {
+    localStorage.removeItem('ADMIN_KEY');
+    location.href = '/login.html';
+  };
+
+  // Arrancar
+  loadVehicles();
 </script>
 </body>
 </html>
