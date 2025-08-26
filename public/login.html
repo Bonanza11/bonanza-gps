@@ -111,19 +111,17 @@
             <h1>Bonanza Transportation</h1>
             <div class="sub">
               Headquarters — Internal Access
-              <svg class="flag" viewBox="0 0 19 10" aria-label="United States flag" xmlns="http://www.w3.org/2000/svg">
-                <defs><clipPath id="c"><rect width="19" height="10" rx="1"/></clipPath></defs>
-                <g clip-path="url(#c)">
-                  <rect width="19" height="10" fill="#b22234"/>
-                  <g fill="#fff">
-                    <rect y="1" width="19" height="1"/>
-                    <rect y="3" width="19" height="1"/>
-                    <rect y="5" width="19" height="1"/>
-                    <rect y="7" width="19" height="1"/>
-                    <rect y="9" width="19" height="1"/>
-                  </g>
-                  <rect width="7.6" height="5.6" fill="#3c3b6e"/>
+              <!-- US flag -->
+              <svg class="flag" viewBox="0 0 19 10" xmlns="http://www.w3.org/2000/svg">
+                <rect width="19" height="10" fill="#b22234"/>
+                <g fill="#fff">
+                  <rect y="1" width="19" height="1"/>
+                  <rect y="3" width="19" height="1"/>
+                  <rect y="5" width="19" height="1"/>
+                  <rect y="7" width="19" height="1"/>
+                  <rect y="9" width="19" height="1"/>
                 </g>
+                <rect width="7.6" height="5.6" fill="#3c3b6e"/>
               </svg>
             </div>
           </div>
@@ -145,7 +143,7 @@
       <section class="right">
         <form id="form" autocomplete="off">
           <label for="user">Username</label>
-          <input id="user" name="username" type="text" placeholder="Dinastía" autocomplete="username" autofocus>
+          <input id="user" name="username" type="text" placeholder="Dinastia" autocomplete="username" autofocus>
 
           <label for="pass">Password</label>
           <div class="row">
@@ -168,19 +166,19 @@
   </div>
 
 <script>
-const VALID_USER = "Dinastía";
-const VALID_PASS = "supersecreto123";
-const DASH_URL = "/admin.html";
+const VALID_USER = "dinastia";         // username válido
+const VALID_PASS = "supersecreto123";  // clave válida
+const DASH_URL   = "/admin.html";
 
-const userEl = document.getElementById("user");
-const passEl = document.getElementById("pass");
-const eye     = document.getElementById("eye");
-const caps    = document.getElementById("capsMsg");
-const form    = document.getElementById("form");
-const state   = document.getElementById("state");
-const card    = document.getElementById("card");
-const remember= document.getElementById("remember");
-const btn     = document.getElementById("enterBtn");
+const userEl   = document.getElementById("user");
+const passEl   = document.getElementById("pass");
+const eye      = document.getElementById("eye");
+const caps     = document.getElementById("capsMsg");
+const form     = document.getElementById("form");
+const state    = document.getElementById("state");
+const card     = document.getElementById("card");
+const remember = document.getElementById("remember");
+const btn      = document.getElementById("enterBtn");
 
 function setState(msg, ok){
   state.textContent = msg || "";
@@ -191,25 +189,30 @@ function loading(on){
   btn.textContent = on ? "Signing in…" : "Enter";
 }
 
-/* Eye toggle */
+// auto-login si está recordado
+try{
+  if(localStorage.getItem("bonanza_admin_ok") === "1"){
+    location.replace(DASH_URL);
+  }
+}catch{}
+
+// ojo mostrar/ocultar
 eye.addEventListener("click", ()=>{
   passEl.type = (passEl.type === "password") ? "text" : "password";
 });
 
-/* CapsLock indicator */
+// indicador CapsLock
 passEl.addEventListener("keydown", (e)=>{
-  const on = e.getModifierState && e.getModifierState("CapsLock");
-  caps.style.display = on ? "block" : "none";
+  caps.style.display = e.getModifierState("CapsLock") ? "block" : "none";
 });
 passEl.addEventListener("keyup", (e)=>{
-  const on = e.getModifierState && e.getModifierState("CapsLock");
-  caps.style.display = on ? "block" : "none";
+  caps.style.display = e.getModifierState("CapsLock") ? "block" : "none";
 });
 
-/* Submit */
+// submit
 form.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const u = (userEl.value || "").trim();
+  const u = (userEl.value || "").trim().toLowerCase();
   const p = (passEl.value || "").trim();
 
   if(!u){ userEl.focus(); setState("Please enter your username.", false); return; }
@@ -228,8 +231,9 @@ form.addEventListener("submit", async (e)=>{
     return;
   }
 
-  try{ localStorage.setItem("ADMIN_KEY", p); }catch{}
-
+  if(remember.checked){
+    try{ localStorage.setItem("bonanza_admin_ok","1"); }catch{}
+  }
   setState("Access granted. Redirecting…", true);
   location.replace(DASH_URL);
 });
