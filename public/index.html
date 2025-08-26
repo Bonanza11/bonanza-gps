@@ -583,20 +583,20 @@
 📍 Park City, Utah — USA</p>
 <!-- Botón Admin visible -->
 <div style="text-align:left; margin-top:20px;">
-  <div style="text-align:left; margin-top:20px;">
   <a href="/admin.html"
      style="display:inline-block; 
             padding:10px 20px; 
-            background:rgba(0,0,0,.65);   /* 👈 más oscuro */
-            color:#a8744f; 
-            font-weight:700; 
+            background:rgba(0,0,0,0.85);   /* 👈 recuadro más oscuro */
+            color:rgba(168,116,79,0.6);    /* 👈 letras cobre opacas */
+            font-weight:600; 
             border-radius:8px; 
             text-decoration:none; 
-            box-shadow:inset 0 0 0 1px rgba(168,116,79,.45);
-            transition:all .2s ease-in-out;">
+            border:1px solid rgba(168,116,79,0.25); /* 👈 borde muy sutil */
+            box-shadow:none;                /* sin brillos */
+            transition:background .2s ease-in-out, color .2s ease-in-out;">
     Cuartel General
   </a>
-</div>          
+</div>    
         <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
