@@ -102,7 +102,7 @@
       <section class="right">
         <form id="form" autocomplete="off">
           <label for="user">Username</label>
-          <input id="user" name="username" type="text" placeholder="Dinastia" autocomplete="username" autofocus>
+          <input id="user" name="username" type="text" placeholder="Username" autocomplete="username" autofocus>
 
           <label for="pass">Password</label>
           <div class="row">
@@ -126,7 +126,7 @@
 
 <script>
 /* Credenciales válidas */
-const VALID_USER = "dinastia";          // acepta Dinastia/dinastia, etc.
+const VALID_USER = "dinastia";          // acepta Dinastia/dinastia/DINASTIA
 const VALID_PASS = "supersecreto123";
 const DASH_URL   = "/admin.html";
 
@@ -193,7 +193,7 @@ form.addEventListener("submit", async (e)=>{
 
   /* Guarda la clave EXACTA que requiere el backend para /api/admin (evita el loop) */
   try {
-    localStorage.setItem("ADMIN_KEY", VALID_PASS);   // <<— ahora es "supersecreto123"
+    localStorage.setItem("ADMIN_KEY", VALID_PASS);   // "supersecreto123"
     localStorage.setItem("bonanza_admin_ok", "1");   // compatibilidad
     localStorage.setItem("ADMIN_USER", "Dinastia");  // opcional
   } catch {}
