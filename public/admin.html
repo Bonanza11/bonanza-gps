@@ -19,10 +19,9 @@
     button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer }
     button:hover{ filter:brightness(1.08) }
     .danger{ background:#3a2030; border-color:#ffffff22 }
-    .link{ color:var(--accent); text-decoration:none }
     .banner{ padding:10px 12px; border:1px dashed #f7b06a55; background:#f7b06a14; color:#f7d3a1; border-radius:8px; margin:8px 0 12px; display:none }
     table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
-    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
+    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px; vertical-align:middle }
     th{ background:#11162a; color:#cdd6ea; position:sticky; top:50px; z-index:1 }
     tbody tr:hover{ background:#1b2136 }
     .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
@@ -37,6 +36,19 @@
     .dot{ width:8px;height:8px;border-radius:50%; background:#6f86b7; opacity:.6; animation:b 1.2s infinite }
     .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
     @keyframes b{ 0%,100%{transform:translateY(0);opacity:.5} 50%{transform:translateY(-4px);opacity:1} }
+
+    /* Modal */
+    .backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.55); z-index:9999 }
+    .backdrop.open{ display:flex }
+    .modal{ width:min(560px,94vw); background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.6); overflow:hidden }
+    .modal header{ position:unset; border:0; background:#11162a; padding:12px 14px; }
+    .modal .body{ padding:14px }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+    .grid-1{ display:grid; grid-template-columns:1fr; gap:10px }
+    label{ font-size:13px; color:#cdd6ea }
+    input,select{ width:100%; height:40px; padding:0 10px; border-radius:8px; border:1px solid #2b3751; background:#121a2b; color:#e9eef7 }
+    .row-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px }
+    .btn.ghost{ background:#11162a; border:1px solid #2b3751 }
   </style>
 </head>
 <body>
@@ -68,13 +80,15 @@
       <tr>
         <th style="width:120px">Plate</th>
         <th>Driver</th>
-        <th style="width:110px">Type</th>
-        <th style="width:120px">Active</th>
-        <th class="right" style="width:160px">Actions</th>
+        <th style="width:90px">Type</th>
+        <th style="width:80px">Year</th>
+        <th>Model/Type</th>
+        <th style="width:100px">Active</th>
+        <th class="right" style="width:220px">Actions</th>
       </tr>
     </thead>
     <tbody id="rows">
-      <tr><td colspan="5">
+      <tr><td colspan="7">
         <div class="loader">
           <span class="dot"></span><span class="dot"></span><span class="dot"></span>
           <span>Loading vehicles…</span>
@@ -82,6 +96,52 @@
       </td></tr>
     </tbody>
   </table>
+</div>
+
+<!-- Edit modal -->
+<div id="editBackdrop" class="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <header><h3 id="editTitle" style="margin:0">Edit Vehicle</h3></header>
+    <div class="body">
+      <div class="grid">
+        <div>
+          <label for="fPlate">Plate</label>
+          <input id="fPlate" placeholder="e.g., UT-123 ABC">
+        </div>
+        <div>
+          <label for="fDriver">Driver</label>
+          <input id="fDriver" placeholder="Driver name">
+        </div>
+        <div>
+          <label for="fKind">Kind</label>
+          <select id="fKind">
+            <option value="SUV">SUV</option>
+            <option value="VAN">VAN</option>
+          </select>
+        </div>
+        <div>
+          <label for="fYear">Year</label>
+          <input id="fYear" type="number" min="2000" max="2100" placeholder="2024">
+        </div>
+        <div class="grid-1" style="grid-column:1 / -1">
+          <label for="fModel">Model/Type</label>
+          <input id="fModel" placeholder="e.g., Suburban LT / Sprinter 2500">
+        </div>
+        <div>
+          <label for="fActive">Active</label>
+          <select id="fActive">
+            <option value="true">ACTIVE</option>
+            <option value="false">OFF</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button class="btn ghost" id="btnCloseEdit" type="button">Cancel</button>
+        <button class="btn" id="btnSaveEdit" type="button">Save</button>
+      </div>
+      <div id="editMsg" class="muted" style="margin-top:8px"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -104,30 +164,31 @@
 
   envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-  // ===== Seed de 5 VANs =====
+  // ===== Seed 5 VANs por si la API aún no las tiene =====
   const VAN_SEED = [
-    { id:'van-001', plate:'VAN-001', driver_name:'Driver K', kind:'VAN', active:true  },
-    { id:'van-002', plate:'VAN-002', driver_name:'Driver L', kind:'VAN', active:false },
-    { id:'van-003', plate:'VAN-003', driver_name:'Driver M', kind:'VAN', active:true  },
-    { id:'van-004', plate:'VAN-004', driver_name:'Driver N', kind:'VAN', active:false },
-    { id:'van-005', plate:'VAN-005', driver_name:'Driver O', kind:'VAN', active:true  }
+    { id:'van-001', plate:'VAN-001', driver_name:'Driver K', kind:'VAN', active:true,  year:2022, model:'Sprinter 2500' },
+    { id:'van-002', plate:'VAN-002', driver_name:'Driver L', kind:'VAN', active:false, year:2021, model:'Transit 350' },
+    { id:'van-003', plate:'VAN-003', driver_name:'Driver M', kind:'VAN', active:true,  year:2023, model:'Sprinter 144' },
+    { id:'van-004', plate:'VAN-004', driver_name:'Driver N', kind:'VAN', active:false, year:2020, model:'Transit 250' },
+    { id:'van-005', plate:'VAN-005', driver_name:'Driver O', kind:'VAN', active:true,  year:2024, model:'Sprinter 170' }
   ];
 
   // Estado
   let allVehicles = [];
   let filterKind = 'ALL';
+  let editingId = null;
 
-  // Demo fallback (incluye las VANs)
+  // Demo fallback
   const DEMO_LIST = [
-    {id:'suv-001', plate:'SUV-001', driver_name:'Driver A', kind:'SUV', active:true},
-    {id:'suv-002', plate:'SUV-002', driver_name:'Driver B', kind:'SUV', active:false},
-    {id:'suv-003', plate:'SUV-003', driver_name:'Driver C', kind:'SUV', active:false},
+    {id:'suv-001', plate:'SUV-001', driver_name:'Driver A', kind:'SUV', active:true,  year:2023, model:'Suburban LT'},
+    {id:'suv-002', plate:'SUV-002', driver_name:'Driver B', kind:'SUV', active:false, year:2022, model:'Suburban LT'},
+    {id:'suv-003', plate:'SUV-003', driver_name:'Driver C', kind:'SUV', active:false, year:2021, model:'Escalade ESV'},
     ...VAN_SEED
   ];
 
   async function loadVehicles() {
     rowsEl.innerHTML = `
-      <tr><td colspan="5">
+      <tr><td colspan="7">
         <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
         <span>Loading vehicles…</span></div>
       </td></tr>`;
@@ -145,16 +206,18 @@
       if (!data.ok || !Array.isArray(data.vehicles)) throw new Error(data.error || 'Malformed response');
 
       allVehicles = data.vehicles || [];
+      // Garantiza campos nuevos
+      allVehicles = allVehicles.map(v => ({ year:null, model:'', ...v }));
 
-      // 👉 Si la API aún no trae VANs, inyectamos 5 VANs semilla
-      const hasVans = allVehicles.some(v => String(v.kind).toUpperCase() === 'VAN');
-      if (!hasVans) allVehicles = allVehicles.concat(VAN_SEED);
+      // Si no hay VANs aún, agrega las 5
+      if (!allVehicles.some(v => (v.kind||'').toUpperCase()==='VAN')) {
+        allVehicles = allVehicles.concat(VAN_SEED);
+      }
 
       demoBanner.style.display = 'none';
       render();
       msgEl.textContent = 'Loaded successfully.';
     } catch (e) {
-      // Fallback demo
       allVehicles = DEMO_LIST;
       demoBanner.style.display = 'block';
       render();
@@ -168,21 +231,26 @@
     return allVehicles.filter(v => (v.kind || '').toUpperCase() === filterKind);
   }
 
+  function h(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
   function render() {
     const list = visibleList();
     countEl.textContent = `Loaded ${list.length} vehicles`;
     rowsEl.innerHTML = list.map(v => {
       const on = !!v.active;
+      const year = v.year ? String(v.year) : '';
+      const model = v.model || '';
       return `
         <tr>
           <td>${h(v.plate)}</td>
           <td>${h(v.driver_name)}</td>
           <td>${h((v.kind||'').toUpperCase())}</td>
+          <td>${h(year)}</td>
+          <td>${h(model)}</td>
           <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
           <td class="right">
-            <button onclick="toggleActive('${v.id}', ${on? 'false':'true'})">
-              ${on ? 'Turn Off' : 'Turn On'}
-            </button>
+            <button onclick="toggleActive('${v.id}', ${on? 'false':'true'})">${on ? 'Turn Off' : 'Turn On'}</button>
+            <button onclick="openEdit('${v.id}')" style="margin-left:6px">Edit</button>
           </td>
         </tr>
       `;
@@ -194,7 +262,7 @@
       const r = await fetch('/api/admin/vehicles', {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'x-admin-key': ADMIN_KEY },
-        body: JSON.stringify({ id, active })
+        body: JSON.stringify({ action:'toggle', id, active })
       });
       if (r.status === 401) {
         localStorage.removeItem('ADMIN_KEY');
@@ -209,7 +277,7 @@
       render();
       msgEl.textContent = 'Updated.';
     } catch (e) {
-      // En modo demo puede fallar el POST; actualizamos localmente para “simular”
+      // Demo mode: actualizar localmente
       const v = allVehicles.find(x => x.id === id);
       if (v) { v.active = !!active; render(); }
       msgEl.textContent = 'Updated locally (demo mode).';
@@ -217,9 +285,92 @@
   }
   window.toggleActive = toggleActive;
 
-  function h(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+  // ====== Edit modal ======
+  const backdrop = document.getElementById('editBackdrop');
+  const fPlate = document.getElementById('fPlate');
+  const fDriver= document.getElementById('fDriver');
+  const fKind  = document.getElementById('fKind');
+  const fYear  = document.getElementById('fYear');
+  const fModel = document.getElementById('fModel');
+  const fActive= document.getElementById('fActive');
+  const editMsg= document.getElementById('editMsg');
 
-  // Filters & actions
+  function openEdit(id){
+    editingId = id;
+    const v = allVehicles.find(x => x.id === id);
+    if (!v) return;
+    fPlate.value = v.plate || '';
+    fDriver.value= v.driver_name || '';
+    fKind.value  = (v.kind || 'SUV').toUpperCase();
+    fYear.value  = v.year || '';
+    fModel.value = v.model || '';
+    fActive.value= String(!!v.active);
+    editMsg.textContent = '';
+    backdrop.classList.add('open');
+  }
+  window.openEdit = openEdit;
+
+  function closeEdit(){
+    editingId = null;
+    backdrop.classList.remove('open');
+  }
+  document.getElementById('btnCloseEdit').onclick = closeEdit;
+  backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closeEdit(); });
+
+  document.getElementById('btnSaveEdit').onclick = saveVehicle;
+
+  async function saveVehicle(){
+    if (!editingId) return;
+    const payload = {
+      id: editingId,
+      plate:  fPlate.value.trim(),
+      driver_name: fDriver.value.trim(),
+      kind:   fKind.value.trim().toUpperCase(),
+      year:   fYear.value ? Number(fYear.value) : null,
+      model:  fModel.value.trim(),
+      active: fActive.value === 'true'
+    };
+
+    // Validación mínima
+    if (!payload.plate) { editMsg.textContent = 'Plate is required.'; return; }
+    if (!payload.driver_name) { editMsg.textContent = 'Driver name is required.'; return; }
+
+    try{
+      /* ⬇️ Ajusta aquí si tu backend usa otro endpoint o método
+         Sugerencia: aceptar {action:"update", vehicle:{...}} en /api/admin/vehicles  */
+      const r = await fetch('/api/admin/vehicles', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-admin-key': ADMIN_KEY },
+        body: JSON.stringify({ action:'update', vehicle: payload })
+      });
+
+      if (r.status === 401) {
+        localStorage.removeItem('ADMIN_KEY');
+        return location.href = '/login.html';
+      }
+
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || 'Update failed');
+
+      // Actualiza local
+      const i = allVehicles.findIndex(x => x.id === editingId);
+      if (i >= 0) allVehicles[i] = { ...allVehicles[i], ...payload };
+      render();
+      closeEdit();
+      msgEl.textContent = 'Vehicle saved.';
+    }catch(e){
+      // Demo: actualizar local si la API no existe
+      const i = allVehicles.findIndex(x => x.id === editingId);
+      if (i >= 0) allVehicles[i] = { ...allVehicles[i], ...payload };
+      render();
+      closeEdit();
+      msgEl.textContent = 'Saved locally (demo mode).';
+      console.warn('saveVehicle error:', e);
+    }
+  }
+
+  // Filtros & acciones
   document.getElementById('btnAll').onclick    = () => { filterKind='ALL'; render(); };
   document.getElementById('btnSUV').onclick    = () => { filterKind='SUV'; render(); };
   document.getElementById('btnVAN').onclick    = () => { filterKind='VAN'; render(); };
