@@ -20,6 +20,7 @@
     button:hover{ filter:brightness(1.08) }
     .danger{ background:#3a2030; border-color:#ffffff22 }
     .link{ color:var(--accent); text-decoration:none }
+    .banner{ padding:10px 12px; border:1px dashed #f7b06a55; background:#f7b06a14; color:#f7d3a1; border-radius:8px; margin:8px 0 12px; display:none }
     table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
     th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
     th{ background:#11162a; color:#cdd6ea; position:sticky; top:50px; z-index:1 }
@@ -31,6 +32,11 @@
     .muted{ color:var(--muted) }
     .count{ margin-left:8px; color:var(--muted); font-size:13px }
     .spacer{ flex:1 }
+    /* Loader */
+    .loader{ display:flex; align-items:center; gap:10px; color:var(--muted); }
+    .dot{ width:8px;height:8px;border-radius:50%; background:#6f86b7; opacity:.6; animation:b 1.2s infinite }
+    .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
+    @keyframes b{ 0%,100%{transform:translateY(0);opacity:.5} 50%{transform:translateY(-4px);opacity:1} }
   </style>
 </head>
 <body>
@@ -50,8 +56,10 @@
     <button id="btnReload">Reload</button>
     <span class="count" id="count"></span>
     <span class="spacer"></span>
-    <span class="muted">Ruta API: <code>/api/admin/vehicles</code></span>
+    <span class="muted">API route: <code>/api/admin/vehicles</code></span>
   </div>
+
+  <div id="demoBanner" class="banner">Demo data loaded (API unreachable). This is only for visualization.</div>
 
   <div id="msg" class="muted" style="margin:8px 0 12px;"></div>
 
@@ -65,50 +73,80 @@
         <th class="right" style="width:160px">Actions</th>
       </tr>
     </thead>
-    <tbody id="rows"></tbody>
+    <tbody id="rows">
+      <tr><td colspan="5">
+        <div class="loader">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span>Loading vehicles…</span>
+        </div>
+      </td></tr>
+    </tbody>
   </table>
 </div>
 
 <script>
-  // === Login obligatorio via localStorage ===
-  const ADMIN_KEY = localStorage.getItem("ADMIN_KEY");
-  if (!ADMIN_KEY) {
-    // Si no hay clave guardada, forzar login
-    location.href = "/login.html";
-  }
+  // ===== Login compatibility =====
+  // Si ya usas login.html que guarda bonanza_admin_ok, permite entrar y crea una ADMIN_KEY "DEMO".
+  (function ensureAdminKey(){
+    const ok = localStorage.getItem('bonanza_admin_ok') === '1';
+    const k  = localStorage.getItem('ADMIN_KEY');
+    if (!k && ok) localStorage.setItem('ADMIN_KEY', 'DEMO'); // compat
+  })();
 
-  // UI elementos
+  const ADMIN_KEY = localStorage.getItem('ADMIN_KEY');
+  if (!ADMIN_KEY) location.href = "/login.html";
+
+  // UI
   const rowsEl  = document.getElementById('rows');
   const countEl = document.getElementById('count');
   const msgEl   = document.getElementById('msg');
   const envInfo = document.getElementById('envInfo');
+  const demoBanner = document.getElementById('demoBanner');
 
-  // Mostrar si estamos en prod/preview (simple heurística)
   envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-  // Estado en memoria
+  // State
   let allVehicles = [];
   let filterKind = 'ALL';
 
-  // Cargar y pintar
+  // Demo fallback
+  const DEMO_LIST = [
+    {id:'SUV-01', plate:'UT-7A2 3BC', driver_name:'Luis Guerrero', kind:'SUV', active:true},
+    {id:'SUV-02', plate:'UT-9C1 7DZ', driver_name:'Maria Gomez',   kind:'SUV', active:false},
+    {id:'VAN-01', plate:'UT-2K4 1LM', driver_name:'John Smith',    kind:'VAN', active:true},
+  ];
+
   async function loadVehicles() {
-    msgEl.textContent = 'Loading vehicles…';
+    // loader persistente (sin parpadeo)
+    rowsEl.innerHTML = `
+      <tr><td colspan="5">
+        <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span>Loading vehicles…</span></div>
+      </td></tr>`;
+    countEl.textContent = '';
+    msgEl.textContent = '';
+
     try {
-      const r = await fetch('/api/admin/vehicles', {
-        headers: { 'x-admin-key': ADMIN_KEY }
-      });
+      const r = await fetch('/api/admin/vehicles', { headers: { 'x-admin-key': ADMIN_KEY } });
       if (r.status === 401) {
         localStorage.removeItem('ADMIN_KEY');
         return location.href = '/login.html';
       }
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
-      if (!data.ok) throw new Error(data.error || 'Unknown error');
+      if (!data.ok || !Array.isArray(data.vehicles)) throw new Error(data.error || 'Malformed response');
 
-      allVehicles = data.vehicles || [];
+      allVehicles = data.vehicles;
+      demoBanner.style.display = 'none';
       render();
       msgEl.textContent = 'Loaded successfully.';
     } catch (e) {
-      msgEl.textContent = 'Error: ' + (e.message || e);
+      // Fallback demo
+      allVehicles = DEMO_LIST;
+      demoBanner.style.display = 'block';
+      render();
+      msgEl.textContent = 'API not reachable. Showing demo data.';
+      console.warn('Vehicles load failed:', e);
     }
   }
 
@@ -124,9 +162,9 @@
       const on = !!v.active;
       return `
         <tr>
-          <td>${escapeHtml(v.plate || '')}</td>
-          <td>${escapeHtml(v.driver_name || '')}</td>
-          <td>${escapeHtml((v.kind || '').toUpperCase())}</td>
+          <td>${h(v.plate)}</td>
+          <td>${h(v.driver_name)}</td>
+          <td>${h((v.kind||'').toUpperCase())}</td>
           <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
           <td class="right">
             <button onclick="toggleActive('${v.id}', ${on? 'false':'true'})">
@@ -138,51 +176,46 @@
     }).join('');
   }
 
-  // Cambiar estado activo/inactivo
   async function toggleActive(id, active) {
     try {
       const r = await fetch('/api/admin/vehicles', {
         method: 'POST',
-        headers: {
-          'Content-Type':'application/json',
-          'x-admin-key': ADMIN_KEY
-        },
+        headers: { 'Content-Type':'application/json', 'x-admin-key': ADMIN_KEY },
         body: JSON.stringify({ id, active })
       });
       if (r.status === 401) {
         localStorage.removeItem('ADMIN_KEY');
         return location.href = '/login.html';
       }
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       if (!data.ok) throw new Error(data.error || 'Toggle failed');
 
-      // Actualizar local sin recargar todo
       const v = allVehicles.find(x => x.id === id);
       if (v) v.active = !!active;
       render();
       msgEl.textContent = 'Updated.';
     } catch (e) {
-      msgEl.textContent = 'Error: ' + (e.message || e);
+      msgEl.textContent = 'Error updating (maybe demo mode).';
     }
   }
-  window.toggleActive = toggleActive; // para inline onclick
+  window.toggleActive = toggleActive;
 
-  // Util
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+  function h(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
 
-  // Filtros y acciones
-  document.getElementById('btnAll').onclick  = () => { filterKind='ALL'; render(); };
-  document.getElementById('btnSUV').onclick  = () => { filterKind='SUV'; render(); };
-  document.getElementById('btnVAN').onclick  = () => { filterKind='VAN'; render(); };
+  // Filters & actions
+  document.getElementById('btnAll').onclick    = () => { filterKind='ALL'; render(); };
+  document.getElementById('btnSUV').onclick    = () => { filterKind='SUV'; render(); };
+  document.getElementById('btnVAN').onclick    = () => { filterKind='VAN'; render(); };
   document.getElementById('btnReload').onclick = () => loadVehicles();
 
   // Logout
   document.getElementById('btnLogout').onclick = () => {
     localStorage.removeItem('ADMIN_KEY');
+    localStorage.removeItem('bonanza_admin_ok'); // opcional
     location.href = '/login.html';
   };
 
-  // Arrancar
   loadVehicles();
 </script>
 </body>
