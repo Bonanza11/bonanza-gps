@@ -1,203 +1,231 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bonanza — Admin Login</title>
-  <link rel="icon" href="/images/bonanza-logo.PNG" />
-  <style>
-    :root{
-      --copper:#a8744f; --copper-2:#c89267;
-      --ink:#0b0e14; --ink-2:#111522; --ink-3:#171c2b;
-      --text:#f7f2ea; --muted:#cfc5b6; --danger:#ff6b6b;
-      --ok:#17c964;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:
-        radial-gradient(1200px 800px at 80% -10%, #24304b 0%, transparent 60%),
-        radial-gradient(1000px 800px at -20% 110%, #1b2439 0%, transparent 55%),
-        linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 60%, var(--ink-3) 100%);
-      color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      display:grid; place-items:center; padding:28px;
-    }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bonanza • Headquarters</title>
+<style>
+  :root{
+    --copper:#a8744f;
+    --copper-2:#c08b5c;
+    --ink:#0b0e13;
+    --panel:#111722;
+    --panel-2:#0e1520;
+    --ok:#17c964;
+    --err:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    color:#e9d5c1; background:radial-gradient(1200px 700px at 50% -10%, #182235 0%, #0b0e13 60%, #07090c 100%);
+  }
+  .wrap{
+    min-height:100%; display:grid; place-items:center; padding:28px;
+  }
+  .card{
+    width:min(940px,96vw);
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+    border:1px solid rgba(192,139,92,.20);
+    border-radius:16px;
+    backdrop-filter:blur(6px);
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    display:grid; grid-template-columns:1.1fr 1fr; gap:0;
+  }
+  @media (max-width:820px){ .card{grid-template-columns:1fr} }
 
-    .card{
-      width:min(880px, 100%); background:linear-gradient(180deg, #0f1423, #0d1220);
-      border:1px solid #ffffff1a; border-radius:18px; padding:0; overflow:hidden;
-      box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
-      display:grid; grid-template-columns: 1.1fr .9fr; gap:0;
-    }
-    @media (max-width: 850px){ .card{ grid-template-columns:1fr } }
+  .left, .right{padding:22px 24px}
+  .left{
+    border-right:1px solid rgba(192,139,92,.16);
+    background:linear-gradient(180deg,#112034,#0f1727);
+    border-top-left-radius:16px; border-bottom-left-radius:16px;
+  }
+  @media (max-width:820px){
+    .left{border-right:0; border-bottom:1px solid rgba(192,139,92,.16);
+      border-radius:16px 16px 0 0;}
+  }
 
-    /* Left: brand */
-    .brand{
-      padding:28px 26px 22px; position:relative;
-      background:
-        radial-gradient(600px 240px at 10% 0%, #0f1a28 0%, transparent 60%),
-        linear-gradient(180deg, #0d1626 0%, #0b111e 100%);
-      border-right:1px solid #ffffff10;
-    }
-    .brand-head{ display:flex; gap:14px; align-items:center; }
-    .logo{
-      width:72px; height:72px; border-radius:50%;
-      border:2px solid var(--copper-2); background:#000;
-      display:grid; place-items:center; overflow:hidden;
-    }
-    .logo img{ width:100%; height:100%; object-fit:cover }
-    .brand h1{ margin:0; font-size:22px; letter-spacing:.3px }
-    .subtitle{ margin-top:4px; color:var(--muted); font-size:13px }
-    .perks{ margin-top:18px; display:grid; gap:8px; color:#e9e3d9; }
-    .perk{ display:flex; align-items:center; gap:10px; font-size:14px }
-    .dot{ width:8px; height:8px; border-radius:999px; background:var(--copper) }
+  .brand{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px;
+  }
+  .brand img{
+    width:58px;height:58px;border-radius:50%;
+    border:1px solid rgba(168,116,79,.55);
+    box-shadow:0 0 16px rgba(168,116,79,.25) inset, 0 6px 18px rgba(0,0,0,.45);
+    background:#0d0d0d;
+  }
+  h1{font-size:1.25rem;margin:0;line-height:1.2}
+  .sub{opacity:.85;font-size:.95rem}
+  .bullets{margin:12px 0 4px 0; padding:0 0 0 18px}
+  .bullets li{margin:6px 0; color:#ffddae}
+  .tiny{font-size:.85rem; opacity:.9}
 
-    /* Right: form */
-    .pane{ padding:28px 24px }
-    .card h2{ margin:0 0 14px; font-size:18px }
-    form{ display:grid; gap:12px; margin-top:6px }
-    label{ font-size:13px; color:#eaddcf }
-    .input{
-      background:#0d1322; border:1px solid #ffffff24; border-radius:12px; padding:12px 12px;
-      color:var(--text); font-size:16px; width:100%;
-      outline:none; transition:border .15s ease, box-shadow .15s ease;
-    }
-    .input:focus{ border-color:var(--copper-2); box-shadow:0 0 0 4px #c8926730 }
-    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between }
-    .hint{ font-size:12px; color:var(--muted) }
-    .caps{ font-size:12px; color:var(--danger); visibility:hidden }
-    .actions{ display:flex; gap:10px; align-items:center; margin-top:6px }
-    .btn{
-      border:0; border-radius:12px; padding:12px 16px; cursor:pointer; font-weight:700;
-      background:linear-gradient(180deg, var(--copper-2), var(--copper));
-      color:#1a1007; box-shadow:0 10px 24px #a8744f33;
-    }
-    .btn.secondary{ background:#1b2236; color:var(--text); box-shadow:none; border:1px solid #ffffff20 }
-    .err{ color:var(--danger); font-size:13px; min-height:18px }
-    .ok{ color:var(--ok); font-size:13px; min-height:18px }
-    .muted{ color:var(--muted) }
-    .foot{ margin-top:10px; font-size:12px; color:var(--muted) }
-    .toggle-eye{ position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#d6cabd }
-    .field{ position:relative }
-    .spinner{
-      width:16px; height:16px; border:2px solid #ffffff44; border-top-color:#fff; border-radius:50%;
-      display:none; animation:spin .9s linear infinite;
-    }
-    @keyframes spin{ to{ transform:rotate(360deg) } }
-  </style>
+  /* Right form */
+  .right{background:linear-gradient(180deg,#0f1522,#0d1420)}
+  label{display:block; font-weight:700; margin:6px 0 6px}
+  .row{position:relative}
+  input[type="password"],input[type="text"]{
+    width:100%; height:46px; padding:0 44px 0 12px; border-radius:10px;
+    border:1px solid #334; outline:0; background:#0f1320; color:#ffddae;
+    box-shadow:0 0 0 3px transparent; transition:.15s;
+  }
+  input::placeholder{color:rgba(255,221,174,.45)}
+  input:focus{border-color:var(--copper); box-shadow:0 0 0 3px rgba(168,116,79,.18)}
+  .eye{
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    width:28px;height:28px;border-radius:8px; display:grid; place-items:center;
+    color:rgba(168,116,79,.65); cursor:pointer; user-select:none;
+  }
+  .eye:hover{background:rgba(168,116,79,.12)}
+  .caps{margin-top:6px; color:var(--warn); font-size:.85rem; display:none}
+
+  .check{
+    display:flex; align-items:center; gap:8px; margin:10px 0 14px;
+    user-select:none; cursor:pointer;
+  }
+  .check input{width:18px;height:18px}
+  .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .btn{
+    appearance:none; border:0; cursor:pointer; padding:10px 16px; border-radius:10px;
+    font-weight:800; background:linear-gradient(180deg,var(--copper-2),var(--copper));
+    color:#0a0a0a; box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.1);
+    transition:transform .06s ease, filter .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.secondary{
+    background:#121a29; color:rgba(255,221,174,.8);
+    border:1px solid rgba(168,116,79,.25);
+  }
+
+  .state{min-height:22px; margin-top:10px; font-size:.9rem}
+  .state.err{color:var(--err)} .state.ok{color:var(--ok)}
+  .shake{animation:shake .26s linear}
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+
+  /* Footer help inside card */
+  .support{margin-top:16px; font-size:.85rem; opacity:.85}
+  .support a{color:#ffddae}
+</style>
 </head>
 <body>
-
-  <div class="card">
-    <!-- Brand side -->
-    <section class="brand">
-      <div class="brand-head">
-        <div class="logo"><img src="/images/bonanza-logo.PNG" alt="Bonanza"></div>
-        <div>
-          <h1>Bonanza Transportation</h1>
-          <div class="subtitle">Cuartel General — Acceso interno</div>
+  <div class="wrap">
+    <div class="card" id="card">
+      <section class="left">
+        <div class="brand">
+          <img src="/images/bonanza-logo.PNG" alt="Bonanza">
+          <div>
+            <h1>Bonanza Transportation</h1>
+            <div class="sub">Headquarters — Internal Access</div>
+          </div>
         </div>
-      </div>
 
-      <div class="perks">
-        <div class="perk"><span class="dot"></span><span>Agenda de vehículos en tiempo real</span></div>
-        <div class="perk"><span class="dot"></span><span>Reglas por temporada y excepción SLC</span></div>
-        <div class="perk"><span class="dot"></span><span>Lectura segura de pagos Stripe</span></div>
-        <div class="perk"><span class="dot"></span><span>Bloqueos y disponibilidad instantánea</span></div>
-      </div>
-    </section>
+        <ul class="bullets">
+          <li>Real-time vehicle schedule</li>
+          <li>Seasonal rules and SLC exception</li>
+          <li>Secure Stripe payment reading</li>
+          <li>Blocking and instant availability</li>
+        </ul>
 
-    <!-- Form side -->
-    <section class="pane">
-      <h2>Admin Login</h2>
-      <div class="hint">Usa tu clave de administrador para continuar.</div>
+        <div class="support tiny">
+          Support: <strong>(786) 683-5128</strong> —
+          <a href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a>
+        </div>
+      </section>
 
-      <form id="form">
-        <div class="field">
+      <section class="right">
+        <form id="form" autocomplete="off">
           <label for="key">Admin Key</label>
-          <input id="key" class="input" type="password" autocomplete="current-password" required />
-          <span id="eye" class="toggle-eye" title="Mostrar/Ocultar">👁️</span>
-        </div>
+          <div class="row">
+            <input id="key" name="key" type="password" placeholder="••••••••" inputmode="text" aria-describedby="capsMsg" autofocus>
+            <div class="eye" id="eye" title="Show / Hide">👁️</div>
+          </div>
+          <div id="capsMsg" class="caps">Caps-Lock is ON</div>
 
-        <div class="row">
-          <label class="hint"><input type="checkbox" id="remember" checked /> Recordar en este equipo</label>
-          <span id="caps" class="caps">Caps Lock activo</span>
-        </div>
+          <label class="check"><input type="checkbox" id="remember"> Remember me on this device</label>
 
-        <div class="actions">
-          <button type="submit" class="btn">Entrar</button>
-          <button type="button" class="btn secondary" id="goHome">Volver al sitio</button>
-          <div class="spinner" id="spin"></div>
-        </div>
+          <div class="actions">
+            <button type="submit" class="btn" id="enterBtn">Enter</button>
+            <a class="btn secondary" href="/">Back to site</a>
+          </div>
 
-        <div id="msg" class="err"></div>
-        <div id="ok" class="ok"></div>
-
-        <div class="foot">
-          Soporte: <strong>(786) 683-5128</strong> ·
-          <a class="muted" href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a>
-        </div>
-      </form>
-    </section>
+          <div id="state" class="state" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+    </div>
   </div>
 
 <script>
-  // Si ya hay clave guardada, pasa directo al Cuartel
-  const saved = localStorage.getItem('ADMIN_KEY');
-  if (saved) {
-    location.replace('/admin.html');
+const DEMO_KEY = 'BONANZA-2025';     // Replace or validate server-side
+const DASH_URL = '/admin.html';      // Where to redirect after login
+
+const keyEl = document.getElementById('key');
+const eye   = document.getElementById('eye');
+const caps  = document.getElementById('capsMsg');
+const form  = document.getElementById('form');
+const state = document.getElementById('state');
+const card  = document.getElementById('card');
+const remember = document.getElementById('remember');
+const btn   = document.getElementById('enterBtn');
+
+function setState(msg, ok){
+  state.textContent = msg || '';
+  state.className = 'state ' + (ok===true ? 'ok' : ok===false ? 'err' : '');
+}
+function loading(on){
+  btn.disabled = !!on;
+  btn.textContent = on ? 'Signing in…' : 'Enter';
+}
+
+/* Auto login if remembered */
+try{
+  if(localStorage.getItem('bonanza_admin_ok') === '1'){
+    location.replace(DASH_URL);
+  }
+}catch{}
+
+/* Eye toggle */
+eye.addEventListener('click', ()=>{
+  keyEl.type = (keyEl.type === 'password') ? 'text' : 'password';
+});
+
+/* CapsLock indicator */
+keyEl.addEventListener('keydown', (e)=>{
+  const on = e.getModifierState && e.getModifierState('CapsLock');
+  caps.style.display = on ? 'block' : 'none';
+});
+keyEl.addEventListener('keyup', (e)=>{
+  const on = e.getModifierState && e.getModifierState('CapsLock');
+  caps.style.display = on ? 'block' : 'none';
+});
+
+/* Submit */
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const k = (keyEl.value || '').trim();
+  if(!k){ keyEl.focus(); setState('Please enter your admin key', false); return; }
+
+  loading(true); setState('');
+  await new Promise(r=>setTimeout(r, 350));
+
+  const ok = (k === DEMO_KEY);
+
+  loading(false);
+  if(!ok){
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    setState('Wrong key. Try again.', false);
+    keyEl.select();
+    return;
   }
 
-  const el = (id)=>document.getElementById(id);
-  const form = el('form');
-  const keyInput = el('key');
-  const msg = el('msg');
-  const ok = el('ok');
-  const caps = el('caps');
-  const spin = el('spin');
-  const eye = el('eye');
-
-  // Mostrar/Ocultar clave
-  eye.addEventListener('click', () => {
-    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
-  });
-
-  // Aviso de Caps Lock
-  keyInput.addEventListener('keyup', (e)=>{
-    const cap = e.getModifierState && e.getModifierState('CapsLock');
-    caps.style.visibility = cap ? 'visible' : 'hidden';
-  });
-
-  // Volver al home público
-  el('goHome').onclick = ()=> location.href = '/';
-
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    msg.textContent = ''; ok.textContent='';
-    const key = keyInput.value.trim();
-    if (!key) { msg.textContent = 'Ingresa tu Admin Key.'; return; }
-
-    // feedback
-    spin.style.display='inline-block';
-
-    try{
-      // Probar la clave con un GET a /api/admin/vehicles
-      const r = await fetch('/api/admin/vehicles', { headers: { 'x-admin-key': key } });
-      if (r.status === 401) throw new Error('Clave inválida.');
-      if (!r.ok) throw new Error('Error de servidor.');
-
-      // Guardar si corresponde
-      if (el('remember').checked) localStorage.setItem('ADMIN_KEY', key);
-
-      ok.textContent = 'Acceso concedido. Entrando…';
-      // Redirigir al Cuartel General
-      setTimeout(()=> location.replace('/admin.html'), 300);
-    }catch(err){
-      msg.textContent = err.message || 'No se pudo validar la clave.';
-    }finally{
-      spin.style.display='none';
-    }
-  });
+  if(remember.checked){
+    try{ localStorage.setItem('bonanza_admin_ok','1'); }catch{}
+  }
+  setState('Access granted. Redirecting…', true);
+  location.replace(DASH_URL);
+});
 </script>
 </body>
 </html>
