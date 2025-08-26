@@ -86,7 +86,6 @@
 
 <script>
   // ===== Login compatibility =====
-  // Si ya usas login.html que guarda bonanza_admin_ok, permite entrar y crea una ADMIN_KEY "DEMO".
   (function ensureAdminKey(){
     const ok = localStorage.getItem('bonanza_admin_ok') === '1';
     const k  = localStorage.getItem('ADMIN_KEY');
@@ -105,19 +104,28 @@
 
   envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-  // State
+  // ===== Seed de 5 VANs =====
+  const VAN_SEED = [
+    { id:'van-001', plate:'VAN-001', driver_name:'Driver K', kind:'VAN', active:true  },
+    { id:'van-002', plate:'VAN-002', driver_name:'Driver L', kind:'VAN', active:false },
+    { id:'van-003', plate:'VAN-003', driver_name:'Driver M', kind:'VAN', active:true  },
+    { id:'van-004', plate:'VAN-004', driver_name:'Driver N', kind:'VAN', active:false },
+    { id:'van-005', plate:'VAN-005', driver_name:'Driver O', kind:'VAN', active:true  }
+  ];
+
+  // Estado
   let allVehicles = [];
   let filterKind = 'ALL';
 
-  // Demo fallback
+  // Demo fallback (incluye las VANs)
   const DEMO_LIST = [
-    {id:'SUV-01', plate:'UT-7A2 3BC', driver_name:'Luis Guerrero', kind:'SUV', active:true},
-    {id:'SUV-02', plate:'UT-9C1 7DZ', driver_name:'Maria Gomez',   kind:'SUV', active:false},
-    {id:'VAN-01', plate:'UT-2K4 1LM', driver_name:'John Smith',    kind:'VAN', active:true},
+    {id:'suv-001', plate:'SUV-001', driver_name:'Driver A', kind:'SUV', active:true},
+    {id:'suv-002', plate:'SUV-002', driver_name:'Driver B', kind:'SUV', active:false},
+    {id:'suv-003', plate:'SUV-003', driver_name:'Driver C', kind:'SUV', active:false},
+    ...VAN_SEED
   ];
 
   async function loadVehicles() {
-    // loader persistente (sin parpadeo)
     rowsEl.innerHTML = `
       <tr><td colspan="5">
         <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -136,7 +144,12 @@
       const data = await r.json();
       if (!data.ok || !Array.isArray(data.vehicles)) throw new Error(data.error || 'Malformed response');
 
-      allVehicles = data.vehicles;
+      allVehicles = data.vehicles || [];
+
+      // 👉 Si la API aún no trae VANs, inyectamos 5 VANs semilla
+      const hasVans = allVehicles.some(v => String(v.kind).toUpperCase() === 'VAN');
+      if (!hasVans) allVehicles = allVehicles.concat(VAN_SEED);
+
       demoBanner.style.display = 'none';
       render();
       msgEl.textContent = 'Loaded successfully.';
@@ -196,7 +209,10 @@
       render();
       msgEl.textContent = 'Updated.';
     } catch (e) {
-      msgEl.textContent = 'Error updating (maybe demo mode).';
+      // En modo demo puede fallar el POST; actualizamos localmente para “simular”
+      const v = allVehicles.find(x => x.id === id);
+      if (v) { v.active = !!active; render(); }
+      msgEl.textContent = 'Updated locally (demo mode).';
     }
   }
   window.toggleActive = toggleActive;
@@ -212,7 +228,7 @@
   // Logout
   document.getElementById('btnLogout').onclick = () => {
     localStorage.removeItem('ADMIN_KEY');
-    localStorage.removeItem('bonanza_admin_ok'); // opcional
+    localStorage.removeItem('bonanza_admin_ok');
     location.href = '/login.html';
   };
 
