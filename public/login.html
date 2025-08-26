@@ -111,7 +111,6 @@
             <h1>Bonanza Transportation</h1>
             <div class="sub">
               Headquarters — Internal Access
-              <!-- US flag (SVG) -->
               <svg class="flag" viewBox="0 0 19 10" aria-label="United States flag" xmlns="http://www.w3.org/2000/svg">
                 <defs><clipPath id="c"><rect width="19" height="10" rx="1"/></clipPath></defs>
                 <g clip-path="url(#c)">
@@ -146,7 +145,7 @@
       <section class="right">
         <form id="form" autocomplete="off">
           <label for="user">Username</label>
-          <input id="user" name="username" type="text" placeholder="e.g., admin" autocomplete="username" autofocus>
+          <input id="user" name="username" type="text" placeholder="Dinastía" autocomplete="username" autofocus>
 
           <label for="pass">Password</label>
           <div class="row">
@@ -169,78 +168,69 @@
   </div>
 
 <script>
-/* Demo users — cámbialos o valida en tu API */
-const USERS = { 
-  admin: 'bonanza2025', 
-  manager: 'secure123'
-};
+const VALID_USER = "Dinastía";
+const VALID_PASS = "supersecreto123";
+const DASH_URL = "/admin.html";
 
-const DASH_URL = '/admin.html';
-
-const userEl = document.getElementById('user');
-const passEl = document.getElementById('pass');
-const eye     = document.getElementById('eye');
-const caps    = document.getElementById('capsMsg');
-const form    = document.getElementById('form');
-const state   = document.getElementById('state');
-const card    = document.getElementById('card');
-const remember= document.getElementById('remember');
-const btn     = document.getElementById('enterBtn');
+const userEl = document.getElementById("user");
+const passEl = document.getElementById("pass");
+const eye     = document.getElementById("eye");
+const caps    = document.getElementById("capsMsg");
+const form    = document.getElementById("form");
+const state   = document.getElementById("state");
+const card    = document.getElementById("card");
+const remember= document.getElementById("remember");
+const btn     = document.getElementById("enterBtn");
 
 function setState(msg, ok){
-  state.textContent = msg || '';
-  state.className = 'state ' + (ok===true ? 'ok' : ok===false ? 'err' : '');
+  state.textContent = msg || "";
+  state.className = "state " + (ok===true ? "ok" : ok===false ? "err" : "");
 }
 function loading(on){
   btn.disabled = !!on;
-  btn.textContent = on ? 'Signing in…' : 'Enter';
+  btn.textContent = on ? "Signing in…" : "Enter";
 }
 
-/* Auto-login if remembered */
-try{ if(localStorage.getItem('bonanza_admin_ok') === '1'){ location.replace(DASH_URL); } }catch{}
-
 /* Eye toggle */
-eye.addEventListener('click', ()=>{
-  passEl.type = (passEl.type === 'password') ? 'text' : 'password';
+eye.addEventListener("click", ()=>{
+  passEl.type = (passEl.type === "password") ? "text" : "password";
 });
 
 /* CapsLock indicator */
-passEl.addEventListener('keydown', (e)=>{
-  const on = e.getModifierState && e.getModifierState('CapsLock');
-  caps.style.display = on ? 'block' : 'none';
+passEl.addEventListener("keydown", (e)=>{
+  const on = e.getModifierState && e.getModifierState("CapsLock");
+  caps.style.display = on ? "block" : "none";
 });
-passEl.addEventListener('keyup', (e)=>{
-  const on = e.getModifierState && e.getModifierState('CapsLock');
-  caps.style.display = on ? 'block' : 'none';
+passEl.addEventListener("keyup", (e)=>{
+  const on = e.getModifierState && e.getModifierState("CapsLock");
+  caps.style.display = on ? "block" : "none";
 });
 
 /* Submit */
-form.addEventListener('submit', async (e)=>{
+form.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const u = (userEl.value || '').trim();
-  const p = (passEl.value || '').trim();
+  const u = (userEl.value || "").trim();
+  const p = (passEl.value || "").trim();
 
-  if(!u){ userEl.focus(); setState('Please enter your username.', false); return; }
-  if(!p){ passEl.focus(); setState('Please enter your password.', false); return; }
+  if(!u){ userEl.focus(); setState("Please enter your username.", false); return; }
+  if(!p){ passEl.focus(); setState("Please enter your password.", false); return; }
 
-  loading(true); setState('');
+  loading(true); setState("");
   await new Promise(r=>setTimeout(r, 300));
 
-  const ok = !!USERS[u] && USERS[u] === p;
+  const ok = (u === VALID_USER && p === VALID_PASS);
 
   loading(false);
   if(!ok){
-    // efecto shake + advertencia
-    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
-    setState('Invalid credentials. This attempt has been logged and may be reviewed. Your IP may be recorded.', false);
+    card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+    setState("Invalid credentials. This attempt has been logged and may be reviewed. Your IP may be recorded.", false);
     passEl.select();
     return;
   }
 
-  if(remember.checked){
-    try{ localStorage.setItem('bonanza_admin_ok','1'); }catch{}
-  }
-  setState('Access granted. Redirecting…', true);
+  try{ localStorage.setItem("ADMIN_KEY", p); }catch{}
+
+  setState("Access granted. Redirecting…", true);
   location.replace(DASH_URL);
 });
 </script>
