@@ -1,58 +1,55 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bonanza • Headquarters</title>
-<style>
-  :root{--bg:#0f1220;--card:#171a2b;--line:#2a3550;--text:#e9eef7;--muted:#9fb0c8;--ok:#28d07f;--bad:#ff5d5d;--accent:#f7b06a}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  header{display:flex;gap:10px;align-items:center;padding:14px 16px;background:#00000030;border-bottom:1px solid #0003;position:sticky;top:0}
-  header h1{font-size:18px;margin:0;font-weight:800} .pill{font-size:12px;padding:6px 10px;border-radius:999px;background:#ffffff10;border:1px solid #ffffff1a;color:var(--muted)}
-  .wrap{max-width:1100px;margin:16px auto;padding:0 16px}
-  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-  button{background:#2a3550;color:var(--text);border:1px solid #ffffff1f;border-radius:8px;padding:8px 12px;cursor:pointer}
-  button:hover{filter:brightness(1.08)} .primary{background:#3b4364} .danger{background:#3a2030}
-  .spacer{flex:1} .muted{color:var(--muted)} .count{color:var(--muted);font-size:13px}
-  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  th,td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px;text-align:left}
-  th{background:#11162a;color:#cfd9f1;position:sticky;top:52px;z-index:1}
-  tbody tr:hover{background:#1b2136}
-  .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700;display:inline-block}
-  .on{background:#143a26;color:var(--ok);border:1px solid #1e8b59}
-  .off{background:#3a2323;color:var(--bad);border:1px solid #b84a4a}
-  .msg{margin:8px 0 12px}
-  /* Modal */
-  .backdrop{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50}
-  .backdrop.open{display:flex}
-  .modal{width:min(680px,96vw);background:#1b2136;border:1px solid #2b3853;border-radius:12px;box-shadow:0 18px 50px #0009}
-  .modal header{display:flex;align-items:center;gap:10px;background:#1e2740;border-bottom:1px solid #2b3853;border-radius:12px 12px 0 0;padding:12px 16px}
-  .modal .body{padding:16px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid .full{grid-column:1/-1}
-  .field label{display:block;font-size:12px;color:#cbd3e7;margin-bottom:6px}
-  .field input,.field select{width:100%;height:40px;border-radius:8px;border:1px solid #30405a;background:#12182a;color:#e9eef7;padding:0 10px}
-  .modal .actions{display:flex;gap:10px;justify-content:flex-end;padding:12px 16px 16px}
-  .err{color:#ff8080;font-size:12px;min-height:16px;padding-top:4px}
-</style>
+  <meta charset="utf-8" />
+  <title>Bonanza — Headquarters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f1220; --card:#171a2b; --line:#344158;
+      --text:#e9eef7; --muted:#a7b0c3; --ok:#28d07f; --bad:#ff5d5d; --accent:#f7b06a;
+    }
+    *{ box-sizing:border-box }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
+    header{ display:flex; gap:10px; align-items:center; padding:14px 18px; background:rgba(0,0,0,.25); position:sticky; top:0; border-bottom:1px solid #0002 }
+    header h1{ font-size:18px; margin:0; font-weight:700; letter-spacing:.3px }
+    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff10; color:var(--muted); border:1px solid #ffffff14 }
+    .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
+    .controls{ display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap }
+    button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer }
+    button:hover{ filter:brightness(1.08) }
+    .primary{ background:#3b4364 }
+    .muted{ color:var(--muted) }
+    .count{ margin-left:8px; color:var(--muted); font-size:13px }
+    .spacer{ flex:1 }
+    table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
+    th{ background:#11162a; color:#cdd6ea; position:sticky; top:50px; z-index:1 }
+    tbody tr:hover{ background:#1b2136 }
+    .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
+    .on{ background:#173523; color:var(--ok); border:1px solid #25a866 }
+    .off{ background:#3a2323; color:var(--bad); border:1px solid #b84a4a }
+    .right{ text-align:right }
+    .msg{ margin:8px 0 12px }
+  </style>
 </head>
 <body>
 <header>
   <h1>Bonanza Admin — Cuartel General</h1>
-  <span id="env" class="pill"></span>
+  <span class="pill" id="envInfo"></span>
   <div class="spacer"></div>
-  <span class="muted">API: <code>/api/admin/vehicles</code></span>
-  <button id="logout" class="danger">Logout</button>
+  <button class="primary" id="btnReload">Reload</button>
+  <button id="btnLogout">Logout</button>
 </header>
 
 <div class="wrap">
   <div class="controls">
-    <button id="all">All</button>
-    <button id="suv">SUV</button>
-    <button id="van">VAN</button>
-    <button id="reload">Reload</button>
-    <button id="add" class="primary">Add Vehicle</button>
-    <div class="spacer"></div>
-    <span id="count" class="count"></span>
+    <button id="btnAll">All</button>
+    <button id="btnSUV">SUV</button>
+    <button id="btnVAN">VAN</button>
+    <span class="count" id="count"></span>
+    <span class="spacer"></span>
+    <span class="muted">API: <code>/api/admin/vehicles</code></span>
   </div>
 
   <div id="msg" class="msg muted"></div>
@@ -66,113 +63,98 @@
         <th style="width:80px">Year</th>
         <th>Model</th>
         <th style="width:110px">Active</th>
-        <th class="right" style="width:220px">Actions</th>
+        <th class="right" style="width:180px">Actions</th>
       </tr>
     </thead>
-    <tbody id="rows"><tr><td colspan="7">Loading…</td></tr></tbody>
+    <tbody id="rows">
+      <tr><td colspan="7">Loading…</td></tr>
+    </tbody>
   </table>
 </div>
 
-<!-- Modal -->
-<div id="backdrop" class="backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-    <header>
-      <h2 id="mTitle" style="font-size:16px;font-weight:800;margin:0">Edit Vehicle</h2>
-      <div class="spacer"></div>
-      <button id="close">Close</button>
-    </header>
-    <div class="body">
-      <div class="grid">
-        <div class="field"><label>Plate</label><input id="fPlate" placeholder="UT-123 ABC"></div>
-        <div class="field"><label>Driver</label><input id="fDriver" placeholder="John Doe"></div>
-        <div class="field"><label>Type</label>
-          <select id="fKind"><option>SUV</option><option>VAN</option></select>
-        </div>
-        <div class="field"><label>Year</label><input id="fYear" type="number" min="2000" max="2099" placeholder="2025"></div>
-        <div class="field full"><label>Model</label><input id="fModel" placeholder="Suburban / Sprinter"></div>
-        <div class="field full"><label><input type="checkbox" id="fActive"> Active</label></div>
-      </div>
-      <div id="fErr" class="err"></div>
-      <div class="actions"><button id="save" class="primary">Save</button></div>
-    </div>
-  </div>
-</div>
-
 <script>
-/* ---------- Config ---------- */
-const ADMIN_KEY = 'supersecreto123';
-const API = '/api/admin/vehicles';
+/* ====== CONFIG / AUTH ====== */
+const API_URL = '/api/admin/vehicles';
 
-/* ---------- State ---------- */
-let all = [];
-let filter = 'ALL'; // ALL|SUV|VAN
-let editingId = null;
+// Cómo obtenemos la llave (sin hardcodearla):
+function getAdminKey(){
+  // si el login actual ya guarda ADMIN_KEY la usamos
+  const k = localStorage.getItem('ADMIN_KEY') || sessionStorage.getItem('ADMIN_KEY');
+  // fallback (sólo para pruebas si aún no tienes login conectado):
+  return k || 'supersecreto123';
+}
 
-/* ---------- UI refs ---------- */
-const env = document.getElementById('env');
-const rows = document.getElementById('rows');
-const msg  = document.getElementById('msg');
-const count= document.getElementById('count');
-const backdrop = document.getElementById('backdrop');
-const mTitle = document.getElementById('mTitle');
-const fPlate = document.getElementById('fPlate');
-const fDriver= document.getElementById('fDriver');
-const fKind  = document.getElementById('fKind');
-const fYear  = document.getElementById('fYear');
-const fModel = document.getElementById('fModel');
-const fActive= document.getElementById('fActive');
-const fErr   = document.getElementById('fErr');
+// si no hay key guardada, intenta redirigir al login
+(function guard(){
+  const k = getAdminKey();
+  if (!k) location.href = '/login.html';
+})();
 
-env.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
+/* ====== STATE & UI ====== */
+const envInfo = document.getElementById('envInfo');
+envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-/* ---------- Helpers ---------- */
-const h = (s)=> (s??'').toString().replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const rowsEl  = document.getElementById('rows');
+const countEl = document.getElementById('count');
+const msgEl   = document.getElementById('msg');
+
+let allVehicles = [];
+let filterKind = 'ALL'; // ALL | SUV | VAN
+
+/* ====== HELPERS ====== */
+function h(s){ return (s??'').toString().replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+// Normaliza SIEMPRE los campos que usamos
 function normalize(v){
+  const kind = String(v.kind||'').trim().toUpperCase();
   return {
-    id: String(v.id),
-    plate: (v.plate||'').trim(),
-    driver_name: (v.driver_name||'').trim(),
-    kind: ((v.kind||'SUV')+'').trim().toUpperCase()==='VAN'?'VAN':'SUV',
-    year: Number(v.year)||'',
-    model: (v.model||'').trim(),
+    id: (v.id!=null? String(v.id):''),
+    plate: String(v.plate||'').trim(),
+    driver_name: String(v.driver_name||'').trim(),
+    kind: (kind==='VAN' ? 'VAN' : 'SUV'),
+    year: (v.year!=null? Number(v.year):''),
+    model: String(v.model||'').trim(),
     active: !!v.active
   };
 }
-function show(text, ok=true){ msg.textContent = text; msg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 
-/* ---------- API ---------- */
-async function call(method, body, qs=''){
-  const r = await fetch(API + (qs?`?${qs}`:''), {
-    method,
-    headers: { 'x-admin-key': ADMIN_KEY, ...(body?{'Content-Type':'application/json'}:{}) },
-    body: body ? JSON.stringify(body) : undefined
+/* ====== API (GET only en Paso 1) ====== */
+async function apiGetVehicles(){
+  const r = await fetch(API_URL, {
+    headers: { 'x-admin-key': getAdminKey() }
   });
-  let data={}; try{ data = await r.json() }catch{}
+  if (r.status === 401) throw new Error('Unauthorized (revisa ADMIN_KEY en Vercel o vuelve a iniciar sesión).');
+  const data = await r.json().catch(()=>({}));
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
-  return data;
+  return Array.isArray(data.vehicles) ? data.vehicles.map(normalize) : [];
 }
 
-/* ---------- Load & render ---------- */
+/* ====== LOAD & RENDER ====== */
 async function load(){
-  rows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  count.textContent = ''; show('');
+  rowsEl.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  countEl.textContent = '';
+  msgEl.textContent = '';
   try{
-    const data = await call('GET');
-    all = (data.vehicles||[]).map(normalize);
-    render(); show('Loaded successfully.');
+    allVehicles = await apiGetVehicles();
+    render();
+    msgEl.textContent = 'Loaded successfully.';
   }catch(e){
-    all = []; render(); show('API error: '+(e.message||e), false);
+    allVehicles = [];
+    render();
+    msgEl.style.color = 'var(--bad)';
+    msgEl.textContent = 'Error loading: ' + (e.message||e);
   }
 }
+
 function visible(){
-  if (filter==='ALL') return all;
-  return all.filter(v => v.kind === filter);
+  if (filterKind==='ALL') return allVehicles;
+  return allVehicles.filter(v => v.kind === filterKind);
 }
+
 function render(){
   const list = visible();
-  count.textContent = `Loaded ${list.length} vehicles`;
-  rows.innerHTML = list.length ? list.map(v=>{
-    const on = !!v.active;
+  countEl.textContent = `Loaded ${list.length} vehicles`;
+  rowsEl.innerHTML = list.map(v=>{
     return `
       <tr>
         <td>${h(v.plate)}</td>
@@ -180,91 +162,31 @@ function render(){
         <td>${h(v.kind)}</td>
         <td>${h(v.year)}</td>
         <td>${h(v.model)}</td>
-        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-        <td style="text-align:right">
-          <button onclick="openEdit('${v.id}')">Edit</button>
-          <button class="danger" onclick="doDelete('${v.id}')">Delete</button>
-          <button onclick="toggleActive('${v.id}', ${on?'false':'true'})">${on?'Turn Off':'Turn On'}</button>
+        <td><span class="badge ${v.active?'on':'off'}">${v.active?'ACTIVE':'OFF'}</span></td>
+        <td class="right">
+          <!-- Paso 2: activaremos estos botones -->
+          <button disabled title="Coming soon">Edit</button>
+          <button disabled title="Coming soon">Delete</button>
+          <button disabled title="Coming soon">${v.active?'Turn Off':'Turn On'}</button>
         </td>
-      </tr>`;
-  }).join('') : '<tr><td colspan="7">No vehicles.</td></tr>';
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
 }
 
-/* ---------- Actions ---------- */
-window.openEdit = (id)=>{
-  const v = all.find(x=>x.id===id); if(!v) return;
-  editingId = id; mTitle.textContent = 'Edit Vehicle';
-  fPlate.value=v.plate; fDriver.value=v.driver_name; fKind.value=v.kind;
-  fYear.value=v.year||''; fModel.value=v.model||''; fActive.checked=!!v.active;
-  fErr.textContent=''; backdrop.classList.add('open');
-};
-function openAdd(){
-  editingId=null; mTitle.textContent='Add Vehicle';
-  fPlate.value=''; fDriver.value=''; fKind.value='SUV'; fYear.value=new Date().getFullYear();
-  fModel.value=''; fActive.checked=false; fErr.textContent='';
-  backdrop.classList.add('open');
-}
-document.getElementById('close').onclick = ()=> backdrop.classList.remove('open');
+/* ====== FILTERS / ACTIONS ====== */
+document.getElementById('btnAll').onclick = ()=>{ filterKind='ALL'; render(); };
+document.getElementById('btnSUV').onclick = ()=>{ filterKind='SUV'; render(); };
+document.getElementById('btnVAN').onclick = ()=>{ filterKind='VAN'; render(); };
+document.getElementById('btnReload').onclick = ()=> load();
 
-document.getElementById('save').onclick = async ()=>{
-  fErr.textContent='';
-  const body = {
-    id: editingId || undefined,
-    plate: fPlate.value.trim(),
-    driver_name: fDriver.value.trim(),
-    kind: (fKind.value||'SUV').toUpperCase(),
-    year: Number(fYear.value||0),
-    model: fModel.value.trim(),
-    active: !!fActive.checked
-  };
-  if (!body.plate || !body.driver_name || !body.year){
-    fErr.textContent = 'Plate, Driver and Year are required.';
-    return;
-  }
-  try{
-    const data = await call('POST', body);
-    const v = normalize(data.vehicle);
-    const i = all.findIndex(x=>x.id===v.id);
-    if (i>=0) all[i]=v; else all.push(v);
-    backdrop.classList.remove('open'); render();
-    show(editingId ? 'Saved changes.' : 'Vehicle added.');
-  }catch(e){
-    fErr.textContent = e.message || 'Error saving.';
-  }
-};
-
-window.toggleActive = async (id, active)=>{
-  try{
-    await call('POST', { id, active });
-    const v = all.find(x=>x.id===id); if (v) v.active=!!active;
-    render(); show('Updated.');
-  }catch(e){ show('Error updating: '+(e.message||e), false); }
-};
-
-window.doDelete = async (id)=>{
-  const v = all.find(x=>x.id===id); if (!v) return;
-  if (!confirm(`Delete vehicle "${v.plate}"?`)) return;
-  try{
-    await call('DELETE', null, 'id='+encodeURIComponent(id));
-    all = all.filter(x=>x.id!==id); render(); show('Deleted.');
-  }catch(e){ show('Error deleting: '+(e.message||e), false); }
-};
-
-/* ---------- Filters ---------- */
-document.getElementById('all').onclick = ()=>{ filter='ALL'; render(); };
-document.getElementById('suv').onclick = ()=>{ filter='SUV'; render(); };
-document.getElementById('van').onclick = ()=>{ filter='VAN'; render(); };
-document.getElementById('reload').onclick = load;
-document.getElementById('add').onclick = openAdd;
-
-/* ---------- Logout ---------- */
-document.getElementById('logout').onclick = ()=>{
+document.getElementById('btnLogout').onclick = ()=>{
   localStorage.removeItem('ADMIN_KEY');
-  localStorage.removeItem('bonanza_admin_ok');
+  sessionStorage.removeItem('ADMIN_KEY');
   location.href = '/login.html';
 };
 
-/* ---------- Go! ---------- */
+/* go */
 load();
 </script>
 </body>
