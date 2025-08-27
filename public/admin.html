@@ -167,7 +167,23 @@ const modalTitle = document.getElementById('modalTitle');
 /* =========== HELPERS =========== */
 function h(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
 function showMsg(text, ok=true){ msgEl.textContent = text; msgEl.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
-function genId(kind){ const k=(kind||'SUV').toUpperCase(); const n=1+Math.max(0,...allVehicles.filter(v=>v.kind===k).map(v=>parseInt(String(v.id).match(/\d+$/)||0))); return `${k}-${String(n).padStart(3,'0')}`; }
+
+// Normaliza el tipo (elimina corchetes y lo pone en MAYÚSCULAS)
+function normKind(s){
+  return String(s || '').toUpperCase().replace(/\[|\]/g, '');
+}
+
+// Genera ID por tipo visible, usando tipo normalizado
+function genId(kind){
+  const k = normKind(kind || 'SUV');
+  const n = 1 + Math.max(
+    0,
+    ...allVehicles
+      .filter(v => normKind(v.kind) === k)
+      .map(v => parseInt(String(v.id).match(/\d+$/) || 0))
+  );
+  return `${k}-${String(n).padStart(3,'0')}`;
+}
 
 /* =========== API =========== */
 async function api(method, body, qs=''){
@@ -201,8 +217,9 @@ async function loadVehicles(){
 /* =========== RENDER =========== */
 function visibleList(){
   if (filterKind==='ALL') return allVehicles;
-  return allVehicles.filter(v => (v.kind||'').toUpperCase()===filterKind);
+  return allVehicles.filter(v => normKind(v.kind) === filterKind);
 }
+
 function render(){
   const list = visibleList();
   countEl.textContent = `Loaded ${list.length} vehicles`;
@@ -212,7 +229,7 @@ function render(){
       <tr>
         <td>${h(v.plate)}</td>
         <td>${h(v.driver_name)}</td>
-        <td>${h((v.kind||'').toUpperCase())}</td>
+        <td>${h(normKind(v.kind))}</td>
         <td>${h(v.year||'')}</td>
         <td>${h(v.model||'')}</td>
         <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
@@ -238,7 +255,7 @@ function openEdit(id){
   const v = allVehicles.find(x=>x.id===id); if(!v) return;
   editingId=id; modalTitle.textContent='Edit Vehicle';
   fPlate.value=v.plate||''; fDriver.value=v.driver_name||'';
-  fKind.value=(v.kind||'SUV').toUpperCase();
+  fKind.value=normKind(v.kind || 'SUV');
   fYear.value=v.year||new Date().getFullYear(); fModel.value=v.model||'';
   fActive.checked=!!v.active; formErr.textContent='';
   backdrop.classList.add('open');
@@ -250,7 +267,7 @@ btnClose.onclick = ()=>backdrop.classList.remove('open');
 btnSave.onclick = async ()=>{
   formErr.textContent='';
   const plate=fPlate.value.trim(), driver_name=fDriver.value.trim();
-  const kind=(fKind.value||'SUV').toUpperCase();
+  const kind=normKind(fKind.value || 'SUV');
   const year=Number(fYear.value||0), model=fModel.value.trim();
   const active=!!fActive.checked;
   if(!plate || !driver_name || !year){ formErr.textContent='Plate, Driver and Year are required.'; return; }
