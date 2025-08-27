@@ -1,15 +1,18 @@
 // /api/ping.js
-import pool from "./_db";
+import { dbPing } from "./_db.js";
 
 export default async function handler(req, res) {
+  // Protección con ADMIN_KEY
+  const key = req.query.key || req.headers["x-admin-key"];
+  if (!key || key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
+
   try {
-    const key = req.headers["x-admin-key"] || req.query.key || "";
-    if (!key || key !== process.env.ADMIN_KEY) {
-      return res.status(401).json({ ok: false, error: "unauthorized" });
-    }
-    const r = await pool.query("select 1 as ok");
-    return res.status(200).json({ ok: true, db: r.rows[0].ok === 1 });
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+    const ok = await dbPing();
+    res.json({ ok: true, db: ok });
+  } catch (err) {
+    console.error("[PING ERROR]", err);
+    res.status(500).json({ ok: false, error: err.message });
   }
 }
