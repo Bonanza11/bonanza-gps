@@ -20,8 +20,9 @@
     button:hover{ filter:brightness(1.08) }
     .danger{ background:#3a2030; border-color:#ffffff22 }
     .primary{ background:#3b4364 }
-    .link{ color:var(--accent); text-decoration:none }
-    .banner{ padding:10px 12px; border:1px dashed #f7b06a55; background:#f7b06a14; color:#f7d3a1; border-radius:8px; margin:8px 0 12px; display:none }
+    .muted{ color:var(--muted) }
+    .count{ margin-left:8px; color:var(--muted); font-size:13px }
+    .spacer{ flex:1 }
     table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
     th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
     th{ background:#11162a; color:#cdd6ea; position:sticky; top:50px; z-index:1 }
@@ -30,20 +31,13 @@
     .on{ background:#173523; color:var(--ok); border:1px solid #25a866 }
     .off{ background:#3a2323; color:var(--bad); border:1px solid #b84a4a }
     .right{ text-align:right }
-    .muted{ color:var(--muted) }
-    .count{ margin-left:8px; color:var(--muted); font-size:13px }
-    .spacer{ flex:1 }
-    /* Loader */
-    .loader{ display:flex; align-items:center; gap:10px; color:var(--muted); }
-    .dot{ width:8px;height:8px;border-radius:50%; background:#6f86b7; opacity:.6; animation:b 1.2s infinite }
-    .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
-    @keyframes b{ 0%,100%{transform:translateY(0);opacity:.5} 50%{transform:translateY(-4px);opacity:1} }
+    .msg{ margin:8px 0 12px }
 
     /* Modal */
     .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:50 }
     .backdrop.open{ display:flex }
     .modal{ width:min(680px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #0009 }
-    .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0 }
+    .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
     .modal .body{ padding:16px }
     .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
     .grid .full{ grid-column:1/-1 }
@@ -76,9 +70,7 @@
     <span class="muted">API route: <code>/api/admin/vehicles</code></span>
   </div>
 
-  <div id="demoBanner" class="banner">Demo data (API unreachable). Changes affect only this view.</div>
-
-  <div id="msg" class="muted" style="margin:8px 0 12px;"></div>
+  <div id="msg" class="msg muted"></div>
 
   <table id="tbl">
     <thead>
@@ -93,17 +85,12 @@
       </tr>
     </thead>
     <tbody id="rows">
-      <tr><td colspan="7">
-        <div class="loader">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span>Loading vehicles…</span>
-        </div>
-      </td></tr>
+      <tr><td colspan="7">Loading…</td></tr>
     </tbody>
   </table>
 </div>
 
-<!-- Modal Edit/Add -->
+<!-- Modal Add/Edit -->
 <div class="backdrop" id="backdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <header>
@@ -149,272 +136,181 @@
 </div>
 
 <script>
-  // ===== Login compatibility =====
-  (function ensureAdminKey(){
-    const ok = localStorage.getItem('bonanza_admin_ok') === '1';
-    const k  = localStorage.getItem('ADMIN_KEY');
-    if (!k && ok) localStorage.setItem('ADMIN_KEY', 'DEMO'); // compat si vienes de login antiguo
-  })();
+/* =========== CONFIG =========== */
+const ADMIN_KEY = 'supersecreto123';     // siempre enviamos este header
+const API_URL   = '/api/admin/vehicles';
 
-  const ADMIN_KEY = localStorage.getItem('ADMIN_KEY');
-  if (!ADMIN_KEY) location.href = "/login.html";
+/* =========== STATE & UI =========== */
+const rowsEl  = document.getElementById('rows');
+const countEl = document.getElementById('count');
+const msgEl   = document.getElementById('msg');
+const envInfo = document.getElementById('envInfo');
+envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-  // UI
-  const rowsEl  = document.getElementById('rows');
-  const countEl = document.getElementById('count');
-  const msgEl   = document.getElementById('msg');
-  const envInfo = document.getElementById('envInfo');
-  const demoBanner = document.getElementById('demoBanner');
+let allVehicles = [];
+let filterKind = 'ALL'; // ALL|SUV|VAN
+let editingId  = null;
 
-  envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
+/* Modal refs */
+const backdrop = document.getElementById('backdrop');
+const btnClose = document.getElementById('btnClose');
+const btnSave  = document.getElementById('btnSave');
+const formErr  = document.getElementById('formErr');
+const fPlate = document.getElementById('fPlate');
+const fDriver= document.getElementById('fDriver');
+const fKind  = document.getElementById('fKind');
+const fYear  = document.getElementById('fYear');
+const fModel = document.getElementById('fModel');
+const fActive= document.getElementById('fActive');
+const modalTitle = document.getElementById('modalTitle');
 
-  // Modal refs
-  const backdrop = document.getElementById('backdrop');
-  const btnClose = document.getElementById('btnClose');
-  const btnSave  = document.getElementById('btnSave');
-  const formErr  = document.getElementById('formErr');
-  const fPlate = document.getElementById('fPlate');
-  const fDriver= document.getElementById('fDriver');
-  const fKind  = document.getElementById('fKind');
-  const fYear  = document.getElementById('fYear');
-  const fModel = document.getElementById('fModel');
-  const fActive= document.getElementById('fActive');
-  const modalTitle = document.getElementById('modalTitle');
+/* =========== HELPERS =========== */
+function h(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function showMsg(text, ok=true){ msgEl.textContent = text; msgEl.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+function genId(kind){ const k=(kind||'SUV').toUpperCase(); const n=1+Math.max(0,...allVehicles.filter(v=>v.kind===k).map(v=>parseInt(String(v.id).match(/\d+$/)||0))); return `${k}-${String(n).padStart(3,'0')}`; }
 
-  // State
-  let allVehicles = [];
-  let filterKind = 'ALL';
-  let editingId = null; // null => add
+/* =========== API =========== */
+async function api(method, body, qs=''){
+  const url = API_URL + (qs ? `?${qs}` : '');
+  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
+  if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+  const r = await fetch(url, opt);
+  if (r.status === 401) { showMsg('Unauthorized (check ADMIN_KEY in Vercel).', false); throw new Error('401'); }
+  let data={}; try{ data = await r.json(); }catch{}
+  if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
+  return data;
+}
 
-  // Demo fallback base
-  const DEMO_LIST = [
-    {id:'SUV-001', plate:'SUV-001', driver_name:'Driver A', kind:'SUV', year:2024, model:'Suburban', active:true},
-    {id:'SUV-002', plate:'SUV-002', driver_name:'Driver B', kind:'SUV', year:2024, model:'Suburban', active:true},
-    {id:'SUV-003', plate:'SUV-003', driver_name:'Driver C', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-004', plate:'SUV-004', driver_name:'Driver D', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-005', plate:'SUV-005', driver_name:'Driver E', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-006', plate:'SUV-006', driver_name:'Driver F', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-007', plate:'SUV-007', driver_name:'Driver G', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-008', plate:'SUV-008', driver_name:'Driver H', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-009', plate:'SUV-009', driver_name:'Driver I', kind:'SUV', year:2024, model:'Suburban', active:false},
-    {id:'SUV-010', plate:'SUV-010', driver_name:'Driver J', kind:'SUV', year:2024, model:'Suburban', active:false},
-  ];
-
-  // ===== API helpers =====
-  async function api(method, body, qs=''){
-    const url = '/api/admin/vehicles' + (qs ? `?${qs}` : '');
-    const opt = {
-      method,
-      headers: { 'x-admin-key': ADMIN_KEY }
-    };
-    if (body){
-      opt.headers['Content-Type'] = 'application/json';
-      opt.body = JSON.stringify(body);
-    }
-    const r = await fetch(url, opt);
-    // 401 -> volver a login
-    if (r.status === 401) {
-      localStorage.removeItem('ADMIN_KEY');
-      location.href = '/login.html';
-      return { ok:false, error:'unauthorized' };
-    }
-    let data = {};
-    try { data = await r.json(); } catch {}
-    return { ok: r.ok && data.ok !== false, status:r.status, data };
+/* =========== LOAD =========== */
+async function loadVehicles(){
+  rowsEl.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  countEl.textContent = '';
+  showMsg('');
+  try{
+    const data = await api('GET');
+    allVehicles = Array.isArray(data.vehicles) ? data.vehicles : [];
+    render();
+    showMsg('Loaded successfully.');
+  }catch(e){
+    allVehicles = [];
+    render();
+    showMsg('API not reachable. ' + (e.message||e), false);
   }
+}
 
-  // ===== Load =====
-  async function loadVehicles() {
-    rowsEl.innerHTML = `
-      <tr><td colspan="7">
-        <div class="loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        <span>Loading vehicles…</span></div>
-      </td></tr>`;
-    countEl.textContent = '';
-    msgEl.textContent = '';
+/* =========== RENDER =========== */
+function visibleList(){
+  if (filterKind==='ALL') return allVehicles;
+  return allVehicles.filter(v => (v.kind||'').toUpperCase()===filterKind);
+}
+function render(){
+  const list = visibleList();
+  countEl.textContent = `Loaded ${list.length} vehicles`;
+  rowsEl.innerHTML = list.map(v=>{
+    const on = !!v.active;
+    return `
+      <tr>
+        <td>${h(v.plate)}</td>
+        <td>${h(v.driver_name)}</td>
+        <td>${h((v.kind||'').toUpperCase())}</td>
+        <td>${h(v.year||'')}</td>
+        <td>${h(v.model||'')}</td>
+        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
+        <td class="right">
+          <button onclick="openEdit('${v.id}')">Edit</button>
+          <button onclick="doDelete('${v.id}')" class="danger">Delete</button>
+          <button onclick="toggleActive('${v.id}', ${on?'false':'true'})">${on?'Turn Off':'Turn On'}</button>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
+}
 
-    try {
-      const {ok,data,status} = await api('GET');
-      if (!ok || !Array.isArray(data.vehicles)) throw new Error('HTTP '+status);
-      allVehicles = data.vehicles;
-      demoBanner.style.display = 'none';
-      render();
-      msgEl.textContent = 'Loaded successfully.';
-    } catch (e) {
-      allVehicles = DEMO_LIST.slice(); // copia
-      demoBanner.style.display = 'block';
-      render();
-      msgEl.textContent = 'API not reachable. Showing demo data.';
-      console.warn('Vehicles load failed:', e);
-    }
-  }
+/* =========== ADD / EDIT =========== */
+function openAdd(){
+  editingId=null;
+  modalTitle.textContent='Add Vehicle';
+  fPlate.value=''; fDriver.value=''; fKind.value='SUV';
+  fYear.value=new Date().getFullYear(); fModel.value=''; fActive.checked=false;
+  formErr.textContent=''; backdrop.classList.add('open');
+}
+function openEdit(id){
+  const v = allVehicles.find(x=>x.id===id); if(!v) return;
+  editingId=id; modalTitle.textContent='Edit Vehicle';
+  fPlate.value=v.plate||''; fDriver.value=v.driver_name||'';
+  fKind.value=(v.kind||'SUV').toUpperCase();
+  fYear.value=v.year||new Date().getFullYear(); fModel.value=v.model||'';
+  fActive.checked=!!v.active; formErr.textContent='';
+  backdrop.classList.add('open');
+}
+window.openEdit = openEdit;
 
-  // ===== Render =====
-  function visibleList() {
-    if (filterKind === 'ALL') return allVehicles;
-    return allVehicles.filter(v => (v.kind || '').toUpperCase() === filterKind);
-  }
-  function render() {
-    const list = visibleList();
-    countEl.textContent = `Loaded ${list.length} vehicles`;
-    rowsEl.innerHTML = list.map(v => {
-      const on = !!v.active;
-      return `
-        <tr>
-          <td>${h(v.plate)}</td>
-          <td>${h(v.driver_name)}</td>
-          <td>${h((v.kind||'').toUpperCase())}</td>
-          <td>${h(v.year||'')}</td>
-          <td>${h(v.model||'')}</td>
-          <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-          <td class="right">
-            <button onclick="openEdit('${v.id}')">Edit</button>
-            <button onclick="doDelete('${v.id}')" class="danger">Delete</button>
-            <button onclick="toggleActive('${v.id}', ${on? 'false':'true'})">${on?'Turn Off':'Turn On'}</button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
+btnClose.onclick = ()=>backdrop.classList.remove('open');
 
-  // ===== Add / Edit =====
-  function openAdd(){
-    editingId = null;
-    modalTitle.textContent = 'Add Vehicle';
-    fPlate.value = ''; fDriver.value = ''; fKind.value = 'SUV';
-    fYear.value = new Date().getFullYear(); fModel.value=''; fActive.checked = false;
-    formErr.textContent = '';
-    backdrop.classList.add('open');
-  }
-  function openEdit(id){
-    const v = allVehicles.find(x=>x.id===id);
-    if (!v) return;
-    editingId = id;
-    modalTitle.textContent = 'Edit Vehicle';
-    fPlate.value = v.plate || '';
-    fDriver.value= v.driver_name || '';
-    fKind.value  = (v.kind||'SUV').toUpperCase();
-    fYear.value  = v.year || new Date().getFullYear();
-    fModel.value = v.model || '';
-    fActive.checked = !!v.active;
-    formErr.textContent = '';
-    backdrop.classList.add('open');
-  }
-  window.openEdit = openEdit;
+btnSave.onclick = async ()=>{
+  formErr.textContent='';
+  const plate=fPlate.value.trim(), driver_name=fDriver.value.trim();
+  const kind=(fKind.value||'SUV').toUpperCase();
+  const year=Number(fYear.value||0), model=fModel.value.trim();
+  const active=!!fActive.checked;
+  if(!plate || !driver_name || !year){ formErr.textContent='Plate, Driver and Year are required.'; return; }
 
-  btnClose.onclick = () => backdrop.classList.remove('open');
-
-  btnSave.onclick = async () => {
-    formErr.textContent = '';
-    const plate = fPlate.value.trim();
-    const driver_name = fDriver.value.trim();
-    const kind  = (fKind.value||'SUV').toUpperCase();
-    const year  = Number(fYear.value||0);
-    const model = fModel.value.trim();
-    const active= !!fActive.checked;
-
-    if (!plate || !driver_name || !year){
-      formErr.textContent = 'Plate, Driver and Year are required.';
-      return;
-    }
-
-    const body = { id: editingId, plate, driver_name, kind, year, model, active };
-
-    // Intentar API (upsert)
-    const res = await safeSave(body);
-    if (res) {
-      backdrop.classList.remove('open');
-      render();
-      msgEl.textContent = editingId ? 'Saved changes.' : 'Vehicle added.';
-    } else {
-      formErr.textContent = 'Error saving.';
-    }
-  };
-
-  async function safeSave(body){
-    try{
-      const {ok,data} = await api('POST', body);
-      if (ok && data?.vehicle){
-        upsertLocal(data.vehicle);
-        return true;
-      }
-      // Demo fallback:
-      upsertLocal({ ...body, id: body.id || genId(body.kind) });
-      demoBanner.style.display = 'block';
-      return true;
-    }catch{
-      upsertLocal({ ...body, id: body.id || genId(body.kind) });
-      demoBanner.style.display = 'block';
-      return true;
-    }
-  }
-
-  function upsertLocal(v){
+  const body = { id:editingId, plate, driver_name, kind, year, model, active };
+  try{
+    const data = await api('POST', body);
+    const v = data.vehicle || { ...body, id: body.id || genId(kind) };
     const i = allVehicles.findIndex(x=>x.id===v.id);
-    if (i>=0) allVehicles[i] = { ...allVehicles[i], ...v };
+    if(i>=0) allVehicles[i] = { ...allVehicles[i], ...v };
     else allVehicles.push(v);
+    render(); backdrop.classList.remove('open');
+    showMsg(editingId ? 'Saved changes.' : 'Vehicle added.');
+  }catch(e){
+    formErr.textContent = e.message || 'Error saving.';
   }
+};
 
-  // ===== Toggle =====
-  async function toggleActive(id, active){
-    try {
-      const {ok} = await api('POST', { id, active });
-      if (!ok) throw 0;
-      const v = allVehicles.find(x=>x.id===id);
-      if (v) v.active = !!active;
-      render();
-      msgEl.textContent = 'Updated.';
-    } catch {
-      // demo fallback
-      const v = allVehicles.find(x=>x.id===id);
-      if (v){ v.active = !!active; render(); demoBanner.style.display='block'; msgEl.textContent='Updated (demo).'; }
-    }
+/* =========== TOGGLE =========== */
+async function toggleActive(id, active){
+  try{
+    await api('POST', { id, active });
+    const v = allVehicles.find(x=>x.id===id); if(v) v.active=!!active;
+    render(); showMsg('Updated.');
+  }catch(e){
+    showMsg('Error updating: '+(e.message||e), false);
   }
-  window.toggleActive = toggleActive;
+}
+window.toggleActive = toggleActive;
 
-  // ===== Delete =====
-  async function doDelete(id){
-    const v = allVehicles.find(x=>x.id===id);
-    if (!v) return;
-    const sure = confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`);
-    if (!sure) return;
-
-    try{
-      const {ok} = await api('DELETE', null, 'id='+encodeURIComponent(id));
-      if (!ok) throw 0;
-      allVehicles = allVehicles.filter(x=>x.id!==id);
-      render();
-      msgEl.textContent = 'Deleted.';
-    }catch{
-      // Fallback demo: quitar local y avisar
-      allVehicles = allVehicles.filter(x=>x.id!==id);
-      render();
-      demoBanner.style.display = 'block';
-      msgEl.textContent = 'Deleted locally (demo mode).';
-    }
+/* =========== DELETE =========== */
+async function doDelete(id){
+  const v = allVehicles.find(x=>x.id===id); if(!v) return;
+  if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
+  try{
+    await api('DELETE', null, 'id='+encodeURIComponent(id));
+    allVehicles = allVehicles.filter(x=>x.id!==id);
+    render(); showMsg('Deleted.');
+  }catch(e){
+    showMsg('Error deleting: '+(e.message||e), false);
   }
-  window.doDelete = doDelete;
+}
+window.doDelete = doDelete;
 
-  // ===== Utils =====
-  function h(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
-  function genId(kind){ const k = (kind||'SUV').toUpperCase(); const n = 1 + Math.max(0,...allVehicles.filter(v=>v.kind===k).map(v=>parseInt(String(v.id).match(/\d+$/)||0))); return `${k}-${String(n).padStart(3,'0')}`; }
+/* =========== FILTERS & ACTIONS =========== */
+document.getElementById('btnAll').onclick    = ()=>{ filterKind='ALL'; render(); };
+document.getElementById('btnSUV').onclick    = ()=>{ filterKind='SUV'; render(); };
+document.getElementById('btnVAN').onclick    = ()=>{ filterKind='VAN'; render(); };
+document.getElementById('btnReload').onclick = ()=> loadVehicles();
+document.getElementById('btnAdd').onclick    = ()=> openAdd();
 
-  // Filters & actions
-  document.getElementById('btnAll').onclick    = () => { filterKind='ALL'; render(); };
-  document.getElementById('btnSUV').onclick    = () => { filterKind='SUV'; render(); };
-  document.getElementById('btnVAN').onclick    = () => { filterKind='VAN'; render(); };
-  document.getElementById('btnReload').onclick = () => loadVehicles();
-  document.getElementById('btnAdd').onclick    = () => openAdd();
+/* =========== LOGOUT =========== */
+document.getElementById('btnLogout').onclick = ()=>{
+  localStorage.removeItem('ADMIN_KEY');
+  localStorage.removeItem('bonanza_admin_ok');
+  location.href = '/login.html';
+};
 
-  // Logout
-  document.getElementById('btnLogout').onclick = () => {
-    localStorage.removeItem('ADMIN_KEY');
-    localStorage.removeItem('bonanza_admin_ok');
-    location.href = '/login.html';
-  };
-
-  // Go!
-  loadVehicles();
+/* =========== GO! =========== */
+loadVehicles();
 </script>
 </body>
 </html>
