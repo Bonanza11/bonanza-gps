@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Bonanza — Clients Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f1220; --card:#171a2b; --line:#2a3550;
+      --text:#e9eef7; --muted:#a7b0c3; --ok:#28d07f; --bad:#ff5d5d; --accent:#f7b06a;
+    }
+    *{ box-sizing:border-box }
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
+
+    header{ position:sticky; top:0; z-index:1000; display:flex; gap:12px; align-items:center;
+      padding:14px 18px; background:rgba(0,0,0,.35); border-bottom:1px solid #0003; backdrop-filter:blur(6px) }
+    header h1{ margin:0; font-size:18px; font-weight:800 }
+    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:var(--muted); border:1px solid #ffffff22 }
+    .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
+
+    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px }
+    button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer }
+    button:hover{ filter:brightness(1.08) }
+    .primary{ background:#3b4364 } .danger{ background:#3a2030 }
+    .muted{ color:var(--muted) } .spacer{ flex:1 } .msg{ min-height:20px; margin:8px 0 12px }
+
+    table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+    th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
+    thead th{ background:#11162a; color:#cdd6ea; position:sticky; top:52px; z-index:5 }
+    tbody tr:hover{ background:#1b2136 }
+    .right{ text-align:right }
+    .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
+    .good{ background:#173523; color:var(--ok); border:1px solid #25a866 }
+    .watch{ background:#3b3a23; color:#f7b06a; border:1px solid #b7945a }
+    .restricted{ background:#3a2323; color:#ff6a6a; border:1px solid #b84a4a }
+
+    /* Modal */
+    .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:2000 }
+    .backdrop.open{ display:flex }
+    .modal{ width:min(760px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a }
+    .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
+    .modal .body{ padding:16px }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+    .grid .full{ grid-column:1/-1 }
+    .field label{ display:block; font-size:12px; color:#cbd3e7; margin-bottom:6px }
+    .field input, .field select, .field textarea{
+      width:100%; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:10px; font:inherit
+    }
+    .field textarea{ min-height:80px; resize:vertical }
+    .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
+    .err-msg{ color:#ff8080; font-size:12px; min-height:16px; padding-top:4px }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Bonanza — Clients</h1>
+  <span class="pill" id="envInfo"></span>
+  <div class="spacer"></div>
+  <a href="/admin.html" class="pill" style="text-decoration:none">← Vehicles</a>
+  <button class="danger" id="btnLogout">Logout</button>
+</header>
+
+<div class="wrap">
+  <div class="controls">
+    <button id="btnReload">Reload</button>
+    <button id="btnAdd" class="primary">Add Client</button>
+    <div class="spacer"></div>
+    <span class="muted">API: <code>/api/admin/clients</code></span>
+  </div>
+
+  <div id="msg" class="msg muted"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:200px">Name</th>
+        <th style="width:200px">Email</th>
+        <th style="width:140px">Phone</th>
+        <th>Home Address</th>
+        <th style="width:120px">Rating</th>
+        <th class="right" style="width:220px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td colspan="6">Loading…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div class="backdrop" id="backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <header>
+      <h2 id="modalTitle" style="margin:0;font-size:16px;font-weight:800">Add Client</h2>
+      <div class="spacer"></div>
+      <button id="btnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field">
+          <label for="fName">Name *</label>
+          <input id="fName" />
+        </div>
+        <div class="field">
+          <label for="fEmail">Email</label>
+          <input id="fEmail" type="email" />
+        </div>
+        <div class="field">
+          <label for="fPhone">Phone</label>
+          <input id="fPhone" />
+        </div>
+        <div class="field">
+          <label for="fRating">Rating</label>
+          <select id="fRating">
+            <option value="GOOD">GOOD</option>
+            <option value="WATCH">WATCH</option>
+            <option value="RESTRICTED">RESTRICTED</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="fAddress">Home Address</label>
+          <input id="fAddress" />
+        </div>
+        <div class="field full">
+          <label for="fNotes">Notes</label>
+          <textarea id="fNotes"></textarea>
+        </div>
+      </div>
+      <div id="formErr" class="err-msg"></div>
+      <div class="actions">
+        <button id="btnSave" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ====== Config ====== */
+  const ADMIN_KEY = 'supersecreto123';
+  const API_URL   = '/api/admin/clients';
+
+  /* ====== State & UI refs ====== */
+  const envInfo = document.getElementById('envInfo');
+  envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
+
+  const rowsEl  = document.getElementById('rows');
+  const msgEl   = document.getElementById('msg');
+  const backdrop= document.getElementById('backdrop');
+  const btnClose= document.getElementById('btnClose');
+  const btnSave = document.getElementById('btnSave');
+  const formErr = document.getElementById('formErr');
+  const modalTitle = document.getElementById('modalTitle');
+
+  const fName = document.getElementById('fName');
+  const fEmail= document.getElementById('fEmail');
+  const fPhone= document.getElementById('fPhone');
+  const fAddress=document.getElementById('fAddress');
+  const fRating= document.getElementById('fRating');
+  const fNotes = document.getElementById('fNotes');
+
+  let allClients = [];
+  let editingId  = null;
+
+  /* ====== Helpers ====== */
+  function h(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+  function showMsg(t, ok=true){ msgEl.textContent=t||''; msgEl.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+
+  async function api(method, body, qs=''){
+    const url = API_URL + (qs?`?${qs}`:'');
+    const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
+    if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+    const r = await fetch(url, opt);
+    let data={}; try{ data = await r.json(); }catch{}
+    if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
+    return data;
+  }
+
+  /* ====== Load & Render ====== */
+  async function loadClients(){
+    rowsEl.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
+    try{
+      const data = await api('GET');
+      allClients = Array.isArray(data.clients) ? data.clients : [];
+      render();
+      showMsg('Loaded successfully.');
+    }catch(e){
+      allClients = [];
+      render();
+      showMsg('Error loading: '+(e.message||e), false);
+    }
+  }
+
+  function ratingBadge(r){
+    const R = String(r||'GOOD').toUpperCase();
+    if (R==='RESTRICTED') return `<span class="badge restricted">RESTRICTED</span>`;
+    if (R==='WATCH')      return `<span class="badge watch">WATCH</span>`;
+    return `<span class="badge good">GOOD</span>`;
+  }
+
+  function render(){
+    rowsEl.innerHTML = allClients.map(c => `
+      <tr data-id="${c.id}">
+        <td>${h(c.name)}</td>
+        <td>${h(c.email||'')}</td>
+        <td>${h(c.phone||'')}</td>
+        <td>${h(c.home_address||'')}</td>
+        <td>${ratingBadge(c.internal_rating)}</td>
+        <td class="right">
+          <button data-action="edit">Edit</button>
+          <button data-action="delete" class="danger">Delete</button>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="6">No clients.</td></tr>';
+  }
+
+  /* ====== Events ====== */
+  document.getElementById('btnReload').onclick = loadClients;
+  document.getElementById('btnAdd').onclick = () => {
+    editingId = null;
+    modalTitle.textContent = 'Add Client';
+    fName.value=''; fEmail.value=''; fPhone.value=''; fAddress.value='';
+    fRating.value='GOOD'; fNotes.value=''; formErr.textContent='';
+    backdrop.classList.add('open');
+  };
+
+  btnClose.onclick = () => backdrop.classList.remove('open');
+
+  btnSave.onclick = async () => {
+    formErr.textContent='';
+    const name=fName.value.trim();
+    if (!name){ formErr.textContent='Name is required.'; return; }
+
+    const body = {
+      id: editingId,
+      name,
+      email: fEmail.value.trim()||null,
+      phone: fPhone.value.trim()||null,
+      home_address: fAddress.value.trim()||null,
+      internal_rating: fRating.value,
+      notes: fNotes.value.trim()||null
+    };
+
+    try{
+      const data = await api('POST', body);
+      const c = data.client;
+      const i = allClients.findIndex(x=>x.id===c.id);
+      if (i>=0) allClients[i] = c; else allClients.unshift(c);
+      render();
+      showMsg(editingId ? 'Saved changes.' : 'Client added.');
+      backdrop.classList.remove('open');
+    }catch(e){
+      formErr.textContent = e.message || 'Error saving';
+    }
+  };
+
+  rowsEl.addEventListener('click', (ev)=>{
+    const btn = ev.target.closest('button'); if(!btn) return;
+    const tr = ev.target.closest('tr'); if(!tr) return;
+    const id = tr.getAttribute('data-id');
+    const action = btn.getAttribute('data-action');
+
+    if (action==='edit'){
+      const c = allClients.find(x=>x.id===id); if(!c) return;
+      editingId = id;
+      modalTitle.textContent = 'Edit Client';
+      fName.value=c.name||''; fEmail.value=c.email||''; fPhone.value=c.phone||'';
+      fAddress.value=c.home_address||''; fRating.value=(c.internal_rating||'GOOD').toUpperCase();
+      fNotes.value=c.notes||''; formErr.textContent='';
+      backdrop.classList.add('open');
+    }
+
+    if (action==='delete'){
+      const c = allClients.find(x=>x.id===id); if(!c) return;
+      if (!confirm(`Delete client "${c.name}"?`)) return;
+      api('DELETE', null, 'id='+encodeURIComponent(id))
+        .then(()=>{ allClients = allClients.filter(x=>x.id!==id); render(); showMsg('Deleted.'); })
+        .catch(e => showMsg('Error deleting: '+(e.message||e), false));
+    }
+  });
+
+  document.getElementById('btnLogout').onclick = ()=>{
+    localStorage.removeItem('ADMIN_KEY');
+    location.href = '/login.html';
+  };
+
+  /* Go */
+  loadClients();
+</script>
+</body>
+</html>
