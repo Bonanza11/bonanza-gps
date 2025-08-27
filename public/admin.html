@@ -8,12 +8,13 @@
   /* ===== Tokens globales ===== */
   :root{
     --bg:#0f1220; --card:#171a2b; --line:#2a3550;
-    --text:#e9eef7; --muted:#a7b0c3; --ok:#28d07f; --bad:#ff5d5d; --accent:#f7b06a;
+    --text:#e9eef7; --muted:#a7b0c3; --ok:#22c55e; --bad:#ff6b6b; --accent:#f7b06a;
+    --theadTop: 0px; /* se ajusta con JS según header + barras */
   }
   *{ box-sizing:border-box }
   body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
 
-  /* ===== Header ===== */
+  /* ===== Header superior ===== */
   header{
     position:sticky; top:0; z-index:1000;
     display:flex; align-items:center; gap:12px;
@@ -21,26 +22,38 @@
     backdrop-filter: blur(6px);
   }
   header h1{ margin:0; font-size:18px; font-weight:800 }
-  .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:var(--muted); border:1px solid #ffffff22 }
+  .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:#cbd5e1; border:1px solid #ffffff22 }
 
-  /* ===== Layout general ===== */
+  /* ===== Tabs (nav) ===== */
+  .tabs{
+    display:flex; gap:8px; align-items:center; padding:10px 16px;
+    background:rgba(0,0,0,.2); border-bottom:1px solid #0003;
+  }
+  .tab-btn{
+    padding:8px 12px; border-radius:8px; border:1px solid #ffffff1f;
+    background:#24304a; color:#e9eef7; cursor:pointer; font-size:14px;
+  }
+  .tab-btn[aria-selected="true"]{ background:#3b4364 }
+  .tabs .spacer{ flex:1 }
+  .muted{ color:var(--muted) }
+
+  /* ===== Layout de cada vista ===== */
   .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
-
   .controls{
-    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-    margin:0 0 12px 0;
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px 0;
   }
   button{
     background:#2a3550; color:var(--text);
-    border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer;
-    font-size:14px;
+    border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px;
   }
   button:hover{ filter:brightness(1.08) }
   .primary{ background:#3b4364 }
   .danger{ background:#3a2030 }
 
   /* ===== Summary cards ===== */
-  #summary{ display:flex; gap:12px; flex-wrap:wrap; margin:0 0 12px 0 }
+  #summaryVehicles, #summaryClients{
+    display:flex; gap:12px; flex-wrap:wrap; margin:0 0 12px 0
+  }
   .card{
     flex:1 1 140px; background:var(--card); border:1px solid var(--line);
     border-radius:10px; padding:12px; text-align:center;
@@ -50,189 +63,181 @@
 
   .msg{ margin:8px 0 12px; color:var(--muted); min-height:20px }
 
-  /* ===== Tabla ===== */
+  /* ===== Tabla genérica ===== */
   table{
-    width:100%; border-collapse:collapse;
-    background:var(--card); border:1px solid var(--line);
+    width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
     border-radius:12px; overflow:hidden;
   }
   th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
 
-  /* Encabezado sticky */
+  /* Encabezado sticky ajustado por JS (header + barras) */
   thead th{
     background:#11162a; color:#cdd6ea;
-    position:sticky; top:0; z-index:5;
+    position: sticky;
+    top: var(--theadTop, 0);
+    z-index: 5;
   }
-
-  /* Espaciador invisible (útil si header fijo tapa filas) */
-  #stickySpacer{ height:0px; }
 
   tbody tr:hover{ background:#1b2136 }
   .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
-  .on{ background:#173523; color:var(--ok); border:1px solid #25a866 }
-  .off{ background:#3a2323; color:var(--bad); border:1px solid #b84a4a }
+  .badge.on { background:#0f3f23; color:#22c55e; border:1px solid #16a34a }
+  .badge.off{ background:#3b0f12; color:#ff6b6b; border:1px solid #dc2626 }
+
   .right{ text-align:right }
-  .muted{ color:var(--muted) }
+
+  /* ===== Celda de acciones y botones ===== */
+  .actions{ display:flex; justify-content:flex-end }
+  .btns{ display:inline-flex; gap:8px; align-items:center }
+  .btn{ height:32px; padding:0 10px; border-radius:8px; border:1px solid #ffffff22; background:#2a3550; color:#e9eef7; font-size:13px; line-height:30px; cursor:pointer; transition:transform .03s ease, filter .15s ease }
+  .btn:active{ transform:translateY(1px) }
+  .btn-edit{ background:#293249; border-color:#46536d }
+  .btn-edit:hover{ filter:brightness(1.12) }
+  .btn-danger{ background:#3a1b22; border-color:#b02a2a; color:#ffd4d4 }
+  .btn-danger:hover{ filter:brightness(1.08) }
+  .btn-toggle-on{ background:#12351e; border-color:#16a34a; color:#9ff5be }
+  .btn-toggle-off{ background:#3a1b1b; border-color:#dc2626; color:#ffcccc }
 
   /* ===== Modal ===== */
-  .backdrop{
-    position:fixed; inset:0; background:#0008;
-    display:none; align-items:center; justify-content:center; z-index:2000;
-  }
+  .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:2000 }
   .backdrop.open{ display:flex }
   .modal{
-    width:min(720px,96vw);
-    background:#1b2136; border:1px solid #2b3853; border-radius:12px;
-    box-shadow:0 18px 50px #000a;
+    width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a;
   }
-  .modal header{
-    position:unset; background:#1e2740;
-    border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0;
-    padding:12px 16px; display:flex; align-items:center; gap:10px;
-  }
+  .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
   .modal .body{ padding:16px }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
   .grid .full{ grid-column:1/-1 }
   .field label{ display:block; font-size:12px; color:#cbd3e7; margin-bottom:6px }
-  .field input, .field select{
-    width:100%; height:40px; border-radius:8px;
-    border:1px solid #30405a; background:#12182a; color:#e9eef7;
-    padding:0 10px;
-  }
-  .modal .actions{
-    display:flex; gap:10px; justify-content:flex-end;
-    padding:12px 16px 16px;
-  }
+  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px; }
+  .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
   .err-msg{ color:#ff8080; font-size:12px; min-height:16px; padding-top:4px }
-  /* ===== Badges más intensos ===== */
-.badge.on{
-  background:#0f3f23;
-  color:#22c55e;                /* verde brillante */
-  border:1px solid #16a34a;
-}
-.badge.off{
-  background:#3b0f12;
-  color:#ff6b6b;                /* rojo vivo */
-  border:1px solid #dc2626;
-}
 
-/* ===== Celda de acciones y grupo de botones ===== */
-.actions{
-  display:flex;
-  justify-content:flex-end;
-}
-.btns{
-  display:inline-flex;
-  gap:8px;                      /* separación constante */
-  align-items:center;
-}
+  /* ===== Responsive acciones ===== */
+  @media (max-width: 720px){
+    .btns{ gap:6px; flex-wrap:wrap }
+    .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
+  }
 
-/* Botón base */
-.btn{
-  height:32px;
-  padding:0 10px;
-  border-radius:8px;
-  border:1px solid #ffffff22;
-  background:#2a3550;
-  color:#e9eef7;
-  font-size:13px;
-  line-height:30px;
-  cursor:pointer;
-  transition:transform .03s ease, filter .15s ease, border-color .15s ease;
-}
-.btn:active{ transform:translateY(1px) }
-
-/* Variantes */
-.btn-edit{
-  background:#293249;
-  border-color:#46536d;
-}
-.btn-edit:hover{ filter:brightness(1.12) }
-
-.btn-danger{
-  background:#3a1b22;
-  border-color:#b02a2a;
-  color:#ffd4d4;
-}
-.btn-danger:hover{ filter:brightness(1.08) }
-
-.btn-toggle-on{                  /* Botón para apagar (está ON) */
-  background:#12351e;
-  border-color:#16a34a;
-  color:#9ff5be;
-}
-.btn-toggle-on:hover{ filter:brightness(1.08) }
-
-.btn-toggle-off{                 /* Botón para encender (está OFF) */
-  background:#3a1b1b;
-  border-color:#dc2626;
-  color:#ffcccc;
-}
-.btn-toggle-off:hover{ filter:brightness(1.08) }
-
-/* Responsive pequeño: apilar acciones si el ancho es chico */
-@media (max-width: 720px){
-  .btns{ gap:6px; flex-wrap:wrap }
-  .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
-}
+  /* ===== Secciones ===== */
+  section[hidden]{ display:none !important }
 </style>
 </head>
 <body>
+
+<!-- HEADER -->
 <header>
   <h1>Bonanza — Headquarters</h1>
   <span class="pill" id="envInfo"></span>
   <div style="flex:1"></div>
   <button id="btnLogout" class="danger">Logout</button>
 </header>
-<div id="stickySpacer"></div>
-<div class="wrap">
-       <!-- Controles -->
-  <div class="controls affects-sticky" id="controls">
-    <button data-filter="ALL">All</button>
-    <button data-filter="SUV">SUV</button>
-    <button data-filter="VAN">VAN</button>
-    <button id="btnReload">Reload</button>
-    <button id="btnAdd" class="primary">Add Vehicle</button>
-    <span class="muted" style="margin-left:auto">API: <code>/api/admin/vehicles</code></span>
+
+<!-- TABS -->
+<nav class="tabs affects-sticky" id="tabs">
+  <button class="tab-btn" data-tab="vehicles" aria-selected="true">Vehículos</button>
+  <button class="tab-btn" data-tab="clients"  aria-selected="false">Clientes</button>
+  <button class="tab-btn" data-tab="settings" aria-selected="false">Ajustes</button>
+  <div class="spacer"></div>
+  <span class="muted">API Vehicles: <code>/api/admin/vehicles</code></span>
+</nav>
+
+<!-- VIEW: VEHICLES -->
+<section id="view-vehicles">
+  <div class="wrap">
+    <!-- Controles -->
+    <div class="controls affects-sticky" id="vehControls">
+      <button data-filter="ALL">All</button>
+      <button data-filter="SUV">SUV</button>
+      <button data-filter="VAN">VAN</button>
+      <button id="btnReloadVehicles">Reload</button>
+      <button id="btnAddVehicle" class="primary">Add Vehicle</button>
+    </div>
+
+    <!-- Resumen -->
+    <div id="summaryVehicles" class="affects-sticky">
+      <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
+      <div class="card"><h2>ACTIVE</h2><p id="statActive">0</p></div>
+      <div class="card"><h2>INACTIVE</h2><p id="statInactive">0</p></div>
+      <div class="card"><h2>SUV</h2><p id="statSUV">0</p></div>
+      <div class="card"><h2>VAN</h2><p id="statVAN">0</p></div>
+    </div>
+
+    <div id="vehMsg" class="msg"></div>
+
+    <!-- Tabla Vehículos -->
+    <table role="grid" aria-label="Vehicles">
+      <thead>
+        <tr>
+          <th style="width:120px">Plate</th>
+          <th>Driver</th>
+          <th style="width:90px">Type</th>
+          <th style="width:80px">Year</th>
+          <th>Model</th>
+          <th style="width:110px">Active</th>
+          <th class="right" style="width:220px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="vehRows">
+        <tr><td colspan="7">Loading…</td></tr>
+      </tbody>
+    </table>
   </div>
+</section>
 
-  <!-- Resumen -->
-  <div id="summary" class="affects-sticky">
-    <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
-    <div class="card"><h2>ACTIVE</h2><p id="statActive">0</p></div>
-    <div class="card"><h2>INACTIVE</h2><p id="statInactive">0</p></div>
-    <div class="card"><h2>SUV</h2><p id="statSUV">0</p></div>
-    <div class="card"><h2>VAN</h2><p id="statVAN">0</p></div>
+<!-- VIEW: CLIENTS -->
+<section id="view-clients" hidden>
+  <div class="wrap">
+    <div class="controls affects-sticky" id="cliControls">
+      <button id="btnReloadClients">Reload</button>
+      <button id="btnAddClient" class="primary">Add Client</button>
+    </div>
+
+    <div id="summaryClients" class="affects-sticky">
+      <div class="card"><h2>TOTAL CLIENTS</h2><p id="cliTotal">0</p></div>
+      <div class="card"><h2>GOOD</h2><p id="cliGood">0</p></div>
+      <div class="card"><h2>OBSERVE</h2><p id="cliWatch">0</p></div>
+      <div class="card"><h2>RESTRICTED</h2><p id="cliRestricted">0</p></div>
+    </div>
+
+    <div id="cliMsg" class="msg"></div>
+
+    <table role="grid" aria-label="Clients">
+      <thead>
+        <tr>
+          <th style="width:26%">Name</th>
+          <th style="width:26%">Email</th>
+          <th style="width:18%">Phone</th>
+          <th style="width:14%">Rating</th>
+          <th class="right" style="width:16%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="cliRows">
+        <tr><td colspan="5">Loading…</td></tr>
+      </tbody>
+    </table>
   </div>
+</section>
 
-  <div id="msg" class="msg"></div>
+<!-- VIEW: SETTINGS (placeholder) -->
+<section id="view-settings" hidden>
+  <div class="wrap">
+    <div class="card">
+      <h2>Información</h2>
+      <p style="font-size:14px; margin-top:8px; color:var(--muted)">
+        Aquí podrás administrar reglas de temporada, excepción SLC, bloqueos, etc.
+        (placeholder – se conecta más adelante).
+      </p>
+    </div>
+  </div>
+</section>
 
-  <!-- Tabla -->
-  <table role="grid" aria-label="Vehicles">
-    <thead>
-      <tr>
-        <th style="width:120px">Plate</th>
-        <th>Driver</th>
-        <th style="width:90px">Type</th>
-        <th style="width:80px">Year</th>
-        <th>Model</th>
-        <th style="width:110px">Active</th>
-        <th class="right" style="width:220px">Actions</th>
-      </tr>
-    </thead>
-    <tbody id="rows">
-      <tr><td colspan="7">Loading…</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- Modal Add/Edit -->
-<div class="backdrop" id="backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+<!-- MODAL VEHICLE -->
+<div class="backdrop" id="vehBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
     <header>
-      <h2 id="modalTitle" style="margin:0;font-size:16px;font-weight:800">Add Vehicle</h2>
+      <h2 id="vehModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Vehicle</h2>
       <div style="flex:1"></div>
-      <button id="btnClose">Close</button>
+      <button id="vehBtnClose">Close</button>
     </header>
     <div class="body">
       <div class="grid">
@@ -263,9 +268,9 @@
           <label><input type="checkbox" id="fActive"> Active</label>
         </div>
       </div>
-      <div id="formErr" class="err-msg"></div>
+      <div id="vehFormErr" class="err-msg"></div>
       <div class="actions">
-        <button id="btnSave" class="primary">Save</button>
+        <button id="vehBtnSave" class="primary">Save</button>
       </div>
     </div>
   </div>
@@ -273,29 +278,65 @@
 
 <script>
 /* =================== CONFIG =================== */
-const ADMIN_KEY = 'supersecreto123';      // header fijo
-const API_URL   = '/api/admin/vehicles';  // ruta de la API
+const ADMIN_KEY = 'supersecreto123';
+const API_VEH   = '/api/admin/vehicles';
+const API_CLI   = '/api/admin/clients';   // puede no existir aún (manejamos 404)
 
-/* =================== STICKY HEAD =================== */
+/* =================== STICKY TOP =================== */
 function setTheadTop(){
-  const header   = document.querySelector('header');
-  const blocks   = document.querySelectorAll('.affects-sticky');
+  const header = document.querySelector('header');
+  const bars   = document.querySelectorAll('.affects-sticky');
   let top = 0;
   if (header) top += header.getBoundingClientRect().height;
-  blocks.forEach(el => top += el.getBoundingClientRect().height);
-  // margen visual
-  top += 6;
+  bars.forEach(el => top += el.getBoundingClientRect().height);
+  top += 6; // margen visual
   document.documentElement.style.setProperty('--theadTop', top + 'px');
 }
 window.addEventListener('load', setTheadTop);
 window.addEventListener('resize', setTheadTop);
 
-/* =================== STATE & UI =================== */
+/* =================== TABS =================== */
+const tabsEl = document.getElementById('tabs');
+const views = {
+  vehicles: document.getElementById('view-vehicles'),
+  clients : document.getElementById('view-clients'),
+  settings: document.getElementById('view-settings'),
+};
+tabsEl.addEventListener('click', (e)=>{
+  const b = e.target.closest('.tab-btn'); if(!b) return;
+  const t = b.dataset.tab;
+  [...tabsEl.querySelectorAll('.tab-btn')].forEach(x=>x.setAttribute('aria-selected', String(x===b)));
+  Object.entries(views).forEach(([key,sec])=> sec.hidden = key!==t );
+  setTheadTop();
+  if (t==='vehicles') loadVehicles();
+  if (t==='clients')  loadClients();
+});
+
+/* =================== ENV / LOGOUT =================== */
 const envInfo = document.getElementById('envInfo');
 envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
+document.getElementById('btnLogout').addEventListener('click', ()=>{
+  localStorage.removeItem('ADMIN_KEY');
+  localStorage.removeItem('bonanza_admin_ok');
+  location.href = '/login.html';
+});
 
-const rowsEl   = document.getElementById('rows');
-const msgEl    = document.getElementById('msg');
+/* ========== HELPERS GENERALES ========== */
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function api(url, method='GET', body=null){
+  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
+  if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+  const r = await fetch(url, opt);
+  let data={}; try{ data = await r.json(); }catch{}
+  if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
+  return data;
+}
+
+/* =========================================================
+   VEHÍCULOS
+   ========================================================= */
+const vehMsg   = document.getElementById('vehMsg');
+const vehRows  = document.getElementById('vehRows');
 const stat = {
   total: document.getElementById('statTotal'),
   active: document.getElementById('statActive'),
@@ -303,56 +344,28 @@ const stat = {
   suv: document.getElementById('statSUV'),
   van: document.getElementById('statVAN'),
 };
-
-const backdrop   = document.getElementById('backdrop');
-const btnClose   = document.getElementById('btnClose');
-const btnSave    = document.getElementById('btnSave');
-const fPlate = document.getElementById('fPlate');
-const fDriver= document.getElementById('fDriver');
-const fKind  = document.getElementById('fKind');
-const fYear  = document.getElementById('fYear');
-const fModel = document.getElementById('fModel');
-const fActive= document.getElementById('fActive');
-const formErr= document.getElementById('formErr');
-const modalTitle = document.getElementById('modalTitle');
-
 let allVehicles = [];
 let filterKind  = 'ALL';
 let editingId   = null;
 
-/* =================== HELPERS =================== */
+function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 function normalizeVehicle(v){
-  const kindNorm = ((v.kind||'').toString().trim().toUpperCase() === 'VAN') ? 'VAN' : 'SUV';
-  return {
-    id: v.id != null ? String(v.id) : '',
-    plate: (v.plate||'').trim(),
-    driver_name: (v.driver_name||'').trim(),
-    kind: kindNorm,
-    year: v.year != null ? Number(v.year) : null,
-    model: (v.model||'').trim(),
-    active: !!v.active
-  };
+  const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN') ? 'VAN':'SUV';
+  return { id:String(v.id||''), plate:(v.plate||'').trim(), driver_name:(v.driver_name||'').trim(), kind:kindNorm, year:(v.year!=null?Number(v.year):null), model:(v.model||'').trim(), active:!!v.active };
 }
-function showMsg(text, ok=true){ msgEl.textContent = text || ''; msgEl.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka!==0) return ka; return (a.plate||'').localeCompare(b.plate||''); }
 function computeStats(){
-  const total = allVehicles.length;
-  const active = allVehicles.filter(v=>!!v.active).length;
-  const suv = allVehicles.filter(v=>v.kind==='SUV').length;
-  const van = allVehicles.filter(v=>v.kind==='VAN').length;
-  stat.total.textContent = total;
-  stat.active.textContent = active;
-  stat.inactive.textContent = Math.max(0, total - active);
-  stat.suv.textContent = suv;
-  stat.van.textContent = van;
+  const total=allVehicles.length, active=allVehicles.filter(v=>v.active).length;
+  stat.total.textContent=total; stat.active.textContent=active;
+  stat.inactive.textContent=Math.max(0,total-active);
+  stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
+  stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
 }
-function visibleList(){
-  if (filterKind === 'ALL') return allVehicles;
-  return allVehicles.filter(v=>v.kind === filterKind);
-}
-function render(){
+function visibleVeh(){ return (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
+function renderVehicles(){
   computeStats();
-  const list = visibleList();
-  rowsEl.innerHTML = list.map(v=>{
+  const list = visibleVeh();
+  vehRows.innerHTML = list.map(v=>{
     const on = !!v.active;
     return `
       <tr data-id="${v.id}">
@@ -361,14 +374,12 @@ function render(){
         <td>${escapeHtml(v.kind)}</td>
         <td>${v.year ?? ''}</td>
         <td>${escapeHtml(v.model || '')}</td>
-        <td><span class="badge ${on ? 'on' : 'off'}">${on ? 'ACTIVE' : 'OFF'}</span></td>
+        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
         <td class="right actions">
           <div class="btns">
             <button class="btn btn-edit"      data-action="edit">Edit</button>
             <button class="btn btn-danger"    data-action="delete">Delete</button>
-            <button class="btn ${on ? 'btn-toggle-on' : 'btn-toggle-off'}" data-action="toggle">
-              ${on ? 'Turn Off' : 'Turn On'}
-            </button>
+            <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
           </div>
         </td>
       </tr>
@@ -376,187 +387,187 @@ function render(){
   }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
 }
 
-function escapeHtml(s){
-  return (s||'').toString().replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-
-function sortVehicles(a,b){
-  const ka = (a.kind||'').localeCompare(b.kind||'');
-  if (ka!==0) return ka;
-  return (a.plate||'').localeCompare(b.plate||'');
-}
-
-/* =================== API =================== */
-async function api(method, body, qs=''){
-  const url = API_URL + (qs ? `?${qs}` : '');
-  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
-  if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
-  const r = await fetch(url, opt);
-  let data = {};
-  try{ data = await r.json(); }catch{}
-  if (r.status === 401) throw new Error('Unauthorized (ADMIN_KEY)');
-  if (!r.ok || data.ok === false) throw new Error(data.error || ('HTTP '+r.status));
-  return data;
-}
-
-/* =================== LOAD =================== */
 async function loadVehicles(){
-  rowsEl.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  showMsg('');
+  vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  vehShowMsg('');
   try{
-    const data = await api('GET');
+    const data = await api(API_VEH, 'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    render();
-    showMsg('Loaded successfully.');
-    setTheadTop(); // por si cambió el alto del resumen
+    renderVehicles();
+    vehShowMsg('Loaded successfully.');
+    setTheadTop();
   }catch(e){
-    allVehicles = [];
-    render();
-    showMsg('Error loading: ' + (e.message||e), false);
+    allVehicles=[]; renderVehicles();
+    vehShowMsg('Error loading: '+(e.message||e), false);
   }
 }
 
-/* =================== MODAL ADD/EDIT =================== */
-function openAdd(){
-  editingId = null;
-  modalTitle.textContent = 'Add Vehicle';
-  fPlate.value=''; fDriver.value='';
-  fKind.value='SUV';
-  fYear.value = new Date().getFullYear();
-  fModel.value=''; fActive.checked=false;
-  formErr.textContent='';
-  backdrop.classList.add('open');
-  setTimeout(()=>fPlate.focus(), 50);
+/* Modal Vehículos */
+const vehBackdrop = document.getElementById('vehBackdrop');
+const vehBtnClose = document.getElementById('vehBtnClose');
+const vehBtnSave  = document.getElementById('vehBtnSave');
+const vehFormErr  = document.getElementById('vehFormErr');
+const vehModalTitle = document.getElementById('vehModalTitle');
+const fPlate = document.getElementById('fPlate');
+const fDriver= document.getElementById('fDriver');
+const fKind  = document.getElementById('fKind');
+const fYear  = document.getElementById('fYear');
+const fModel = document.getElementById('fModel');
+const fActive= document.getElementById('fActive');
+
+function openAddVehicle(){
+  editingId=null; vehModalTitle.textContent='Add Vehicle';
+  fPlate.value=''; fDriver.value=''; fKind.value='SUV';
+  fYear.value=new Date().getFullYear(); fModel.value=''; fActive.checked=false;
+  vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
-function openEditById(id){
-  const v = allVehicles.find(x=>x.id===id);
-  if (!v) return;
-  editingId = id;
-  modalTitle.textContent = 'Edit Vehicle';
-  fPlate.value = v.plate || '';
-  fDriver.value = v.driver_name || '';
-  fKind.value = v.kind || 'SUV';
-  fYear.value = v.year || new Date().getFullYear();
-  fModel.value = v.model || '';
-  fActive.checked = !!v.active;
-  formErr.textContent='';
-  backdrop.classList.add('open');
-  setTimeout(()=>fPlate.focus(), 50);
+function openEditVehicle(id){
+  const v = allVehicles.find(x=>x.id===id); if(!v) return;
+  editingId=id; vehModalTitle.textContent='Edit Vehicle';
+  fPlate.value=v.plate||''; fDriver.value=v.driver_name||''; fKind.value=v.kind||'SUV';
+  fYear.value=v.year||new Date().getFullYear(); fModel.value=v.model||''; fActive.checked=!!v.active;
+  vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
-function closeModal(){ backdrop.classList.remove('open'); }
+function closeVehModal(){ vehBackdrop.classList.remove('open'); }
 
-/* Guardar (add/update) */
-btnSave.addEventListener('click', async ()=>{
-  formErr.textContent='';
-  const plate = fPlate.value.trim();
-  const driver_name = fDriver.value.trim();
-  const kind = (fKind.value || 'SUV').toUpperCase();
-  const year = Number(fYear.value || 0);
-  const model = fModel.value.trim();
-  const active = !!fActive.checked;
-
-  if (!plate || !driver_name || !year){
-    formErr.textContent = 'Plate, Driver and Year are required.'; return;
-  }
-
-  btnSave.disabled = true;
+vehBtnSave.addEventListener('click', async ()=>{
+  vehFormErr.textContent='';
+  const plate=fPlate.value.trim(), driver_name=fDriver.value.trim();
+  const kind=(fKind.value||'SUV').toUpperCase(); const year=Number(fYear.value||0);
+  const model=fModel.value.trim(); const active=!!fActive.checked;
+  if(!plate||!driver_name||!year){ vehFormErr.textContent='Plate, Driver and Year are required.'; return; }
+  vehBtnSave.disabled=true;
   try{
-    const payload = { id: editingId, plate, driver_name, kind, year, model, active };
-    const data = await api('POST', payload);
+    const payload={ id:editingId, plate, driver_name, kind, year, model, active };
+    const data = await api(API_VEH, 'POST', payload);
     const v = normalizeVehicle(data.vehicle || payload);
-    const i = allVehicles.findIndex(x=>x.id === v.id);
-    if (i>=0) allVehicles[i] = { ...allVehicles[i], ...v };
-    else allVehicles.push(v);
-    allVehicles.sort(sortVehicles);
-    render();
-    showMsg(editingId ? 'Saved changes.' : 'Vehicle added.');
-    closeModal();
+    const i = allVehicles.findIndex(x=>x.id===v.id);
+    if(i>=0) allVehicles[i]={...allVehicles[i],...v}; else allVehicles.push(v);
+    allVehicles.sort(sortVehicles); renderVehicles(); vehShowMsg(editingId?'Saved changes.':'Vehicle added.'); closeVehModal();
   }catch(e){
-    formErr.textContent = e.message || 'Error saving.';
-  }finally{
-    btnSave.disabled = false;
-  }
+    vehFormErr.textContent = e.message || 'Error saving.';
+  }finally{ vehBtnSave.disabled=false; }
 });
+vehBtnClose.addEventListener('click', closeVehModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeVehModal(); });
 
-btnClose.addEventListener('click', closeModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+/* Delegación acciones tabla vehículos */
+vehRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr = btn.closest('tr[data-id]'); if(!tr) return;
+  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
 
-/* =================== TABLE ACTIONS (delegation) =================== */
-rowsEl.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]');
-  if (!btn) return;
-  const tr = btn.closest('tr[data-id]');
-  if (!tr) return;
-  const id = tr.getAttribute('data-id');
-  const action = btn.getAttribute('data-action');
-
-  if (action === 'edit'){
-    openEditById(id);
-    return;
-  }
-
-  if (action === 'delete'){
-    const v = allVehicles.find(x=>x.id===id);
-    if (!v) return;
-    const sure = confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`);
-    if (!sure) return;
+  if (action==='edit'){ openEditVehicle(id); return; }
+  if (action==='delete'){
+    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
     try{
-      await api('DELETE', null, 'id='+encodeURIComponent(id));
-      allVehicles = allVehicles.filter(x=>x.id!==id);
-      render(); showMsg('Deleted.');
-    }catch(e){
-      showMsg('Error deleting: ' + (e.message||e), false);
-    }
+      await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allVehicles = allVehicles.filter(x=>x.id!==id); renderVehicles(); vehShowMsg('Deleted.');
+    }catch(e){ vehShowMsg('Error deleting: '+(e.message||e), false); }
     return;
   }
-
-  if (action === 'toggle'){
+  if (action==='toggle'){
     const v = allVehicles.find(x=>x.id===id); if(!v) return;
     const next = !v.active;
     try{
-      await api('POST', { id, active: next });
-      v.active = next;
-      render(); showMsg('Updated.');
-    }catch(e){
-      showMsg('Error updating: ' + (e.message||e), false);
-    }
+      await api(API_VEH, 'POST', { id, active: next });
+      v.active = next; renderVehicles(); vehShowMsg('Updated.');
+    }catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
     return;
   }
 });
 
-/* =================== FILTERS & GLOBAL BTNS =================== */
-document.getElementById('btnAdd').addEventListener('click', openAdd);
-document.getElementById('btnReload').addEventListener('click', loadVehicles);
-document.getElementById('controls').addEventListener('click', (e)=>{
+/* Botones globales vehículos */
+document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
+document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
+document.getElementById('vehControls').addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-filter]'); if(!b) return;
-  filterKind = b.getAttribute('data-filter') || 'ALL';
-  render();
+  filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles();
 });
-document.getElementById('btnLogout').addEventListener('click', ()=>{
-  localStorage.removeItem('ADMIN_KEY');
-  localStorage.removeItem('bonanza_admin_ok');
-  location.href = '/login.html';
+
+/* =========================================================
+   CLIENTES (tolerante si la API aún no existe)
+   ========================================================= */
+const cliMsg  = document.getElementById('cliMsg');
+const cliRows = document.getElementById('cliRows');
+const cliStat = {
+  total: document.getElementById('cliTotal'),
+  good: document.getElementById('cliGood'),
+  watch: document.getElementById('cliWatch'),
+  restricted: document.getElementById('cliRestricted'),
+};
+let allClients = [];
+
+function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+
+function normalizeClient(c){
+  return {
+    id: String(c.id||''),
+    name: (c.name||'').trim(),
+    email: (c.email||'').trim(),
+    phone: (c.phone||'').trim(),
+    rating: (c.rating||'good'), // good|watch|restricted
+  };
+}
+function computeCliStats(){
+  cliStat.total.textContent = allClients.length;
+  cliStat.good.textContent = allClients.filter(c=>c.rating==='good').length;
+  cliStat.watch.textContent = allClients.filter(c=>c.rating==='watch').length;
+  cliStat.restricted.textContent = allClients.filter(c=>c.rating==='restricted').length;
+}
+function renderClients(){
+  computeCliStats();
+  cliRows.innerHTML = allClients.map(c=>`
+    <tr data-id="${c.id}">
+      <td>${escapeHtml(c.name)}</td>
+      <td>${escapeHtml(c.email)}</td>
+      <td>${escapeHtml(c.phone)}</td>
+      <td>
+        <span class="badge ${c.rating==='restricted'?'off':'on'}">
+          ${escapeHtml(c.rating.toUpperCase())}
+        </span>
+      </td>
+      <td class="right actions">
+        <div class="btns">
+          <button class="btn btn-edit"   data-action="edit">Edit</button>
+          <button class="btn btn-danger" data-action="delete">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="5">No clients.</td></tr>';
+}
+
+async function loadClients(){
+  cliRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+  cliShowMsg('');
+  try{
+    const data = await api(API_CLI, 'GET');   // <- si 404, cae al catch
+    const raw  = Array.isArray(data.clients) ? data.clients : [];
+    allClients = raw.map(normalizeClient);
+    renderClients();
+    cliShowMsg('Loaded successfully.');
+    setTheadTop();
+  }catch(e){
+    allClients = [];
+    renderClients();
+    // Mensaje amigable si el endpoint no existe aún
+    const msg = (String(e.message||'').includes('404')) ?
+      'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.' :
+      'Error loading clients: ' + (e.message||e);
+    cliShowMsg(msg, false);
+  }
+}
+
+document.getElementById('btnReloadClients').addEventListener('click', loadClients);
+/* (Opcional) abrir modal Add Client más adelante */
+document.getElementById('btnAddClient').addEventListener('click', ()=>{
+  alert('Modal de Clientes pendiente. La vista ya está lista para cuando expongas /api/admin/clients.');
 });
 
 /* =================== BOOT =================== */
-loadVehicles();
-</script>
-  <script>
-  function ajustarEspaciador(){
-    const header = document.querySelector("header");
-    const spacer = document.getElementById("stickySpacer");
-    if(header && spacer){
-      spacer.style.height = header.offsetHeight + "px";
-    }
-  }
-
-  // Ajusta cuando carga la página
-  window.addEventListener("load", ajustarEspaciador);
-  // Ajusta también si redimensionas la ventana
-  window.addEventListener("resize", ajustarEspaciador);
+loadVehicles(); // tab inicial
 </script>
 </body>
 </html>
