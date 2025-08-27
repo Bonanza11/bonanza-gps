@@ -1,71 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bonanza — Headquarters (Stable)</title>
+<title>Bonanza • Headquarters</title>
 <style>
-  :root{
-    --bg:#0f1220; --card:#171a2b; --line:#2d3650;
-    --text:#e9eef7; --muted:#9fb0c8; --ok:#28d07f; --bad:#ff6464; --accent:#f7b06a;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-  header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #0002;background:#0b0f1d}
-  header h1{font-size:18px;margin:0;font-weight:800}
-  .pill{padding:4px 8px;border-radius:999px;border:1px solid #ffffff1a;font-size:12px;color:#cfe}
-  .wrap{max-width:1100px;margin:18px auto;padding:0 16px}
-  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  button{background:#27314a;color:var(--text);border:1px solid #ffffff1f;border-radius:8px;padding:8px 12px;cursor:pointer}
-  button:hover{filter:brightness(1.06)}
-  .danger{background:#3a2230}
-  .primary{background:#3a4364}
-  .spacer{flex:1}
-  .msg{margin:10px 0 12px;font-size:14px}
-  .msg.ok{color:var(--muted)} .msg.err{color:var(--bad)}
+  :root{--bg:#0f1220;--card:#171a2b;--line:#2a3550;--text:#e9eef7;--muted:#9fb0c8;--ok:#28d07f;--bad:#ff5d5d;--accent:#f7b06a}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  header{display:flex;gap:10px;align-items:center;padding:14px 16px;background:#00000030;border-bottom:1px solid #0003;position:sticky;top:0}
+  header h1{font-size:18px;margin:0;font-weight:800} .pill{font-size:12px;padding:6px 10px;border-radius:999px;background:#ffffff10;border:1px solid #ffffff1a;color:var(--muted)}
+  .wrap{max-width:1100px;margin:16px auto;padding:0 16px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  button{background:#2a3550;color:var(--text);border:1px solid #ffffff1f;border-radius:8px;padding:8px 12px;cursor:pointer}
+  button:hover{filter:brightness(1.08)} .primary{background:#3b4364} .danger{background:#3a2030}
+  .spacer{flex:1} .muted{color:var(--muted)} .count{color:var(--muted);font-size:13px}
   table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   th,td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px;text-align:left}
-  th{background:#10162a;color:#cdd6ea;position:sticky;top:58px;z-index:1}
-  tbody tr:hover{background:#1a2035}
-  .right{text-align:right}
-  .badge{padding:3px 8px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #ffffff22}
-  .on{background:#163723;color:#87f1bb;border-color:#2aa66d}
-  .off{background:#3a2424;color:#ffb0b0;border-color:#b44}
-  /* Drawer (form) */
-  .drawer{position:fixed;top:0;right:-420px;width:min(420px,96vw);height:100%;
-          background:#151c31;border-left:1px solid #2a3550;box-shadow:-10px 0 40px #0008;
-          transition:right .25s ease;z-index:50;display:flex;flex-direction:column}
-  .drawer.open{right:0}
-  .drawer header{background:#1a2340;border-bottom:1px solid #2a3550}
-  .drawer .body{padding:16px;overflow:auto;flex:1}
-  .field{margin-bottom:12px}
+  th{background:#11162a;color:#cfd9f1;position:sticky;top:52px;z-index:1}
+  tbody tr:hover{background:#1b2136}
+  .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700;display:inline-block}
+  .on{background:#143a26;color:var(--ok);border:1px solid #1e8b59}
+  .off{background:#3a2323;color:var(--bad);border:1px solid #b84a4a}
+  .msg{margin:8px 0 12px}
+  /* Modal */
+  .backdrop{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50}
+  .backdrop.open{display:flex}
+  .modal{width:min(680px,96vw);background:#1b2136;border:1px solid #2b3853;border-radius:12px;box-shadow:0 18px 50px #0009}
+  .modal header{display:flex;align-items:center;gap:10px;background:#1e2740;border-bottom:1px solid #2b3853;border-radius:12px 12px 0 0;padding:12px 16px}
+  .modal .body{padding:16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid .full{grid-column:1/-1}
   .field label{display:block;font-size:12px;color:#cbd3e7;margin-bottom:6px}
-  input,select{width:100%;height:40px;border-radius:8px;border:1px solid #30405a;background:#0f152a;color:#e9eef7;padding:0 10px}
-  .drawer .actions{padding:12px 16px;border-top:1px solid #2a3550;display:flex;gap:8px;justify-content:flex-end}
-  .err{color:var(--bad);font-size:12px;min-height:16px}
+  .field input,.field select{width:100%;height:40px;border-radius:8px;border:1px solid #30405a;background:#12182a;color:#e9eef7;padding:0 10px}
+  .modal .actions{display:flex;gap:10px;justify-content:flex-end;padding:12px 16px 16px}
+  .err{color:#ff8080;font-size:12px;min-height:16px;padding-top:4px}
 </style>
 </head>
 <body>
 <header>
-  <h1>Bonanza — Headquarters</h1>
+  <h1>Bonanza Admin — Cuartel General</h1>
   <span id="env" class="pill"></span>
   <div class="spacer"></div>
+  <span class="muted">API: <code>/api/admin/vehicles</code></span>
   <button id="logout" class="danger">Logout</button>
 </header>
 
 <div class="wrap">
-  <div class="toolbar" id="toolbar">
-    <button data-filter="ALL">All</button>
-    <button data-filter="SUV">SUV</button>
-    <button data-filter="VAN">VAN</button>
+  <div class="controls">
+    <button id="all">All</button>
+    <button id="suv">SUV</button>
+    <button id="van">VAN</button>
     <button id="reload">Reload</button>
     <button id="add" class="primary">Add Vehicle</button>
     <div class="spacer"></div>
-    <small class="pill">API: /api/admin/vehicles</small>
-    <small id="count" style="margin-left:8px;color:var(--muted)"></small>
+    <span id="count" class="count"></span>
   </div>
 
-  <div id="msg" class="msg"></div>
+  <div id="msg" class="msg muted"></div>
 
   <table>
     <thead>
@@ -79,217 +69,202 @@
         <th class="right" style="width:220px">Actions</th>
       </tr>
     </thead>
-    <tbody id="rows">
-      <tr><td colspan="7">Loading…</td></tr>
-    </tbody>
+    <tbody id="rows"><tr><td colspan="7">Loading…</td></tr></tbody>
   </table>
 </div>
 
-<!-- Drawer -->
-<aside id="drawer" class="drawer" aria-hidden="true">
-  <header>
-    <h2 id="drawTitle" style="font-size:16px;font-weight:800;margin:0">Add Vehicle</h2>
-    <div class="spacer"></div>
-    <button id="close">Close</button>
-  </header>
-  <div class="body">
-    <div class="field"><label for="fPlate">Plate</label><input id="fPlate" placeholder="UT-123 ABC"></div>
-    <div class="field"><label for="fDriver">Driver Name</label><input id="fDriver" placeholder="John Doe"></div>
-    <div class="field"><label for="fKind">Type</label>
-      <select id="fKind"><option value="SUV">SUV</option><option value="VAN">VAN</option></select>
+<!-- Modal -->
+<div id="backdrop" class="backdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <header>
+      <h2 id="mTitle" style="font-size:16px;font-weight:800;margin:0">Edit Vehicle</h2>
+      <div class="spacer"></div>
+      <button id="close">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field"><label>Plate</label><input id="fPlate" placeholder="UT-123 ABC"></div>
+        <div class="field"><label>Driver</label><input id="fDriver" placeholder="John Doe"></div>
+        <div class="field"><label>Type</label>
+          <select id="fKind"><option>SUV</option><option>VAN</option></select>
+        </div>
+        <div class="field"><label>Year</label><input id="fYear" type="number" min="2000" max="2099" placeholder="2025"></div>
+        <div class="field full"><label>Model</label><input id="fModel" placeholder="Suburban / Sprinter"></div>
+        <div class="field full"><label><input type="checkbox" id="fActive"> Active</label></div>
+      </div>
+      <div id="fErr" class="err"></div>
+      <div class="actions"><button id="save" class="primary">Save</button></div>
     </div>
-    <div class="field"><label for="fYear">Year</label><input id="fYear" type="number" min="2000" max="2099" placeholder="2025"></div>
-    <div class="field"><label for="fModel">Model / Subtype</label><input id="fModel" placeholder="Suburban LT / Sprinter 2500"></div>
-    <div class="field"><label><input type="checkbox" id="fActive"> Active</label></div>
-    <div id="formErr" class="err"></div>
   </div>
-  <div class="actions">
-    <button id="save" class="primary">Save</button>
-  </div>
-</aside>
+</div>
 
 <script>
-/* ===== Config ===== */
+/* ---------- Config ---------- */
 const ADMIN_KEY = 'supersecreto123';
-const API_URL   = '/api/admin/vehicles';
-document.getElementById('env').textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
+const API = '/api/admin/vehicles';
 
-/* ===== State ===== */
+/* ---------- State ---------- */
 let all = [];
-let filter = 'ALL';
+let filter = 'ALL'; // ALL|SUV|VAN
 let editingId = null;
 
-/* ===== Shortcuts ===== */
-const $ = (s)=>document.querySelector(s);
-const rows   = $('#rows');
-const msg    = $('#msg');
-const count  = $('#count');
-const drawer = $('#drawer');
-const drawTitle = $('#drawTitle');
-const fPlate = $('#fPlate');
-const fDriver= $('#fDriver');
-const fKind  = $('#fKind');
-const fYear  = $('#fYear');
-const fModel = $('#fModel');
-const fActive= $('#fActive');
-const formErr= $('#formErr');
+/* ---------- UI refs ---------- */
+const env = document.getElementById('env');
+const rows = document.getElementById('rows');
+const msg  = document.getElementById('msg');
+const count= document.getElementById('count');
+const backdrop = document.getElementById('backdrop');
+const mTitle = document.getElementById('mTitle');
+const fPlate = document.getElementById('fPlate');
+const fDriver= document.getElementById('fDriver');
+const fKind  = document.getElementById('fKind');
+const fYear  = document.getElementById('fYear');
+const fModel = document.getElementById('fModel');
+const fActive= document.getElementById('fActive');
+const fErr   = document.getElementById('fErr');
 
-/* ===== Helpers ===== */
-const esc = s => (s??'').toString().replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-const show = (t, ok=true)=>{ msg.className='msg ' + (ok?'ok':'err'); msg.textContent=t; };
-const normKind = k => (String(k||'').trim().toUpperCase()==='VAN') ? 'VAN' : 'SUV';
-const normalize = v => ({
-  id: v.id!=null ? String(v.id) : '',
-  plate: String(v.plate||'').trim(),
-  driver_name: String(v.driver_name||'').trim(),
-  kind: normKind(v.kind),
-  year: (v.year==null || isNaN(v.year)) ? null : Number(v.year),
-  model: String(v.model||'').trim(),
-  active: !!v.active
-});
+env.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
-/* ===== Fetch with timeout (robusto) ===== */
-async function api(method, body, qs='', timeoutMs=12000){
-  const controller = new AbortController();
-  const t = setTimeout(()=>controller.abort(), timeoutMs);
-  const url = API_URL + (qs?`?${qs}`:'');
-  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY }, signal: controller.signal };
-  if (body){ opt.headers['Content-Type']='application/json'; opt.body=JSON.stringify(body); }
-  const r = await fetch(url, opt).catch(e=>{ throw new Error(e.name==='AbortError'?'Timeout':'Network error'); });
-  clearTimeout(t);
-  let data={}; try{ data=await r.json(); }catch{}
-  if (r.status===401) throw new Error('Unauthorized');
+/* ---------- Helpers ---------- */
+const h = (s)=> (s??'').toString().replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function normalize(v){
+  return {
+    id: String(v.id),
+    plate: (v.plate||'').trim(),
+    driver_name: (v.driver_name||'').trim(),
+    kind: ((v.kind||'SUV')+'').trim().toUpperCase()==='VAN'?'VAN':'SUV',
+    year: Number(v.year)||'',
+    model: (v.model||'').trim(),
+    active: !!v.active
+  };
+}
+function show(text, ok=true){ msg.textContent = text; msg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+
+/* ---------- API ---------- */
+async function call(method, body, qs=''){
+  const r = await fetch(API + (qs?`?${qs}`:''), {
+    method,
+    headers: { 'x-admin-key': ADMIN_KEY, ...(body?{'Content-Type':'application/json'}:{}) },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let data={}; try{ data = await r.json() }catch{}
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
 
-/* ===== Render ===== */
-function visible(){ return filter==='ALL' ? all : all.filter(v => v.kind===filter); }
+/* ---------- Load & render ---------- */
+async function load(){
+  rows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  count.textContent = ''; show('');
+  try{
+    const data = await call('GET');
+    all = (data.vehicles||[]).map(normalize);
+    render(); show('Loaded successfully.');
+  }catch(e){
+    all = []; render(); show('API error: '+(e.message||e), false);
+  }
+}
+function visible(){
+  if (filter==='ALL') return all;
+  return all.filter(v => v.kind === filter);
+}
 function render(){
   const list = visible();
-  count.textContent = `Loaded ${list.length} vehicle${list.length===1?'':'s'}`;
+  count.textContent = `Loaded ${list.length} vehicles`;
   rows.innerHTML = list.length ? list.map(v=>{
     const on = !!v.active;
-    return `<tr data-id="${esc(v.id)}">
-      <td>${esc(v.plate)}</td>
-      <td>${esc(v.driver_name)}</td>
-      <td>${esc(v.kind)}</td>
-      <td>${esc(v.year??'')}</td>
-      <td>${esc(v.model??'')}</td>
-      <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-      <td class="right">
-        <button data-act="edit">Edit</button>
-        <button data-act="del" class="danger">Delete</button>
-        <button data-act="${on?'off':'on'}">${on?'Turn Off':'Turn On'}</button>
-      </td>
-    </tr>`;
-  }).join('') : `<tr><td colspan="7">No vehicles.</td></tr>`;
+    return `
+      <tr>
+        <td>${h(v.plate)}</td>
+        <td>${h(v.driver_name)}</td>
+        <td>${h(v.kind)}</td>
+        <td>${h(v.year)}</td>
+        <td>${h(v.model)}</td>
+        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
+        <td style="text-align:right">
+          <button onclick="openEdit('${v.id}')">Edit</button>
+          <button class="danger" onclick="doDelete('${v.id}')">Delete</button>
+          <button onclick="toggleActive('${v.id}', ${on?'false':'true'})">${on?'Turn Off':'Turn On'}</button>
+        </td>
+      </tr>`;
+  }).join('') : '<tr><td colspan="7">No vehicles.</td></tr>';
 }
 
-/* ===== Drawer ===== */
-function openAdd(){
-  editingId=null; drawTitle.textContent='Add Vehicle';
-  fPlate.value=''; fDriver.value=''; fKind.value='SUV'; fYear.value=new Date().getFullYear();
-  fModel.value=''; fActive.checked=false; formErr.textContent='';
-  drawer.classList.add('open');
-}
-function openEdit(id){
+/* ---------- Actions ---------- */
+window.openEdit = (id)=>{
   const v = all.find(x=>x.id===id); if(!v) return;
-  editingId = id; drawTitle.textContent='Edit Vehicle';
-  fPlate.value=v.plate||''; fDriver.value=v.driver_name||'';
-  fKind.value=v.kind||'SUV'; fYear.value=v.year||new Date().getFullYear();
-  fModel.value=v.model||''; fActive.checked=!!v.active; formErr.textContent='';
-  drawer.classList.add('open');
+  editingId = id; mTitle.textContent = 'Edit Vehicle';
+  fPlate.value=v.plate; fDriver.value=v.driver_name; fKind.value=v.kind;
+  fYear.value=v.year||''; fModel.value=v.model||''; fActive.checked=!!v.active;
+  fErr.textContent=''; backdrop.classList.add('open');
+};
+function openAdd(){
+  editingId=null; mTitle.textContent='Add Vehicle';
+  fPlate.value=''; fDriver.value=''; fKind.value='SUV'; fYear.value=new Date().getFullYear();
+  fModel.value=''; fActive.checked=false; fErr.textContent='';
+  backdrop.classList.add('open');
 }
-function closeDrawer(){ drawer.classList.remove('open'); }
+document.getElementById('close').onclick = ()=> backdrop.classList.remove('open');
 
-/* ===== CRUD ===== */
-async function load(){
-  rows.innerHTML = `<tr><td colspan="7">Loading…</td></tr>`;
-  count.textContent='';
-  try{
-    const data = await api('GET');
-    all = (data.vehicles||[]).map(normalize);
-    render();
-    show('Loaded successfully.');
-  }catch(e){
-    all = [];
-    render();
-    show('Load error: '+(e.message||e), false);
-  }
-}
-
-async function save(){
-  formErr.textContent='';
-  const plate = fPlate.value.trim();
-  const driver = fDriver.value.trim();
-  const year   = parseInt(fYear.value,10);
-  const model  = fModel.value.trim();
-  const kind   = normKind(fKind.value);
-  const active = !!fActive.checked;
-
-  if (!plate || !driver || !year || !model){
-    formErr.textContent = 'Plate, Driver, Year and Model are required.';
+document.getElementById('save').onclick = async ()=>{
+  fErr.textContent='';
+  const body = {
+    id: editingId || undefined,
+    plate: fPlate.value.trim(),
+    driver_name: fDriver.value.trim(),
+    kind: (fKind.value||'SUV').toUpperCase(),
+    year: Number(fYear.value||0),
+    model: fModel.value.trim(),
+    active: !!fActive.checked
+  };
+  if (!body.plate || !body.driver_name || !body.year){
+    fErr.textContent = 'Plate, Driver and Year are required.';
     return;
   }
-  const body = { id: editingId || undefined, plate, driver_name: driver, kind, year, model, active };
   try{
-    const data = await api('POST', body);
-    const v = normalize(data.vehicle || body);
+    const data = await call('POST', body);
+    const v = normalize(data.vehicle);
     const i = all.findIndex(x=>x.id===v.id);
-    if (i>=0) all[i] = { ...all[i], ...v }; else all.push(v);
-    render(); closeDrawer();
+    if (i>=0) all[i]=v; else all.push(v);
+    backdrop.classList.remove('open'); render();
     show(editingId ? 'Saved changes.' : 'Vehicle added.');
   }catch(e){
-    formErr.textContent = e.message || 'Save error';
+    fErr.textContent = e.message || 'Error saving.';
   }
-}
+};
 
-async function toggle(id, on){
+window.toggleActive = async (id, active)=>{
   try{
-    await api('POST', { id, active:on });
-    const v = all.find(x=>x.id===id); if (v) v.active=!!on;
+    await call('POST', { id, active });
+    const v = all.find(x=>x.id===id); if (v) v.active=!!active;
     render(); show('Updated.');
-  }catch(e){ show('Update error: '+(e.message||e), false); }
-}
+  }catch(e){ show('Error updating: '+(e.message||e), false); }
+};
 
-async function removeOne(id){
-  const v = all.find(x=>x.id===id);
-  if (!v) return;
+window.doDelete = async (id)=>{
+  const v = all.find(x=>x.id===id); if (!v) return;
   if (!confirm(`Delete vehicle "${v.plate}"?`)) return;
   try{
-    await api('DELETE', null, 'id='+encodeURIComponent(id));
-    all = all.filter(x=>x.id!==id);
-    render(); show('Deleted.');
-  }catch(e){ show('Delete error: '+(e.message||e), false); }
-}
+    await call('DELETE', null, 'id='+encodeURIComponent(id));
+    all = all.filter(x=>x.id!==id); render(); show('Deleted.');
+  }catch(e){ show('Error deleting: '+(e.message||e), false); }
+};
 
-/* ===== Wire events (sin inline onclick) ===== */
-document.getElementById('reload').addEventListener('click', load);
-document.getElementById('add').addEventListener('click', openAdd);
-document.getElementById('close').addEventListener('click', closeDrawer);
-document.getElementById('save').addEventListener('click', save);
-document.getElementById('logout').addEventListener('click', ()=>{
+/* ---------- Filters ---------- */
+document.getElementById('all').onclick = ()=>{ filter='ALL'; render(); };
+document.getElementById('suv').onclick = ()=>{ filter='SUV'; render(); };
+document.getElementById('van').onclick = ()=>{ filter='VAN'; render(); };
+document.getElementById('reload').onclick = load;
+document.getElementById('add').onclick = openAdd;
+
+/* ---------- Logout ---------- */
+document.getElementById('logout').onclick = ()=>{
   localStorage.removeItem('ADMIN_KEY');
   localStorage.removeItem('bonanza_admin_ok');
-  location.href='/login.html';
-});
-document.getElementById('toolbar').addEventListener('click', e=>{
-  const f = e.target?.dataset?.filter; if (!f) return;
-  filter = f; render();
-});
-rows.addEventListener('click', (e)=>{
-  const btn = e.target.closest('button'); if(!btn) return;
-  const tr  = e.target.closest('tr[data-id]'); if(!tr) return;
-  const id  = tr.getAttribute('data-id');
-  const act = btn.dataset.act;
-  if (act==='edit') openEdit(id);
-  else if (act==='del') removeOne(id);
-  else if (act==='on')  toggle(id, true);
-  else if (act==='off') toggle(id, false);
-});
+  location.href = '/login.html';
+};
 
-/* ===== Start ===== */
+/* ---------- Go! ---------- */
 load();
 </script>
 </body>
