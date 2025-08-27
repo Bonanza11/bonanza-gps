@@ -213,13 +213,14 @@ async function loadVehicles(){
     showMsg('API not reachable. ' + (e.message||e), false);
   }
 }
-
-/* =========== RENDER =========== */
 function visibleList(){
   if (filterKind==='ALL') return allVehicles;
-  return allVehicles.filter(v => normKind(v.kind) === filterKind);
+  return allVehicles.filter(v => {
+    // 🔑 normalizar: quitar corchetes, espacios, y poner mayúsculas
+    const k = (v.kind || '').replace(/[\[\]\s]/g,'').toUpperCase();
+    return k === filterKind;
+  });
 }
-
 function render(){
   const list = visibleList();
   countEl.textContent = `Loaded ${list.length} vehicles`;
