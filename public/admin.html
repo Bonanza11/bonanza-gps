@@ -24,7 +24,8 @@
     .spacer{ flex:1 }
     table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
     th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
-    th{ background:#11162a; color:#cdd6ea; position:sticky; top:50px; z-index:1 }
+    /* 👇 Fix: sin sticky para evitar que tape la primera fila */
+    th{ background:#11162a; color:#cdd6ea; }
     tbody tr:hover{ background:#1b2136 }
     .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
     .on{ background:#173523; color:var(--ok); border:1px solid #25a866 }
@@ -75,16 +76,10 @@
 <script>
 /* ====== CONFIG / AUTH ====== */
 const API_URL = '/api/admin/vehicles';
-
-// Cómo obtenemos la llave (sin hardcodearla):
 function getAdminKey(){
-  // si el login actual ya guarda ADMIN_KEY la usamos
   const k = localStorage.getItem('ADMIN_KEY') || sessionStorage.getItem('ADMIN_KEY');
-  // fallback (sólo para pruebas si aún no tienes login conectado):
   return k || 'supersecreto123';
 }
-
-// si no hay key guardada, intenta redirigir al login
 (function guard(){
   const k = getAdminKey();
   if (!k) location.href = '/login.html';
@@ -103,8 +98,6 @@ let filterKind = 'ALL'; // ALL | SUV | VAN
 
 /* ====== HELPERS ====== */
 function h(s){ return (s??'').toString().replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-
-// Normaliza SIEMPRE los campos que usamos
 function normalize(v){
   const kind = String(v.kind||'').trim().toUpperCase();
   return {
@@ -118,7 +111,7 @@ function normalize(v){
   };
 }
 
-/* ====== API (GET only en Paso 1) ====== */
+/* ====== API (GET only) ====== */
 async function apiGetVehicles(){
   const r = await fetch(API_URL, {
     headers: { 'x-admin-key': getAdminKey() }
@@ -164,7 +157,6 @@ function render(){
         <td>${h(v.model)}</td>
         <td><span class="badge ${v.active?'on':'off'}">${v.active?'ACTIVE':'OFF'}</span></td>
         <td class="right">
-          <!-- Paso 2: activaremos estos botones -->
           <button disabled title="Coming soon">Edit</button>
           <button disabled title="Coming soon">Delete</button>
           <button disabled title="Coming soon">${v.active?'Turn Off':'Turn On'}</button>
