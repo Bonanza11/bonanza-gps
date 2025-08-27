@@ -358,20 +358,30 @@ function render(){
       <tr data-id="${v.id}">
         <td>${escapeHtml(v.plate)}</td>
         <td>${escapeHtml(v.driver_name)}</td>
-        <td>${v.kind}</td>
+        <td>${escapeHtml(v.kind)}</td>
         <td>${v.year ?? ''}</td>
         <td>${escapeHtml(v.model || '')}</td>
-        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-        <td class="right">
-          <button data-action="edit">Edit</button>
-          <button data-action="delete" class="danger">Delete</button>
-          <button data-action="toggle">${on?'Turn Off':'Turn On'}</button>
+        <td><span class="badge ${on ? 'on' : 'off'}">${on ? 'ACTIVE' : 'OFF'}</span></td>
+        <td class="right actions">
+          <div class="btns">
+            <button class="btn btn-edit"      data-action="edit">Edit</button>
+            <button class="btn btn-danger"    data-action="delete">Delete</button>
+            <button class="btn ${on ? 'btn-toggle-on' : 'btn-toggle-off'}" data-action="toggle">
+              ${on ? 'Turn Off' : 'Turn On'}
+            </button>
+          </div>
         </td>
       </tr>
     `;
   }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
 }
-function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+function escapeHtml(s){
+  return (s||'').toString().replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 function sortVehicles(a,b){
   const ka = (a.kind||'').localeCompare(b.kind||'');
   if (ka!==0) return ka;
