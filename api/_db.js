@@ -19,7 +19,6 @@ if (!globalForPg.pool) {
     connectionTimeoutMillis: 10000,
     keepAlive: true,
   });
-
   globalForPg.pool.on("error", (err) => {
     console.error("[DB] Pool error:", err);
   });
@@ -28,14 +27,12 @@ if (!globalForPg.pool) {
 export const pool = globalForPg.pool;
 if (!globalThis.__pgPool) globalThis.__pgPool = { pool };
 
-// 👇 función query
+// Helpers
 export async function query(text, params = []) {
-  const res = await pool.query(text, params);
-  return res.rows;
+  const { rows } = await pool.query(text, params);
+  return rows;
 }
-
-// 👇 función dbPing (la que fallaba)
 export async function dbPing() {
-  const rows = await query("SELECT 1 as ok");
+  const rows = await query("select 1 as ok");
   return rows?.[0]?.ok === 1;
 }
