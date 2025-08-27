@@ -1,51 +1,33 @@
 // /api/admin/vehicles.js
-import { pool } from "../_db.js";
+import { pool, query } from "../_db.js";
 
-// === Auth helper ===
+// --- Auth ---
 function checkKey(req) {
   const hdr = req.headers["x-admin-key"] || req.headers["X-Admin-Key"];
   const envKey = process.env.ADMIN_KEY || "supersecreto123";
   return hdr && String(hdr) === String(envKey);
 }
 
-// === tiny query helper ===
-async function q(text, params = []) {
-  const { rows } = await pool.query(text, params);
-  return rows;
+// Normaliza y valida fields
+function norm(body) {
+  const v = {
+    id: body?.id ? String(body.id) : null,
+    plate: (body?.plate ?? "").toString().trim(),
+    driver_name: (body?.driver_name ?? "").toString().trim(),
+    kind: (body?.kind ?? "").toString().trim().toUpperCase(),
+    year: body?.year != null ? Number(body.year) : null,
+    model: (body?.model ?? "").toString().trim() || null,
+    active: !!body?.active,
+  };
+  if (v.kind !== "SUV" && v.kind !== "VAN") v.kind = "SUV";
+  return v;
 }
 
-// upsert que intenta 2 estrategias: constraint -> expresión upper(plate)
-async function upsertByConstraint({ plate, driver_name, kind, year, model, active }) {
-  return q(
-    `INSERT INTO vehicles (plate, driver_name, kind, year, model, active)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT ON CONSTRAINT uniq_vehicles_plate_ci
-     DO UPDATE SET
-       driver_name = EXCLUDED.driver_name,
-       kind        = EXCLUDED.kind,
-       year        = EXCLUDED.year,
-       model       = EXCLUDED.model,
-       active      = EXCLUDED.active
-     RETURNING id::text AS id, plate, driver_name, upper(kind) AS kind, year, model, active`,
-    [plate, driver_name, kind, Number(year), model || null, !!active]
-  );
-}
-
-async function upsertByExpression({ plate, driver_name, kind, year, model, active }) {
-  return q(
-    `INSERT INTO vehicles (plate, driver_name, kind, year, model, active)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT ((upper(plate)))
-     DO UPDATE SET
-       driver_name = EXCLUDED.driver_name,
-       kind        = EXCLUDED.kind,
-       year        = EXCLUDED.year,
-       model       = EXCLUDED.model,
-       active      = EXCLUDED.active
-     RETURNING id::text AS id, plate, driver_name, upper(kind) AS kind, year, model, active`,
-    [plate, driver_name, kind, Number(year), model || null, !!active]
-  );
-}
+// Leer registro formateado
+const SELECT_ONE =
+  `select id::text as id, plate, driver_name,
+          upper(kind) as kind, year, model, active
+   from vehicles where id = $1`;
 
 export default async function handler(req, res) {
   try {
@@ -54,79 +36,86 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "GET") {
-      const rows = await q(
-        `SELECT
-           id::text AS id,
-           plate,
-           driver_name,
-           upper(kind) AS kind,
-           year,
-           model,
-           active
-         FROM vehicles
-         ORDER BY kind, plate`
+      const rows = await query(
+        `select id::text as id, plate, driver_name,
+                upper(kind) as kind, year, model, active
+         from vehicles
+         order by kind, plate`
       );
       return res.json({ ok: true, vehicles: rows });
     }
 
     if (req.method === "POST") {
-      const { id, plate, driver_name } = req.body || {};
-      const kind  = String(req.body?.kind || "").toUpperCase().trim();
-      const year  = Number(req.body?.year || 0);
-      const model = (req.body?.model || "").trim();
-      const active= !!req.body?.active;
+      const b = norm(req.body || {});
 
-      if (!plate || !driver_name || !kind || !year) {
-        return res.status(400).json({ ok: false, error: "Missing fields" });
-      }
-      if (kind !== "SUV" && kind !== "VAN") {
-        return res.status(400).json({ ok: false, error: "kind must be SUV or VAN" });
-      }
+      // 1) Toggle rápido: {id, active} y NADA más
+      const onlyToggle =
+        b.id &&
+        Object.keys(req.body || {}).every(k => k === "id" || k === "active");
 
-      // UPDATE por id (id puede ser uuid o texto)
-      if (id) {
-        const rows = await q(
-          `UPDATE vehicles
-             SET plate = $2,
-                 driver_name = $3,
-                 kind = $4,
-                 year = $5,
-                 model = $6,
-                 active = $7
-           WHERE id::text = $1
-           RETURNING id::text AS id, plate, driver_name, upper(kind) AS kind, year, model, active`,
-          [String(id), plate.trim(), driver_name.trim(), kind, year, model || null, active]
+      if (onlyToggle) {
+        const { rows } = await pool.query(
+          `update vehicles set active = $2 where id::text = $1
+           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
+          [b.id, b.active]
         );
         if (!rows.length) return res.status(404).json({ ok: false, error: "Vehicle not found" });
         return res.json({ ok: true, vehicle: rows[0] });
       }
 
-      // INSERT con UPSERT por placa (case-insensitive)
-      try {
-        const rows = await upsertByConstraint({
-          plate: plate.trim(), driver_name: driver_name.trim(), kind, year, model, active
-        });
-        return res.json({ ok: true, vehicle: rows[0] });
-      } catch (e) {
-        // si el constraint no existe, reintenta con expresión
-        const msg = (e && e.message) || "";
-        const looksLikeNoConstraint =
-          /constraint .* does not exist/i.test(msg) || /undefined_table/i.test(msg);
-        if (!looksLikeNoConstraint) throw e;
+      // 2) Edición completa por id
+      if (b.id) {
+        if (!b.plate || !b.driver_name || !b.year)
+          return res.status(400).json({ ok: false, error: "Missing fields" });
 
-        const rows2 = await upsertByExpression({
-          plate: plate.trim(), driver_name: driver_name.trim(), kind, year, model, active
-        });
-        return res.json({ ok: true, vehicle: rows2[0] });
+        const { rows } = await pool.query(
+          `update vehicles
+             set plate = $2, driver_name = $3, kind = $4,
+                 year = $5, model = $6, active = $7
+           where id::text = $1
+           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
+          [b.id, b.plate, b.driver_name, b.kind, b.year, b.model, b.active]
+        );
+        if (!rows.length) return res.status(404).json({ ok: false, error: "Vehicle not found" });
+        return res.json({ ok: true, vehicle: rows[0] });
+      }
+
+      // 3) Crear / UPSERT manual por placa (case-insensitive)
+      if (!b.plate || !b.driver_name || !b.year)
+        return res.status(400).json({ ok: false, error: "Missing fields" });
+
+      // Buscar por UPPER(plate)
+      const found = await query(
+        `select id from vehicles where upper(plate) = upper($1) limit 1`,
+        [b.plate]
+      );
+
+      if (found.length) {
+        const id = found[0].id;
+        const { rows } = await pool.query(
+          `update vehicles
+             set driver_name = $2, kind = $3, year = $4, model = $5, active = $6
+           where id = $1
+           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
+          [id, b.driver_name, b.kind, b.year, b.model, b.active]
+        );
+        return res.json({ ok: true, vehicle: rows[0] });
+      } else {
+        const { rows } = await pool.query(
+          `insert into vehicles (plate, driver_name, kind, year, model, active)
+           values ($1,$2,$3,$4,$5,$6)
+           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
+          [b.plate, b.driver_name, b.kind, b.year, b.model, b.active]
+        );
+        return res.json({ ok: true, vehicle: rows[0] });
       }
     }
 
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
       if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
-
-      const rows = await q(`DELETE FROM vehicles WHERE id::text = $1 RETURNING id`, [id]);
-      if (!rows.length) return res.status(404).json({ ok: false, error: "Vehicle not found" });
+      const { rowCount } = await pool.query(`delete from vehicles where id::text = $1`, [id]);
+      if (!rowCount) return res.status(404).json({ ok: false, error: "Vehicle not found" });
       return res.json({ ok: true });
     }
 
