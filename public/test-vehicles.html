@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Vehicles API Tester</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:20px;background:#0f1220;color:#e9eef7}
+    input,select,button,textarea{padding:8px;border-radius:8px;border:1px solid #334;background:#121a2b;color:#e9eef7}
+    label{display:block;margin:10px 0 4px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .card{border:1px solid #2b3750;border-radius:12px;padding:16px;margin:12px 0;background:#171a2b}
+    pre{white-space:pre-wrap;background:#0e1322;padding:12px;border-radius:10px}
+  </style>
+</head>
+<body>
+  <h1>Vehicles API Tester</h1>
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>Admin Key</label>
+        <input id="k" value="supersecreto123" style="width:260px">
+      </div>
+      <div style="align-self:end">
+        <button onclick="list()">GET /api/admin/vehicles</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Insert / Update (POST)</h3>
+    <div class="row">
+      <div><label>id (vacío = crear)</label><input id="id" style="width:220px"></div>
+      <div><label>plate</label><input id="plate" value="UT-123 ABC" style="width:160px"></div>
+      <div><label>driver_name</label><input id="driver" value="Nuevo Driver" style="width:200px"></div>
+      <div><label>kind</label>
+        <select id="kind"><option>SUV</option><option>VAN</option></select>
+      </div>
+      <div><label>year</label><input id="year" type="number" value="2024" style="width:100px"></div>
+      <div><label>model</label><input id="model" value="Suburban" style="width:160px"></div>
+      <div><label>active</label>
+        <select id="active"><option value="true">true</option><option value="false" selected>false</option></select>
+      </div>
+      <div style="align-self:end"><button onclick="save()">POST save</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Delete (DELETE)</h3>
+    <div class="row">
+      <div><label>id</label><input id="delid" placeholder="id exacto" style="width:220px"></div>
+      <div style="align-self:end"><button onclick="delv()">DELETE</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Output</h3>
+    <pre id="out">—</pre>
+  </div>
+
+<script>
+const out = (x)=>document.getElementById('out').textContent =
+  (typeof x==='string'?x:JSON.stringify(x,null,2));
+
+async function list(){
+  try{
+    const r = await fetch('/api/admin/vehicles', { headers:{'x-admin-key':document.getElementById('k').value} });
+    out(await r.json());
+  }catch(e){ out(e.message||e); }
+}
+
+async function save(){
+  try{
+    const body = {
+      id: val('id') || undefined,
+      plate: val('plate'),
+      driver_name: val('driver'),
+      kind: val('kind'),
+      year: val('year')? Number(val('year')): null,
+      model: val('model') || null,
+      active: val('active') === 'true',
+    };
+    const r = await fetch('/api/admin/vehicles', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-admin-key': val('k'),
+      },
+      body: JSON.stringify(body)
+    });
+    out(await r.json());
+  }catch(e){ out(e.message||e); }
+}
+
+async function delv(){
+  try{
+    const r = await fetch('/api/admin/vehicles', {
+      method:'DELETE',
+      headers:{
+        'Content-Type':'application/json',
+        'x-admin-key': val('k'),
+      },
+      body: JSON.stringify({ id: val('delid') })
+    });
+    out(await r.json());
+  }catch(e){ out(e.message||e); }
+}
+
+const val = id => document.getElementById(id).value.trim();
+</script>
+</body>
+</html>
