@@ -1,38 +1,52 @@
 // /api/admin/vehicles.js
-import pool from "../_db.js"; // usamos el conector centralizado
-
-// clave secreta para admin (ponla en Vercel como variable de entorno ADMIN_KEY)
-const ADMIN_KEY = process.env.ADMIN_KEY || "changeme";
+import pool from "../_db.js";
 
 export default async function handler(req, res) {
-  // validar API Key
   const key = req.headers["x-admin-key"];
-  if (key !== ADMIN_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
+  if (key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
   }
 
   try {
     if (req.method === "GET") {
-      // listar vehículos
       const { rows } = await pool.query(
-        "SELECT id, kind, plate, driver_name, active FROM vehicles ORDER BY plate"
+        "SELECT id, plate, driver_name, kind, year, model, active FROM vehicles ORDER BY created_at DESC"
       );
-      return res.status(200).json({ ok: true, vehicles: rows });
+      return res.json({ ok: true, vehicles: rows });
     }
 
     if (req.method === "POST") {
-      // cambiar estado activo/inactivo
-      const { id, active } = req.body;
-      if (!id) {
-        return res.status(400).json({ error: "Missing vehicle id" });
+      const { id, plate, driver_name, kind, year, model, active } = req.body;
+
+      if (id) {
+        // Update
+        await pool.query(
+          `UPDATE vehicles
+           SET plate=$1, driver_name=$2, kind=$3, year=$4, model=$5, active=$6
+           WHERE id=$7`,
+          [plate, driver_name, kind, year, model, active, id]
+        );
+      } else {
+        // Insert
+        await pool.query(
+          `INSERT INTO vehicles (id, plate, driver_name, kind, year, model, active)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)`,
+          [plate, driver_name, kind, year, model, active]
+        );
       }
-      await pool.query("UPDATE vehicles SET active=$1 WHERE id=$2", [active, id]);
-      return res.status(200).json({ ok: true });
+
+      return res.json({ ok: true });
     }
 
-    return res.status(405).json({ error: "Method Not Allowed" });
-  } catch (err) {
-    console.error("❌ Admin vehicles error:", err);
-    res.status(500).json({ error: "Server error", details: err.message });
+    if (req.method === "DELETE") {
+      const { id } = req.body;
+      await pool.query(`DELETE FROM vehicles WHERE id=$1`, [id]);
+      return res.json({ ok: true });
+    }
+
+    return res.status(405).json({ ok: false, error: "Method not allowed" });
+  } catch (e) {
+    console.error("DB Error:", e);
+    return res.status(500).json({ ok: false, error: "Server error" });
   }
 }
