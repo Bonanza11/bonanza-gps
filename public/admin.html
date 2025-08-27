@@ -463,5 +463,19 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
 /* =================== BOOT =================== */
 loadVehicles();
 </script>
+  <script>
+  function ajustarEspaciador(){
+    const header = document.querySelector("header");
+    const spacer = document.getElementById("stickySpacer");
+    if(header && spacer){
+      spacer.style.height = header.offsetHeight + "px";
+    }
+  }
+
+  // Ajusta cuando carga la página
+  window.addEventListener("load", ajustarEspaciador);
+  // Ajusta también si redimensionas la ventana
+  window.addEventListener("resize", ajustarEspaciador);
+</script>
 </body>
 </html>
