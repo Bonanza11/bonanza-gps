@@ -137,7 +137,7 @@
 
 <script>
 /* =========== CONFIG =========== */
-const ADMIN_KEY = 'supersecreto123';
+const ADMIN_KEY = 'supersecreto123';  // header fijo
 const API_URL   = '/api/admin/vehicles';
 
 /* =========== STATE & UI =========== */
@@ -148,7 +148,7 @@ const envInfo = document.getElementById('envInfo');
 envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 
 let allVehicles = [];
-let filterKind = 'ALL';
+let filterKind = 'ALL'; // ALL|SUV|VAN
 let editingId  = null;
 
 /* Modal refs */
@@ -169,7 +169,7 @@ function h(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;',
 function showMsg(text, ok=true){ msgEl.textContent = text; msgEl.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 function genId(kind){ const k=(kind||'SUV').toUpperCase(); const n=1+Math.max(0,...allVehicles.filter(v=>v.kind===k).map(v=>parseInt(String(v.id).match(/\d+$/)||0))); return `${k}-${String(n).padStart(3,'0')}`; }
 
-/* Normaliza un vehículo (clave para filtros y UI) */
+/* Normaliza un vehículo (claves en mayúsculas, tipos limpios) */
 function normalizeVehicle(v){
   return {
     ...v,
@@ -213,57 +213,33 @@ async function loadVehicles(){
   }
 }
 
-/* =========== VISTA / RENDER =========== */
+/* =========== RENDER =========== */
 function visibleList(){
   if (filterKind==='ALL') return allVehicles;
   return allVehicles.filter(v => (v.kind||'').toString().trim().toUpperCase()===filterKind);
 }
-
 function render(){
   const list = visibleList();
   countEl.textContent = `Loaded ${list.length} vehicles`;
-  rowsEl.innerHTML =
-    list.map(v=>{
-      const on = !!v.active;
-      return `
-        <tr>
-          <td>${h(v.plate)}</td>
-          <td>${h(v.driver_name)}</td>
-          <td>${h((v.kind||'').toUpperCase())}</td>
-          <td>${h(v.year||'')}</td>
-          <td>${h(v.model||'')}</td>
-          <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-          <td class="right">
-            <button data-action="edit"   data-id="${v.id}">Edit</button>
-            <button data-action="delete" data-id="${v.id}" class="danger">Delete</button>
-            <button data-action="toggle" data-id="${v.id}" data-next="${on?'false':'true'}">
-              ${on?'Turn Off':'Turn On'}
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
+  rowsEl.innerHTML = list.map(v=>{
+    const on = !!v.active;
+    return `
+      <tr>
+        <td>${h(v.plate)}</td>
+        <td>${h(v.driver_name)}</td>
+        <td>${h((v.kind||'').toUpperCase())}</td>
+        <td>${h(v.year||'')}</td>
+        <td>${h(v.model||'')}</td>
+        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
+        <td class="right">
+          <button onclick="openEdit('${v.id}')">Edit</button>
+          <button onclick="doDelete('${v.id}')" class="danger">Delete</button>
+          <button onclick="toggleActive('${v.id}', ${on?'false':'true'})">${on?'Turn Off':'Turn On'}</button>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
 }
-
-/* Delegación de eventos para los botones de cada fila */
-rowsEl.addEventListener('click', (ev)=>{
-  const btn = ev.target.closest('button[data-action]');
-  if (!btn) return;
-  const id = btn.dataset.id;
-  switch (btn.dataset.action) {
-    case 'edit':
-      openEdit(id);
-      break;
-    case 'delete':
-      doDelete(id);
-      break;
-    case 'toggle': {
-      const next = btn.dataset.next === 'true';
-      toggleActive(id, next);
-      break;
-    }
-  }
-});
 
 /* =========== ADD / EDIT =========== */
 function openAdd(){
@@ -282,27 +258,50 @@ function openEdit(id){
   fActive.checked=!!v.active; formErr.textContent='';
   backdrop.classList.add('open');
 }
+window.openEdit = openEdit;
 
 btnClose.onclick = ()=>backdrop.classList.remove('open');
 
+/* === SAVE con validación fuerte (evita 400 Missing fields) === */
 btnSave.onclick = async ()=>{
-  formErr.textContent='';
-  const plate=fPlate.value.trim(), driver_name=fDriver.value.trim();
-  const kind=(fKind.value||'SUV').toUpperCase();
-  const year=Number(fYear.value||0), model=fModel.value.trim();
-  const active=!!fActive.checked;
-  if(!plate || !driver_name || !year){ formErr.textContent='Plate, Driver and Year are required.'; return; }
+  formErr.textContent = '';
 
-  const body = { id:editingId, plate, driver_name, kind, year, model, active };
-  try{
+  const plate       = fPlate.value.trim();
+  const driver_name = fDriver.value.trim();
+  const kind        = (fKind.value || 'SUV').toUpperCase();
+  const year        = parseInt(fYear.value, 10) || null;
+  const model       = fModel.value.trim();
+  const active      = !!fActive.checked;
+
+  if (!plate || !driver_name || !year || !model) {
+    formErr.textContent = 'Plate, Driver, Year and Model are required.';
+    return;
+  }
+
+  const body = { 
+    id: editingId || undefined, 
+    plate, 
+    driver_name, 
+    kind, 
+    year, 
+    model, 
+    active 
+  };
+
+  try {
     const data = await api('POST', body);
-    const v = normalizeVehicle(data.vehicle || { ...body, id: body.id || genId(kind) });
-    const i = allVehicles.findIndex(x=>x.id===v.id);
-    if(i>=0) allVehicles[i] = { ...allVehicles[i], ...v };
+    const v = normalizeVehicle(
+      data.vehicle || { ...body, id: body.id || genId(kind) }
+    );
+
+    const i = allVehicles.findIndex(x => x.id === v.id);
+    if (i >= 0) allVehicles[i] = { ...allVehicles[i], ...v };
     else allVehicles.push(v);
-    render(); backdrop.classList.remove('open');
+
+    render();
+    backdrop.classList.remove('open');
     showMsg(editingId ? 'Saved changes.' : 'Vehicle added.');
-  }catch(e){
+  } catch (e) {
     formErr.textContent = e.message || 'Error saving.';
   }
 };
@@ -317,6 +316,7 @@ async function toggleActive(id, active){
     showMsg('Error updating: '+(e.message||e), false);
   }
 }
+window.toggleActive = toggleActive;
 
 /* =========== DELETE =========== */
 async function doDelete(id){
@@ -330,6 +330,7 @@ async function doDelete(id){
     showMsg('Error deleting: '+(e.message||e), false);
   }
 }
+window.doDelete = doDelete;
 
 /* =========== FILTERS & ACTIONS =========== */
 document.getElementById('btnAll').onclick    = ()=>{ filterKind='ALL'; render(); };
