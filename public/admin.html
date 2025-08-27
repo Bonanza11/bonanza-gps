@@ -286,11 +286,25 @@ const API_CLI   = '/api/admin/clients';   // puede no existir aún (manejamos 40
 function setTheadTop(){
   const header = document.querySelector('header');
   const bars   = document.querySelectorAll('.affects-sticky');
+
   let top = 0;
+
+  // Altura real del header (incluye padding/border)
   if (header) top += header.getBoundingClientRect().height;
-  bars.forEach(el => top += el.getBoundingClientRect().height);
-  top += 6; // margen visual
-  document.documentElement.style.setProperty('--theadTop', top + 'px');
+
+  // Suma altura + márgenes verticales de cada barra que afecta al sticky
+  bars.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    const cs   = getComputedStyle(el);
+    const mt   = parseFloat(cs.marginTop)  || 0;
+    const mb   = parseFloat(cs.marginBottom) || 0;
+    top += rect.height + mt + mb;
+  });
+
+  // pequeño respiro visual
+  top += 6;
+
+  document.documentElement.style.setProperty('--theadTop', `${top}px`);
 }
 window.addEventListener('load', setTheadTop);
 window.addEventListener('resize', setTheadTop);
