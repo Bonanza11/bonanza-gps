@@ -1,151 +1,151 @@
-// api/admin/vehicles.js
-// CRUD de vehículos (SUV/VAN) con autorización por ADMIN_KEY
+// /api/admin/vehicles.js
+// CRUD de vehículos para el panel. Compatible con id TEXT o UUID.
+// Requiere header: x-admin-key = process.env.ADMIN_KEY (o "supersecreto123" como fallback)
 
-import { query } from "../_db.js"; // <- tu helper de DB (ESM)
+import { pool } from "../_db.js";
 
-function json(res, code, data) {
-  res.statusCode = code;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(data));
+const EXPECTED_KEY = process.env.ADMIN_KEY || "supersecreto123";
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Utils
+function bad(res, code, msg) {
+  res.status(code).json({ ok: false, error: msg });
+}
+function asBool(v) {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") return v === "true" || v === "1";
+  if (typeof v === "number") return v !== 0;
+  return false;
+}
+function normKind(k) {
+  k = (k || "").toString().trim().toUpperCase();
+  return k === "VAN" ? "VAN" : "SUV";
+}
+function toInt(n) {
+  const v = Number.parseInt(n, 10);
+  return Number.isFinite(v) ? v : null;
+}
+async function nextId(kind) {
+  // Calcula el siguiente id tipo "SUV-011" o "VAN-006" leyendo el sufijo numérico mayor
+  const k = normKind(kind);
+  const sql = `
+    SELECT COALESCE(MAX( (REGEXP_MATCH(id::text, '\\d+$'))[1]::int ), 0) AS maxn
+    FROM vehicles
+    WHERE UPPER(kind) = $1
+  `;
+  const { rows } = await pool.query(sql, [k]);
+  const n = (rows?.[0]?.maxn || 0) + 1;
+  return `${k}-${String(n).padStart(3, "0")}`;
 }
 
-function getAdminKey(req) {
-  // prioridad: header, luego query ?key=
-  return (
-    req.headers["x-admin-key"] ||
-    new URL(req.url, `http://${req.headers.host}`).searchParams.get("key") ||
-    ""
-  );
-}
-
-function normalizeVehicle(input = {}) {
-  // Sanitiza y normaliza campos
-  const v = { ...input };
-  v.id = (v.id || "").trim();
-  v.plate = (v.plate || "").trim();
-  v.driver_name = (v.driver_name || "").trim();
-  v.kind = (v.kind || "").trim().toUpperCase(); // "SUV" | "VAN"
-  v.year = v.year == null || v.year === "" ? null : Number(v.year);
-  v.model = (v.model || "").trim();
-  v.active = !!v.active;
-  if (v.kind !== "SUV" && v.kind !== "VAN") v.kind = "SUV";
-  return v;
-}
-
-// Genera un ID incremental con prefijo (SUV-### o VAN-###)
-async function generateId(kind) {
-  const pref = kind === "VAN" ? "VAN" : "SUV";
-  // Extrae el mayor sufijo numérico existente para ese prefijo
-  const rows = await query(
-    `SELECT id
-       FROM vehicles
-      WHERE id ILIKE $1
-   ORDER BY
-      CAST(regexp_replace(id, '^[^0-9]*', '') AS INT) DESC
-      NULLS LAST
-      LIMIT 1`,
-    [`${pref}-%`]
-  );
-
-  let next = 1;
-  if (rows.length) {
-    const last = rows[0].id;
-    const n = Number(String(last).replace(/^\D+/, "")) || 0;
-    next = n + 1;
+function requireAuth(req, res) {
+  const key = req.headers["x-admin-key"];
+  if (!key || key !== EXPECTED_KEY) {
+    bad(res, 401, "Unauthorized");
+    return false;
   }
-  return `${pref}-${String(next).padStart(3, "0")}`;
+  return true;
 }
 
-// ====== Handler principal ======
+// ────────────────────────────────────────────────────────────────────────────────
+// Handler
 export default async function handler(req, res) {
   try {
-    // --- Auth ---
-    const provided = String(getAdminKey(req) || "");
-    const expected = String(process.env.ADMIN_KEY || "");
-    if (!expected) {
-      return json(res, 500, { ok: false, error: "ADMIN_KEY not configured" });
-    }
-    if (provided !== expected) {
-      return json(res, 401, { ok: false, error: "Unauthorized" });
-    }
+    if (!requireAuth(req, res)) return;
 
-    // --- Métodos ---
     if (req.method === "GET") {
-      const rows = await query(
-        `SELECT id, plate, driver_name, UPPER(kind) AS kind, year, model, active
-           FROM vehicles
-       ORDER BY id ASC`
-      );
-      return json(res, 200, { ok: true, vehicles: rows || [] });
+      // Listado
+      const q = `
+        SELECT 
+          id::text AS id,
+          plate,
+          driver_name,
+          UPPER(kind) AS kind,
+          year,
+          model,
+          active
+        FROM vehicles
+        ORDER BY kind, id::text
+      `;
+      const { rows } = await pool.query(q);
+      res.json({ ok: true, vehicles: rows });
+      return;
     }
 
     if (req.method === "POST") {
-      let body = {};
-      try {
-        body = typeof req.body === "object" && req.body
-          ? req.body
-          : JSON.parse(req.body || "{}");
-      } catch {
-        return json(res, 400, { ok: false, error: "Invalid JSON body" });
+      const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
+
+      // Si es toggle (solo id + active)
+      if (body && body.id && typeof body.active !== "undefined" && !body.plate && !body.driver_name && !body.kind) {
+        const id = String(body.id);
+        const active = asBool(body.active);
+        const q = `
+          UPDATE vehicles 
+          SET active = $2 
+          WHERE id::text = $1
+          RETURNING id::text AS id, plate, driver_name, UPPER(kind) AS kind, year, model, active
+        `;
+        const { rows } = await pool.query(q, [id, active]);
+        if (!rows.length) return bad(res, 404, "Not found");
+        res.json({ ok: true, vehicle: rows[0] });
+        return;
       }
 
-      const v = normalizeVehicle(body);
+      // Upsert completo (crear o editar)
+      let {
+        id,
+        plate,
+        driver_name,
+        kind,
+        year,
+        model,
+        active,
+      } = body;
 
-      // Si no viene id => crear
-      if (!v.id) v.id = await generateId(v.kind);
+      plate = (plate || "").trim();
+      driver_name = (driver_name || "").trim();
+      kind = normKind(kind);
+      year = toInt(year);
+      model = (model || "").trim();
+      active = asBool(active);
 
-      // Validaciones mínimas
-      if (!v.plate) return json(res, 400, { ok: false, error: "plate required" });
-      if (!v.driver_name) v.driver_name = "Driver";
-      if (v.year !== null && (isNaN(v.year) || v.year < 1990 || v.year > 2100)) {
-        return json(res, 400, { ok: false, error: "year invalid" });
+      if (!plate || !driver_name || !year) {
+        return bad(res, 400, "Missing required fields (plate, driver_name, year).");
       }
+      if (!id) id = await nextId(kind);
 
-      // UPSERT por id
-      const rows = await query(
-        `INSERT INTO vehicles (id, plate, driver_name, kind, year, model, active)
-              VALUES ($1,$2,$3,$4,$5,$6,$7)
-         ON CONFLICT (id)
-           DO UPDATE SET
-             plate       = EXCLUDED.plate,
-             driver_name = EXCLUDED.driver_name,
-             kind        = EXCLUDED.kind,
-             year        = EXCLUDED.year,
-             model       = EXCLUDED.model,
-             active      = EXCLUDED.active
-         RETURNING id, plate, driver_name, UPPER(kind) AS kind, year, model, active`,
-        [v.id, v.plate, v.driver_name, v.kind, v.year, v.model, v.active]
-      );
-
-      return json(res, 200, { ok: true, vehicle: rows[0] });
+      const q = `
+        INSERT INTO vehicles (id, plate, driver_name, kind, year, model, active)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET
+          plate       = EXCLUDED.plate,
+          driver_name = EXCLUDED.driver_name,
+          kind        = EXCLUDED.kind,
+          year        = EXCLUDED.year,
+          model       = EXCLUDED.model,
+          active      = EXCLUDED.active
+        RETURNING id::text AS id, plate, driver_name, UPPER(kind) AS kind, year, model, active
+      `;
+      const params = [id, plate, driver_name, kind, year, model, active];
+      const { rows } = await pool.query(q, params);
+      res.json({ ok: true, vehicle: rows[0] });
+      return;
     }
 
     if (req.method === "DELETE") {
-      // id por query o body
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      let id = url.searchParams.get("id");
-      if (!id) {
-        try {
-          const body = typeof req.body === "object" && req.body
-            ? req.body
-            : JSON.parse(req.body || "{}");
-          id = body.id;
-        } catch {}
-      }
-      id = (id || "").trim();
-      if (!id) return json(res, 400, { ok: false, error: "id required" });
-
-      const rows = await query(`DELETE FROM vehicles WHERE id = $1 RETURNING id`, [id]);
-      if (!rows.length) return json(res, 404, { ok: false, error: "Not found" });
-
-      return json(res, 200, { ok: true, deleted: rows[0].id });
+      const id = (req.query?.id || req.query?.ID || "").toString();
+      if (!id) return bad(res, 400, "Missing id");
+      const q = `DELETE FROM vehicles WHERE id::text = $1 RETURNING id::text AS id`;
+      const { rows } = await pool.query(q, [id]);
+      if (!rows.length) return bad(res, 404, "Not found");
+      res.json({ ok: true, id: rows[0].id });
+      return;
     }
 
-    // Método no permitido
     res.setHeader("Allow", "GET,POST,DELETE");
-    return json(res, 405, { ok: false, error: "Method Not Allowed" });
+    return bad(res, 405, "Method Not Allowed");
   } catch (err) {
     console.error("[/api/admin/vehicles] error:", err);
-    return json(res, 500, { ok: false, error: "Internal error" });
+    return bad(res, 500, err?.message || "Internal error");
   }
 }
