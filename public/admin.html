@@ -70,13 +70,19 @@
   }
   th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
 
-  /* Encabezado sticky ajustado por JS (header + barras) */
-  thead th{
-    background:#11162a; color:#cdd6ea;
-    position: sticky;
-    top: var(--theadTop, 0);
-    z-index: 5;
-  }
+  /* Encabezado sticky fijo al top real de la página */
+thead th{
+  background:#11162a; color:#cdd6ea;
+  position: sticky;
+  top: 0;             /* SIEMPRE 0; compensamos con el espaciador */
+  z-index: 5;
+}
+
+/* Espaciador que empuja la tabla hacia abajo */
+#stickySpacerVehicles,
+#stickySpacerClients{
+  height: var(--theadTop, 0px);
+}
 
   tbody tr:hover{ background:#1b2136 }
   .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
