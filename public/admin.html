@@ -279,6 +279,48 @@ thead th{
       <div id="vehFormErr" class="err-msg"></div>
       <div class="actions">
         <button id="vehBtnSave" class="primary">Save</button>
+     <!-- MODAL CLIENT -->
+<div class="backdrop" id="cliBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cliModalTitle">
+    <header>
+      <h2 id="cliModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Client</h2>
+      <div style="flex:1"></div>
+      <button id="cliBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field">
+          <label for="cName">Name</label>
+          <input id="cName" placeholder="John Appleseed" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cEmail">Email</label>
+          <input id="cEmail" type="email" placeholder="john@email.com" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cPhone">Phone</label>
+          <input id="cPhone" placeholder="+1 555 123 4567" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cRating">Internal rating</label>
+          <select id="cRating">
+            <option value="good">good</option>
+            <option value="watch">watch</option>
+            <option value="restricted">restricted</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="cAddress">Home address</label>
+          <input id="cAddress" placeholder="123 Main St, Park City, UT">
+        </div>
+        <div class="field full">
+          <label for="cNotes">Notes</label>
+          <input id="cNotes" placeholder="VIP, prefiere pagos con tarjeta, etc.">
+        </div>
+      </div>
+      <div id="cliFormErr" class="err-msg"></div>
+      <div class="actions">
+        <button id="cliBtnSave" class="primary">Save</button>
       </div>
     </div>
   </div>
@@ -511,7 +553,7 @@ document.getElementById('vehControls').addEventListener('click', (e)=>{
 });
 
 /* =========================================================
-   CLIENTES (tolerante si la API aún no existe)
+   CLIENTES (CRUD completo)
    ========================================================= */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
@@ -522,26 +564,29 @@ const cliStat = {
   restricted: document.getElementById('cliRestricted'),
 };
 let allClients = [];
+let editingClientId = null;
 
 function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+
 function normalizeClient(c){
-  const ratingRaw = String(c.internal_rating || c.rating || 'GOOD').toUpperCase();
-  const ratingMap = { GOOD:'good', WATCH:'watch', RESTRICTED:'restricted' };
   return {
-    id: String(c.id || ''),
-    name: (c.name || '').trim(),
-    email: (c.email || '').trim(),
-    phone: (c.phone || '').trim(),
-    rating: ratingMap[ratingRaw] || 'good',
+    id: String(c.id ?? ''),
+    name: (c.name ?? '').trim(),
+    email: (c.email ?? '').trim(),
+    phone: (c.phone ?? '').trim(),
+    home_address: (c.home_address ?? '').trim(),
+    rating: String(c.internal_rating ?? c.rating ?? 'good').toLowerCase(),
+    notes: (c.notes ?? '').trim(),
   };
 }
 
 function computeCliStats(){
-  cliStat.total.textContent      = allClients.length;
-  cliStat.good.textContent       = allClients.filter(x => x.rating==='good').length;
-  cliStat.watch.textContent      = allClients.filter(x => x.rating==='watch').length;
-  cliStat.restricted.textContent = allClients.filter(x => x.rating==='restricted').length;
+  cliStat.total.textContent = allClients.length;
+  cliStat.good.textContent = allClients.filter(c=>c.rating==='good').length;
+  cliStat.watch.textContent = allClients.filter(c=>c.rating==='watch').length;
+  cliStat.restricted.textContent = allClients.filter(c=>c.rating==='restricted').length;
 }
+
 function renderClients(){
   computeCliStats();
   cliRows.innerHTML = allClients.map(c=>`
@@ -568,7 +613,7 @@ async function loadClients(){
   cliRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   cliShowMsg('');
   try{
-    const data = await api(API_CLI, 'GET');   // <- si 404, cae al catch
+    const data = await api(API_CLI, 'GET');   // si 404, cae al catch
     const raw  = Array.isArray(data.clients) ? data.clients : [];
     allClients = raw.map(normalizeClient);
     renderClients();
@@ -577,7 +622,6 @@ async function loadClients(){
   }catch(e){
     allClients = [];
     renderClients();
-    // Mensaje amigable si el endpoint no existe aún
     const msg = (String(e.message||'').includes('404')) ?
       'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.' :
       'Error loading clients: ' + (e.message||e);
@@ -585,12 +629,97 @@ async function loadClients(){
   }
 }
 
-document.getElementById('btnReloadClients').addEventListener('click', loadClients);
-/* (Opcional) abrir modal Add Client más adelante */
-document.getElementById('btnAddClient').addEventListener('click', ()=>{
-  alert('Modal de Clientes pendiente. La vista ya está lista para cuando expongas /api/admin/clients.');
+/* ------- Modal: refs ------- */
+const cliBackdrop = document.getElementById('cliBackdrop');
+const cliBtnClose = document.getElementById('cliBtnClose');
+const cliBtnSave  = document.getElementById('cliBtnSave');
+const cliModalTitle = document.getElementById('cliModalTitle');
+
+const cName    = document.getElementById('cName');
+const cEmail   = document.getElementById('cEmail');
+const cPhone   = document.getElementById('cPhone');
+const cRating  = document.getElementById('cRating');
+const cAddress = document.getElementById('cAddress');
+const cNotes   = document.getElementById('cNotes');
+const cliFormErr = document.getElementById('cliFormErr');
+
+function openAddClient(){
+  editingClientId = null;
+  cliModalTitle.textContent = 'Add Client';
+  cName.value=''; cEmail.value=''; cPhone.value='';
+  cRating.value='good'; cAddress.value=''; cNotes.value='';
+  cliFormErr.textContent='';
+  cliBackdrop.classList.add('open');
+  setTimeout(()=>cName.focus(),50);
+}
+function openEditClient(id){
+  const c = allClients.find(x=>x.id===id); if(!c) return;
+  editingClientId = id;
+  cliModalTitle.textContent = 'Edit Client';
+  cName.value=c.name||''; cEmail.value=c.email||''; cPhone.value=c.phone||'';
+  cRating.value=(c.rating||'good'); cAddress.value=c.home_address||''; cNotes.value=c.notes||'';
+  cliFormErr.textContent='';
+  cliBackdrop.classList.add('open');
+  setTimeout(()=>cName.focus(),50);
+}
+function closeCliModal(){ cliBackdrop.classList.remove('open'); }
+cliBtnClose.addEventListener('click', closeCliModal);
+window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeCliModal(); });
+
+/* ------- Guardar cliente ------- */
+cliBtnSave.addEventListener('click', async ()=>{
+  cliFormErr.textContent='';
+  const name=cName.value.trim();
+  const email=cEmail.value.trim();
+  const phone=cPhone.value.trim();
+  const home_address=cAddress.value.trim();
+  const internal_rating=(cRating.value||'good').toLowerCase();
+  const notes=cNotes.value.trim();
+
+  if(!name){ cliFormErr.textContent='Name is required.'; return; }
+
+  cliBtnSave.disabled = true;
+  try{
+    const payload = { id: editingClientId, name, email, phone, home_address, internal_rating, notes };
+    const data = await api(API_CLI, 'POST', payload);
+    const c = normalizeClient(data.client || payload);
+    const i = allClients.findIndex(x=>x.id===c.id);
+    if(i>=0) allClients[i]={...allClients[i], ...c}; else allClients.unshift(c);
+    renderClients();
+    cliShowMsg(editingClientId ? 'Client updated.' : 'Client added.');
+    closeCliModal();
+  }catch(e){
+    cliFormErr.textContent = e.message || 'Error saving.';
+  }finally{
+    cliBtnSave.disabled = false;
+  }
 });
 
+/* ------- Tabla: delegación de eventos ------- */
+cliRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr = btn.closest('tr[data-id]'); if(!tr) return;
+  const id = tr.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+
+  if(action==='edit'){ openEditClient(id); return; }
+
+  if(action==='delete'){
+    const c = allClients.find(x=>x.id===id); if(!c) return;
+    if(!confirm(`Delete client "${c.name}"? This cannot be undone.`)) return;
+    try{
+      await api(`${API_CLI}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allClients = allClients.filter(x=>x.id!==id);
+      renderClients(); cliShowMsg('Deleted.');
+    }catch(e){
+      cliShowMsg('Error deleting: ' + (e.message||e), false);
+    }
+  }
+});
+
+/* ------- Botones globales ------- */
+document.getElementById('btnReloadClients').addEventListener('click', loadClients);
+document.getElementById('btnAddClient').addEventListener('click', openAddClient);
 /* =================== BOOT =================== */
 loadVehicles(); // tab inicial
 </script>
