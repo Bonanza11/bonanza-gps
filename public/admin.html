@@ -502,21 +502,7 @@ let allClients = [];
 
 function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 
-function normalizeClient(c){
-  return {
-    id: String(c.id||''),
-    name: (c.name||'').trim(),
-    email: (c.email||'').trim(),
-    phone: (c.phone||'').trim(),
-    rating: (c.rating||'good'), // good|watch|restricted
-  };
-}
-function computeCliStats(){
-  cliStat.total.textContent = allClients.length;
-  cliStat.good.textContent = allClients.filter(c=>c.rating==='good').length;
-  cliStat.watch.textContent = allClients.filter(c=>c.rating==='watch').length;
-  cliStat.restricted.textContent = allClients.filter(c=>c.rating==='restricted').length;
-}
+normalizeClient
 function renderClients(){
   computeCliStats();
   cliRows.innerHTML = allClients.map(c=>`
