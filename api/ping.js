@@ -2,15 +2,16 @@
 import { dbPing } from "./_db.js";
 
 export default async function handler(req, res) {
-  const key = req.query.key || req.headers["x-admin-key"];
-  if (!key || key !== process.env.ADMIN_KEY) {
+  const { key } = req.query;
+  if (key !== process.env.ADMIN_KEY) {
     return res.status(401).json({ ok: false, error: "Unauthorized" });
   }
+
   try {
-    const ok = await dbPing();
-    res.json({ ok: true, db: ok });
+    const alive = await dbPing();
+    return res.status(200).json({ ok: true, db: alive });
   } catch (err) {
-    console.error("[PING ERROR]", err);
-    res.status(500).json({ ok: false, error: err.message });
+    console.error("[ping] DB error", err);
+    return res.status(500).json({ ok: false, error: err.message });
   }
 }
