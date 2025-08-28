@@ -1,47 +1,78 @@
 // /api/admin/blocks.js
-import pool from "../_db.js";
+import { pool } from "../_db.js";
 
-const ADMIN_KEY = process.env.ADMIN_KEY || "changeme";
+function okKey(req){
+  const hdr = req.headers["x-admin-key"] || req.headers["X-Admin-Key"];
+  const env = process.env.ADMIN_KEY || "supersecreto123";
+  return hdr && String(hdr) === String(env);
+}
 
-export default async function handler(req, res) {
-  const key = req.headers["x-admin-key"];
-  if (key !== ADMIN_KEY) return res.status(401).json({ error: "Unauthorized" });
+function norm(b={}){
+  const kind = String(b.kind||'block').toLowerCase();
+  return {
+    id: b.id ? String(b.id) : null,
+    kind: (kind==='slc_exception' ? 'slc_exception' : 'block'),
+    starts_on: b.starts_on ? String(b.starts_on) : null,
+    ends_on: b.ends_on ? String(b.ends_on) : null,
+    note: (b.note||'').trim() || null,
+    active: !!b.active
+  };
+}
 
-  try {
-    if (req.method === "GET") {
+export default async function handler(req,res){
+  try{
+    if(!okKey(req)) return res.status(401).json({ok:false, error:'Unauthorized'});
+
+    if (req.method === 'GET'){
       const { rows } = await pool.query(
-        `SELECT vb.id, vb.vehicle_id, v.plate, v.kind, vb.starts_at, vb.ends_at, vb.reason
-         FROM vehicle_blocks vb
-         JOIN vehicles v ON v.id = vb.vehicle_id
-         ORDER BY vb.starts_at DESC
-        `
+        `select id::text, lower(kind) as kind, starts_on, ends_on, note, active, created_at
+           from blocks
+          order by starts_on desc, id desc
+          limit 500`
       );
-      return res.status(200).json({ ok: true, blocks: rows });
+      return res.json({ ok:true, blocks: rows });
     }
 
-    if (req.method === "POST") {
-      const { vehicle_id, starts_at, ends_at, reason } = req.body || {};
-      if (!vehicle_id || !starts_at || !ends_at) {
-        return res.status(400).json({ error: "Missing vehicle_id/starts_at/ends_at" });
+    if (req.method === 'POST'){
+      const b = norm(req.body||{});
+      if (!b.starts_on || !b.ends_on)
+        return res.status(400).json({ ok:false, error:'Missing dates' });
+
+      // update
+      if (b.id){
+        const { rows } = await pool.query(
+          `update blocks
+              set kind=$2, starts_on=$3, ends_on=$4, note=$5, active=$6
+            where id::text=$1
+          returning id::text, lower(kind) as kind, starts_on, ends_on, note, active, created_at`,
+          [b.id, b.kind, b.starts_on, b.ends_on, b.note, b.active]
+        );
+        if(!rows.length) return res.status(404).json({ ok:false, error:'Not found' });
+        return res.json({ ok:true, block: rows[0] });
       }
-      await pool.query(
-        `INSERT INTO vehicle_blocks (vehicle_id, starts_at, ends_at, reason)
-         VALUES ($1, $2, $3, $4)`,
-        [vehicle_id, starts_at, ends_at, reason || null]
+
+      // insert
+      const { rows } = await pool.query(
+        `insert into blocks (kind, starts_on, ends_on, note, active)
+         values ($1,$2,$3,$4,$5)
+         returning id::text, lower(kind) as kind, starts_on, ends_on, note, active, created_at`,
+        [b.kind, b.starts_on, b.ends_on, b.note, b.active]
       );
-      return res.status(200).json({ ok: true });
+      return res.json({ ok:true, block: rows[0] });
     }
 
-    if (req.method === "DELETE") {
-      const { id } = req.query; // /api/admin/blocks?id=...
-      if (!id) return res.status(400).json({ error: "Missing id" });
-      await pool.query(`DELETE FROM vehicle_blocks WHERE id=$1`, [id]);
-      return res.status(200).json({ ok: true });
+    if (req.method === 'DELETE'){
+      const id = (req.query.id||'').toString();
+      if(!id) return res.status(400).json({ ok:false, error:'Missing id' });
+      const r = await pool.query(`delete from blocks where id::text=$1`, [id]);
+      if (!r.rowCount) return res.status(404).json({ ok:false, error:'Not found' });
+      return res.json({ ok:true });
     }
 
-    return res.status(405).json({ error: "Method Not Allowed" });
-  } catch (err) {
-    console.error("❌ Admin blocks error:", err);
-    return res.status(500).json({ error: "Server error", details: err.message });
+    res.setHeader('Allow','GET,POST,DELETE');
+    return res.status(405).json({ ok:false, error:'Method Not Allowed' });
+  }catch(e){
+    console.error('[/api/admin/blocks] error:', e);
+    return res.status(500).json({ ok:false, error:e.message||'Internal error' });
   }
 }
