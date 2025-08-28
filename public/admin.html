@@ -346,61 +346,6 @@ thead th{
     </div>
   </div>
 </div>
-/* =================== SETTINGS: BLOCKS =================== */
-const API_BLK = '/api/admin/blocks';
-
-const setMsg   = document.getElementById('setMsg');
-const blkRows  = document.getElementById('blkRows');
-function setShowMsg(t, ok=true){ setMsg.textContent=t||''; setMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
-
-let allBlocks = [];
-let editingBlockId = null;
-
-function normalizeBlock(b){
-  return {
-    id: String(b.id||''),
-    kind: String(b.kind||'block').toLowerCase(),
-    starts_on: b.starts_on,
-    ends_on: b.ends_on,
-    note: (b.note||'').trim(),
-    active: !!b.active
-  };
-}
-function renderBlocks(){
-  blkRows.innerHTML = allBlocks.map(b=>`
-    <tr data-id="${b.id}">
-      <td>${escapeHtml(b.kind)}</td>
-      <td>${escapeHtml(b.starts_on)}</td>
-      <td>${escapeHtml(b.ends_on)}</td>
-      <td>${escapeHtml(b.note)}</td>
-      <td><span class="badge ${b.active?'on':'off'}">${b.active?'ACTIVE':'OFF'}</span></td>
-      <td class="right actions">
-        <div class="btns">
-          <button class="btn btn-edit" data-action="edit">Edit</button>
-          <button class="btn btn-danger" data-action="delete">Delete</button>
-          <button class="btn ${b.active?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${b.active?'Turn Off':'Turn On'}</button>
-        </div>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="6">No blocks.</td></tr>';
-}
-
-async function loadBlocks(){
-  blkRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
-  setShowMsg('');
-  try{
-    const data = await api(API_BLK, 'GET');
-    const raw = Array.isArray(data.blocks) ? data.blocks : [];
-    allBlocks = raw.map(normalizeBlock);
-    renderBlocks();
-    setShowMsg('Loaded successfully.');
-    setTheadTop();
-  }catch(e){
-    allBlocks = []; renderBlocks();
-    setShowMsg('Error loading blocks: ' + (e.message||e), false);
-  }
-}
-
 /* Modal refs */
 const blkBackdrop = document.getElementById('blkBackdrop');
 const blkBtnClose = document.getElementById('blkBtnClose');
@@ -877,6 +822,62 @@ cliRows.addEventListener('click', async (ev)=>{
 /* ------- Botones globales ------- */
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
 document.getElementById('btnAddClient').addEventListener('click', openAddClient);
+
+
+  /* =================== SETTINGS: BLOCKS =================== */
+const API_BLK = '/api/admin/blocks';
+
+const setMsg   = document.getElementById('setMsg');
+const blkRows  = document.getElementById('blkRows');
+function setShowMsg(t, ok=true){ setMsg.textContent=t||''; setMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+
+let allBlocks = [];
+let editingBlockId = null;
+
+function normalizeBlock(b){
+  return {
+    id: String(b.id||''),
+    kind: String(b.kind||'block').toLowerCase(),
+    starts_on: b.starts_on,
+    ends_on: b.ends_on,
+    note: (b.note||'').trim(),
+    active: !!b.active
+  };
+}
+function renderBlocks(){
+  blkRows.innerHTML = allBlocks.map(b=>`
+    <tr data-id="${b.id}">
+      <td>${escapeHtml(b.kind)}</td>
+      <td>${escapeHtml(b.starts_on)}</td>
+      <td>${escapeHtml(b.ends_on)}</td>
+      <td>${escapeHtml(b.note)}</td>
+      <td><span class="badge ${b.active?'on':'off'}">${b.active?'ACTIVE':'OFF'}</span></td>
+      <td class="right actions">
+        <div class="btns">
+          <button class="btn btn-edit" data-action="edit">Edit</button>
+          <button class="btn btn-danger" data-action="delete">Delete</button>
+          <button class="btn ${b.active?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${b.active?'Turn Off':'Turn On'}</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6">No blocks.</td></tr>';
+}
+
+async function loadBlocks(){
+  blkRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
+  setShowMsg('');
+  try{
+    const data = await api(API_BLK, 'GET');
+    const raw = Array.isArray(data.blocks) ? data.blocks : [];
+    allBlocks = raw.map(normalizeBlock);
+    renderBlocks();
+    setShowMsg('Loaded successfully.');
+    setTheadTop();
+  }catch(e){
+    allBlocks = []; renderBlocks();
+    setShowMsg('Error loading blocks: ' + (e.message||e), false);
+  }
+}
 /* =================== BOOT =================== */
 loadVehicles(); // tab inicial
 </script>
