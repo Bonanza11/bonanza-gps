@@ -226,16 +226,31 @@ thead th{
   </div>
 </section>
 
-<!-- VIEW: SETTINGS (placeholder) -->
 <section id="view-settings" hidden>
   <div class="wrap">
-    <div class="card">
-      <h2>Información</h2>
-      <p style="font-size:14px; margin-top:8px; color:var(--muted)">
-        Aquí podrás administrar reglas de temporada, excepción SLC, bloqueos, etc.
-        (placeholder – se conecta más adelante).
-      </p>
+    <div class="controls affects-sticky">
+      <button id="btnReloadBlocks">Reload</button>
+      <button id="btnAddBlock" class="primary">Add Block / SLC Exception</button>
     </div>
+
+    <div id="setMsg" class="msg"></div>
+    <div id="stickySpacerSettings"></div>
+
+    <table role="grid" aria-label="Blocks">
+      <thead>
+        <tr>
+          <th style="width:140px">Kind</th>
+          <th style="width:140px">Starts</th>
+          <th style="width:140px">Ends</th>
+          <th>Note</th>
+          <th style="width:110px">Active</th>
+          <th class="right" style="width:200px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="blkRows">
+        <tr><td colspan="6">Loading…</td></tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
@@ -331,7 +346,143 @@ thead th{
     </div>
   </div>
 </div>
+/* =================== SETTINGS: BLOCKS =================== */
+const API_BLK = '/api/admin/blocks';
 
+const setMsg   = document.getElementById('setMsg');
+const blkRows  = document.getElementById('blkRows');
+function setShowMsg(t, ok=true){ setMsg.textContent=t||''; setMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+
+let allBlocks = [];
+let editingBlockId = null;
+
+function normalizeBlock(b){
+  return {
+    id: String(b.id||''),
+    kind: String(b.kind||'block').toLowerCase(),
+    starts_on: b.starts_on,
+    ends_on: b.ends_on,
+    note: (b.note||'').trim(),
+    active: !!b.active
+  };
+}
+function renderBlocks(){
+  blkRows.innerHTML = allBlocks.map(b=>`
+    <tr data-id="${b.id}">
+      <td>${escapeHtml(b.kind)}</td>
+      <td>${escapeHtml(b.starts_on)}</td>
+      <td>${escapeHtml(b.ends_on)}</td>
+      <td>${escapeHtml(b.note)}</td>
+      <td><span class="badge ${b.active?'on':'off'}">${b.active?'ACTIVE':'OFF'}</span></td>
+      <td class="right actions">
+        <div class="btns">
+          <button class="btn btn-edit" data-action="edit">Edit</button>
+          <button class="btn btn-danger" data-action="delete">Delete</button>
+          <button class="btn ${b.active?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${b.active?'Turn Off':'Turn On'}</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6">No blocks.</td></tr>';
+}
+
+async function loadBlocks(){
+  blkRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
+  setShowMsg('');
+  try{
+    const data = await api(API_BLK, 'GET');
+    const raw = Array.isArray(data.blocks) ? data.blocks : [];
+    allBlocks = raw.map(normalizeBlock);
+    renderBlocks();
+    setShowMsg('Loaded successfully.');
+    setTheadTop();
+  }catch(e){
+    allBlocks = []; renderBlocks();
+    setShowMsg('Error loading blocks: ' + (e.message||e), false);
+  }
+}
+
+/* Modal refs */
+const blkBackdrop = document.getElementById('blkBackdrop');
+const blkBtnClose = document.getElementById('blkBtnClose');
+const blkBtnSave  = document.getElementById('blkBtnSave');
+const blkModalTitle = document.getElementById('blkModalTitle');
+const bKind = document.getElementById('bKind');
+const bStart= document.getElementById('bStart');
+const bEnd  = document.getElementById('bEnd');
+const bNote = document.getElementById('bNote');
+const bActive = document.getElementById('bActive');
+const blkFormErr = document.getElementById('blkFormErr');
+
+function openAddBlock(){
+  editingBlockId = null; blkModalTitle.textContent='Add Block / SLC Exception';
+  bKind.value='block'; bStart.value=''; bEnd.value=''; bNote.value=''; bActive.checked=true;
+  blkFormErr.textContent=''; blkBackdrop.classList.add('open'); setTimeout(()=>bStart.focus(),50);
+}
+function openEditBlock(id){
+  const b = allBlocks.find(x=>x.id===id); if(!b) return;
+  editingBlockId=id; blkModalTitle.textContent='Edit Block / SLC Exception';
+  bKind.value=b.kind; bStart.value=b.starts_on; bEnd.value=b.ends_on; bNote.value=b.note; bActive.checked=!!b.active;
+  blkFormErr.textContent=''; blkBackdrop.classList.add('open'); setTimeout(()=>bStart.focus(),50);
+}
+function closeBlkModal(){ blkBackdrop.classList.remove('open'); }
+blkBtnClose.addEventListener('click', closeBlkModal);
+window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeBlkModal(); });
+
+blkBtnSave.addEventListener('click', async ()=>{
+  blkFormErr.textContent='';
+  const kind = (bKind.value||'block').toLowerCase();
+  const starts_on = bStart.value;
+  const ends_on   = bEnd.value;
+  const note = bNote.value.trim();
+  const active = !!bActive.checked;
+
+  if(!starts_on || !ends_on){ blkFormErr.textContent='Start and End are required.'; return; }
+  blkBtnSave.disabled = true;
+  try{
+    const payload = { id: editingBlockId, kind, starts_on, ends_on, note, active };
+    const data = await api(API_BLK, 'POST', payload);
+    const bb = normalizeBlock(data.block || payload);
+    const i = allBlocks.findIndex(x=>x.id===bb.id);
+    if(i>=0) allBlocks[i] = {...allBlocks[i], ...bb}; else allBlocks.unshift(bb);
+    renderBlocks(); setShowMsg(editingBlockId?'Updated.':'Added.'); closeBlkModal();
+  }catch(e){
+    blkFormErr.textContent = e.message || 'Error saving.';
+  }finally{
+    blkBtnSave.disabled = false;
+  }
+});
+
+/* Delegación tabla */
+blkRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr = btn.closest('tr[data-id]'); if(!tr) return;
+  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
+
+  if (action==='edit'){ openEditBlock(id); return; }
+  if (action==='delete'){
+    if(!confirm('Delete this record? This cannot be undone.')) return;
+    try{
+      await api(`${API_BLK}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allBlocks = allBlocks.filter(x=>x.id!==id); renderBlocks(); setShowMsg('Deleted.');
+    }catch(e){ setShowMsg('Error deleting: '+(e.message||e), false); }
+    return;
+  }
+  if (action==='toggle'){
+    const b = allBlocks.find(x=>x.id===id); if(!b) return;
+    try{
+      const next = !b.active;
+      await api(API_BLK, 'POST', { id, active: next, kind:b.kind, starts_on:b.starts_on, ends_on:b.ends_on, note:b.note });
+      b.active = next; renderBlocks(); setShowMsg('Updated.');
+    }catch(e){ setShowMsg('Error updating: '+(e.message||e), false); }
+    return;
+  }
+});
+
+/* Botones */
+document.getElementById('btnReloadBlocks').addEventListener('click', loadBlocks);
+document.getElementById('btnAddBlock').addEventListener('click', openAddBlock);
+
+/* Carga cuando entras a Ajustes */
 <script>
 /* =================== CONFIG =================== */
 const ADMIN_KEY = 'supersecreto123';
