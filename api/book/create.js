@@ -107,8 +107,8 @@ export default async function handler(req, res){
     }
     if (!clientRow){
      clientRow = (await sql`
-  insert into clients (name, phone, email, status)
-  values (${fullname}, ${phone || null}, ${email || null}, 'ok')
+ insert into clients (name, phone, email, status)
+values (${fullname}, ${phone || null}, ${email || null}, 'ok')
   returning *;
 `)[0];
     }
