@@ -109,7 +109,7 @@ export default async function handler(req, res){
     // después
 clientRow = (await sql`
   insert into clients (name, phone, email, rating)
-  values (${fullname}, ${phone || null}, ${email || null}, 'good')
+  values (${name}, ${phone || null}, ${email || null}, 'good')
   returning *;
 `)[0];
     }
