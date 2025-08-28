@@ -106,9 +106,10 @@ export default async function handler(req, res){
       clientRow = (await sql`select * from clients where phone = ${phone} limit 1;`)[0];
     }
     if (!clientRow){
-     clientRow = (await sql`
- insert into clients (name, phone, email, status)
-values (${fullname}, ${phone || null}, ${email || null}, 'ok')
+    // después
+clientRow = (await sql`
+  insert into clients (name, phone, email, rating)
+  values (${fullname}, ${phone || null}, ${email || null}, 'good')
   returning *;
 `)[0];
     }
