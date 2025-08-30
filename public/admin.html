@@ -859,26 +859,23 @@ async function patchReservation(id, payload){
   return r.json();
 }
 
-/* Delegación de acciones de la tabla */
-resRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr  = btn.closest('tr[data-id]'); if(!tr) return;
-  const id  = tr.getAttribute('data-id');
-  const a   = btn.getAttribute('data-action');
-
-  try{
-    if (a==='assign') else if (a==='start'){
-      await patchReservation(id, { status:'in_progress' });
-    } else if (a==='done'){
-      await patchReservation(id, { status:'done' });
-    } else if (a==='cancel'){
-      if (!confirm('Cancel this reservation?')) return;
-      await patchReservation(id, { status:'canceled' });
-    }
-    await loadReservations();
-  }catch(e){
-    resShowMsg('Error updating: '+(e.message||e), false);
+try {
+  if (a === 'assign') {
+    openAssignModal(id);     // 👈 abre el modal
+    return;                  // importante: salir para no seguir evaluando
+  } else if (a === 'start') {
+    await patchReservation(id, { status: 'in_progress' });
+  } else if (a === 'done') {
+    await patchReservation(id, { status: 'done' });
+  } else if (a === 'cancel') {
+    if (!confirm('Cancel this reservation?')) return;
+    await patchReservation(id, { status: 'canceled' });
   }
+
+  await loadReservations();
+} catch (e) {
+  resShowMsg('Error updating: ' + (e.message || e), false);
+}
 });
 
 /* Botón Reload */
