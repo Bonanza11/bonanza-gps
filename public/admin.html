@@ -222,11 +222,38 @@ thead th{
       </thead>
       <tbody id="cliRows">
         <tr><td colspan="5">Loading…</td></tr>
+      <!-- VIEW: RESERVATIONS -->
+<section id="view-reservations" hidden>
+  <div class="wrap">
+    <div class="controls affects-sticky" id="resControls">
+      <button id="btnReloadRes">Reload</button>
+    </div>
+
+    <div class="card affects-sticky" style="margin-bottom:12px">
+      <h2 style="margin:0; font-size:12px; color:var(--muted)">RESERVATIONS</h2>
+      <p id="resMsg" class="msg" style="margin:6px 0 0"></p>
+    </div>
+
+    <div id="stickySpacerReservations"></div>
+
+    <table role="grid" aria-label="Reservations">
+      <thead>
+        <tr>
+          <th style="width:60px">ID</th>
+          <th style="width:210px">Customer</th>
+          <th>Pickup → Dropoff</th>
+          <th style="width:190px">Time</th>
+          <th style="width:80px">Vehicle</th>
+          <th style="width:110px">Status</th>
+          <th class="right" style="width:280px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="resRows">
+        <tr><td colspan="7">Loading…</td></tr>
       </tbody>
     </table>
   </div>
 </section>
-
 <!-- VIEW: SETTINGS (placeholder) -->
 <section id="view-settings" hidden>
   <div class="wrap">
