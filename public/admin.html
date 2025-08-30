@@ -5,16 +5,14 @@
 <title>Bonanza — Headquarters</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  /* ===== Tokens globales ===== */
   :root{
     --bg:#0f1220; --card:#171a2b; --line:#2a3550;
     --text:#e9eef7; --muted:#a7b0c3; --ok:#22c55e; --bad:#ff6b6b; --accent:#f7b06a;
-    --theadTop: 0px; /* se ajusta con JS según header + barras */
+    --theadTop: 0px;
   }
   *{ box-sizing:border-box }
   body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
 
-  /* ===== Header superior ===== */
   header{
     position:sticky; top:0; z-index:1000;
     display:flex; align-items:center; gap:12px;
@@ -24,7 +22,6 @@
   header h1{ margin:0; font-size:18px; font-weight:800 }
   .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:#cbd5e1; border:1px solid #ffffff22 }
 
-  /* ===== Tabs (nav) ===== */
   .tabs{
     display:flex; gap:8px; align-items:center; padding:10px 16px;
     background:rgba(0,0,0,.2); border-bottom:1px solid #0003;
@@ -37,100 +34,52 @@
   .tabs .spacer{ flex:1 }
   .muted{ color:var(--muted) }
 
-  /* ===== Layout de cada vista ===== */
   .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
-  .controls{
-    display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px 0;
-  }
-  button{
-    background:#2a3550; color:var(--text);
-    border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px;
-  }
+  .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px 0 }
+  button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px }
   button:hover{ filter:brightness(1.08) }
-  .primary{ background:#3b4364 }
-  .danger{ background:#3a2030 }
+  .primary{ background:#3b4364 } .danger{ background:#3a2030 }
 
-  /* ===== Summary cards ===== */
-  #summaryVehicles, #summaryClients{
-    display:flex; gap:12px; flex-wrap:wrap; margin:0 0 12px 0
-  }
-  .card{
-    flex:1 1 140px; background:var(--card); border:1px solid var(--line);
-    border-radius:10px; padding:12px; text-align:center;
-  }
-  .card h2{ margin:0; font-size:12px; letter-spacing:.35px; color:var(--muted) }
-  .card p{ margin:6px 0 0; font-size:20px; font-weight:800 }
-
-  .msg{ margin:8px 0 12px; color:var(--muted); min-height:20px }
-
-  /* ===== Tabla genérica ===== */
-  table{
-    width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
-    border-radius:12px; overflow:hidden;
-  }
+  table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
   th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
-
-  /* Encabezado sticky fijo al top real de la página */
-thead th{
-  background:#11162a; color:#cdd6ea;
-  position: sticky;
-  top: 0;             /* SIEMPRE 0; compensamos con el espaciador */
-  z-index: 5;
-}
-
-/* Espaciador que empuja la tabla hacia abajo */
-#stickySpacerVehicles,
-#stickySpacerClients{
-  height: var(--theadTop, 0px);
-}
-
+  thead th{ background:#11162a; color:#cdd6ea; position:sticky; top:0; z-index:5 }
+  #stickySpacerVehicles,#stickySpacerClients,#stickySpacerReservations{ height: var(--theadTop, 0px) }
   tbody tr:hover{ background:#1b2136 }
   .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
   .badge.on { background:#0f3f23; color:#22c55e; border:1px solid #16a34a }
   .badge.off{ background:#3b0f12; color:#ff6b6b; border:1px solid #dc2626 }
-
   .right{ text-align:right }
 
-  /* ===== Celda de acciones y botones ===== */
   .actions{ display:flex; justify-content:flex-end }
   .btns{ display:inline-flex; gap:8px; align-items:center }
   .btn{ height:32px; padding:0 10px; border-radius:8px; border:1px solid #ffffff22; background:#2a3550; color:#e9eef7; font-size:13px; line-height:30px; cursor:pointer; transition:transform .03s ease, filter .15s ease }
   .btn:active{ transform:translateY(1px) }
   .btn-edit{ background:#293249; border-color:#46536d }
-  .btn-edit:hover{ filter:brightness(1.12) }
   .btn-danger{ background:#3a1b22; border-color:#b02a2a; color:#ffd4d4 }
-  .btn-danger:hover{ filter:brightness(1.08) }
   .btn-toggle-on{ background:#12351e; border-color:#16a34a; color:#9ff5be }
   .btn-toggle-off{ background:#3a1b1b; border-color:#dc2626; color:#ffcccc }
 
-  /* ===== Modal ===== */
   .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:2000 }
   .backdrop.open{ display:flex }
-  .modal{
-    width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a;
-  }
+  .modal{ width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a }
   .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
   .modal .body{ padding:16px }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
   .grid .full{ grid-column:1/-1 }
   .field label{ display:block; font-size:12px; color:#cbd3e7; margin-bottom:6px }
-  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px; }
-  .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
+  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px }
   .err-msg{ color:#ff8080; font-size:12px; min-height:16px; padding-top:4px }
+  .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
 
-  /* ===== Responsive acciones ===== */
   @media (max-width: 720px){
     .btns{ gap:6px; flex-wrap:wrap }
     .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
   }
-
-  /* ===== Secciones ===== */
   section[hidden]{ display:none !important }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <h1>Bonanza — Headquarters</h1>
   <span class="pill" id="envInfo"></span>
@@ -138,7 +87,6 @@ thead th{
   <button id="btnLogout" class="danger">Logout</button>
 </header>
 
-<!-- TABS -->
 <nav class="tabs affects-sticky" id="tabs">
   <button class="tab-btn" data-tab="vehicles" aria-selected="true">Vehículos</button>
   <button class="tab-btn" data-tab="clients"  aria-selected="false">Clientes</button>
@@ -151,7 +99,6 @@ thead th{
 <!-- VIEW: VEHICLES -->
 <section id="view-vehicles">
   <div class="wrap">
-    <!-- Controles -->
     <div class="controls affects-sticky" id="vehControls">
       <button data-filter="ALL">All</button>
       <button data-filter="SUV">SUV</button>
@@ -160,7 +107,6 @@ thead th{
       <button id="btnAddVehicle" class="primary">Add Vehicle</button>
     </div>
 
-    <!-- Resumen -->
     <div id="summaryVehicles" class="affects-sticky">
       <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
       <div class="card"><h2>ACTIVE</h2><p id="statActive">0</p></div>
@@ -172,7 +118,6 @@ thead th{
     <div id="vehMsg" class="msg"></div>
     <div id="stickySpacerVehicles"></div>
 
-    <!-- Tabla Vehículos -->
     <table role="grid" aria-label="Vehicles">
       <thead>
         <tr>
@@ -222,250 +167,251 @@ thead th{
       </thead>
       <tbody id="cliRows">
         <tr><td colspan="5">Loading…</td></tr>
-      <!-- VIEW: RESERVATIONS -->
-<section id="view-reservations" hidden>
+      </tbody>
+    </table>
+  </div>
+</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Bonanza — Headquarters</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0f1220; --card:#171a2b; --line:#2a3550;
+    --text:#e9eef7; --muted:#a7b0c3; --ok:#22c55e; --bad:#ff6b6b; --accent:#f7b06a;
+    --theadTop: 0px;
+  }
+  *{ box-sizing:border-box }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
+
+  header{
+    position:sticky; top:0; z-index:1000;
+    display:flex; align-items:center; gap:12px;
+    padding:14px 18px; background:rgba(0,0,0,.35); border-bottom:1px solid #0003;
+    backdrop-filter: blur(6px);
+  }
+  header h1{ margin:0; font-size:18px; font-weight:800 }
+  .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:#cbd5e1; border:1px solid #ffffff22 }
+
+  .tabs{
+    display:flex; gap:8px; align-items:center; padding:10px 16px;
+    background:rgba(0,0,0,.2); border-bottom:1px solid #0003;
+  }
+  .tab-btn{
+    padding:8px 12px; border-radius:8px; border:1px solid #ffffff1f;
+    background:#24304a; color:#e9eef7; cursor:pointer; font-size:14px;
+  }
+  .tab-btn[aria-selected="true"]{ background:#3b4364 }
+  .tabs .spacer{ flex:1 }
+  .muted{ color:var(--muted) }
+
+  .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
+  .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px 0 }
+  button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px }
+  button:hover{ filter:brightness(1.08) }
+  .primary{ background:#3b4364 } .danger{ background:#3a2030 }
+
+  table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+  th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
+  thead th{ background:#11162a; color:#cdd6ea; position:sticky; top:0; z-index:5 }
+  #stickySpacerVehicles,#stickySpacerClients,#stickySpacerReservations{ height: var(--theadTop, 0px) }
+  tbody tr:hover{ background:#1b2136 }
+  .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
+  .badge.on { background:#0f3f23; color:#22c55e; border:1px solid #16a34a }
+  .badge.off{ background:#3b0f12; color:#ff6b6b; border:1px solid #dc2626 }
+  .right{ text-align:right }
+
+  .actions{ display:flex; justify-content:flex-end }
+  .btns{ display:inline-flex; gap:8px; align-items:center }
+  .btn{ height:32px; padding:0 10px; border-radius:8px; border:1px solid #ffffff22; background:#2a3550; color:#e9eef7; font-size:13px; line-height:30px; cursor:pointer; transition:transform .03s ease, filter .15s ease }
+  .btn:active{ transform:translateY(1px) }
+  .btn-edit{ background:#293249; border-color:#46536d }
+  .btn-danger{ background:#3a1b22; border-color:#b02a2a; color:#ffd4d4 }
+  .btn-toggle-on{ background:#12351e; border-color:#16a34a; color:#9ff5be }
+  .btn-toggle-off{ background:#3a1b1b; border-color:#dc2626; color:#ffcccc }
+
+  .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:2000 }
+  .backdrop.open{ display:flex }
+  .modal{ width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a }
+  .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
+  .modal .body{ padding:16px }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+  .grid .full{ grid-column:1/-1 }
+  .field label{ display:block; font-size:12px; color:#cbd3e7; margin-bottom:6px }
+  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px }
+  .err-msg{ color:#ff8080; font-size:12px; min-height:16px; padding-top:4px }
+  .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
+
+  @media (max-width: 720px){
+    .btns{ gap:6px; flex-wrap:wrap }
+    .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
+  }
+  section[hidden]{ display:none !important }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bonanza — Headquarters</h1>
+  <span class="pill" id="envInfo"></span>
+  <div style="flex:1"></div>
+  <button id="btnLogout" class="danger">Logout</button>
+</header>
+
+<nav class="tabs affects-sticky" id="tabs">
+  <button class="tab-btn" data-tab="vehicles" aria-selected="true">Vehículos</button>
+  <button class="tab-btn" data-tab="clients"  aria-selected="false">Clientes</button>
+  <button class="tab-btn" data-tab="reservations" aria-selected="false">Reservations</button>
+  <button class="tab-btn" data-tab="settings" aria-selected="false">Ajustes</button>
+  <div class="spacer"></div>
+  <span class="muted">API Vehicles: <code>/api/admin/vehicles</code></span>
+</nav>
+
+<!-- VIEW: VEHICLES -->
+<section id="view-vehicles">
   <div class="wrap">
-    <div class="controls affects-sticky" id="resControls">
-      <button id="btnReloadRes">Reload</button>
+    <div class="controls affects-sticky" id="vehControls">
+      <button data-filter="ALL">All</button>
+      <button data-filter="SUV">SUV</button>
+      <button data-filter="VAN">VAN</button>
+      <button id="btnReloadVehicles">Reload</button>
+      <button id="btnAddVehicle" class="primary">Add Vehicle</button>
     </div>
 
-    <div class="card affects-sticky" style="margin-bottom:12px">
-      <h2 style="margin:0; font-size:12px; color:var(--muted)">RESERVATIONS</h2>
-      <p id="resMsg" class="msg" style="margin:6px 0 0"></p>
+    <div id="summaryVehicles" class="affects-sticky">
+      <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
+      <div class="card"><h2>ACTIVE</h2><p id="statActive">0</p></div>
+      <div class="card"><h2>INACTIVE</h2><p id="statInactive">0</p></div>
+      <div class="card"><h2>SUV</h2><p id="statSUV">0</p></div>
+      <div class="card"><h2>VAN</h2><p id="statVAN">0</p></div>
     </div>
 
-    <div id="stickySpacerReservations"></div>
+    <div id="vehMsg" class="msg"></div>
+    <div id="stickySpacerVehicles"></div>
 
-    <table role="grid" aria-label="Reservations">
+    <table role="grid" aria-label="Vehicles">
       <thead>
         <tr>
-          <th style="width:60px">ID</th>
-          <th style="width:210px">Customer</th>
-          <th>Pickup → Dropoff</th>
-          <th style="width:190px">Time</th>
-          <th style="width:80px">Vehicle</th>
-          <th style="width:110px">Status</th>
-          <th class="right" style="width:280px">Actions</th>
+          <th style="width:120px">Plate</th>
+          <th>Driver</th>
+          <th style="width:90px">Type</th>
+          <th style="width:80px">Year</th>
+          <th>Model</th>
+          <th style="width:110px">Active</th>
+          <th class="right" style="width:220px">Actions</th>
         </tr>
       </thead>
-      <tbody id="resRows">
+      <tbody id="vehRows">
         <tr><td colspan="7">Loading…</td></tr>
       </tbody>
     </table>
   </div>
 </section>
-        <!-- MODAL: ASSIGN RESERVATION -->
-<div class="backdrop" id="assignBackdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
-    <header>
-      <h2 id="assignTitle" style="margin:0;font-size:16px;font-weight:800">Assign Reservation</h2>
-      <div style="flex:1"></div>
-      <button id="assignBtnClose">Close</button>
-    </header>
-    <div class="body">
-      <div class="grid">
-        <div class="field">
-          <label for="aVehicle">Vehicle *</label>
-          <select id="aVehicle"></select>
-        </div>
-        <div class="field">
-          <label for="aDriver">Driver (optional)</label>
-          <input id="aDriver" placeholder="Name or ID" />
-        </div>
-        <div class="field full">
-          <label for="aNotes">Notes (optional)</label>
-          <textarea id="aNotes" placeholder="Internal notes for dispatch"></textarea>
-        </div>
-      </div>
-      <div id="assignErr" class="err-msg"></div>
-      <div class="actions">
-        <button id="assignBtnSave" class="primary">Assign</button>
-      </div>
-    </div>
-  </div>
-</div>        
-<!-- VIEW: SETTINGS (placeholder) -->
-<section id="view-settings" hidden>
+
+<!-- VIEW: CLIENTS -->
+<section id="view-clients" hidden>
   <div class="wrap">
-    <div class="card">
-      <h2>Información</h2>
-      <p style="font-size:14px; margin-top:8px; color:var(--muted)">
-        Aquí podrás administrar reglas de temporada, excepción SLC, bloqueos, etc.
-        (placeholder – se conecta más adelante).
-      </p>
+    <div class="controls affects-sticky" id="cliControls">
+      <button id="btnReloadClients">Reload</button>
+      <button id="btnAddClient" class="primary">Add Client</button>
     </div>
+
+    <div id="summaryClients" class="affects-sticky">
+      <div class="card"><h2>TOTAL CLIENTS</h2><p id="cliTotal">0</p></div>
+      <div class="card"><h2>GOOD</h2><p id="cliGood">0</p></div>
+      <div class="card"><h2>OBSERVE</h2><p id="cliWatch">0</p></div>
+      <div class="card"><h2>RESTRICTED</h2><p id="cliRestricted">0</p></div>
+    </div>
+
+    <div id="cliMsg" class="msg"></div>
+    <div id="stickySpacerClients"></div>
+
+    <table role="grid" aria-label="Clients">
+      <thead>
+        <tr>
+          <th style="width:26%">Name</th>
+          <th style="width:26%">Email</th>
+          <th style="width:18%">Phone</th>
+          <th style="width:14%">Rating</th>
+          <th class="right" style="width:16%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="cliRows">
+        <tr><td colspan="5">Loading…</td></tr>
+      </tbody>
+    </table>
   </div>
 </section>
-
-<!-- MODAL VEHICLE -->
-<div class="backdrop" id="vehBackdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
-    <header>
-      <h2 id="vehModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Vehicle</h2>
-      <div style="flex:1"></div>
-      <button id="vehBtnClose">Close</button>
-    </header>
-    <div class="body">
-      <div class="grid">
-        <div class="field">
-          <label for="fPlate">Plate</label>
-          <input id="fPlate" placeholder="UT-123 ABC" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="fDriver">Driver Name</label>
-          <input id="fDriver" placeholder="John Doe" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="fKind">Type</label>
-          <select id="fKind">
-            <option value="SUV">SUV</option>
-            <option value="VAN">VAN</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="fYear">Year</label>
-          <input id="fYear" type="number" min="2000" max="2099" placeholder="2025">
-        </div>
-        <div class="field full">
-          <label for="fModel">Model / Subtype (e.g., Suburban LT / Sprinter)</label>
-          <input id="fModel" placeholder="Suburban LT / Sprinter 2500">
-        </div>
-        <div class="field full">
-          <label><input type="checkbox" id="fActive"> Active</label>
-        </div>
-      </div>
-      <div id="vehFormErr" class="err-msg"></div>
-      <div class="actions">
-        <button id="vehBtnSave" class="primary">Save</button>
-      </div> <!-- .actions -->
-    </div>   <!-- .body -->
-  </div>     <!-- .modal -->
-</div>       <!-- #vehBackdrop -->
-
-  
-     <!-- MODAL CLIENT -->
-<div class="backdrop" id="cliBackdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cliModalTitle">
-    <header>
-      <h2 id="cliModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Client</h2>
-      <div style="flex:1"></div>
-      <button id="cliBtnClose">Close</button>
-    </header>
-    <div class="body">
-      <div class="grid">
-        <div class="field">
-          <label for="cName">Name</label>
-          <input id="cName" placeholder="John Appleseed" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="cEmail">Email</label>
-          <input id="cEmail" type="email" placeholder="john@email.com" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="cPhone">Phone</label>
-          <input id="cPhone" placeholder="+1 555 123 4567" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="cRating">Internal rating</label>
-          <select id="cRating">
-            <option value="good">good</option>
-            <option value="watch">watch</option>
-            <option value="restricted">restricted</option>
-          </select>
-        </div>
-        <div class="field full">
-          <label for="cAddress">Home address</label>
-          <input id="cAddress" placeholder="123 Main St, Park City, UT">
-        </div>
-        <div class="field full">
-          <label for="cNotes">Notes</label>
-          <input id="cNotes" placeholder="VIP, prefiere pagos con tarjeta, etc.">
-        </div>
-      </div>
-      <div id="cliFormErr" class="err-msg"></div>
-      <div class="actions">
-        <button id="cliBtnSave" class="primary">Save</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 /* =================== CONFIG =================== */
 const ADMIN_KEY = 'supersecreto123';
 const API_VEH   = '/api/admin/vehicles';
-const API_CLI   = '/api/admin/clients';   // puede no existir aún (manejamos 404)
+const API_CLI   = '/api/admin/clients';
+const API_RES   = '/api/reservations';
 
 /* =================== STICKY TOP =================== */
 function setTheadTop(){
   const header = document.querySelector('header');
   const bars   = document.querySelectorAll('.affects-sticky');
-
   let top = 0;
-
-  // Altura real del header (incluye padding/border)
   if (header) top += header.getBoundingClientRect().height;
-
-  // Suma altura + márgenes verticales de cada barra que afecta al sticky
-  bars.forEach(el => {
-    const rect = el.getBoundingClientRect();
-    const cs   = getComputedStyle(el);
-    const mt   = parseFloat(cs.marginTop)  || 0;
-    const mb   = parseFloat(cs.marginBottom) || 0;
+  bars.forEach(el=>{
+    const rect=el.getBoundingClientRect(), cs=getComputedStyle(el);
+    const mt=parseFloat(cs.marginTop)||0, mb=parseFloat(cs.marginBottom)||0;
     top += rect.height + mt + mb;
   });
-
-  // pequeño respiro visual
   top += 6;
-
   document.documentElement.style.setProperty('--theadTop', `${top}px`);
 }
-window.addEventListener('load', setTheadTop);
-window.addEventListener('resize', setTheadTop);
+addEventListener('load', setTheadTop);
+addEventListener('resize', setTheadTop);
 
 /* =================== TABS =================== */
 const tabsEl = document.getElementById('tabs');
 const views = {
   vehicles: document.getElementById('view-vehicles'),
   clients : document.getElementById('view-clients'),
+  reservations: document.getElementById('view-reservations'),
   settings: document.getElementById('view-settings'),
 };
 tabsEl.addEventListener('click', (e)=>{
   const b = e.target.closest('.tab-btn'); if(!b) return;
   const t = b.dataset.tab;
   [...tabsEl.querySelectorAll('.tab-btn')].forEach(x=>x.setAttribute('aria-selected', String(x===b)));
-  Object.entries(views).forEach(([key,sec])=> sec.hidden = key!==t );
+  Object.entries(views).forEach(([k,sec])=> sec.hidden = k!==t );
   setTheadTop();
-  if (t==='vehicles') loadVehicles();
-  if (t==='clients')  loadClients();
+  if (t==='vehicles')     loadVehicles();
+  if (t==='clients')      loadClients();
   if (t==='reservations') loadReservations();
 });
 
 /* =================== ENV / LOGOUT =================== */
-const envInfo = document.getElementById('envInfo');
-envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
+document.getElementById('envInfo').textContent =
+  location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 document.getElementById('btnLogout').addEventListener('click', ()=>{
   localStorage.removeItem('ADMIN_KEY');
   localStorage.removeItem('bonanza_admin_ok');
-  location.href = '/login.html';
+  location.href='/login.html';
 });
 
-/* ========== HELPERS GENERALES ========== */
-function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* ========== HELPERS ========== */
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
 async function api(url, method='GET', body=null){
-  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
-  if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+  const opt={ method, headers:{ 'x-admin-key': ADMIN_KEY } };
+  if(body){ opt.headers['Content-Type']='application/json'; opt.body=JSON.stringify(body); }
   const r = await fetch(url, opt);
-  let data={}; try{ data = await r.json(); }catch{}
-  if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
+  let data={}; try{ data=await r.json(); }catch{}
+  if(!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
 
 /* =========================================================
-   VEHÍCULOS
+   VEHICLES
    ========================================================= */
-const vehMsg   = document.getElementById('vehMsg');
-const vehRows  = document.getElementById('vehRows');
+const vehMsg  = document.getElementById('vehMsg');
+const vehRows = document.getElementById('vehRows');
 const stat = {
   total: document.getElementById('statTotal'),
   active: document.getElementById('statActive'),
@@ -473,185 +419,157 @@ const stat = {
   suv: document.getElementById('statSUV'),
   van: document.getElementById('statVAN'),
 };
-let allVehicles = [];
-let filterKind  = 'ALL';
-let editingId   = null;
+let allVehicles=[]; let filterKind='ALL'; let editingId=null;
 
-function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+function vehShowMsg(t, ok=true){ vehMsg.textContent=t||''; vehMsg.style.color=ok?'var(--muted)':'var(--bad)' }
 function normalizeVehicle(v){
-  const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN') ? 'VAN':'SUV';
-  return { id:String(v.id||''), plate:(v.plate||'').trim(), driver_name:(v.driver_name||'').trim(), kind:kindNorm, year:(v.year!=null?Number(v.year):null), model:(v.model||'').trim(), active:!!v.active };
+  const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN')?'VAN':'SUV';
+  return { id:String(v.id||''), plate:(v.plate||'').trim(), driver_name:(v.driver_name||'').trim(),
+           kind:kindNorm, year:(v.year!=null?Number(v.year):null), model:(v.model||'').trim(),
+           active:!!v.active };
 }
-function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka!==0) return ka; return (a.plate||'').localeCompare(b.plate||''); }
+function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka) return ka; return (a.plate||'').localeCompare(b.plate||''); }
 function computeStats(){
   const total=allVehicles.length, active=allVehicles.filter(v=>v.active).length;
-  stat.total.textContent=total; stat.active.textContent=active;
-  stat.inactive.textContent=Math.max(0,total-active);
+  stat.total.textContent=total; stat.active.textContent=active; stat.inactive.textContent=Math.max(0,total-active);
   stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
   stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
 }
-function visibleVeh(){ return (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
+function visibleVeh(){ return filterKind==='ALL'? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
 function renderVehicles(){
   computeStats();
-  const list = visibleVeh();
+  const list=visibleVeh();
   vehRows.innerHTML = list.map(v=>{
-    const on = !!v.active;
+    const on=!!v.active;
     return `
       <tr data-id="${v.id}">
         <td>${escapeHtml(v.plate)}</td>
         <td>${escapeHtml(v.driver_name)}</td>
         <td>${escapeHtml(v.kind)}</td>
         <td>${v.year ?? ''}</td>
-        <td>${escapeHtml(v.model || '')}</td>
+        <td>${escapeHtml(v.model||'')}</td>
         <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
         <td class="right actions">
           <div class="btns">
-            <button class="btn btn-edit"      data-action="edit">Edit</button>
-            <button class="btn btn-danger"    data-action="delete">Delete</button>
+            <button class="btn btn-edit" data-action="edit">Edit</button>
+            <button class="btn btn-danger" data-action="delete">Delete</button>
             <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
           </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
 }
-
 async function loadVehicles(){
-  vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  vehShowMsg('');
+  vehRows.innerHTML='<tr><td colspan="7">Loading…</td></tr>'; vehShowMsg('');
   try{
-    const data = await api(API_VEH, 'GET');
-    const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-    allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    renderVehicles();
-    vehShowMsg('Loaded successfully.');
-    setTheadTop();
-  }catch(e){
-    allVehicles=[]; renderVehicles();
-    vehShowMsg('Error loading: '+(e.message||e), false);
-  }
+    const data=await api(API_VEH,'GET');
+    const raw=Array.isArray(data.vehicles)?data.vehicles:[];
+    allVehicles=raw.map(normalizeVehicle).sort(sortVehicles);
+    renderVehicles(); vehShowMsg('Loaded successfully.'); setTheadTop();
+  }catch(e){ allVehicles=[]; renderVehicles(); vehShowMsg('Error loading: '+(e.message||e), false); }
 }
 
-/* Modal Vehículos */
-const vehBackdrop = document.getElementById('vehBackdrop');
-const vehBtnClose = document.getElementById('vehBtnClose');
-const vehBtnSave  = document.getElementById('vehBtnSave');
-const vehFormErr  = document.getElementById('vehFormErr');
-const vehModalTitle = document.getElementById('vehModalTitle');
-const fPlate = document.getElementById('fPlate');
-const fDriver= document.getElementById('fDriver');
-const fKind  = document.getElementById('fKind');
-const fYear  = document.getElementById('fYear');
-const fModel = document.getElementById('fModel');
-const fActive= document.getElementById('fActive');
+/* Vehicle modal */
+const vehBackdrop=document.getElementById('vehBackdrop');
+const vehBtnClose=document.getElementById('vehBtnClose');
+const vehBtnSave=document.getElementById('vehBtnSave');
+const vehFormErr=document.getElementById('vehFormErr');
+const vehModalTitle=document.getElementById('vehModalTitle');
+const fPlate=document.getElementById('fPlate');
+const fDriver=document.getElementById('fDriver');
+const fKind=document.getElementById('fKind');
+const fYear=document.getElementById('fYear');
+const fModel=document.getElementById('fModel');
+const fActive=document.getElementById('fActive');
 
-function openAddVehicle(){
-  editingId=null; vehModalTitle.textContent='Add Vehicle';
+function openAddVehicle(){ editingId=null; vehModalTitle.textContent='Add Vehicle';
   fPlate.value=''; fDriver.value=''; fKind.value='SUV';
   fYear.value=new Date().getFullYear(); fModel.value=''; fActive.checked=false;
   vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
 function openEditVehicle(id){
-  const v = allVehicles.find(x=>x.id===id); if(!v) return;
+  const v=allVehicles.find(x=>x.id===id); if(!v) return;
   editingId=id; vehModalTitle.textContent='Edit Vehicle';
   fPlate.value=v.plate||''; fDriver.value=v.driver_name||''; fKind.value=v.kind||'SUV';
   fYear.value=v.year||new Date().getFullYear(); fModel.value=v.model||''; fActive.checked=!!v.active;
   vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
 function closeVehModal(){ vehBackdrop.classList.remove('open'); }
+vehBtnClose.addEventListener('click', closeVehModal);
+addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeVehModal(); });
 
 vehBtnSave.addEventListener('click', async ()=>{
   vehFormErr.textContent='';
   const plate=fPlate.value.trim(), driver_name=fDriver.value.trim();
-  const kind=(fKind.value||'SUV').toUpperCase(); const year=Number(fYear.value||0);
-  const model=fModel.value.trim(); const active=!!fActive.checked;
+  const kind=(fKind.value||'SUV').toUpperCase(), year=Number(fYear.value||0);
+  const model=fModel.value.trim(), active=!!fActive.checked;
   if(!plate||!driver_name||!year){ vehFormErr.textContent='Plate, Driver and Year are required.'; return; }
   vehBtnSave.disabled=true;
   try{
     const payload={ id:editingId, plate, driver_name, kind, year, model, active };
-    const data = await api(API_VEH, 'POST', payload);
-    const v = normalizeVehicle(data.vehicle || payload);
-    const i = allVehicles.findIndex(x=>x.id===v.id);
+    const data=await api(API_VEH,'POST',payload);
+    const v=normalizeVehicle(data.vehicle || payload);
+    const i=allVehicles.findIndex(x=>x.id===v.id);
     if(i>=0) allVehicles[i]={...allVehicles[i],...v}; else allVehicles.push(v);
     allVehicles.sort(sortVehicles); renderVehicles(); vehShowMsg(editingId?'Saved changes.':'Vehicle added.'); closeVehModal();
-  }catch(e){
-    vehFormErr.textContent = e.message || 'Error saving.';
-  }finally{ vehBtnSave.disabled=false; }
+  }catch(e){ vehFormErr.textContent=e.message||'Error saving.'; }
+  finally{ vehBtnSave.disabled=false; }
 });
-vehBtnClose.addEventListener('click', closeVehModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeVehModal(); });
 
-/* Delegación acciones tabla vehículos */
+/* Vehicle table actions */
 vehRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr = btn.closest('tr[data-id]'); if(!tr) return;
-  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
+  const btn=ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr=btn.closest('tr[data-id]'); if(!tr) return;
+  const id=tr.getAttribute('data-id'); const action=btn.getAttribute('data-action');
 
-  if (action==='edit'){ openEditVehicle(id); return; }
-  if (action==='delete'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+  if(action==='edit'){ openEditVehicle(id); return; }
+  if(action==='delete'){
+    const v=allVehicles.find(x=>x.id===id); if(!v) return;
     if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
-    try{
-      await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
-      allVehicles = allVehicles.filter(x=>x.id!==id); renderVehicles(); vehShowMsg('Deleted.');
+    try{ await api(`${API_VEH}?id=${encodeURIComponent(id)}`,'DELETE');
+      allVehicles=allVehicles.filter(x=>x.id!==id); renderVehicles(); vehShowMsg('Deleted.');
     }catch(e){ vehShowMsg('Error deleting: '+(e.message||e), false); }
     return;
   }
-  if (action==='toggle'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
-    const next = !v.active;
-    try{
-      await api(API_VEH, 'POST', { id, active: next });
-      v.active = next; renderVehicles(); vehShowMsg('Updated.');
-    }catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
-    return;
+  if(action==='toggle'){
+    const v=allVehicles.find(x=>x.id===id); if(!v) return;
+    const next=!v.active;
+    try{ await api(API_VEH,'POST',{ id, active:next }); v.active=next; renderVehicles(); vehShowMsg('Updated.'); }
+    catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
   }
 });
-
-/* Botones globales vehículos */
 document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
 document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
 document.getElementById('vehControls').addEventListener('click', (e)=>{
-  const b = e.target.closest('button[data-filter]'); if(!b) return;
-  filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles();
-  setTheadTop();
+  const b=e.target.closest('button[data-filter]'); if(!b) return;
+  filterKind=b.getAttribute('data-filter')||'ALL'; renderVehicles(); setTheadTop();
 });
 
 /* =========================================================
-   CLIENTES (CRUD completo)
+   CLIENTS
    ========================================================= */
-const cliMsg  = document.getElementById('cliMsg');
-const cliRows = document.getElementById('cliRows');
-const cliStat = {
-  total: document.getElementById('cliTotal'),
-  good: document.getElementById('cliGood'),
-  watch: document.getElementById('cliWatch'),
-  restricted: document.getElementById('cliRestricted'),
+const cliMsg=document.getElementById('cliMsg');
+const cliRows=document.getElementById('cliRows');
+const cliStat={
+  total:document.getElementById('cliTotal'),
+  good:document.getElementById('cliGood'),
+  watch:document.getElementById('cliWatch'),
+  restricted:document.getElementById('cliRestricted'),
 };
-let allClients = [];
-let editingClientId = null;
+let allClients=[]; let editingClientId=null;
 
-function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
-
+function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color=ok?'var(--muted)':'var(--bad)' }
 function normalizeClient(c){
-  return {
-    id: String(c.id ?? ''),
-    name: (c.name ?? '').trim(),
-    email: (c.email ?? '').trim(),
-    phone: (c.phone ?? '').trim(),
-    home_address: (c.home_address ?? '').trim(),
-    rating: String(c.internal_rating ?? c.rating ?? 'good').toLowerCase(),
-    notes: (c.notes ?? '').trim(),
-  };
+  return { id:String(c.id??''), name:(c.name??'').trim(), email:(c.email??'').trim(),
+    phone:(c.phone??'').trim(), home_address:(c.home_address??'').trim(),
+    rating:String(c.internal_rating??c.rating??'good').toLowerCase(), notes:(c.notes??'').trim() };
 }
-
 function computeCliStats(){
-  cliStat.total.textContent = allClients.length;
-  cliStat.good.textContent = allClients.filter(c=>c.rating==='good').length;
-  cliStat.watch.textContent = allClients.filter(c=>c.rating==='watch').length;
-  cliStat.restricted.textContent = allClients.filter(c=>c.rating==='restricted').length;
+  cliStat.total.textContent=allClients.length;
+  cliStat.good.textContent=allClients.filter(c=>c.rating==='good').length;
+  cliStat.watch.textContent=allClients.filter(c=>c.rating==='watch').length;
+  cliStat.restricted.textContent=allClients.filter(c=>c.rating==='restricted').length;
 }
-
 function renderClients(){
   computeCliStats();
   cliRows.innerHTML = allClients.map(c=>`
@@ -659,164 +577,123 @@ function renderClients(){
       <td>${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.email)}</td>
       <td>${escapeHtml(c.phone)}</td>
-      <td>
-        <span class="badge ${c.rating==='restricted'?'off':'on'}">
-          ${escapeHtml(c.rating.toUpperCase())}
-        </span>
-      </td>
+      <td><span class="badge ${c.rating==='restricted'?'off':'on'}">${escapeHtml(c.rating.toUpperCase())}</span></td>
       <td class="right actions">
         <div class="btns">
-          <button class="btn btn-edit"   data-action="edit">Edit</button>
+          <button class="btn btn-edit" data-action="edit">Edit</button>
           <button class="btn btn-danger" data-action="delete">Delete</button>
         </div>
       </td>
-    </tr>
-  `).join('') || '<tr><td colspan="5">No clients.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="5">No clients.</td></tr>';
 }
-
 async function loadClients(){
-  cliRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
-  cliShowMsg('');
+  cliRows.innerHTML='<tr><td colspan="5">Loading…</td></tr>'; cliShowMsg('');
   try{
-    const data = await api(API_CLI, 'GET');   // si 404, cae al catch
-    const raw  = Array.isArray(data.clients) ? data.clients : [];
-    allClients = raw.map(normalizeClient);
-    renderClients();
-    cliShowMsg('Loaded successfully.');
-    setTheadTop();
+    const data=await api(API_CLI,'GET');
+    const raw=Array.isArray(data.clients)?data.clients:[];
+    allClients=raw.map(normalizeClient); renderClients(); cliShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){
-    allClients = [];
-    renderClients();
-    const msg = (String(e.message||'').includes('404')) ?
-      'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.' :
-      'Error loading clients: ' + (e.message||e);
-    cliShowMsg(msg, false);
+    allClients=[]; renderClients();
+    const msg=(String(e.message||'').includes('404'))?'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.':'Error loading clients: '+(e.message||e);
+    cliShowMsg(msg,false);
   }
 }
 
-/* ------- Modal: refs ------- */
-const cliBackdrop = document.getElementById('cliBackdrop');
-const cliBtnClose = document.getElementById('cliBtnClose');
-const cliBtnSave  = document.getElementById('cliBtnSave');
-const cliModalTitle = document.getElementById('cliModalTitle');
+/* Client modal */
+const cliBackdrop=document.getElementById('cliBackdrop');
+const cliBtnClose=document.getElementById('cliBtnClose');
+const cliBtnSave=document.getElementById('cliBtnSave');
+const cliModalTitle=document.getElementById('cliModalTitle');
+const cName=document.getElementById('cName');
+const cEmail=document.getElementById('cEmail');
+const cPhone=document.getElementById('cPhone');
+const cRating=document.getElementById('cRating');
+const cAddress=document.getElementById('cAddress');
+const cNotes=document.getElementById('cNotes');
+const cliFormErr=document.getElementById('cliFormErr');
 
-const cName    = document.getElementById('cName');
-const cEmail   = document.getElementById('cEmail');
-const cPhone   = document.getElementById('cPhone');
-const cRating  = document.getElementById('cRating');
-const cAddress = document.getElementById('cAddress');
-const cNotes   = document.getElementById('cNotes');
-const cliFormErr = document.getElementById('cliFormErr');
-
-function openAddClient(){
-  editingClientId = null;
-  cliModalTitle.textContent = 'Add Client';
-  cName.value=''; cEmail.value=''; cPhone.value='';
-  cRating.value='good'; cAddress.value=''; cNotes.value='';
-  cliFormErr.textContent='';
-  cliBackdrop.classList.add('open');
-  setTimeout(()=>cName.focus(),50);
+function openAddClient(){ editingClientId=null; cliModalTitle.textContent='Add Client';
+  cName.value=''; cEmail.value=''; cPhone.value=''; cRating.value='good'; cAddress.value=''; cNotes.value='';
+  cliFormErr.textContent=''; cliBackdrop.classList.add('open'); setTimeout(()=>cName.focus(),50);
 }
 function openEditClient(id){
-  const c = allClients.find(x=>x.id===id); if(!c) return;
-  editingClientId = id;
-  cliModalTitle.textContent = 'Edit Client';
+  const c=allClients.find(x=>x.id===id); if(!c) return;
+  editingClientId=id; cliModalTitle.textContent='Edit Client';
   cName.value=c.name||''; cEmail.value=c.email||''; cPhone.value=c.phone||'';
-  cRating.value=(c.rating||'good'); cAddress.value=c.home_address||''; cNotes.value=c.notes||'';
-  cliFormErr.textContent='';
-  cliBackdrop.classList.add('open');
-  setTimeout(()=>cName.focus(),50);
+  cRating.value=c.rating||'good'; cAddress.value=c.home_address||''; cNotes.value=c.notes||'';
+  cliFormErr.textContent=''; cliBackdrop.classList.add('open'); setTimeout(()=>cName.focus(),50);
 }
 function closeCliModal(){ cliBackdrop.classList.remove('open'); }
 cliBtnClose.addEventListener('click', closeCliModal);
-window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeCliModal(); });
+addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeCliModal(); });
 
-/* ------- Guardar cliente ------- */
 cliBtnSave.addEventListener('click', async ()=>{
   cliFormErr.textContent='';
-  const name=cName.value.trim();
-  const email=cEmail.value.trim();
-  const phone=cPhone.value.trim();
-  const home_address=cAddress.value.trim();
-  const internal_rating=(cRating.value||'good').toLowerCase();
+  const name=cName.value.trim(), email=cEmail.value.trim(), phone=cPhone.value.trim();
+  const home_address=cAddress.value.trim(), internal_rating=(cRating.value||'good').toLowerCase();
   const notes=cNotes.value.trim();
-
   if(!name){ cliFormErr.textContent='Name is required.'; return; }
-
-  cliBtnSave.disabled = true;
+  cliBtnSave.disabled=true;
   try{
-    const payload = { id: editingClientId, name, email, phone, home_address, internal_rating, notes };
-    const data = await api(API_CLI, 'POST', payload);
-    const c = normalizeClient(data.client || payload);
-    const i = allClients.findIndex(x=>x.id===c.id);
-    if(i>=0) allClients[i]={...allClients[i], ...c}; else allClients.unshift(c);
-    renderClients();
-    cliShowMsg(editingClientId ? 'Client updated.' : 'Client added.');
-    closeCliModal();
-  }catch(e){
-    cliFormErr.textContent = e.message || 'Error saving.';
-  }finally{
-    cliBtnSave.disabled = false;
-  }
+    const payload={ id:editingClientId, name, email, phone, home_address, internal_rating, notes };
+    const data=await api(API_CLI,'POST',payload);
+    const c=normalizeClient(data.client||payload);
+    const i=allClients.findIndex(x=>x.id===c.id);
+    if(i>=0) allClients[i]={...allClients[i],...c}; else allClients.unshift(c);
+    renderClients(); cliShowMsg(editingClientId?'Client updated.':'Client added.'); closeCliModal();
+  }catch(e){ cliFormErr.textContent=e.message||'Error saving.'; }
+  finally{ cliBtnSave.disabled=false; }
 });
 
-/* ------- Tabla: delegación de eventos ------- */
+/* Client table actions */
 cliRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr = btn.closest('tr[data-id]'); if(!tr) return;
-  const id = tr.getAttribute('data-id');
-  const action = btn.getAttribute('data-action');
+  const btn=ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr=btn.closest('tr[data-id]'); if(!tr) return;
+  const id=tr.getAttribute('data-id'); const action=btn.getAttribute('data-action');
 
   if(action==='edit'){ openEditClient(id); return; }
-
   if(action==='delete'){
-    const c = allClients.find(x=>x.id===id); if(!c) return;
+    const c=allClients.find(x=>x.id===id); if(!c) return;
     if(!confirm(`Delete client "${c.name}"? This cannot be undone.`)) return;
-    try{
-      await api(`${API_CLI}?id=${encodeURIComponent(id)}`, 'DELETE');
-      allClients = allClients.filter(x=>x.id!==id);
-      renderClients(); cliShowMsg('Deleted.');
-    }catch(e){
-      cliShowMsg('Error deleting: ' + (e.message||e), false);
-    }
+    try{ await api(`${API_CLI}?id=${encodeURIComponent(id)}`,'DELETE');
+      allClients=allClients.filter(x=>x.id!==id); renderClients(); cliShowMsg('Deleted.');
+    }catch(e){ cliShowMsg('Error deleting: '+(e.message||e), false); }
   }
 });
-
-/* ------- Botones globales ------- */
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
 document.getElementById('btnAddClient').addEventListener('click', openAddClient);
-/* =================== BOOT =================== */
-loadVehicles(); // tab inicial
-  /* =========================================================
+
+/* =================== BOOT (tab inicial) =================== */
+loadVehicles();
+
+/* =========================================================
    RESERVATIONS
    ========================================================= */
-const API_RES = '/api/reservations';          // tu endpoint nuevo
-const resMsg  = document.getElementById('resMsg');
-const resRows = document.getElementById('resRows');
+const resMsg=document.getElementById('resMsg');
+const resRows=document.getElementById('resRows');
 
-function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color=ok?'var(--muted)':'var(--bad)' }
 function fmtWhen(ts){ try{ return new Date(ts).toLocaleString(); }catch{ return ts; } }
 function badgeStatus(s){
-  const x = String(s||'pending').toLowerCase();
-  const map = {
-    pending   : 'background:#33384d;color:#cdd6ea;border:1px solid #4b5576',
-    assigned  : 'background:#23343a;color:#7fe9b2;border:1px solid #2c8e64',
+  const x=String(s||'pending').toLowerCase();
+  const map={
+    pending:'background:#33384d;color:#cdd6ea;border:1px solid #4b5576',
+    assigned:'background:#23343a;color:#7fe9b2;border:1px solid #2c8e64',
     in_progress:'background:#34301f;color:#f7b06a;border:1px solid #b78e4f',
-    done      : 'background:#1c3321;color:#84f1a8;border:1px solid #1d7f49',
-    canceled  : 'background:#3a2124;color:#ffb0b0;border:1px solid #b04747',
+    done:'background:#1c3321;color:#84f1a8;border:1px solid #1d7f49',
+    canceled:'background:#3a2124;color:#ffb0b0;border:1px solid #b04747',
   };
-  const style = map[x] || map.pending;
+  const style=map[x]||map.pending;
   return `<span class="badge" style="${style}">${x.toUpperCase()}</span>`;
 }
-
 function renderReservations(list){
-  resRows.innerHTML = (list||[]).map(r => `
+  resRows.innerHTML=(list||[]).map(r=>`
     <tr data-id="${r.id}">
       <td>${r.id}</td>
       <td>
         <div><strong>${escapeHtml(r.customer_name||'')}</strong></div>
         <div style="color:var(--muted);font-size:12px">
-          ${escapeHtml(r.phone||'')} ${r.email? ' · '+escapeHtml(r.email):''}
+          ${escapeHtml(r.phone||'')} ${r.email ? ' · '+escapeHtml(r.email) : ''}
         </div>
       </td>
       <td>${escapeHtml(r.pickup_location)} → ${escapeHtml(r.dropoff_location)}</td>
@@ -831,124 +708,77 @@ function renderReservations(list){
           <button class="btn btn-danger" data-action="cancel">Cancel</button>
         </div>
       </td>
-    </tr>
-  `).join('') || '<tr><td colspan="7">No reservations.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="7">No reservations.</td></tr>';
 }
-
 async function loadReservations(){
-  resRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  resRows.innerHTML='<tr><td colspan="7">Loading…</td></tr>';
   try{
-    const r = await fetch(API_RES, { headers:{ 'x-admin-key': ADMIN_KEY } });
-    const data = await r.json();
-    renderReservations(Array.isArray(data) ? data : []);
-    resShowMsg('Loaded successfully.');
-    setTheadTop();
-  }catch(e){
-    renderReservations([]);
-    resShowMsg('Error loading: '+(e.message||e), false);
-  }
+    const r=await fetch(API_RES,{ headers:{ 'x-admin-key': ADMIN_KEY }});
+    const data=await r.json();
+    renderReservations(Array.isArray(data)?data:[]);
+    resShowMsg('Loaded successfully.'); setTheadTop();
+  }catch(e){ renderReservations([]); resShowMsg('Error loading: '+(e.message||e), false); }
 }
-
 async function patchReservation(id, payload){
-  const r = await fetch(`${API_RES}/${id}`, {
-    method: 'PATCH',
-    headers:{ 'Content-Type':'application/json', 'x-admin-key': ADMIN_KEY },
-    body: JSON.stringify(payload)
+  const r=await fetch(`${API_RES}/${id}`,{
+    method:'PATCH', headers:{ 'Content-Type':'application/json','x-admin-key':ADMIN_KEY },
+    body:JSON.stringify(payload)
   });
-  if (!r.ok) throw new Error('update_failed');
+  if(!r.ok) throw new Error('update_failed');
   return r.json();
 }
 
-try {
-  if (a === 'assign') {
-    openAssignModal(id);     // 👈 abre el modal
-    return;                  // importante: salir para no seguir evaluando
-  } else if (a === 'start') {
-    await patchReservation(id, { status: 'in_progress' });
-  } else if (a === 'done') {
-    await patchReservation(id, { status: 'done' });
-  } else if (a === 'cancel') {
-    if (!confirm('Cancel this reservation?')) return;
-    await patchReservation(id, { status: 'canceled' });
-  }
-
-  await loadReservations();
-} catch (e) {
-  resShowMsg('Error updating: ' + (e.message || e), false);
-}
-});
-
-/* Botón Reload */
-document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
-  /* ---------- ASSIGN MODAL (Reservations) ---------- */
-const assignBackdrop  = document.getElementById('assignBackdrop');
-const assignBtnClose  = document.getElementById('assignBtnClose');
-const assignBtnSave   = document.getElementById('assignBtnSave');
-const assignErr       = document.getElementById('assignErr');
-const aVehicle        = document.getElementById('aVehicle');
-const aDriver         = document.getElementById('aDriver');
-const aNotes          = document.getElementById('aNotes');
-
-let assignReservationId = null;
-
-// Carga/caché de vehículos para el selector
-async function ensureVehiclesLoadedForAssign() {
-  try {
-    if (!Array.isArray(allVehicles) || allVehicles.length === 0) {
-      // reutilizamos tu API de vehicles
-      const data = await api(API_VEH, 'GET');
-      const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-      allVehicles = raw.map(v => ({
-        id: String(v.id),
-        plate: (v.plate||'').trim(),
-        driver_name: (v.driver_name||'').trim(),
-        kind: ((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV'
-      }));
-    }
-    // llenar <select>
-    aVehicle.innerHTML = allVehicles.map(v =>
-      `<option value="${v.id}">${v.plate} — ${v.kind} — ${v.driver_name||'No driver'}</option>`
-    ).join('');
-  } catch (e) {
-    assignErr.textContent = 'Error loading vehicles: ' + (e.message||e);
-  }
-}
-
-function openAssignModal(reservationId) {
-  assignReservationId = reservationId;
-  assignErr.textContent = '';
-  aDriver.value = '';
-  aNotes.value = '';
-  ensureVehiclesLoadedForAssign().then(()=>{
-    assignBackdrop.classList.add('open');
-    aVehicle.focus();
-  });
-}
-function closeAssignModal(){
-  assignBackdrop.classList.remove('open');
-  assignReservationId = null;
-}
-
-assignBtnClose.addEventListener('click', closeAssignModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
-
-assignBtnSave.addEventListener('click', async ()=>{
-  assignErr.textContent = '';
-  const vehicle_id = aVehicle.value;
-  if (!vehicle_id) { assignErr.textContent = 'Please select a vehicle.'; return; }
-  const driver_name = aDriver.value.trim() || null; // opcional por ahora
-  // Nota: tu backend soporta driver_id; enviamos solo vehicle_id + status por ahora.
-  assignBtnSave.disabled = true;
+/* Reservations table actions */
+resRows.addEventListener('click', async (ev)=>{
+  const btn=ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr=btn.closest('tr[data-id]'); if(!tr) return;
+  const id=tr.getAttribute('data-id'); const a=btn.getAttribute('data-action');
   try{
-    await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
-    // TODO (opcional): guardar driver_name en otra tabla si lo necesitas
-    closeAssignModal();
+    if(a==='assign'){ openAssignModal(id); return; }
+    else if(a==='start'){ await patchReservation(id,{ status:'in_progress' }); }
+    else if(a==='done'){ await patchReservation(id,{ status:'done' }); }
+    else if(a==='cancel'){ if(!confirm('Cancel this reservation?')) return; await patchReservation(id,{ status:'canceled' }); }
     await loadReservations();
-  }catch(e){
-    assignErr.textContent = e.message || 'Error assigning.';
-  }finally{
-    assignBtnSave.disabled = false;
-  }
+  }catch(e){ resShowMsg('Error updating: '+(e.message||e), false); }
+});
+document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
+
+/* ---------- ASSIGN MODAL ---------- */
+const assignBackdrop=document.getElementById('assignBackdrop');
+const assignBtnClose=document.getElementById('assignBtnClose');
+const assignBtnSave=document.getElementById('assignBtnSave');
+const assignErr=document.getElementById('assignErr');
+const aVehicle=document.getElementById('aVehicle');
+const aDriver=document.getElementById('aDriver');
+const aNotes=document.getElementById('aNotes');
+let assignReservationId=null;
+
+async function ensureVehiclesLoadedForAssign(){
+  try{
+    if(!Array.isArray(allVehicles) || allVehicles.length===0){
+      const data=await api(API_VEH,'GET');
+      const raw=Array.isArray(data.vehicles)?data.vehicles:[];
+      allVehicles=raw.map(v=>({ id:String(v.id), plate:(v.plate||'').trim(),
+        driver_name:(v.driver_name||'').trim(),
+        kind:((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV' }));
+    }
+    aVehicle.innerHTML = allVehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.kind} — ${v.driver_name||'No driver'}</option>`).join('');
+  }catch(e){ assignErr.textContent='Error loading vehicles: '+(e.message||e); }
+}
+function openAssignModal(resId){
+  assignReservationId=resId; assignErr.textContent=''; aDriver.value=''; aNotes.value='';
+  ensureVehiclesLoadedForAssign().then(()=>{ assignBackdrop.classList.add('open'); aVehicle.focus(); });
+}
+function closeAssignModal(){ assignBackdrop.classList.remove('open'); assignReservationId=null; }
+assignBtnClose.addEventListener('click', closeAssignModal);
+addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeAssignModal(); });
+assignBtnSave.addEventListener('click', async ()=>{
+  assignErr.textContent='';
+  const vehicle_id=aVehicle.value; if(!vehicle_id){ assignErr.textContent='Please select a vehicle.'; return; }
+  assignBtnSave.disabled=true;
+  try{ await patchReservation(assignReservationId,{ status:'assigned', vehicle_id }); closeAssignModal(); await loadReservations(); }
+  catch(e){ assignErr.textContent=e.message||'Error assigning.'; }
+  finally{ assignBtnSave.disabled=false; }
 });
 </script>
 </body>
