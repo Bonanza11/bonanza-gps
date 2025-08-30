@@ -70,18 +70,19 @@
   }
   th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
 
-  thead th{
-    background:#11162a; color:#cdd6ea;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-  }
+  /* Encabezado sticky fijo al top real de la página */
+thead th{
+  background:#11162a; color:#cdd6ea;
+  position: sticky;
+  top: 0;             /* SIEMPRE 0; compensamos con el espaciador */
+  z-index: 5;
+}
 
-  #stickySpacerVehicles,
-  #stickySpacerClients,
-  #stickySpacerReservations{
-    height: var(--theadTop, 0px);
-  }
+/* Espaciador que empuja la tabla hacia abajo */
+#stickySpacerVehicles,
+#stickySpacerClients{
+  height: var(--theadTop, 0px);
+}
 
   tbody tr:hover{ background:#1b2136 }
   .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
@@ -90,27 +91,46 @@
 
   .right{ text-align:right }
 
+  /* ===== Celda de acciones y botones ===== */
   .actions{ display:flex; justify-content:flex-end }
   .btns{ display:inline-flex; gap:8px; align-items:center }
-  .btn{ height:32px; padding:0 10px; border-radius:8px; border:1px solid #ffffff22; background:#2a3550; color:#e9eef7; font-size:13px; line-height:30px; cursor:pointer }
+  .btn{ height:32px; padding:0 10px; border-radius:8px; border:1px solid #ffffff22; background:#2a3550; color:#e9eef7; font-size:13px; line-height:30px; cursor:pointer; transition:transform .03s ease, filter .15s ease }
   .btn:active{ transform:translateY(1px) }
+  .btn-edit{ background:#293249; border-color:#46536d }
+  .btn-edit:hover{ filter:brightness(1.12) }
+  .btn-danger{ background:#3a1b22; border-color:#b02a2a; color:#ffd4d4 }
+  .btn-danger:hover{ filter:brightness(1.08) }
+  .btn-toggle-on{ background:#12351e; border-color:#16a34a; color:#9ff5be }
+  .btn-toggle-off{ background:#3a1b1b; border-color:#dc2626; color:#ffcccc }
 
   /* ===== Modal ===== */
   .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:2000 }
   .backdrop.open{ display:flex }
-  .modal{ width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a }
-  .modal header{ background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
+  .modal{
+    width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a;
+  }
+  .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
   .modal .body{ padding:16px }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
   .grid .full{ grid-column:1/-1 }
   .field label{ display:block; font-size:12px; color:#cbd3e7; margin-bottom:6px }
-  .field input, .field select, textarea{ width:100%; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:6px 10px }
+  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px; }
+  .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
   .err-msg{ color:#ff8080; font-size:12px; min-height:16px; padding-top:4px }
-  .modal .actions{ display:flex; justify-content:flex-end; gap:10px; padding:12px 16px 16px }
+
+  /* ===== Responsive acciones ===== */
+  @media (max-width: 720px){
+    .btns{ gap:6px; flex-wrap:wrap }
+    .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
+  }
+
+  /* ===== Secciones ===== */
+  section[hidden]{ display:none !important }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
   <h1>Bonanza — Headquarters</h1>
   <span class="pill" id="envInfo"></span>
@@ -118,6 +138,7 @@
   <button id="btnLogout" class="danger">Logout</button>
 </header>
 
+<!-- TABS -->
 <nav class="tabs affects-sticky" id="tabs">
   <button class="tab-btn" data-tab="vehicles" aria-selected="true">Vehículos</button>
   <button class="tab-btn" data-tab="clients"  aria-selected="false">Clientes</button>
@@ -128,22 +149,93 @@
 </nav>
 
 <!-- VIEW: VEHICLES -->
-<section id="view-vehicles"> ... </section>
+<section id="view-vehicles">
+  <div class="wrap">
+    <!-- Controles -->
+    <div class="controls affects-sticky" id="vehControls">
+      <button data-filter="ALL">All</button>
+      <button data-filter="SUV">SUV</button>
+      <button data-filter="VAN">VAN</button>
+      <button id="btnReloadVehicles">Reload</button>
+      <button id="btnAddVehicle" class="primary">Add Vehicle</button>
+    </div>
+
+    <!-- Resumen -->
+    <div id="summaryVehicles" class="affects-sticky">
+      <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
+      <div class="card"><h2>ACTIVE</h2><p id="statActive">0</p></div>
+      <div class="card"><h2>INACTIVE</h2><p id="statInactive">0</p></div>
+      <div class="card"><h2>SUV</h2><p id="statSUV">0</p></div>
+      <div class="card"><h2>VAN</h2><p id="statVAN">0</p></div>
+    </div>
+
+    <div id="vehMsg" class="msg"></div>
+    <div id="stickySpacerVehicles"></div>
+
+    <!-- Tabla Vehículos -->
+    <table role="grid" aria-label="Vehicles">
+      <thead>
+        <tr>
+          <th style="width:120px">Plate</th>
+          <th>Driver</th>
+          <th style="width:90px">Type</th>
+          <th style="width:80px">Year</th>
+          <th>Model</th>
+          <th style="width:110px">Active</th>
+          <th class="right" style="width:220px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="vehRows">
+        <tr><td colspan="7">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
 <!-- VIEW: CLIENTS -->
-<section id="view-clients" hidden> ... </section>
+<section id="view-clients" hidden>
+  <div class="wrap">
+    <div class="controls affects-sticky" id="cliControls">
+      <button id="btnReloadClients">Reload</button>
+      <button id="btnAddClient" class="primary">Add Client</button>
+    </div>
 
-<!-- VIEW: RESERVATIONS -->
+    <div id="summaryClients" class="affects-sticky">
+      <div class="card"><h2>TOTAL CLIENTS</h2><p id="cliTotal">0</p></div>
+      <div class="card"><h2>GOOD</h2><p id="cliGood">0</p></div>
+      <div class="card"><h2>OBSERVE</h2><p id="cliWatch">0</p></div>
+      <div class="card"><h2>RESTRICTED</h2><p id="cliRestricted">0</p></div>
+    </div>
+
+    <div id="cliMsg" class="msg"></div>
+    <div id="stickySpacerClients"></div>
+
+    <table role="grid" aria-label="Clients">
+      <thead>
+        <tr>
+          <th style="width:26%">Name</th>
+          <th style="width:26%">Email</th>
+          <th style="width:18%">Phone</th>
+          <th style="width:14%">Rating</th>
+          <th class="right" style="width:16%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="cliRows">
+        <tr><td colspan="5">Loading…</td></tr>
+      <!-- VIEW: RESERVATIONS -->
 <section id="view-reservations" hidden>
   <div class="wrap">
     <div class="controls affects-sticky" id="resControls">
       <button id="btnReloadRes">Reload</button>
     </div>
+
     <div class="card affects-sticky" style="margin-bottom:12px">
       <h2 style="margin:0; font-size:12px; color:var(--muted)">RESERVATIONS</h2>
       <p id="resMsg" class="msg" style="margin:6px 0 0"></p>
     </div>
+
     <div id="stickySpacerReservations"></div>
+
     <table role="grid" aria-label="Reservations">
       <thead>
         <tr>
@@ -162,12 +254,11 @@
     </table>
   </div>
 </section>
-
-<!-- MODAL: ASSIGN RESERVATION -->
+        <!-- MODAL: ASSIGN RESERVATION -->
 <div class="backdrop" id="assignBackdrop">
-  <div class="modal" role="dialog" aria-modal="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
     <header>
-      <h2>Assign Reservation</h2>
+      <h2 id="assignTitle" style="margin:0;font-size:16px;font-weight:800">Assign Reservation</h2>
       <div style="flex:1"></div>
       <button id="assignBtnClose">Close</button>
     </header>
@@ -192,7 +283,7 @@
       </div>
     </div>
   </div>
-</div>
+</div>        
 <!-- VIEW: SETTINGS (placeholder) -->
 <section id="view-settings" hidden>
   <div class="wrap">
@@ -207,20 +298,128 @@
 </section>
 
 <!-- MODAL VEHICLE -->
-<div class="backdrop" id="vehBackdrop"> ... </div>
+<div class="backdrop" id="vehBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
+    <header>
+      <h2 id="vehModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Vehicle</h2>
+      <div style="flex:1"></div>
+      <button id="vehBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field">
+          <label for="fPlate">Plate</label>
+          <input id="fPlate" placeholder="UT-123 ABC" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fDriver">Driver Name</label>
+          <input id="fDriver" placeholder="John Doe" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fKind">Type</label>
+          <select id="fKind">
+            <option value="SUV">SUV</option>
+            <option value="VAN">VAN</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fYear">Year</label>
+          <input id="fYear" type="number" min="2000" max="2099" placeholder="2025">
+        </div>
+        <div class="field full">
+          <label for="fModel">Model / Subtype (e.g., Suburban LT / Sprinter)</label>
+          <input id="fModel" placeholder="Suburban LT / Sprinter 2500">
+        </div>
+        <div class="field full">
+          <label><input type="checkbox" id="fActive"> Active</label>
+        </div>
+      </div>
+      <div id="vehFormErr" class="err-msg"></div>
+      <div class="actions">
+        <button id="vehBtnSave" class="primary">Save</button>
+      </div> <!-- .actions -->
+    </div>   <!-- .body -->
+  </div>     <!-- .modal -->
+</div>       <!-- #vehBackdrop -->
 
-<!-- MODAL CLIENT -->
-<div class="backdrop" id="cliBackdrop"> ... </div>
+  
+     <!-- MODAL CLIENT -->
+<div class="backdrop" id="cliBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cliModalTitle">
+    <header>
+      <h2 id="cliModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Client</h2>
+      <div style="flex:1"></div>
+      <button id="cliBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field">
+          <label for="cName">Name</label>
+          <input id="cName" placeholder="John Appleseed" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cEmail">Email</label>
+          <input id="cEmail" type="email" placeholder="john@email.com" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cPhone">Phone</label>
+          <input id="cPhone" placeholder="+1 555 123 4567" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cRating">Internal rating</label>
+          <select id="cRating">
+            <option value="good">good</option>
+            <option value="watch">watch</option>
+            <option value="restricted">restricted</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="cAddress">Home address</label>
+          <input id="cAddress" placeholder="123 Main St, Park City, UT">
+        </div>
+        <div class="field full">
+          <label for="cNotes">Notes</label>
+          <input id="cNotes" placeholder="VIP, prefiere pagos con tarjeta, etc.">
+        </div>
+      </div>
+      <div id="cliFormErr" class="err-msg"></div>
+      <div class="actions">
+        <button id="cliBtnSave" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* =================== CONFIG =================== */
 const ADMIN_KEY = 'supersecreto123';
 const API_VEH   = '/api/admin/vehicles';
-const API_CLI   = '/api/admin/clients';
-const API_RES   = '/api/reservations';
+const API_CLI   = '/api/admin/clients';   // puede no existir aún (manejamos 404)
 
 /* =================== STICKY TOP =================== */
-function setTheadTop(){ ... }
+function setTheadTop(){
+  const header = document.querySelector('header');
+  const bars   = document.querySelectorAll('.affects-sticky');
+
+  let top = 0;
+
+  // Altura real del header (incluye padding/border)
+  if (header) top += header.getBoundingClientRect().height;
+
+  // Suma altura + márgenes verticales de cada barra que afecta al sticky
+  bars.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    const cs   = getComputedStyle(el);
+    const mt   = parseFloat(cs.marginTop)  || 0;
+    const mb   = parseFloat(cs.marginBottom) || 0;
+    top += rect.height + mt + mb;
+  });
+
+  // pequeño respiro visual
+  top += 6;
+
+  document.documentElement.style.setProperty('--theadTop', `${top}px`);
+}
 window.addEventListener('load', setTheadTop);
 window.addEventListener('resize', setTheadTop);
 
@@ -229,7 +428,6 @@ const tabsEl = document.getElementById('tabs');
 const views = {
   vehicles: document.getElementById('view-vehicles'),
   clients : document.getElementById('view-clients'),
-  reservations: document.getElementById('view-reservations'),
   settings: document.getElementById('view-settings'),
 };
 tabsEl.addEventListener('click', (e)=>{
@@ -253,28 +451,363 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
 });
 
 /* ========== HELPERS GENERALES ========== */
-function escapeHtml(s){ ... }
-async function api(url, method='GET', body=null){ ... }
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function api(url, method='GET', body=null){
+  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
+  if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+  const r = await fetch(url, opt);
+  let data={}; try{ data = await r.json(); }catch{}
+  if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
+  return data;
+}
 
 /* =========================================================
-   VEHÍCULOS (CRUD completo)
+   VEHÍCULOS
    ========================================================= */
-...   // tu bloque de vehicles tal como ya lo tenías
+const vehMsg   = document.getElementById('vehMsg');
+const vehRows  = document.getElementById('vehRows');
+const stat = {
+  total: document.getElementById('statTotal'),
+  active: document.getElementById('statActive'),
+  inactive: document.getElementById('statInactive'),
+  suv: document.getElementById('statSUV'),
+  van: document.getElementById('statVAN'),
+};
+let allVehicles = [];
+let filterKind  = 'ALL';
+let editingId   = null;
+
+function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+function normalizeVehicle(v){
+  const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN') ? 'VAN':'SUV';
+  return { id:String(v.id||''), plate:(v.plate||'').trim(), driver_name:(v.driver_name||'').trim(), kind:kindNorm, year:(v.year!=null?Number(v.year):null), model:(v.model||'').trim(), active:!!v.active };
+}
+function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka!==0) return ka; return (a.plate||'').localeCompare(b.plate||''); }
+function computeStats(){
+  const total=allVehicles.length, active=allVehicles.filter(v=>v.active).length;
+  stat.total.textContent=total; stat.active.textContent=active;
+  stat.inactive.textContent=Math.max(0,total-active);
+  stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
+  stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
+}
+function visibleVeh(){ return (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
+function renderVehicles(){
+  computeStats();
+  const list = visibleVeh();
+  vehRows.innerHTML = list.map(v=>{
+    const on = !!v.active;
+    return `
+      <tr data-id="${v.id}">
+        <td>${escapeHtml(v.plate)}</td>
+        <td>${escapeHtml(v.driver_name)}</td>
+        <td>${escapeHtml(v.kind)}</td>
+        <td>${v.year ?? ''}</td>
+        <td>${escapeHtml(v.model || '')}</td>
+        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
+        <td class="right actions">
+          <div class="btns">
+            <button class="btn btn-edit"      data-action="edit">Edit</button>
+            <button class="btn btn-danger"    data-action="delete">Delete</button>
+            <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
+}
+
+async function loadVehicles(){
+  vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+  vehShowMsg('');
+  try{
+    const data = await api(API_VEH, 'GET');
+    const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
+    allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
+    renderVehicles();
+    vehShowMsg('Loaded successfully.');
+    setTheadTop();
+  }catch(e){
+    allVehicles=[]; renderVehicles();
+    vehShowMsg('Error loading: '+(e.message||e), false);
+  }
+}
+
+/* Modal Vehículos */
+const vehBackdrop = document.getElementById('vehBackdrop');
+const vehBtnClose = document.getElementById('vehBtnClose');
+const vehBtnSave  = document.getElementById('vehBtnSave');
+const vehFormErr  = document.getElementById('vehFormErr');
+const vehModalTitle = document.getElementById('vehModalTitle');
+const fPlate = document.getElementById('fPlate');
+const fDriver= document.getElementById('fDriver');
+const fKind  = document.getElementById('fKind');
+const fYear  = document.getElementById('fYear');
+const fModel = document.getElementById('fModel');
+const fActive= document.getElementById('fActive');
+
+function openAddVehicle(){
+  editingId=null; vehModalTitle.textContent='Add Vehicle';
+  fPlate.value=''; fDriver.value=''; fKind.value='SUV';
+  fYear.value=new Date().getFullYear(); fModel.value=''; fActive.checked=false;
+  vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
+}
+function openEditVehicle(id){
+  const v = allVehicles.find(x=>x.id===id); if(!v) return;
+  editingId=id; vehModalTitle.textContent='Edit Vehicle';
+  fPlate.value=v.plate||''; fDriver.value=v.driver_name||''; fKind.value=v.kind||'SUV';
+  fYear.value=v.year||new Date().getFullYear(); fModel.value=v.model||''; fActive.checked=!!v.active;
+  vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
+}
+function closeVehModal(){ vehBackdrop.classList.remove('open'); }
+
+vehBtnSave.addEventListener('click', async ()=>{
+  vehFormErr.textContent='';
+  const plate=fPlate.value.trim(), driver_name=fDriver.value.trim();
+  const kind=(fKind.value||'SUV').toUpperCase(); const year=Number(fYear.value||0);
+  const model=fModel.value.trim(); const active=!!fActive.checked;
+  if(!plate||!driver_name||!year){ vehFormErr.textContent='Plate, Driver and Year are required.'; return; }
+  vehBtnSave.disabled=true;
+  try{
+    const payload={ id:editingId, plate, driver_name, kind, year, model, active };
+    const data = await api(API_VEH, 'POST', payload);
+    const v = normalizeVehicle(data.vehicle || payload);
+    const i = allVehicles.findIndex(x=>x.id===v.id);
+    if(i>=0) allVehicles[i]={...allVehicles[i],...v}; else allVehicles.push(v);
+    allVehicles.sort(sortVehicles); renderVehicles(); vehShowMsg(editingId?'Saved changes.':'Vehicle added.'); closeVehModal();
+  }catch(e){
+    vehFormErr.textContent = e.message || 'Error saving.';
+  }finally{ vehBtnSave.disabled=false; }
+});
+vehBtnClose.addEventListener('click', closeVehModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeVehModal(); });
+
+/* Delegación acciones tabla vehículos */
+vehRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr = btn.closest('tr[data-id]'); if(!tr) return;
+  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
+
+  if (action==='edit'){ openEditVehicle(id); return; }
+  if (action==='delete'){
+    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
+    try{
+      await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allVehicles = allVehicles.filter(x=>x.id!==id); renderVehicles(); vehShowMsg('Deleted.');
+    }catch(e){ vehShowMsg('Error deleting: '+(e.message||e), false); }
+    return;
+  }
+  if (action==='toggle'){
+    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    const next = !v.active;
+    try{
+      await api(API_VEH, 'POST', { id, active: next });
+      v.active = next; renderVehicles(); vehShowMsg('Updated.');
+    }catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
+    return;
+  }
+});
+
+/* Botones globales vehículos */
+document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
+document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
+document.getElementById('vehControls').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-filter]'); if(!b) return;
+  filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles();
+  setTheadTop();
+});
 
 /* =========================================================
    CLIENTES (CRUD completo)
    ========================================================= */
-...   // tu bloque de clients tal como ya lo tenías
+const cliMsg  = document.getElementById('cliMsg');
+const cliRows = document.getElementById('cliRows');
+const cliStat = {
+  total: document.getElementById('cliTotal'),
+  good: document.getElementById('cliGood'),
+  watch: document.getElementById('cliWatch'),
+  restricted: document.getElementById('cliRestricted'),
+};
+let allClients = [];
+let editingClientId = null;
 
-/* =========================================================
-   RESERVATIONS (nuevo)
+function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+
+function normalizeClient(c){
+  return {
+    id: String(c.id ?? ''),
+    name: (c.name ?? '').trim(),
+    email: (c.email ?? '').trim(),
+    phone: (c.phone ?? '').trim(),
+    home_address: (c.home_address ?? '').trim(),
+    rating: String(c.internal_rating ?? c.rating ?? 'good').toLowerCase(),
+    notes: (c.notes ?? '').trim(),
+  };
+}
+
+function computeCliStats(){
+  cliStat.total.textContent = allClients.length;
+  cliStat.good.textContent = allClients.filter(c=>c.rating==='good').length;
+  cliStat.watch.textContent = allClients.filter(c=>c.rating==='watch').length;
+  cliStat.restricted.textContent = allClients.filter(c=>c.rating==='restricted').length;
+}
+
+function renderClients(){
+  computeCliStats();
+  cliRows.innerHTML = allClients.map(c=>`
+    <tr data-id="${c.id}">
+      <td>${escapeHtml(c.name)}</td>
+      <td>${escapeHtml(c.email)}</td>
+      <td>${escapeHtml(c.phone)}</td>
+      <td>
+        <span class="badge ${c.rating==='restricted'?'off':'on'}">
+          ${escapeHtml(c.rating.toUpperCase())}
+        </span>
+      </td>
+      <td class="right actions">
+        <div class="btns">
+          <button class="btn btn-edit"   data-action="edit">Edit</button>
+          <button class="btn btn-danger" data-action="delete">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="5">No clients.</td></tr>';
+}
+
+async function loadClients(){
+  cliRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+  cliShowMsg('');
+  try{
+    const data = await api(API_CLI, 'GET');   // si 404, cae al catch
+    const raw  = Array.isArray(data.clients) ? data.clients : [];
+    allClients = raw.map(normalizeClient);
+    renderClients();
+    cliShowMsg('Loaded successfully.');
+    setTheadTop();
+  }catch(e){
+    allClients = [];
+    renderClients();
+    const msg = (String(e.message||'').includes('404')) ?
+      'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.' :
+      'Error loading clients: ' + (e.message||e);
+    cliShowMsg(msg, false);
+  }
+}
+
+/* ------- Modal: refs ------- */
+const cliBackdrop = document.getElementById('cliBackdrop');
+const cliBtnClose = document.getElementById('cliBtnClose');
+const cliBtnSave  = document.getElementById('cliBtnSave');
+const cliModalTitle = document.getElementById('cliModalTitle');
+
+const cName    = document.getElementById('cName');
+const cEmail   = document.getElementById('cEmail');
+const cPhone   = document.getElementById('cPhone');
+const cRating  = document.getElementById('cRating');
+const cAddress = document.getElementById('cAddress');
+const cNotes   = document.getElementById('cNotes');
+const cliFormErr = document.getElementById('cliFormErr');
+
+function openAddClient(){
+  editingClientId = null;
+  cliModalTitle.textContent = 'Add Client';
+  cName.value=''; cEmail.value=''; cPhone.value='';
+  cRating.value='good'; cAddress.value=''; cNotes.value='';
+  cliFormErr.textContent='';
+  cliBackdrop.classList.add('open');
+  setTimeout(()=>cName.focus(),50);
+}
+function openEditClient(id){
+  const c = allClients.find(x=>x.id===id); if(!c) return;
+  editingClientId = id;
+  cliModalTitle.textContent = 'Edit Client';
+  cName.value=c.name||''; cEmail.value=c.email||''; cPhone.value=c.phone||'';
+  cRating.value=(c.rating||'good'); cAddress.value=c.home_address||''; cNotes.value=c.notes||'';
+  cliFormErr.textContent='';
+  cliBackdrop.classList.add('open');
+  setTimeout(()=>cName.focus(),50);
+}
+function closeCliModal(){ cliBackdrop.classList.remove('open'); }
+cliBtnClose.addEventListener('click', closeCliModal);
+window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeCliModal(); });
+
+/* ------- Guardar cliente ------- */
+cliBtnSave.addEventListener('click', async ()=>{
+  cliFormErr.textContent='';
+  const name=cName.value.trim();
+  const email=cEmail.value.trim();
+  const phone=cPhone.value.trim();
+  const home_address=cAddress.value.trim();
+  const internal_rating=(cRating.value||'good').toLowerCase();
+  const notes=cNotes.value.trim();
+
+  if(!name){ cliFormErr.textContent='Name is required.'; return; }
+
+  cliBtnSave.disabled = true;
+  try{
+    const payload = { id: editingClientId, name, email, phone, home_address, internal_rating, notes };
+    const data = await api(API_CLI, 'POST', payload);
+    const c = normalizeClient(data.client || payload);
+    const i = allClients.findIndex(x=>x.id===c.id);
+    if(i>=0) allClients[i]={...allClients[i], ...c}; else allClients.unshift(c);
+    renderClients();
+    cliShowMsg(editingClientId ? 'Client updated.' : 'Client added.');
+    closeCliModal();
+  }catch(e){
+    cliFormErr.textContent = e.message || 'Error saving.';
+  }finally{
+    cliBtnSave.disabled = false;
+  }
+});
+
+/* ------- Tabla: delegación de eventos ------- */
+cliRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr = btn.closest('tr[data-id]'); if(!tr) return;
+  const id = tr.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+
+  if(action==='edit'){ openEditClient(id); return; }
+
+  if(action==='delete'){
+    const c = allClients.find(x=>x.id===id); if(!c) return;
+    if(!confirm(`Delete client "${c.name}"? This cannot be undone.`)) return;
+    try{
+      await api(`${API_CLI}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allClients = allClients.filter(x=>x.id!==id);
+      renderClients(); cliShowMsg('Deleted.');
+    }catch(e){
+      cliShowMsg('Error deleting: ' + (e.message||e), false);
+    }
+  }
+});
+
+/* ------- Botones globales ------- */
+document.getElementById('btnReloadClients').addEventListener('click', loadClients);
+document.getElementById('btnAddClient').addEventListener('click', openAddClient);
+/* =================== BOOT =================== */
+loadVehicles(); // tab inicial
+  /* =========================================================
+   RESERVATIONS
    ========================================================= */
+const API_RES = '/api/reservations';          // tu endpoint nuevo
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
 
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 function fmtWhen(ts){ try{ return new Date(ts).toLocaleString(); }catch{ return ts; } }
-function badgeStatus(s){ ... }  // como ya lo tenías
+function badgeStatus(s){
+  const x = String(s||'pending').toLowerCase();
+  const map = {
+    pending   : 'background:#33384d;color:#cdd6ea;border:1px solid #4b5576',
+    assigned  : 'background:#23343a;color:#7fe9b2;border:1px solid #2c8e64',
+    in_progress:'background:#34301f;color:#f7b06a;border:1px solid #b78e4f',
+    done      : 'background:#1c3321;color:#84f1a8;border:1px solid #1d7f49',
+    canceled  : 'background:#3a2124;color:#ffb0b0;border:1px solid #b04747',
+  };
+  const style = map[x] || map.pending;
+  return `<span class="badge" style="${style}">${x.toUpperCase()}</span>`;
+}
 
 function renderReservations(list){
   resRows.innerHTML = (list||[]).map(r => `
@@ -326,48 +859,43 @@ async function patchReservation(id, payload){
   return r.json();
 }
 
-/* Delegación acciones tabla Reservations */
-resRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr  = btn.closest('tr[data-id]'); if(!tr) return;
-  const id  = tr.getAttribute('data-id');
-  const a   = btn.getAttribute('data-action');
-
-  try {
-    if (a === 'assign') {
-      openAssignModal(id);
-      return;
-    } else if (a === 'start') {
-      await patchReservation(id, { status: 'in_progress' });
-    } else if (a === 'done') {
-      await patchReservation(id, { status: 'done' });
-    } else if (a === 'cancel') {
-      if (!confirm('Cancel this reservation?')) return;
-      await patchReservation(id, { status: 'canceled' });
-    }
-    await loadReservations();
-  } catch (e) {
-    resShowMsg('Error updating: ' + (e.message || e), false);
+try {
+  if (a === 'assign') {
+    openAssignModal(id);     // 👈 abre el modal
+    return;                  // importante: salir para no seguir evaluando
+  } else if (a === 'start') {
+    await patchReservation(id, { status: 'in_progress' });
+  } else if (a === 'done') {
+    await patchReservation(id, { status: 'done' });
+  } else if (a === 'cancel') {
+    if (!confirm('Cancel this reservation?')) return;
+    await patchReservation(id, { status: 'canceled' });
   }
+
+  await loadReservations();
+} catch (e) {
+  resShowMsg('Error updating: ' + (e.message || e), false);
+}
 });
 
-/* Botón Reload Reservations */
+/* Botón Reload */
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
-
-/* ---------- ASSIGN MODAL ---------- */
+  /* ---------- ASSIGN MODAL (Reservations) ---------- */
 const assignBackdrop  = document.getElementById('assignBackdrop');
-const assignBtnClose = document.getElementById('assignBtnClose');
-const assignBtnSave  = document.getElementById('assignBtnSave');
-const assignErr      = document.getElementById('assignErr');
-const aVehicle       = document.getElementById('aVehicle');
-const aDriver        = document.getElementById('aDriver');
-const aNotes         = document.getElementById('aNotes');
+const assignBtnClose  = document.getElementById('assignBtnClose');
+const assignBtnSave   = document.getElementById('assignBtnSave');
+const assignErr       = document.getElementById('assignErr');
+const aVehicle        = document.getElementById('aVehicle');
+const aDriver         = document.getElementById('aDriver');
+const aNotes          = document.getElementById('aNotes');
 
 let assignReservationId = null;
 
+// Carga/caché de vehículos para el selector
 async function ensureVehiclesLoadedForAssign() {
   try {
     if (!Array.isArray(allVehicles) || allVehicles.length === 0) {
+      // reutilizamos tu API de vehicles
       const data = await api(API_VEH, 'GET');
       const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
       allVehicles = raw.map(v => ({
@@ -377,6 +905,7 @@ async function ensureVehiclesLoadedForAssign() {
         kind: ((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV'
       }));
     }
+    // llenar <select>
     aVehicle.innerHTML = allVehicles.map(v =>
       `<option value="${v.id}">${v.plate} — ${v.kind} — ${v.driver_name||'No driver'}</option>`
     ).join('');
@@ -407,9 +936,12 @@ assignBtnSave.addEventListener('click', async ()=>{
   assignErr.textContent = '';
   const vehicle_id = aVehicle.value;
   if (!vehicle_id) { assignErr.textContent = 'Please select a vehicle.'; return; }
+  const driver_name = aDriver.value.trim() || null; // opcional por ahora
+  // Nota: tu backend soporta driver_id; enviamos solo vehicle_id + status por ahora.
   assignBtnSave.disabled = true;
   try{
     await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
+    // TODO (opcional): guardar driver_name en otra tabla si lo necesitas
     closeAssignModal();
     await loadReservations();
   }catch(e){
@@ -418,9 +950,6 @@ assignBtnSave.addEventListener('click', async ()=>{
     assignBtnSave.disabled = false;
   }
 });
-
-/* =================== BOOT =================== */
-loadVehicles(); // Tab inicial
 </script>
 </body>
 </html>
