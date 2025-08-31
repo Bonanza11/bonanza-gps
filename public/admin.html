@@ -259,90 +259,7 @@ thead th{
     </table>
   </div>
 </section>
-        /* ---------- ASSIGN MODAL (Reservations) ---------- */
-const assignBackdrop  = document.getElementById('assignBackdrop');
-const assignBtnClose  = document.getElementById('assignBtnClose');
-const assignBtnSave   = document.getElementById('assignBtnSave');
-const assignErr       = document.getElementById('assignErr');
-const aVehicle        = document.getElementById('aVehicle');
-const aDriver         = document.getElementById('aDriver');
-const aNotes          = document.getElementById('aNotes');
-
-let assignReservationId = null;
-let assignVehicles = []; // 👈 cache local SOLO para el modal
-
-// Carga/caché de vehículos para el selector (sin tocar allVehicles)
-async function ensureVehiclesLoadedForAssign() {
-  try {
-    // Si ya tenemos vehicles cargados en la vista, los reutilizamos:
-    if (Array.isArray(allVehicles) && allVehicles.length > 0) {
-      assignVehicles = allVehicles.map(v => ({
-        id: Number(v.id),                               // 👈 A ENTERO
-        plate: (v.plate||'').trim(),
-        kind:  ((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV',
-        driver_name: (v.driver_name||'').trim()
-      }));
-    } else {
-      // si no hay, llamamos a la API de vehicles
-      const data = await api(API_VEH, 'GET');
-      const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-      assignVehicles = raw.map(v => ({
-        id: Number(v.id),                               // 👈 A ENTERO
-        plate: (v.plate||'').trim(),
-        kind:  ((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV',
-        driver_name: (v.driver_name||'').trim()
-      }));
-    }
-
-    // Rellenar el <select> (value siempre el id numérico)
-    aVehicle.innerHTML = assignVehicles.map(v =>
-      `<option value="${v.id}">${v.plate} — ${v.kind} — ${v.driver_name || 'No driver'}</option>`
-    ).join('');
-  } catch (e) {
-    assignErr.textContent = 'Error loading vehicles: ' + (e.message||e);
-  }
-}
-
-function openAssignModal(reservationId) {
-  assignReservationId = Number(reservationId); // por si viene como string
-  assignErr.textContent = '';
-  aDriver.value = '';
-  aNotes.value  = '';
-  ensureVehiclesLoadedForAssign().then(()=>{
-    assignBackdrop.classList.add('open');
-    aVehicle.focus();
-  });
-}
-
-function closeAssignModal(){
-  assignBackdrop.classList.remove('open');
-  assignReservationId = null;
-}
-
-assignBtnClose.addEventListener('click', closeAssignModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
-
-assignBtnSave.addEventListener('click', async ()=>{
-  assignErr.textContent = '';
-
-  // 👇 Forzar entero y validar
-  const vehicle_id = parseInt(aVehicle.value, 10);
-  if (!Number.isInteger(vehicle_id)) {
-    assignErr.textContent = 'Please select a valid vehicle.';
-    return;
-  }
-
-  assignBtnSave.disabled = true;
-  try{
-    await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
-    closeAssignModal();
-    await loadReservations();
-  }catch(e){
-    assignErr.textContent = e.message || 'Error assigning.';
-  }finally{
-    assignBtnSave.disabled = false;
-  }
-});
+        
 <!-- VIEW: SETTINGS (placeholder) -->
 <section id="view-settings" hidden>
   <div class="wrap">
@@ -951,7 +868,36 @@ resRows.addEventListener('click', async (ev)=>{
 });
 /* Botón Reload */
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
-   
 </script>
+  <!-- ASSIGN MODAL -->
+<div class="backdrop" id="assignBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+    <header>
+      <h2 id="assignTitle" style="margin:0;font-size:16px;font-weight:800">Assign vehicle</h2>
+      <div style="flex:1"></div>
+      <button id="assignBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field full">
+          <label for="aVehicle">Vehicle</label>
+          <select id="aVehicle"></select>
+        </div>
+        <div class="field">
+          <label for="aDriver">Driver (optional)</label>
+          <input id="aDriver" placeholder="John Doe" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="aNotes">Notes (optional)</label>
+          <input id="aNotes" placeholder="">
+        </div>
+      </div>
+      <div id="assignErr" class="err-msg"></div>
+      <div class="actions">
+        <button id="assignBtnSave" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
