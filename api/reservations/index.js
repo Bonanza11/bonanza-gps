@@ -1,5 +1,5 @@
 // /api/reservations/index.js
-// GET: lista | POST: crea
+// GET: lista | POST: crea | PATCH: asigna/desasigna driver
 import { query } from "../_db.js";
 
 const ADMIN = process.env.ADMIN_KEY || "supersecreto123";
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
            r.vehicle_id,
            r.driver_name,
            r.notes,
-           v.plate AS vehicle_plate,   -- 🚀 agregado: placa directamente
+           v.plate AS vehicle_plate,   -- placa directamente
            CASE
              WHEN v.id IS NULL THEN NULL
              ELSE v.plate::text || ' — ' || v.kind::text || ' — ' || COALESCE(v.driver_name,'')::text
@@ -84,8 +84,30 @@ export default async function handler(req, res) {
       return res.json(rows?.[0] ?? null);
     }
 
+    // ---------- PATCH ----------
+    // Asignar / desasignar driver a una reserva
+    // Permite pasar solo driver_id (uuid) y opcionalmente driver_name para compatibilidad
+    if (req.method === "PATCH") {
+      const { id, driver_id = null, driver_name = undefined } = req.body || {};
+      if (!id) {
+        return res.status(400).json({ ok: false, error: "missing_id" });
+      }
+
+      // Si no envías driver_name, no lo toca (COALESCE con el valor actual)
+      const rows = await query(
+        `UPDATE reservations
+           SET driver_id = $2,
+               driver_name = COALESCE($3, driver_name)
+         WHERE id = $1
+         RETURNING *`,
+        [id, driver_id, driver_name]
+      );
+
+      return res.json(rows?.[0] ?? null);
+    }
+
     // ---------- Método no permitido ----------
-    res.setHeader("Allow", "GET, POST");
+    res.setHeader("Allow", "GET, POST, PATCH");
     return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
   } catch (err) {
