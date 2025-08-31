@@ -431,9 +431,10 @@ window.addEventListener('resize', setTheadTop);
 /* =================== TABS =================== */
 const tabsEl = document.getElementById('tabs');
 const views = {
-  vehicles: document.getElementById('view-vehicles'),
-  clients : document.getElementById('view-clients'),
-  settings: document.getElementById('view-settings'),
+  vehicles    : document.getElementById('view-vehicles'),
+  clients     : document.getElementById('view-clients'),
+  reservations: document.getElementById('view-reservations'),
+  settings    : document.getElementById('view-settings'),
 };
 tabsEl.addEventListener('click', (e)=>{
   const b = e.target.closest('.tab-btn'); if(!b) return;
