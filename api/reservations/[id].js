@@ -1,5 +1,5 @@
 // /api/reservations/[id].js
-import { query } from '../_db.js';   // ruta correcta a _db.js
+import { query } from '../db.js';   // ruta correcta a _db.js
 
 export default async function handler(req, res) {
   const { id } = req.query;
