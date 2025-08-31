@@ -786,85 +786,46 @@ function badgeStatus(s){
 }
 
 function renderReservations(list){
-  resRows.innerHTML = (list||[]).map(r => `
-    <tr data-id="${r.id}">
-      <td>${r.id}</td>
-      <td>
-        <div><strong>${escapeHtml(r.customer_name||'')}</strong></div>
-        <div style="color:var(--muted);font-size:12px">
-          ${escapeHtml(r.phone||'')} ${r.email? ' · '+escapeHtml(r.email):''}
-        </div>
-      </td>
-      <td>${escapeHtml(r.pickup_location)} → ${escapeHtml(r.dropoff_location)}</td>
-      <td>${fmtWhen(r.pickup_time)}</td>
-      <td>${escapeHtml(r.vehicle_type||'-')}</td>
-      <td>${badgeStatus(r.status)}</td>
-      <td class="right actions">
-        <div class="btns">
-          <button class="btn" data-action="assign">Assign</button>
-          <button class="btn" data-action="start">Start</button>
-          <button class="btn" data-action="done">Done</button>
-          <button class="btn btn-danger" data-action="cancel">Cancel</button>
-        </div>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="7">No reservations.</td></tr>';
+  resRows.innerHTML = (list||[]).map(r => {
+    const extra =
+      (r.driver_name || r.notes)
+        ? `
+          <div style="margin-top:6px; font-size:12px; color:var(--muted)">
+            ${r.driver_name ? `Driver: ${escapeHtml(r.driver_name)}` : ''}
+            ${r.driver_name && r.notes ? ' · ' : ''}
+            ${r.notes ? `Notes: ${escapeHtml(r.notes)}` : ''}
+          </div>
+        `
+        : '';
+
+    return `
+      <tr data-id="${r.id}">
+        <td>${r.id}</td>
+        <td>
+          <div><strong>${escapeHtml(r.customer_name||'')}</strong></div>
+          <div style="color:var(--muted);font-size:12px">
+            ${escapeHtml(r.phone||'')} ${r.email? ' · '+escapeHtml(r.email):''}
+          </div>
+        </td>
+        <td>${escapeHtml(r.pickup_location)} → ${escapeHtml(r.dropoff_location)}</td>
+        <td>${fmtWhen(r.pickup_time)}</td>
+        <td>
+          ${escapeHtml(r.vehicle_type||'-')}
+          ${extra}
+        </td>
+        <td>${badgeStatus(r.status)}</td>
+        <td class="right actions">
+          <div class="btns">
+            <button class="btn" data-action="assign">Assign</button>
+            <button class="btn" data-action="start">Start</button>
+            <button class="btn" data-action="done">Done</button>
+            <button class="btn btn-danger" data-action="cancel">Cancel</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7">No reservations.</td></tr>';
 }
-
-async function loadReservations(){
-  resRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  try{
-    const r = await fetch(API_RES, { headers:{ 'x-admin-key': ADMIN_KEY } });
-    const data = await r.json();
-    renderReservations(Array.isArray(data) ? data : []);
-    resShowMsg('Loaded successfully.');
-    setTheadTop();
-  }catch(e){
-    renderReservations([]);
-    resShowMsg('Error loading: '+(e.message||e), false);
-  }
-}
-
-async function patchReservation(id, payload){
-  const r = await fetch(`${API_RES}/${id}`, {
-    method: 'PATCH',
-    headers:{ 'Content-Type':'application/json', 'x-admin-key': ADMIN_KEY },
-    body: JSON.stringify(payload)
-  });
-  if (!r.ok) throw new Error('update_failed');
-  return r.json();
-}
-
-/* Delegación de eventos en la tabla de Reservations */
-resRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]');
-  if (!btn) return;
-
-  const tr = btn.closest('tr[data-id]');
-  if (!tr) return;
-
-  const id = tr.getAttribute('data-id');
-  const a  = btn.getAttribute('data-action');
-
-  try {
-    if (a === 'assign') {
-      openAssignModal(id);
-      return; // salimos para no seguir
-    }
-    if (a === 'start') {
-      await patchReservation(id, { status: 'in_progress' });
-    } else if (a === 'done') {
-      await patchReservation(id, { status: 'done' });
-    } else if (a === 'cancel') {
-      if (!confirm('Cancel this reservation?')) return;
-      await patchReservation(id, { status: 'canceled' });
-    }
-
-    await loadReservations();
-  } catch (e) {
-    resShowMsg('Error updating: ' + (e.message || e), false);
-  }
-});
 /* Botón Reload */
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 </script>
