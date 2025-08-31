@@ -961,11 +961,11 @@ window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(
 
 assignBtnSave.addEventListener('click', async ()=>{
   assignErr.textContent = '';
-  const vehicle_id = parseInt(aVehicle.value, 10);
-  if (!Number.isInteger(vehicle_id)) {
-    assignErr.textContent = 'Please select a valid vehicle.';
-    return;
-  }
+  const vehicle_id = aVehicle.value;
+if (!vehicle_id) {
+  assignErr.textContent = 'Please select a valid vehicle.';
+  return;
+}
   assignBtnSave.disabled = true;
   try{
     await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
