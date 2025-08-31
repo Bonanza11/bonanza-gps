@@ -1,5 +1,5 @@
 // /api/reservations/[id].js
-import { query } from '../db.js';
+import { query } from '../_db.js';   // <-- ruta correcta (subimos 1 nivel y usamos _db.js)
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -11,16 +11,36 @@ export default async function handler(req, res) {
     const values = [];
     let i = 1;
 
-    if (typeof status === 'string')     { fields.push(`status = $${i++}`);      values.push(status); }
-    if (vehicle_id !== undefined)       { fields.push(`vehicle_id = $${i++}`);  values.push(vehicle_id); }
-    if (driver_id  !== undefined)       { fields.push(`driver_id = $${i++}`);   values.push(driver_id); }
-    if (pickup_time !== undefined)      { fields.push(`pickup_time = $${i++}`); values.push(pickup_time); }
-
-    if (!fields.length) {
-      return res.status(400).json({ ok:false, error:'nothing_to_update' });
+    // status es texto
+    if (typeof status === 'string' && status.trim() !== '') {
+      fields.push(`status = $${i++}`);
+      values.push(status.trim());
     }
 
-    // Si tu columna id es INT:
+    // vehicle_id es integer en la BD
+    if (vehicle_id !== undefined) {
+      const veh = vehicle_id === null ? null : Number(vehicle_id);
+      fields.push(`vehicle_id = $${i++}`);
+      values.push(veh);
+    }
+
+    // driver_id por ahora es texto (si luego lo haces integer, castea como arriba)
+    if (driver_id !== undefined) {
+      fields.push(`driver_id = $${i++}`);
+      values.push(driver_id);
+    }
+
+    // pickup_time: acepta string ISO o null
+    if (pickup_time !== undefined) {
+      fields.push(`pickup_time = $${i++}`);
+      values.push(pickup_time);
+    }
+
+    if (!fields.length) {
+      return res.status(400).json({ ok: false, error: 'nothing_to_update' });
+    }
+
+    // tu PK id es integer → aseguremos número
     const idValue = /^\d+$/.test(String(id)) ? Number(id) : id;
     values.push(idValue);
 
@@ -28,10 +48,10 @@ export default async function handler(req, res) {
 
     try {
       const { rows } = await query(sql, values);
-      return res.status(200).json({ ok:true, reservation: rows[0] });
+      return res.status(200).json({ ok: true, reservation: rows[0] });
     } catch (err) {
-      console.error('[PATCH reservations]', err);
-      return res.status(500).json({ ok:false, error:'update_failed' });
+      console.error('[reservations PATCH] SQL error:', err);
+      return res.status(500).json({ ok: false, error: 'update_failed' });
     }
   }
 
