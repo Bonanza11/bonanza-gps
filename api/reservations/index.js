@@ -1,43 +1,37 @@
-// /api/reservations/index.js
-import { query } from '../db.js';
+// GET /api/reservations
+import { query } from '../db.js'; // o '../_db.js' si dejaste el guion
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
-    try {
-      const {
-        customer_name, email, phone,
-        pickup_location, dropoff_location,
-        vehicle_type, pickup_time, instructions
-      } = req.body;
-
-      const rows = await query(
-        `INSERT INTO reservations
-         (customer_name,email,phone,pickup_location,dropoff_location,vehicle_type,pickup_time,instructions)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-         RETURNING *`,
-        [customer_name, email, phone, pickup_location, dropoff_location, vehicle_type, pickup_time, instructions]
-      );
-
-      // rows es un array; toma el primer elemento
-      return res.status(201).json({ ok: true, reservation: rows[0] || null });
-    } catch (err) {
-      console.error('INSERT ERROR', err);
-      return res.status(500).json({ ok: false, error: err.message });
+  try {
+    // 🔐 Header simple (opcional si no usas clave en server)
+    const ADMIN_KEY = process.env.ADMIN_KEY || 'supersecreto123';
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) {
+      return res.status(401).json({ ok: false, error: 'unauthorized' });
     }
-  }
 
-  if (req.method === 'GET') {
-    try {
-      const rows = await query(
-        `SELECT * FROM reservations ORDER BY created_at DESC`
-      );
-      return res.status(200).json(rows);
-    } catch (err) {
-      console.error('LIST ERROR', err);
-      return res.status(500).json({ ok: false, error: err.message });
+    if (req.method !== 'GET') {
+      res.setHeader('Allow', ['GET']);
+      return res.status(405).json({ ok:false, error:'method_not_allowed' });
     }
-  }
 
-  res.setHeader('Allow', ['GET','POST']);
-  return res.status(405).end('Method Not Allowed');
+    const { rows } = await query(`
+      SELECT
+        id,
+        COALESCE(customer_name,'')      AS customer_name,
+        COALESCE(phone,'')              AS phone,
+        COALESCE(email,'')              AS email,
+        COALESCE(pickup_location,'')    AS pickup_location,
+        COALESCE(dropoff_location,'')   AS dropoff_location,
+        pickup_time,                    -- timestamp
+        COALESCE(vehicle_type,'')       AS vehicle_type,
+        COALESCE(status,'pending')      AS status
+      FROM reservations
+      ORDER BY id DESC
+    `);
+
+    return res.status(200).json(rows);
+  } catch (e) {
+    console.error('[GET /reservations] Error:', e);
+    return res.status(500).json({ ok:false, error:'server_error' });
+  }
 }
