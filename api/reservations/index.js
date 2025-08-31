@@ -1,37 +1,35 @@
-// GET /api/reservations
-import { query } from '../_db.js'; // o '../_db.js' si dejaste el guion
+// /api/reservations/index.js
+import { query } from "../_db.js";
 
 export default async function handler(req, res) {
   try {
-    // 🔐 Header simple (opcional si no usas clave en server)
-    const ADMIN_KEY = process.env.ADMIN_KEY || 'supersecreto123';
-    if (req.headers['x-admin-key'] !== ADMIN_KEY) {
-      return res.status(401).json({ ok: false, error: 'unauthorized' });
+    if (req.method === "GET") {
+      const rows = await query("SELECT * FROM reservations ORDER BY id DESC");
+      return res.json(rows);
     }
 
-    if (req.method !== 'GET') {
-      res.setHeader('Allow', ['GET']);
-      return res.status(405).json({ ok:false, error:'method_not_allowed' });
+    if (req.method === "POST") {
+      const { customer_name, pickup_location, dropoff_location, pickup_time } = req.body;
+      const rows = await query(
+        `INSERT INTO reservations (customer_name, pickup_location, dropoff_location, pickup_time)
+         VALUES ($1,$2,$3,$4) RETURNING *`,
+        [customer_name, pickup_location, dropoff_location, pickup_time]
+      );
+      return res.json(rows[0]);
     }
 
-    const { rows } = await query(`
-      SELECT
-        id,
-        COALESCE(customer_name,'')      AS customer_name,
-        COALESCE(phone,'')              AS phone,
-        COALESCE(email,'')              AS email,
-        COALESCE(pickup_location,'')    AS pickup_location,
-        COALESCE(dropoff_location,'')   AS dropoff_location,
-        pickup_time,                    -- timestamp
-        COALESCE(vehicle_type,'')       AS vehicle_type,
-        COALESCE(status,'pending')      AS status
-      FROM reservations
-      ORDER BY id DESC
-    `);
+    if (req.method === "PATCH") {
+      const { id, status, vehicle_id } = req.body;
+      const rows = await query(
+        `UPDATE reservations SET status=$2, vehicle_id=$3 WHERE id=$1 RETURNING *`,
+        [id, status, vehicle_id]
+      );
+      return res.json(rows[0]);
+    }
 
-    return res.status(200).json(rows);
-  } catch (e) {
-    console.error('[GET /reservations] Error:', e);
-    return res.status(500).json({ ok:false, error:'server_error' });
+    return res.status(405).json({ error: "Method not allowed" });
+  } catch (err) {
+    console.error("[RESERVATIONS] Error:", err);
+    return res.status(500).json({ error: "internal_error", details: err.message });
   }
 }
