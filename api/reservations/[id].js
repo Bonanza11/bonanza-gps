@@ -1,67 +1,52 @@
-// /api/reservations/[id].js
-import { query } from '../_db.js';
+// PATCH: actualiza status/vehicle_id/driver/notes | GET: uno | DELETE: borra
+import { query } from "../_db.js";
+
+const ADMIN = "supersecreto123";
 
 export default async function handler(req, res) {
-  const { id } = req.query;
-
-  if (req.method !== 'PATCH') {
-    res.setHeader('Allow', ['PATCH']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
-
-  // id debe ser integer
-  const resId = Number(id);
-  if (!Number.isInteger(resId)) {
-    return res.status(400).json({ ok:false, error:'invalid_reservation_id' });
-  }
-
-  const { status, vehicle_id, driver_id, pickup_time } = req.body;
-
-  const fields = [];
-  const values = [];
-  let i = 1;
-
-  if (typeof status === 'string') {
-    fields.push(`status = $${i++}`);
-    values.push(status);
-  }
-
-  if (vehicle_id !== undefined) {
-    const vid = Number(vehicle_id);
-    if (!Number.isInteger(vid)) {
-      return res.status(400).json({ ok:false, error:'invalid_vehicle_id' });
-    }
-    fields.push(`vehicle_id = $${i++}`);
-    values.push(vid);
-  }
-
-  if (driver_id !== undefined) {
-    const did = Number(driver_id);
-    if (!Number.isInteger(did)) {
-      return res.status(400).json({ ok:false, error:'invalid_driver_id' });
-    }
-    fields.push(`driver_id = $${i++}`);
-    values.push(did);
-  }
-
-  if (pickup_time !== undefined) {
-    // si te llega string ISO, lo pasas como está; Postgres lo castea a timestamp
-    fields.push(`pickup_time = $${i++}`);
-    values.push(pickup_time);
-  }
-
-  if (!fields.length) {
-    return res.status(400).json({ ok:false, error:'nothing_to_update' });
-  }
-
-  values.push(resId);
-  const sql = `UPDATE reservations SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`;
-
   try {
-    const { rows } = await query(sql, values);
-    return res.status(200).json({ ok:true, reservation: rows[0] });
+    if (req.headers["x-admin-key"] !== ADMIN) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
+
+    if (req.method === "GET") {
+      const rows = await query(`SELECT * FROM reservations WHERE id=$1`, [id]);
+      return res.json(rows[0] || null);
+    }
+
+    if (req.method === "PATCH") {
+      const { status, vehicle_id, driver_name, notes } = req.body || {};
+      // Construye SET dinámico solo con campos enviados
+      const fields = [];
+      const vals = [];
+      let idx = 1;
+
+      if (status != null)      { fields.push(`status=$${idx++}`);      vals.push(String(status)); }
+      if (vehicle_id != null)  { fields.push(`vehicle_id=$${idx++}`);  vals.push(Number(vehicle_id)); }
+      if (driver_name != null) { fields.push(`driver_name=$${idx++}`); vals.push(String(driver_name)); }
+      if (notes != null)       { fields.push(`notes=$${idx++}`);       vals.push(String(notes)); }
+
+      if (!fields.length) return res.json({ ok: true }); // nada que actualizar
+
+      vals.push(id);
+      const rows = await query(
+        `UPDATE reservations SET ${fields.join(", ")} WHERE id=$${idx} RETURNING *`,
+        vals
+      );
+      return res.json(rows[0]);
+    }
+
+    if (req.method === "DELETE") {
+      await query(`DELETE FROM reservations WHERE id=$1`, [id]);
+      return res.json({ ok: true });
+    }
+
+    return res.status(405).json({ ok: false, error: "method_not_allowed" });
   } catch (err) {
-    console.error('[reservations PATCH] SQL error:', err);
-    return res.status(500).json({ ok:false, error:'update_failed' });
+    console.error("[/api/reservations/[id]] ", err);
+    return res.status(500).json({ ok: false, error: "server_error", detail: String(err.message || err) });
   }
 }
