@@ -898,8 +898,7 @@ document.getElementById('btnReloadRes').addEventListener('click', loadReservatio
     </div>
   </div>
 </div>
-
-<!-- JS del ASSIGN MODAL -->
+  <!-- JS del ASSIGN MODAL -->
 <script>
 const assignBackdrop  = document.getElementById('assignBackdrop');
 const assignBtnClose  = document.getElementById('assignBtnClose');
@@ -912,11 +911,12 @@ const aNotes          = document.getElementById('aNotes');
 let assignReservationId = null;
 let assignVehicles = [];
 
+/* Carga/caché de vehículos para el <select> */
 async function ensureVehiclesLoadedForAssign() {
   try {
     if (Array.isArray(allVehicles) && allVehicles.length > 0) {
       assignVehicles = allVehicles.map(v => ({
-        id: Number(v.id),
+        id: String(v.id),                                   // <-- UUID como string
         plate: (v.plate || '').trim(),
         kind: ((v.kind || 'SUV').toUpperCase() === 'VAN') ? 'VAN' : 'SUV',
         driver_name: (v.driver_name || '').trim()
@@ -925,7 +925,7 @@ async function ensureVehiclesLoadedForAssign() {
       const data = await api(API_VEH, 'GET');
       const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
       assignVehicles = raw.map(v => ({
-        id: Number(v.id),
+        id: String(v.id),                                   // <-- UUID como string
         plate: (v.plate || '').trim(),
         kind: ((v.kind || 'SUV').toUpperCase() === 'VAN') ? 'VAN' : 'SUV',
         driver_name: (v.driver_name || '').trim()
@@ -935,13 +935,15 @@ async function ensureVehiclesLoadedForAssign() {
     aVehicle.innerHTML = assignVehicles.map(v =>
       `<option value="${v.id}">${escapeHtml(v.plate)} — ${v.kind} — ${escapeHtml(v.driver_name || 'No driver')}</option>`
     ).join('');
+    // Selecciona la primera opción por defecto si existe
+    if (assignVehicles.length > 0) aVehicle.value = assignVehicles[0].id;
   } catch (e) {
     assignErr.textContent = 'Error loading vehicles: ' + (e.message || e);
   }
 }
 
 function openAssignModal(reservationId) {
-  assignReservationId = Number(reservationId);
+  assignReservationId = String(reservationId);             // <-- mantener como string
   assignErr.textContent = '';
   aDriver.value = '';
   aNotes.value  = '';
@@ -961,14 +963,19 @@ window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(
 
 assignBtnSave.addEventListener('click', async ()=>{
   assignErr.textContent = '';
-  const vehicle_id = aVehicle.value;
-if (!vehicle_id) {
-  assignErr.textContent = 'Please select a valid vehicle.';
-  return;
-}
+  const vehicle_id = aVehicle.value;                       // <-- ya NO parseInt
+  if (!vehicle_id) {
+    assignErr.textContent = 'Please select a valid vehicle.';
+    return;
+  }
   assignBtnSave.disabled = true;
   try{
-    await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
+    await patchReservation(assignReservationId, {
+      status: 'assigned',
+      vehicle_id,                                          // UUID string
+      driver_name: aDriver.value.trim() || null,
+      notes: aNotes.value.trim() || null
+    });
     closeAssignModal();
     await loadReservations();
   }catch(e){
