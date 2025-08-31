@@ -745,7 +745,6 @@ cliRows.addEventListener('click', async (ev)=>{
   const action = btn.getAttribute('data-action');
 
   if(action==='edit'){ openEditClient(id); return; }
-
   if(action==='delete'){
     const c = allClients.find(x=>x.id===id); if(!c) return;
     if(!confirm(`Delete client "${c.name}"? This cannot be undone.`)) return;
@@ -869,7 +868,7 @@ resRows.addEventListener('click', async (ev)=>{
 /* Botón Reload */
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 </script>
-  <!-- ASSIGN MODAL -->
+ <!-- ASSIGN MODAL -->
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
     <header>
@@ -899,5 +898,85 @@ document.getElementById('btnReloadRes').addEventListener('click', loadReservatio
     </div>
   </div>
 </div>
+
+<!-- JS del ASSIGN MODAL -->
+<script>
+const assignBackdrop  = document.getElementById('assignBackdrop');
+const assignBtnClose  = document.getElementById('assignBtnClose');
+const assignBtnSave   = document.getElementById('assignBtnSave');
+const assignErr       = document.getElementById('assignErr');
+const aVehicle        = document.getElementById('aVehicle');
+const aDriver         = document.getElementById('aDriver');
+const aNotes          = document.getElementById('aNotes');
+
+let assignReservationId = null;
+let assignVehicles = [];
+
+async function ensureVehiclesLoadedForAssign() {
+  try {
+    if (Array.isArray(allVehicles) && allVehicles.length > 0) {
+      assignVehicles = allVehicles.map(v => ({
+        id: Number(v.id),
+        plate: (v.plate || '').trim(),
+        kind: ((v.kind || 'SUV').toUpperCase() === 'VAN') ? 'VAN' : 'SUV',
+        driver_name: (v.driver_name || '').trim()
+      }));
+    } else {
+      const data = await api(API_VEH, 'GET');
+      const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
+      assignVehicles = raw.map(v => ({
+        id: Number(v.id),
+        plate: (v.plate || '').trim(),
+        kind: ((v.kind || 'SUV').toUpperCase() === 'VAN') ? 'VAN' : 'SUV',
+        driver_name: (v.driver_name || '').trim()
+      }));
+    }
+
+    aVehicle.innerHTML = assignVehicles.map(v =>
+      `<option value="${v.id}">${escapeHtml(v.plate)} — ${v.kind} — ${escapeHtml(v.driver_name || 'No driver')}</option>`
+    ).join('');
+  } catch (e) {
+    assignErr.textContent = 'Error loading vehicles: ' + (e.message || e);
+  }
+}
+
+function openAssignModal(reservationId) {
+  assignReservationId = Number(reservationId);
+  assignErr.textContent = '';
+  aDriver.value = '';
+  aNotes.value  = '';
+  ensureVehiclesLoadedForAssign().then(() => {
+    assignBackdrop.classList.add('open');
+    aVehicle.focus();
+  });
+}
+
+function closeAssignModal() {
+  assignBackdrop.classList.remove('open');
+  assignReservationId = null;
+}
+
+assignBtnClose.addEventListener('click', closeAssignModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
+
+assignBtnSave.addEventListener('click', async ()=>{
+  assignErr.textContent = '';
+  const vehicle_id = parseInt(aVehicle.value, 10);
+  if (!Number.isInteger(vehicle_id)) {
+    assignErr.textContent = 'Please select a valid vehicle.';
+    return;
+  }
+  assignBtnSave.disabled = true;
+  try{
+    await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
+    closeAssignModal();
+    await loadReservations();
+  }catch(e){
+    assignErr.textContent = e.message || 'Error assigning.';
+  }finally{
+    assignBtnSave.disabled = false;
+  }
+});
+</script>
 </body>
 </html>
