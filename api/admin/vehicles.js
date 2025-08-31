@@ -1,9 +1,12 @@
 // /api/admin/vehicles.js
 import { pool, query } from "../_db.js";
 
+/** Forzamos runtime Node (pg no funciona en Edge) */
+export const config = { runtime: "nodejs" };
+
 /* ---------- Auth ---------- */
 function checkKey(req) {
-  // headers siempre en minúsculas
+  // headers siempre en minúsculas en Node
   const hdr = req.headers["x-admin-key"];
   const envKey = process.env.ADMIN_KEY || "supersecreto123";
   return hdr && String(hdr) === String(envKey);
@@ -12,7 +15,10 @@ function checkKey(req) {
 /* ---------- Normalización ---------- */
 function norm(body = {}) {
   const v = {
-    id: body.id != null ? String(body.id) : null,
+    id:
+      body.id !== undefined && body.id !== null && String(body.id).trim() !== ""
+        ? String(body.id)
+        : null,
     plate: (body.plate ?? "").toString().trim(),
     driver_name: (body.driver_name ?? "").toString().trim(),
     kind: (body.kind ?? "").toString().trim().toUpperCase(),
@@ -21,7 +27,8 @@ function norm(body = {}) {
         ? Number.parseInt(body.year, 10)
         : null,
     model: ((body.model ?? "").toString().trim() || null),
-    active: typeof body.active === "boolean" ? body.active : undefined, // importante para toggle
+    // si viene, debe ser boolean; si no, queda undefined para no pisar en updates
+    active: typeof body.active === "boolean" ? body.active : undefined,
   };
   if (v.kind !== "SUV" && v.kind !== "VAN") v.kind = "SUV";
   return v;
@@ -48,11 +55,14 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       const b = norm(req.body || {});
 
-      // 1) Toggle: exige id y active boolean explícito, y NADA más
+      // 1) SOLO toggle: exactamente { id, active }
+      const keys = Object.keys(req.body || {});
       const onlyToggle =
         b.id &&
         typeof b.active === "boolean" &&
-        Object.keys(req.body || {}).every((k) => k === "id" || k === "active");
+        keys.length === 2 &&
+        keys.includes("id") &&
+        keys.includes("active");
 
       if (onlyToggle) {
         const { rows } = await pool.query(
@@ -62,19 +72,17 @@ export default async function handler(req, res) {
         returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
           [b.id, b.active]
         );
-        if (!rows.length)
-          return res
-            .status(404)
-            .json({ ok: false, error: "Vehicle not found" });
+        if (!rows.length) {
+          return res.status(404).json({ ok: false, error: "Vehicle not found" });
+        }
         return res.json({ ok: true, vehicle: rows[0] });
       }
 
       // 2) Update por id (edición completa)
       if (b.id) {
-        if (!b.plate || !b.driver_name || !b.year)
-          return res
-            .status(400)
-            .json({ ok: false, error: "Missing fields" });
+        if (!b.plate || !b.driver_name || !b.year) {
+          return res.status(400).json({ ok: false, error: "Missing fields" });
+        }
 
         const { rows } = await pool.query(
           `update vehicles
@@ -88,16 +96,16 @@ export default async function handler(req, res) {
         returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
           [b.id, b.plate, b.driver_name, b.kind, b.year, b.model, b.active]
         );
-        if (!rows.length)
-          return res
-            .status(404)
-            .json({ ok: false, error: "Vehicle not found" });
+        if (!rows.length) {
+          return res.status(404).json({ ok: false, error: "Vehicle not found" });
+        }
         return res.json({ ok: true, vehicle: rows[0] });
       }
 
-      // 3) Insert / upsert manual por placa (case-insensitive)
-      if (!b.plate || !b.driver_name || !b.year)
+      // 3) Insert / upsert por placa (case-insensitive)
+      if (!b.plate || !b.driver_name || !b.year) {
         return res.status(400).json({ ok: false, error: "Missing fields" });
+      }
 
       // ¿existe ya por plate (insensible a mayúsculas)?
       const found = await query(
@@ -136,25 +144,23 @@ export default async function handler(req, res) {
     /* ---------- DELETE ---------- */
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
-      if (!id)
+      if (!id) {
         return res.status(400).json({ ok: false, error: "Missing id" });
+      }
 
-      const r = await pool.query(`delete from vehicles where id::text = $1`, [
-        id,
-      ]);
-      if (!r.rowCount)
+      const r = await pool.query(`delete from vehicles where id::text = $1`, [id]);
+      if (!r.rowCount) {
         return res.status(404).json({ ok: false, error: "Vehicle not found" });
+      }
       return res.json({ ok: true });
     }
 
     res.setHeader("Allow", "GET,POST,DELETE");
-    return res
-      .status(405)
-      .json({ ok: false, error: "Method Not Allowed" });
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   } catch (e) {
     console.error("[/api/admin/vehicles] error:", e);
     return res
       .status(500)
-      .json({ ok: false, error: e.message || "Internal error" });
+      .json({ ok: false, error: e?.message || "Internal error" });
   }
 }
