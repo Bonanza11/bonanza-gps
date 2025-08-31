@@ -1,5 +1,5 @@
 // /api/reservations/[id].js
-import { query } from '../_db.js';   // <-- ruta correcta (subimos 1 nivel y usamos _db.js)
+import { query } from '../_db.js';   // ruta correcta a _db.js
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -11,26 +11,22 @@ export default async function handler(req, res) {
     const values = [];
     let i = 1;
 
-    // status es texto
     if (typeof status === 'string' && status.trim() !== '') {
       fields.push(`status = $${i++}`);
       values.push(status.trim());
     }
 
-    // vehicle_id es integer en la BD
     if (vehicle_id !== undefined) {
-      const veh = vehicle_id === null ? null : Number(vehicle_id);
+      const veh = vehicle_id === null ? null : Number(vehicle_id); // columna integer
       fields.push(`vehicle_id = $${i++}`);
       values.push(veh);
     }
 
-    // driver_id por ahora es texto (si luego lo haces integer, castea como arriba)
     if (driver_id !== undefined) {
       fields.push(`driver_id = $${i++}`);
-      values.push(driver_id);
+      values.push(driver_id); // si luego es integer, castear como arriba
     }
 
-    // pickup_time: acepta string ISO o null
     if (pickup_time !== undefined) {
       fields.push(`pickup_time = $${i++}`);
       values.push(pickup_time);
@@ -40,14 +36,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'nothing_to_update' });
     }
 
-    // tu PK id es integer → aseguremos número
     const idValue = /^\d+$/.test(String(id)) ? Number(id) : id;
     values.push(idValue);
 
-    const sql = `UPDATE reservations SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`;
+    const sql = `UPDATE reservations SET ${fields.join(', ')}
+                 WHERE id = $${i} RETURNING *`;
 
     try {
-      const { rows } = await query(sql, values);
+      const rows = await query(sql, values);     // <-- query devuelve array
       return res.status(200).json({ ok: true, reservation: rows[0] });
     } catch (err) {
       console.error('[reservations PATCH] SQL error:', err);
