@@ -1,5 +1,5 @@
 // GET /api/reservations
-import { query } from '../db.js'; // o '../_db.js' si dejaste el guion
+import { query } from '../_db.js'; // o '../_db.js' si dejaste el guion
 
 export default async function handler(req, res) {
   try {
