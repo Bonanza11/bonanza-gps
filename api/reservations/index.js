@@ -11,30 +11,37 @@ export default async function handler(req, res) {
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
 
-    // --- GET: incluir driver_name y notes ---
+    // ---------- GET ----------
+    // Devuelve también vehicle_label compuesto de la tabla vehicles
     if (req.method === "GET") {
       const rows = await query(
         `SELECT
-           id,
-           customer_name,
-           email,
-           phone,
-           pickup_location,
-           dropoff_location,
-           pickup_time,
-           vehicle_type,
-           status,
-           vehicle_id,
-           driver_name,   -- incluido en respuesta
-           notes          -- incluido en respuesta
-         FROM reservations
-         ORDER BY id DESC`
+           r.id,
+           r.customer_name,
+           r.email,
+           r.phone,
+           r.pickup_location,
+           r.dropoff_location,
+           r.pickup_time,
+           r.vehicle_type,
+           r.status,
+           r.vehicle_id,
+           r.driver_name,
+           r.notes,
+           CASE
+             WHEN v.id IS NULL THEN NULL
+             ELSE v.plate::text || ' — ' || v.kind::text || ' — ' || COALESCE(v.driver_name,'')::text
+           END AS vehicle_label
+         FROM reservations r
+         LEFT JOIN vehicles v
+           ON v.id::text = r.vehicle_id::text   -- evita error uuid vs integer
+         ORDER BY r.id DESC`
       );
-      // El frontend espera un array JSON plano
       return res.json(Array.isArray(rows) ? rows : []);
     }
 
-    // --- POST: crear reserva (driver_name / notes opcionales) ---
+    // ---------- POST ----------
+    // Crea la reserva (driver_name / notes opcionales)
     if (req.method === "POST") {
       const {
         customer_name,
@@ -44,11 +51,11 @@ export default async function handler(req, res) {
         dropoff_location,
         pickup_time,
         vehicle_type = "SUV",
-        driver_name = null, // opcional
-        notes = null        // opcional
+        driver_name = null,
+        notes = null
       } = req.body || {};
 
-      // Campos mínimos
+      // Validación mínima
       if (!customer_name || !pickup_location || !dropoff_location || !pickup_time) {
         return res.status(400).json({ ok: false, error: "missing_fields" });
       }
@@ -76,9 +83,10 @@ export default async function handler(req, res) {
       return res.json(rows?.[0] ?? null);
     }
 
-    // --- Método no permitido ---
+    // ---------- Método no permitido ----------
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ ok: false, error: "method_not_allowed" });
+
   } catch (err) {
     console.error("[/api/reservations] ", err);
     return res.status(500).json({
