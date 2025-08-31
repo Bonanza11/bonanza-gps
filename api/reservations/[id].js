@@ -1,12 +1,12 @@
 // /api/reservations/[id].js
 import { pool } from "../_db.js";
 
-export default async function handler(req, res){
+export default async function handler(req, res) {
   if (req.method !== "PATCH") {
     res.setHeader("Allow", "PATCH");
-    return res.status(405).json({ ok:false, error:"Method Not Allowed" });
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   }
-  try{
+  try {
     const id = req.query.id;
     const { status, vehicle_id, driver_name, notes } = req.body || {};
 
@@ -14,22 +14,36 @@ export default async function handler(req, res){
     const vals = [];
     let i = 1;
 
-    if (status)       { sets.push(`status = $${i++}`);      vals.push(String(status)); }
-    if (vehicle_id!=null && vehicle_id!=='') {
-      sets.push(`vehicle_id = $${i++}`); vals.push(parseInt(vehicle_id,10));
+    if (status !== undefined) {
+      sets.push(`status = $${i++}`);
+      vals.push(String(status));
     }
-    if (driver_name!==undefined) { sets.push(`driver_name = $${i++}`); vals.push(driver_name || null); }
-    if (notes!==undefined)       { sets.push(`notes = $${i++}`);       vals.push(notes || null); }
+    if (vehicle_id !== undefined) {
+      if (vehicle_id === null || vehicle_id === "") {
+        sets.push(`vehicle_id = NULL`);
+      } else {
+        sets.push(`vehicle_id = $${i++}::uuid`);
+        vals.push(String(vehicle_id));
+      }
+    }
+    if (driver_name !== undefined) {
+      sets.push(`driver_name = $${i++}`);
+      vals.push(driver_name || null);
+    }
+    if (notes !== undefined) {
+      sets.push(`notes = $${i++}`);
+      vals.push(notes || null);
+    }
 
-    if (!sets.length) return res.json({ ok:true }); // nada que actualizar
+    if (!sets.length) return res.json({ ok: true }); // nada que actualizar
 
     vals.push(id);
-    const sql = `update reservations set ${sets.join(", ")} where id = $${i} returning *`;
+    const sql = `UPDATE reservations SET ${sets.join(", ")} WHERE id = $${i} RETURNING *`;
     const { rows } = await pool.query(sql, vals);
-    if (!rows.length) return res.status(404).json({ ok:false, error:"Not found" });
-    return res.json({ ok:true, reservation: rows[0] });
-  }catch(e){
+    if (!rows.length) return res.status(404).json({ ok: false, error: "Not found" });
+    return res.json({ ok: true, reservation: rows[0] });
+  } catch (e) {
     console.error("[/api/reservations/:id] error:", e);
-    return res.status(500).json({ ok:false, error:e.message });
+    return res.status(500).json({ ok: false, error: e.message });
   }
 }
