@@ -951,51 +951,7 @@ resRows.addEventListener('click', async (ev)=>{
 });
 /* Botón Reload */
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
-    // llenar <select>
-    aVehicle.innerHTML = allVehicles.map(v =>
-      `<option value="${v.id}">${v.plate} — ${v.kind} — ${v.driver_name||'No driver'}</option>`
-    ).join('');
-  } catch (e) {
-    assignErr.textContent = 'Error loading vehicles: ' + (e.message||e);
-  }
-}
-
-function openAssignModal(reservationId) {
-  assignReservationId = reservationId;
-  assignErr.textContent = '';
-  aDriver.value = '';
-  aNotes.value = '';
-  ensureVehiclesLoadedForAssign().then(()=>{
-    assignBackdrop.classList.add('open');
-    aVehicle.focus();
-  });
-}
-function closeAssignModal(){
-  assignBackdrop.classList.remove('open');
-  assignReservationId = null;
-}
-
-assignBtnClose.addEventListener('click', closeAssignModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
-
-assignBtnSave.addEventListener('click', async ()=>{
-  assignErr.textContent = '';
-  const vehicle_id = aVehicle.value;
-  if (!vehicle_id) { assignErr.textContent = 'Please select a vehicle.'; return; }
-  const driver_name = aDriver.value.trim() || null; // opcional por ahora
-  // Nota: tu backend soporta driver_id; enviamos solo vehicle_id + status por ahora.
-  assignBtnSave.disabled = true;
-  try{
-    await patchReservation(assignReservationId, { status:'assigned', vehicle_id });
-    // TODO (opcional): guardar driver_name en otra tabla si lo necesitas
-    closeAssignModal();
-    await loadReservations();
-  }catch(e){
-    assignErr.textContent = e.message || 'Error assigning.';
-  }finally{
-    assignBtnSave.disabled = false;
-  }
-});
+   
 </script>
 </body>
 </html>
