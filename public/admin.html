@@ -5,7 +5,6 @@
 <title>Bonanza — Headquarters</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  /* ===== Tokens globales ===== */
   :root{
     --bg:#0f1220; --card:#171a2b; --line:#2a3550;
     --text:#e9eef7; --muted:#a7b0c3; --ok:#22c55e; --bad:#ff6b6b; --accent:#f7b06a;
@@ -14,7 +13,6 @@
   *{ box-sizing:border-box }
   body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
 
-  /* ===== Header superior ===== */
   header{
     position:sticky; top:0; z-index:1000;
     display:flex; align-items:center; gap:12px;
@@ -24,7 +22,6 @@
   header h1{ margin:0; font-size:18px; font-weight:800 }
   .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:#cbd5e1; border:1px solid #ffffff22 }
 
-  /* ===== Tabs ===== */
   .tabs{
     display:flex; gap:8px; align-items:center; padding:10px 16px;
     background:rgba(0,0,0,.2); border-bottom:1px solid #0003;
@@ -37,7 +34,6 @@
   .tabs .spacer{ flex:1 }
   .muted{ color:var(--muted) }
 
-  /* ===== Layout vistas ===== */
   .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
   .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px 0 }
   button{
@@ -48,7 +44,6 @@
   .primary{ background:#3b4364 }
   .danger{ background:#3a2030 }
 
-  /* ===== Summary cards ===== */
   #summaryVehicles, #summaryClients{ display:flex; gap:12px; flex-wrap:wrap; margin:0 0 12px 0 }
   .card{
     flex:1 1 140px; background:var(--card); border:1px solid var(--line);
@@ -58,68 +53,50 @@
   .card p{ margin:6px 0 0; font-size:20px; font-weight:800 }
   .msg{ margin:8px 0 12px; color:var(--muted); min-height:20px }
 
-  /* ===== Tabla ===== */
   table{
     width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
     border-radius:12px; overflow:hidden;
   }
   th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
-
-  thead th{
-    background:#11162a; color:#cdd6ea;
-    position: sticky; top: 0; z-index: 5;
-  }
-
-  #stickySpacerVehicles, #stickySpacerClients, #stickySpacerReservations{
-    height: var(--theadTop, 0px);
-  }
+  thead th{ background:#11162a; color:#cdd6ea; position:sticky; top:0; z-index:5 }
+  #stickySpacerVehicles, #stickySpacerClients, #stickySpacerReservations{ height: var(--theadTop, 0px) }
 
   tbody tr:hover{ background:#1b2136 }
   .badge{ padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700 }
   .badge.on { background:#0f3f23; color:#22c55e; border:1px solid #16a34a }
   .badge.off{ background:#3b0f12; color:#ff6b6b; border:1px solid #dc2626 }
-
   .right{ text-align:right }
 
-  /* ===== Botones tabla ===== */
   .actions{ display:flex; justify-content:flex-end }
   .btns{ display:inline-flex; gap:8px; align-items:center }
   .btn{ height:32px; padding:0 10px; border-radius:8px; border:1px solid #ffffff22; background:#2a3550; color:#e9eef7; font-size:13px; line-height:30px; cursor:pointer; transition:transform .03s ease, filter .15s ease }
   .btn:active{ transform:translateY(1px) }
   .btn-edit{ background:#293249; border-color:#46536d }
-  .btn-edit:hover{ filter:brightness(1.12) }
   .btn-danger{ background:#3a1b22; border-color:#b02a2a; color:#ffd4d4 }
-  .btn-danger:hover{ filter:brightness(1.08) }
   .btn-toggle-on{ background:#12351e; border-color:#16a34a; color:#9ff5be }
   .btn-toggle-off{ background:#3a1b1b; border-color:#dc2626; color:#ffcccc }
 
-  /* ===== Modal ===== */
   .backdrop{ position:fixed; inset:0; background:#0008; display:none; align-items:center; justify-content:center; z-index:2000 }
   .backdrop.open{ display:flex }
-  .modal{
-    width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a;
-  }
+  .modal{ width:min(720px,96vw); background:#1b2136; border:1px solid #2b3853; border-radius:12px; box-shadow:0 18px 50px #000a }
   .modal header{ position:unset; background:#1e2740; border-bottom:1px solid #2b3853; border-radius:12px 12px 0 0; padding:12px 16px; display:flex; align-items:center; gap:10px }
   .modal .body{ padding:16px }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
   .grid .full{ grid-column:1/-1 }
   .field label{ display:block; font-size:12px; color:#cbd3e7; margin-bottom:6px }
-  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px; }
+  .field input, .field select{ width:100%; height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px }
   .modal .actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 16px 16px }
   .err-msg{ color:#ff8080; font-size:12px; min-height:16px; padding-top:4px }
 
-  /* ===== Responsive ===== */
   @media (max-width: 720px){
     .btns{ gap:6px; flex-wrap:wrap }
     .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
   }
-
   section[hidden]{ display:none !important }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <h1>Bonanza — Headquarters</h1>
   <span class="pill" id="envInfo"></span>
@@ -127,7 +104,6 @@
   <button id="btnLogout" class="danger">Logout</button>
 </header>
 
-<!-- TABS -->
 <nav class="tabs affects-sticky" id="tabs">
   <button class="tab-btn" data-tab="vehicles" aria-selected="true">Vehículos</button>
   <button class="tab-btn" data-tab="clients"  aria-selected="false">Clientes</button>
@@ -137,7 +113,7 @@
   <span class="muted">API Vehicles: <code>/api/admin/vehicles</code></span>
 </nav>
 
-<!-- VIEW: VEHICLES -->
+<!-- VEHICLES -->
 <section id="view-vehicles">
   <div class="wrap">
     <div class="controls affects-sticky" id="vehControls">
@@ -178,7 +154,7 @@
   </div>
 </section>
 
-<!-- VIEW: CLIENTS -->
+<!-- CLIENTS -->
 <section id="view-clients" hidden>
   <div class="wrap">
     <div class="controls affects-sticky" id="cliControls">
@@ -213,7 +189,7 @@
   </div>
 </section>
 
-<!-- VIEW: RESERVATIONS -->
+<!-- RESERVATIONS -->
 <section id="view-reservations" hidden>
   <div class="wrap">
     <div class="controls affects-sticky" id="resControls">
@@ -246,7 +222,7 @@
   </div>
 </section>
 
-<!-- VIEW: SETTINGS -->
+<!-- SETTINGS -->
 <section id="view-settings" hidden>
   <div class="wrap">
     <div class="card">
@@ -335,8 +311,8 @@
       <div class="actions"><button id="assignBtnSave" class="primary">Save</button></div>
     </div>
   </div>
-</div>
-<script>
+</div
+  <script>
 /* =================== CONFIG =================== */
 const ADMIN_KEY = 'supersecreto123';
 const API_VEH   = '/api/admin/vehicles';
@@ -520,9 +496,7 @@ vehBtnSave.addEventListener('click', async ()=>{
   }finally{ vehBtnSave.disabled=false; }
 });
 vehBtnClose.addEventListener('click', closeVehModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeVehModal(); });
 
-/* Acciones en tabla vehículos */
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr = btn.closest('tr[data-id]'); if(!tr) return;
@@ -548,15 +522,15 @@ vehRows.addEventListener('click', async (ev)=>{
   }
 });
 
-/* Filtros vehículos */
+/* Botones vehículos */
 document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
 document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
 document.getElementById('vehControls').addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-filter]'); if(!b) return;
-  filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles();
-  setTheadTop();
+  filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles(); setTheadTop();
 });
-
+</script>
+<script>
 /* =========================================================
    CLIENTS
    ========================================================= */
@@ -622,14 +596,12 @@ async function loadClients(){
     const raw  = Array.isArray(data.clients) ? data.clients : [];
     allClients = raw.map(normalizeClient);
     renderClients();
-    cliShowMsg('Loaded successfully.');
-    setTheadTop();
+    cliShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){
-    allClients = [];
-    renderClients();
-    const msg = (String(e.message||'').includes('404')) ?
-      'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.' :
-      'Error loading clients: ' + (e.message||e);
+    allClients = []; renderClients();
+    const msg = (String(e.message||'').includes('404'))
+      ? 'Endpoint de clientes no disponible todavía. Puedes crearlo en /api/admin/clients.'
+      : 'Error loading clients: ' + (e.message||e);
     cliShowMsg(msg, false);
   }
 }
@@ -653,18 +625,15 @@ function openAddClient(){
   cliModalTitle.textContent = 'Add Client';
   cName.value=''; cEmail.value=''; cPhone.value='';
   cRating.value='good'; cAddress.value=''; cNotes.value='';
-  cliFormErr.textContent='';
-  cliBackdrop.classList.add('open');
+  cliFormErr.textContent=''; cliBackdrop.classList.add('open');
   setTimeout(()=>cName.focus(),50);
 }
 function openEditClient(id){
   const c = allClients.find(x=>x.id===id); if(!c) return;
-  editingClientId = id;
-  cliModalTitle.textContent = 'Edit Client';
+  editingClientId = id; cliModalTitle.textContent = 'Edit Client';
   cName.value=c.name||''; cEmail.value=c.email||''; cPhone.value=c.phone||'';
   cRating.value=(c.rating||'good'); cAddress.value=c.home_address||''; cNotes.value=c.notes||'';
-  cliFormErr.textContent='';
-  cliBackdrop.classList.add('open');
+  cliFormErr.textContent=''; cliBackdrop.classList.add('open');
   setTimeout(()=>cName.focus(),50);
 }
 function closeCliModal(){ cliBackdrop.classList.remove('open'); }
@@ -689,9 +658,7 @@ cliBtnSave.addEventListener('click', async ()=>{
     const c = normalizeClient(data.client || payload);
     const i = allClients.findIndex(x=>x.id===c.id);
     if(i>=0) allClients[i]={...allClients[i], ...c}; else allClients.unshift(c);
-    renderClients();
-    cliShowMsg(editingClientId ? 'Client updated.' : 'Client added.');
-    closeCliModal();
+    renderClients(); cliShowMsg(editingClientId ? 'Client updated.' : 'Client added.'); closeCliModal();
   }catch(e){
     cliFormErr.textContent = e.message || 'Error saving.';
   }finally{
@@ -703,8 +670,7 @@ cliBtnSave.addEventListener('click', async ()=>{
 cliRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr = btn.closest('tr[data-id]'); if(!tr) return;
-  const id = tr.getAttribute('data-id');
-  const action = btn.getAttribute('data-action');
+  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
 
   if(action==='edit'){ openEditClient(id); return; }
   if(action==='delete'){
@@ -722,7 +688,8 @@ cliRows.addEventListener('click', async (ev)=>{
 
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
 document.getElementById('btnAddClient').addEventListener('click', openAddClient);
-
+</script>
+<script>
 /* =========================================================
    RESERVATIONS
    ========================================================= */
@@ -755,6 +722,9 @@ function renderReservations(list){
           </div>
         `
         : '';
+    // MOSTRAR vehicle_label si viene del backend; si no, fallback a vehicle_type o '-'
+    const vehText = r.vehicle_label || r.vehicle_type || '-';
+
     return `
       <tr data-id="${r.id}">
         <td>${r.id}</td>
@@ -767,7 +737,7 @@ function renderReservations(list){
         <td>${escapeHtml(r.pickup_location)} → ${escapeHtml(r.dropoff_location)}</td>
         <td>${fmtWhen(r.pickup_time)}</td>
         <td>
-          ${escapeHtml(r.vehicle_type||'-')}
+          ${escapeHtml(vehText)}
           ${extra}
         </td>
         <td>${badgeStatus(r.status)}</td>
@@ -790,11 +760,9 @@ async function loadReservations(){
     const r = await fetch(API_RES, { headers:{ 'x-admin-key': ADMIN_KEY } });
     const data = await r.json();
     renderReservations(Array.isArray(data) ? data : []);
-    resShowMsg('Loaded successfully.');
-    setTheadTop();
+    resShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){
-    renderReservations([]);
-    resShowMsg('Error loading: '+(e.message||e), false);
+    renderReservations([]); resShowMsg('Error loading: '+(e.message||e), false);
   }
 }
 
@@ -808,7 +776,6 @@ async function patchReservation(id, payload){
   return r.json();
 }
 
-/* Delegación de eventos en Reservations */
 resRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if (!btn) return;
   const tr = btn.closest('tr[data-id]'); if (!tr) return;
@@ -816,15 +783,10 @@ resRows.addEventListener('click', async (ev)=>{
   const a  = btn.getAttribute('data-action');
 
   try {
-    if (a === 'assign') {
-      openAssignModal(id);
-      return;
-    }
-    if (a === 'start') {
-      await patchReservation(id, { status: 'in_progress' });
-    } else if (a === 'done') {
-      await patchReservation(id, { status: 'done' });
-    } else if (a === 'cancel') {
+    if (a === 'assign') { openAssignModal(id); return; }
+    if (a === 'start')  { await patchReservation(id, { status: 'in_progress' }); }
+    else if (a === 'done') { await patchReservation(id, { status: 'done' }); }
+    else if (a === 'cancel') {
       if (!confirm('Cancel this reservation?')) return;
       await patchReservation(id, { status: 'canceled' });
     }
@@ -833,7 +795,6 @@ resRows.addEventListener('click', async (ev)=>{
     resShowMsg('Error updating: ' + (e.message || e), false);
   }
 });
-
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 
 /* ---------- ASSIGN MODAL ---------- */
@@ -883,13 +844,11 @@ function openAssignModal(reservationId) {
   aDriver.value = '';
   aNotes.value  = '';
   ensureVehiclesLoadedForAssign().then(() => {
-    assignBackdrop.classList.add('open');
-    aVehicle.focus();
+    assignBackdrop.classList.add('open'); aVehicle.focus();
   });
 }
 function closeAssignModal() {
-  assignBackdrop.classList.remove('open');
-  assignReservationId = null;
+  assignBackdrop.classList.remove('open'); assignReservationId = null;
 }
 assignBtnClose.addEventListener('click', closeAssignModal);
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
@@ -904,8 +863,7 @@ assignBtnSave.addEventListener('click', async ()=>{
   assignBtnSave.disabled = true;
   try{
     await patchReservation(assignReservationId, { status:'assigned', vehicle_id, driver_name, notes });
-    closeAssignModal();
-    await loadReservations();
+    closeAssignModal(); await loadReservations();
   }catch(e){
     assignErr.textContent = e.message || 'Error assigning.';
   }finally{
@@ -914,7 +872,7 @@ assignBtnSave.addEventListener('click', async ()=>{
 });
 
 /* =================== BOOT =================== */
-loadVehicles(); // tab inicial
+loadVehicles(); // tab inicial; las otras se cargan al cambiar tab
 </script>
 </body>
 </html>
