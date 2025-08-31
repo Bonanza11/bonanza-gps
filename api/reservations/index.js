@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     // ---------- GET ----------
-    // Devuelve también vehicle_label compuesto de la tabla vehicles
+    // Devuelve también vehicle_label y vehicle_plate de la tabla vehicles
     if (req.method === "GET") {
       const rows = await query(
         `SELECT
@@ -28,6 +28,7 @@ export default async function handler(req, res) {
            r.vehicle_id,
            r.driver_name,
            r.notes,
+           v.plate AS vehicle_plate,   -- 🚀 agregado: placa directamente
            CASE
              WHEN v.id IS NULL THEN NULL
              ELSE v.plate::text || ' — ' || v.kind::text || ' — ' || COALESCE(v.driver_name,'')::text
