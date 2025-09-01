@@ -1,20 +1,13 @@
 // /api/reservations/index.js
 // GET: lista | POST: crea | PATCH: asigna/desasigna driver
 import { query } from "../_db.js";
+import { requireAuth } from "../_lib/guard.js";
 
-const ADMIN = process.env.ADMIN_KEY || "supersecreto123";
-
-export default async function handler(req, res) {
+async function handler(req, res) {
   try {
-    // --- Auth ---
-    if (req.headers["x-admin-key"] !== ADMIN) {
-      return res.status(401).json({ ok: false, error: "unauthorized" });
-    }
-
     // ---------- GET ----------
-    // Devuelve también vehicle_label y vehicle_plate de la tabla vehicles
     if (req.method === "GET") {
-      const rows = await query(
+      const { rows } = await query(
         `SELECT
            r.id,
            r.customer_name,
@@ -28,17 +21,19 @@ export default async function handler(req, res) {
            r.vehicle_id,
            r.driver_name,
            r.notes,
-           v.plate AS vehicle_plate,   -- placa directamente
+           r.assigned_at, r.started_at, r.arrived_at, r.done_at, r.updated_at,
+           d.name  AS driver,
+           v.plate AS vehicle_plate,
            CASE
              WHEN v.id IS NULL THEN NULL
              ELSE v.plate::text || ' — ' || v.kind::text || ' — ' || COALESCE(v.driver_name,'')::text
            END AS vehicle_label
          FROM reservations r
-         LEFT JOIN vehicles v
-           ON v.id::text = r.vehicle_id::text   -- evita error uuid vs integer
-         ORDER BY r.id DESC`
+         LEFT JOIN vehicles v ON v.id::text = r.vehicle_id::text
+         LEFT JOIN drivers  d ON d.id = r.driver_id
+         ORDER BY r.pickup_time DESC`
       );
-      return res.json(Array.isArray(rows) ? rows : []);
+      return res.json({ ok: true, rows });
     }
 
     // ---------- POST ----------
@@ -56,17 +51,16 @@ export default async function handler(req, res) {
         notes = null
       } = req.body || {};
 
-      // Validación mínima
       if (!customer_name || !pickup_location || !dropoff_location || !pickup_time) {
         return res.status(400).json({ ok: false, error: "missing_fields" });
       }
 
-      const rows = await query(
+      const { rows } = await query(
         `INSERT INTO reservations
            (customer_name, email, phone,
             pickup_location, dropoff_location, pickup_time,
-            vehicle_type, status, driver_name, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',$8,$9)
+            vehicle_type, status, driver_name, notes, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'PENDING',$8,$9, now())
          RETURNING *`,
         [
           customer_name,
@@ -85,19 +79,22 @@ export default async function handler(req, res) {
     }
 
     // ---------- PATCH ----------
-    // Asignar / desasignar driver a una reserva
-    // Permite pasar solo driver_id (uuid) y opcionalmente driver_name para compatibilidad
+    // Asigna / desasigna driver
+    // Si viene driver_id NULL -> desasigna -> PENDING
+    // Si viene driver_id NO NULL -> asigna -> ASSIGNED + assigned_at=now()
     if (req.method === "PATCH") {
       const { id, driver_id = null, driver_name = undefined } = req.body || {};
-      if (!id) {
-        return res.status(400).json({ ok: false, error: "missing_id" });
-      }
+      if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
 
-      // Si no envías driver_name, no lo toca (COALESCE con el valor actual)
-      const rows = await query(
+      const assigning = !!driver_id;
+
+      const { rows } = await query(
         `UPDATE reservations
-           SET driver_id = $2,
-               driver_name = COALESCE($3, driver_name)
+           SET driver_id   = $2,
+               driver_name = COALESCE($3, driver_name),
+               status      = CASE WHEN $2 IS NULL THEN 'PENDING' ELSE 'ASSIGNED' END,
+               assigned_at = CASE WHEN $2 IS NULL THEN NULL       ELSE now()    END,
+               updated_at  = now()
          WHERE id = $1
          RETURNING *`,
         [id, driver_id, driver_name]
@@ -119,3 +116,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
+export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
