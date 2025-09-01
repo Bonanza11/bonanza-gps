@@ -384,11 +384,13 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
 /* =================== HELPERS (BEARER) =================== */
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtWhen(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
-
 async function getAdminToken() {
   let t = localStorage.getItem('bonanza_token');
   if (!t) {
-    const r = await fetch('/api/auth/admin-token', { method:'POST', headers:{ 'x-admin-key':'supersecreto123' } });
+    const r = await fetch('/api/auth/admin-token', { 
+      method:'POST', 
+      headers:{ 'x-admin-key':'supersecreto123' } 
+    });
     const j = await r.json();
     if(!j.ok) throw new Error('login_required');
     t = j.token;
@@ -397,12 +399,18 @@ async function getAdminToken() {
   return t;
 }
 async function api(url, method='GET', body=null){
-  const token = await getAdminToken();
-  const opt = { method, headers:{ Authorization:'Bearer '+token } };
+  // intenta obtener token (si tienes /api/auth/admin-token); si falla, seguimos solo con x-admin-key
+  let token = null;
+  try { token = localStorage.getItem('bonanza_token'); } catch {}
+  const headers = { 'x-admin-key': 'supersecreto123' };   // <-- tu ADMIN_KEY
+
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const opt = { method, headers };
   if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+
   const r = await fetch(url, opt);
   const text = await r.text();
-  let data; try{ data = JSON.parse(text); } catch { throw new Error('API not JSON: '+text.slice(0,100)); }
+  let data; try { data = JSON.parse(text); } catch { throw new Error('API not JSON: '+text.slice(0,80)); }
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
