@@ -6,18 +6,18 @@ const ADMIN_KEY  = process.env.ADMIN_KEY  || "supersecreto123";
 export function requireAuth(allowedRoles = []) {
   return (handler) => async (req, res) => {
     try {
-      // --- Fallback temporal: permitir x-admin-key ---
+      // 1) x-admin-key (HQ) – atajo
       if (req.headers["x-admin-key"] === ADMIN_KEY) {
         req.user = { id: "hq-admin", roles: ["OWNER","ADMIN","DISPATCHER"] };
         return handler(req, res);
       }
 
-      // --- Bearer JWT ---
+      // 2) Bearer JWT (drivers/admin)
       const auth = req.headers.authorization || "";
       const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
       if (!token) return res.status(401).json({ ok:false, error:"missing_token" });
 
-      const payload = jwt.verify(token, JWT_SECRET); // { sub, roles? | role? }
+      const payload = jwt.verify(token, JWT_SECRET);
       const roles = payload.roles || (payload.role ? [payload.role] : []);
       if (allowedRoles.length && !roles.some(r => allowedRoles.includes(r))) {
         return res.status(403).json({ ok:false, error:"forbidden" });
