@@ -3,6 +3,9 @@
 import { query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
 
+// 👇 Opcional si usas pg nativo (evita que Vercel intente correr en Edge)
+export const config = { runtime: "nodejs" };
+
 async function handler(req, res) {
   try {
     // ---------- GET ----------
@@ -17,7 +20,7 @@ async function handler(req, res) {
            r.dropoff_location,
            r.pickup_time,
            r.vehicle_type,
-           r.status,
+           lower(r.status) AS status,                 -- 👈 normaliza a minúsculas
            r.vehicle_id,
            r.driver_name,
            r.notes,
@@ -33,7 +36,8 @@ async function handler(req, res) {
          LEFT JOIN drivers  d ON d.id = r.driver_id
          ORDER BY r.pickup_time DESC`
       );
-      return res.json({ ok: true, rows });
+      // 👇 devuelve array directo (lo que espera admin.html)
+      return res.json(rows || []);
     }
 
     // ---------- POST ----------
@@ -86,8 +90,6 @@ async function handler(req, res) {
       const { id, driver_id = null, driver_name = undefined } = req.body || {};
       if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
 
-      const assigning = !!driver_id;
-
       const { rows } = await query(
         `UPDATE reservations
            SET driver_id   = $2,
@@ -117,4 +119,5 @@ async function handler(req, res) {
   }
 }
 
+// 👇 Protegemos con requireAuth
 export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
