@@ -8,15 +8,26 @@ export default async function handler(req, res) {
     if (req.headers["x-admin-key"] !== ADMIN) {
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
-
     if (req.method !== "GET") {
       res.setHeader("Allow", "GET");
       return res.status(405).json({ ok: false, error: "method_not_allowed" });
     }
 
-    const { driver_id, from, to } = req.query || {};
+    let { driver_id, driver_email, from, to } = req.query || {};
+    driver_id = (driver_id || "").trim();
+    driver_email = (driver_email || "").trim();
+
+    // Resolver UUID por email si no vino driver_id
+    if (!driver_id && driver_email) {
+      const found = await query(
+        `SELECT id FROM drivers WHERE lower(email)=lower($1) LIMIT 1`,
+        [driver_email]
+      );
+      driver_id = found?.[0]?.id || "";
+    }
+
     if (!driver_id) {
-      return res.status(400).json({ ok: false, error: "missing_driver_id" });
+      return res.status(400).json({ ok: false, error: "missing_driver_ref" });
     }
 
     const rows = await query(
@@ -25,7 +36,7 @@ export default async function handler(req, res) {
          r.pickup_location, r.dropoff_location, r.pickup_time,
          r.vehicle_type, r.status, r.notes,
          v.plate AS vehicle_plate,
-         d.id AS driver_id, d.name AS driver_name
+         d.id AS driver_id, d.name AS driver_name, d.email AS driver_email
        FROM reservations r
        LEFT JOIN vehicles v ON v.id::text = r.vehicle_id::text
        LEFT JOIN drivers  d ON d.id = r.driver_id
@@ -33,12 +44,16 @@ export default async function handler(req, res) {
          AND ($2::timestamptz IS NULL OR r.pickup_time >= $2::timestamptz)
          AND ($3::timestamptz IS NULL OR r.pickup_time <= $3::timestamptz)
        ORDER BY r.pickup_time ASC`,
-      [String(driver_id), from || null, to || null]
+      [driver_id, from || null, to || null]
     );
 
     return res.json(Array.isArray(rows) ? rows : []);
   } catch (err) {
     console.error("[/api/drivers/assignments] ", err);
-    return res.status(500).json({ ok: false, error: "server_error", detail: String(err?.message || err) });
+    return res.status(500).json({
+      ok: false,
+      error: "server_error",
+      detail: String(err?.message || err),
+    });
   }
 }
