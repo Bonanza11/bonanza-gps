@@ -1,59 +1,66 @@
 // /api/drivers/assignments.js
 import { query } from "../_db.js";
-const ADMIN = process.env.ADMIN_KEY || "supersecreto123";
+import { requireAuth } from "../_lib/guard.js"; // <- usa tu guard
 
-export default async function handler(req, res) {
-  try {
-    // --- Auth ---
-    if (req.headers["x-admin-key"] !== ADMIN) {
-      return res.status(401).json({ ok: false, error: "unauthorized" });
-    }
-    if (req.method !== "GET") {
-      res.setHeader("Allow", "GET");
-      return res.status(405).json({ ok: false, error: "method_not_allowed" });
-    }
+async function handler(req, res) {
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  }
 
-    let { driver_id, driver_email, from, to } = req.query || {};
-    driver_id = (driver_id || "").trim();
-    driver_email = (driver_email || "").trim();
+  // parámetros (solo HQ puede usarlos)
+  let { driver_id, driver_email, from, to } = req.query || {};
+  driver_id = (driver_id || "").trim();
+  driver_email = (driver_email || "").trim();
 
-    // Resolver UUID por email si no vino driver_id
+  // Si es DRIVER autenticado, ignoramos params y lo mapeamos a su driver_id
+  let actingDriverId = null;
+  if (req.user?.roles?.includes("DRIVER")) {
+    const { rows: d } = await query(
+      `select id from drivers where user_id = $1 limit 1`,
+      [req.user.id]
+    );
+    if (!d[0]) return res.status(404).json({ ok:false, error: "driver_profile_not_found" });
+    actingDriverId = d[0].id;
+  } else {
+    // HQ: si no viene driver_id pero sí email, resolverlo
     if (!driver_id && driver_email) {
       const found = await query(
-        `SELECT id FROM drivers WHERE lower(email)=lower($1) LIMIT 1`,
+        `select id from drivers where lower(email)=lower($1) limit 1`,
         [driver_email]
       );
-      driver_id = found?.[0]?.id || "";
+      driver_id = found.rows?.[0]?.id || "";
     }
-
-    if (!driver_id) {
-      return res.status(400).json({ ok: false, error: "missing_driver_ref" });
-    }
-
-    const rows = await query(
-      `SELECT
-         r.id, r.customer_name, r.email, r.phone,
-         r.pickup_location, r.dropoff_location, r.pickup_time,
-         r.vehicle_type, r.status, r.notes,
-         v.plate AS vehicle_plate,
-         d.id AS driver_id, d.name AS driver_name, d.email AS driver_email
-       FROM reservations r
-       LEFT JOIN vehicles v ON v.id::text = r.vehicle_id::text
-       LEFT JOIN drivers  d ON d.id = r.driver_id
-       WHERE r.driver_id = $1::uuid
-         AND ($2::timestamptz IS NULL OR r.pickup_time >= $2::timestamptz)
-         AND ($3::timestamptz IS NULL OR r.pickup_time <= $3::timestamptz)
-       ORDER BY r.pickup_time ASC`,
-      [driver_id, from || null, to || null]
-    );
-
-    return res.json(Array.isArray(rows) ? rows : []);
-  } catch (err) {
-    console.error("[/api/drivers/assignments] ", err);
-    return res.status(500).json({
-      ok: false,
-      error: "server_error",
-      detail: String(err?.message || err),
-    });
+    actingDriverId = driver_id || null;
   }
+
+  if (!actingDriverId) {
+    return res.status(400).json({ ok: false, error: "missing_driver_ref" });
+  }
+
+  // Ventana por defecto: -6h a +48h
+  const fromTs = from || null;
+  const toTs   = to   || null;
+
+  const { rows } = await query(
+    `select
+        r.id,
+        r.customer_name, r.email, r.phone,
+        r.pickup_location, r.dropoff_location, r.pickup_time,
+        r.vehicle_type, r.status, r.notes,
+        v.plate as vehicle_plate,
+        d.id   as driver_id, d.name as driver_name, d.email as driver_email
+     from reservations r
+     left join vehicles v on v.id = r.vehicle_id
+     left join drivers  d on d.id = r.driver_id
+     where r.driver_id = $1::uuid
+       and ($2::timestamptz is null or r.pickup_time >= $2::timestamptz)
+       and ($3::timestamptz is null or r.pickup_time <= $3::timestamptz)
+     order by r.pickup_time asc`,
+    [actingDriverId, fromTs, toTs]
+  );
+
+  return res.json({ ok: true, rows });
 }
+
+export default requireAuth(["DRIVER","DISPATCHER","ADMIN","OWNER"])(handler);
