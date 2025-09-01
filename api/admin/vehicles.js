@@ -1,16 +1,9 @@
 // /api/admin/vehicles.js
 import { pool, query } from "../_db.js";
+import { requireAuth } from "../_lib/guard.js";
 
 /** Forzamos runtime Node (pg no funciona en Edge) */
 export const config = { runtime: "nodejs" };
-
-/* ---------- Auth ---------- */
-function checkKey(req) {
-  // headers siempre en minúsculas en Node
-  const hdr = req.headers["x-admin-key"];
-  const envKey = process.env.ADMIN_KEY || "supersecreto123";
-  return hdr && String(hdr) === String(envKey);
-}
 
 /* ---------- Normalización ---------- */
 function norm(body = {}) {
@@ -34,12 +27,8 @@ function norm(body = {}) {
   return v;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   try {
-    if (!checkKey(req)) {
-      return res.status(401).json({ ok: false, error: "Unauthorized" });
-    }
-
     /* ---------- GET: lista ---------- */
     if (req.method === "GET") {
       const rows = await query(
@@ -107,7 +96,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ ok: false, error: "Missing fields" });
       }
 
-      // ¿existe ya por plate (insensible a mayúsculas)?
       const found = await query(
         `select id
            from vehicles
@@ -164,3 +152,6 @@ export default async function handler(req, res) {
       .json({ ok: false, error: e?.message || "Internal error" });
   }
 }
+
+// Protegemos con roles de HQ (OWNER/ADMIN/DISPATCHER)
+export default requireAuth(["OWNER", "ADMIN", "DISPATCHER"])(handler);
