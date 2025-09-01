@@ -22,41 +22,26 @@
   header h1{ margin:0; font-size:18px; font-weight:800 }
   .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:#ffffff12; color:#cbd5e1; border:1px solid #ffffff22 }
 
-  .tabs{
-    display:flex; gap:8px; align-items:center; padding:10px 16px;
-    background:rgba(0,0,0,.2); border-bottom:1px solid #0003;
-  }
-  .tab-btn{
-    padding:8px 12px; border-radius:8px; border:1px solid #ffffff1f;
-    background:#24304a; color:#e9eef7; cursor:pointer; font-size:14px;
-  }
+  .tabs{ display:flex; gap:8px; align-items:center; padding:10px 16px; background:rgba(0,0,0,.2); border-bottom:1px solid #0003; }
+  .tab-btn{ padding:8px 12px; border-radius:8px; border:1px solid #ffffff1f; background:#24304a; color:#e9eef7; cursor:pointer; font-size:14px; }
   .tab-btn[aria-selected="true"]{ background:#3b4364 }
   .tabs .spacer{ flex:1 }
   .muted{ color:var(--muted) }
 
   .wrap{ max-width:1100px; margin:18px auto; padding:0 16px }
   .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 12px 0 }
-  button{
-    background:#2a3550; color:var(--text);
-    border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px;
-  }
+  button{ background:#2a3550; color:var(--text); border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px; }
   button:hover{ filter:brightness(1.08) }
   .primary{ background:#3b4364 }
   .danger{ background:#3a2030 }
 
   #summaryVehicles, #summaryClients{ display:flex; gap:12px; flex-wrap:wrap; margin:0 0 12px 0 }
-  .card{
-    flex:1 1 140px; background:var(--card); border:1px solid var(--line);
-    border-radius:10px; padding:12px; text-align:center;
-  }
+  .card{ flex:1 1 140px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; }
   .card h2{ margin:0; font-size:12px; letter-spacing:.35px; color:var(--muted) }
   .card p{ margin:6px 0 0; font-size:20px; font-weight:800 }
   .msg{ margin:8px 0 12px; color:var(--muted); min-height:20px }
 
-  table{
-    width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
-    border-radius:12px; overflow:hidden;
-  }
+  table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
   th,td{ padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; font-size:14px }
   thead th{ background:#11162a; color:#cdd6ea; position:sticky; top:0; z-index:5 }
   #stickySpacerVehicles, #stickySpacerClients, #stickySpacerReservations, #stickySpacerDrivers{ height: var(--theadTop, 0px) }
@@ -108,11 +93,12 @@
   <button class="tab-btn" data-tab="vehicles" aria-selected="true">Vehículos</button>
   <button class="tab-btn" data-tab="clients"  aria-selected="false">Clientes</button>
   <button class="tab-btn" data-tab="reservations" aria-selected="false">Reservations</button>
-  <button class="tab-btn" data-tab="drivers" aria-selected="false">Drivers</button> <!-- 🆕 -->
+  <button class="tab-btn" data-tab="drivers" aria-selected="false">Drivers</button>
   <button class="tab-btn" data-tab="settings" aria-selected="false">Ajustes</button>
   <div class="spacer"></div>
   <span class="muted">API Vehicles: <code>/api/admin/vehicles</code></span>
 </nav>
+
 <!-- VEHICLES -->
 <section id="view-vehicles">
   <div class="wrap">
@@ -153,6 +139,30 @@
     </table>
   </div>
 </section>
+<!-- MODAL: VEHICLE -->
+<div class="backdrop" id="vehBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
+    <header>
+      <h2 id="vehModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Vehicle</h2>
+      <div style="flex:1"></div>
+      <button id="vehBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field"><label for="fPlate">Plate</label><input id="fPlate" placeholder="UT-123 ABC" autocomplete="off"></div>
+        <div class="field"><label for="fDriver">Driver Name</label><input id="fDriver" placeholder="John Doe" autocomplete="off"></div>
+        <div class="field"><label for="fKind">Type</label>
+          <select id="fKind"><option value="SUV">SUV</option><option value="VAN">VAN</option></select>
+        </div>
+        <div class="field"><label for="fYear">Year</label><input id="fYear" type="number" min="2000" max="2099" placeholder="2025"></div>
+        <div class="field full"><label for="fModel">Model / Subtype</label><input id="fModel" placeholder="Suburban LT / Sprinter 2500"></div>
+        <div class="field full"><label><input type="checkbox" id="fActive"> Active</label></div>
+      </div>
+      <div id="vehFormErr" class="err-msg"></div>
+      <div class="actions"><button id="vehBtnSave" class="primary">Save</button></div>
+    </div>
+  </div>
+</div>
 
 <!-- CLIENTS -->
 <section id="view-clients" hidden>
@@ -188,6 +198,31 @@
     </table>
   </div>
 </section>
+
+<!-- MODAL: CLIENT -->
+<div class="backdrop" id="cliBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cliModalTitle">
+    <header>
+      <h2 id="cliModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Client</h2>
+      <div style="flex:1"></div>
+      <button id="cliBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <div class="field"><label for="cName">Name</label><input id="cName" placeholder="John Appleseed" autocomplete="off"></div>
+        <div class="field"><label for="cEmail">Email</label><input id="cEmail" type="email" placeholder="john@email.com" autocomplete="off"></div>
+        <div class="field"><label for="cPhone">Phone</label><input id="cPhone" placeholder="+1 555 123 4567" autocomplete="off"></div>
+        <div class="field"><label for="cRating">Internal rating</label>
+          <select id="cRating"><option value="good">good</option><option value="watch">watch</option><option value="restricted">restricted</option></select>
+        </div>
+        <div class="field full"><label for="cAddress">Home address</label><input id="cAddress" placeholder="123 Main St, Park City, UT"></div>
+        <div class="field full"><label for="cNotes">Notes</label><input id="cNotes" placeholder="VIP, prefiere pagos con tarjeta, etc."></div>
+      </div>
+      <div id="cliFormErr" class="err-msg"></div>
+      <div class="actions"><button id="cliBtnSave" class="primary">Save</button></div>
+    </div>
+  </div>
+</div>
 <!-- RESERVATIONS -->
 <section id="view-reservations" hidden>
   <div class="wrap">
@@ -209,8 +244,8 @@
           <th style="width:210px">Customer</th>
           <th>Pickup → Dropoff</th>
           <th style="width:190px">Time</th>
-          <th style="width:180px">Vehicle / Assign</th>
-          <th style="width:110px">Status</th>
+          <th style="width:220px">Vehicle / Assign</th>
+          <th style="width:220px">Status & Timeline</th>
           <th class="right" style="width:280px">Actions</th>
         </tr>
       </thead>
@@ -221,7 +256,7 @@
   </div>
 </section>
 
-<!-- DRIVERS (🆕) -->
+<!-- DRIVERS -->
 <section id="view-drivers" hidden>
   <div class="wrap">
     <div class="controls affects-sticky" id="drvControls">
@@ -261,56 +296,6 @@
   </div>
 </section>
 
-<!-- MODAL: VEHICLE -->
-<div class="backdrop" id="vehBackdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
-    <header>
-      <h2 id="vehModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Vehicle</h2>
-      <div style="flex:1"></div>
-      <button id="vehBtnClose">Close</button>
-    </header>
-    <div class="body">
-      <div class="grid">
-        <div class="field"><label for="fPlate">Plate</label><input id="fPlate" placeholder="UT-123 ABC" autocomplete="off"></div>
-        <div class="field"><label for="fDriver">Driver Name</label><input id="fDriver" placeholder="John Doe" autocomplete="off"></div>
-        <div class="field"><label for="fKind">Type</label>
-          <select id="fKind"><option value="SUV">SUV</option><option value="VAN">VAN</option></select>
-        </div>
-        <div class="field"><label for="fYear">Year</label><input id="fYear" type="number" min="2000" max="2099" placeholder="2025"></div>
-        <div class="field full"><label for="fModel">Model / Subtype</label><input id="fModel" placeholder="Suburban LT / Sprinter 2500"></div>
-        <div class="field full"><label><input type="checkbox" id="fActive"> Active</label></div>
-      </div>
-      <div id="vehFormErr" class="err-msg"></div>
-      <div class="actions"><button id="vehBtnSave" class="primary">Save</button></div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: CLIENT -->
-<div class="backdrop" id="cliBackdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cliModalTitle">
-    <header>
-      <h2 id="cliModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Client</h2>
-      <div style="flex:1"></div>
-      <button id="cliBtnClose">Close</button>
-    </header>
-    <div class="body">
-      <div class="grid">
-        <div class="field"><label for="cName">Name</label><input id="cName" placeholder="John Appleseed" autocomplete="off"></div>
-        <div class="field"><label for="cEmail">Email</label><input id="cEmail" type="email" placeholder="john@email.com" autocomplete="off"></div>
-        <div class="field"><label for="cPhone">Phone</label><input id="cPhone" placeholder="+1 555 123 4567" autocomplete="off"></div>
-        <div class="field"><label for="cRating">Internal rating</label>
-          <select id="cRating"><option value="good">good</option><option value="watch">watch</option><option value="restricted">restricted</option></select>
-        </div>
-        <div class="field full"><label for="cAddress">Home address</label><input id="cAddress" placeholder="123 Main St, Park City, UT"></div>
-        <div class="field full"><label for="cNotes">Notes</label><input id="cNotes" placeholder="VIP, prefiere pagos con tarjeta, etc."></div>
-      </div>
-      <div id="cliFormErr" class="err-msg"></div>
-      <div class="actions"><button id="cliBtnSave" class="primary">Save</button></div>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: ASSIGN -->
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
@@ -341,13 +326,12 @@
 </div>
 <script>
 /* =================== CONFIG =================== */
-const ADMIN_KEY = 'supersecreto123';
 const API_VEH   = '/api/admin/vehicles';
 const API_CLI   = '/api/admin/clients';
 const API_RES   = '/api/reservations';
-const API_DRV   = '/api/drivers';               // 🆕
-const API_DRV_ASSIGN = '/api/drivers/assignments'; // 🆕
-const API_DRV_NOTIFY = '/api/drivers/notify';      // 🆕
+const API_DRV   = '/api/drivers';
+const API_DRV_ASSIGN = '/api/drivers/assignments';
+const API_DRV_NOTIFY = '/api/drivers/notify';
 
 /* =================== STICKY TOP =================== */
 function setTheadTop(){
@@ -374,7 +358,7 @@ const views = {
   vehicles    : document.getElementById('view-vehicles'),
   clients     : document.getElementById('view-clients'),
   reservations: document.getElementById('view-reservations'),
-  drivers     : document.getElementById('view-drivers'),   // 🆕
+  drivers     : document.getElementById('view-drivers'),
   settings    : document.getElementById('view-settings'),
 };
 tabsEl.addEventListener('click', (e)=>{
@@ -386,29 +370,42 @@ tabsEl.addEventListener('click', (e)=>{
   if (t==='vehicles') loadVehicles();
   if (t==='clients')  loadClients();
   if (t==='reservations') loadReservations();
-  if (t==='drivers')  loadDrivers(); // 🆕
+  if (t==='drivers')  loadDrivers();
 });
 
 /* =================== ENV / LOGOUT =================== */
 const envInfo = document.getElementById('envInfo');
 envInfo.textContent = location.hostname.includes('vercel.app') ? 'vercel' : 'local';
 document.getElementById('btnLogout').addEventListener('click', ()=>{
-  localStorage.removeItem('ADMIN_KEY');
-  localStorage.removeItem('bonanza_admin_ok');
+  localStorage.removeItem('bonanza_token');
   location.href = '/login.html';
 });
 
-/* =================== HELPERS =================== */
+/* =================== HELPERS (BEARER) =================== */
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtWhen(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
+
+async function getAdminToken() {
+  let t = localStorage.getItem('bonanza_token');
+  if (!t) {
+    const r = await fetch('/api/auth/admin-token', { method:'POST', headers:{ 'x-admin-key':'supersecreto123' } });
+    const j = await r.json();
+    if(!j.ok) throw new Error('login_required');
+    t = j.token;
+    localStorage.setItem('bonanza_token', t);
+  }
+  return t;
+}
 async function api(url, method='GET', body=null){
-  const opt = { method, headers:{ 'x-admin-key': ADMIN_KEY } };
+  const token = await getAdminToken();
+  const opt = { method, headers:{ Authorization:'Bearer '+token } };
   if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
   const r = await fetch(url, opt);
-  let data={}; try{ data = await r.json(); }catch{}
+  const text = await r.text();
+  let data; try{ data = JSON.parse(text); } catch { throw new Error('API not JSON: '+text.slice(0,100)); }
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
-function fmtWhen(ts){ try{ return new Date(ts).toLocaleString(); }catch{ return ts; } }
 
 /* =========================================================
    VEHICLES
@@ -480,7 +477,7 @@ async function loadVehicles(){
   }
 }
 
-/* Modal Vehículos (igual que tu base) */
+/* Modal Vehículos */
 const vehBackdrop = document.getElementById('vehBackdrop');
 const vehBtnClose = document.getElementById('vehBtnClose');
 const vehBtnSave  = document.getElementById('vehBtnSave');
@@ -507,6 +504,7 @@ function openEditVehicle(id){
   vehFormErr.textContent=''; vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
 function closeVehModal(){ vehBackdrop.classList.remove('open'); }
+vehBtnClose.addEventListener('click', closeVehModal);
 
 vehBtnSave.addEventListener('click', async ()=>{
   vehFormErr.textContent='';
@@ -526,7 +524,6 @@ vehBtnSave.addEventListener('click', async ()=>{
     vehFormErr.textContent = e.message || 'Error saving.';
   }finally{ vehBtnSave.disabled=false; }
 });
-vehBtnClose.addEventListener('click', closeVehModal);
 
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
@@ -576,7 +573,6 @@ let allClients = [];
 let editingClientId = null;
 
 function cliShowMsg(t, ok=true){ cliMsg.textContent=t||''; cliMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
-
 function normalizeClient(c){
   return {
     id: String(c.id ?? ''),
@@ -588,14 +584,12 @@ function normalizeClient(c){
     notes: (c.notes ?? '').trim(),
   };
 }
-
 function computeCliStats(){
   cliStat.total.textContent = allClients.length;
   cliStat.good.textContent = allClients.filter(c=>c.rating==='good').length;
   cliStat.watch.textContent = allClients.filter(c=>c.rating==='watch').length;
   cliStat.restricted.textContent = allClients.filter(c=>c.rating==='restricted').length;
 }
-
 function renderClients(){
   computeCliStats();
   cliRows.innerHTML = allClients.map(c=>`
@@ -603,11 +597,7 @@ function renderClients(){
       <td>${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.email)}</td>
       <td>${escapeHtml(c.phone)}</td>
-      <td>
-        <span class="badge ${c.rating==='restricted'?'off':'on'}">
-          ${escapeHtml(c.rating.toUpperCase())}
-        </span>
-      </td>
+      <td><span class="badge ${c.rating==='restricted'?'off':'on'}">${escapeHtml(c.rating.toUpperCase())}</span></td>
       <td class="right actions">
         <div class="btns">
           <button class="btn btn-edit"   data-action="edit">Edit</button>
@@ -617,7 +607,6 @@ function renderClients(){
     </tr>
   `).join('') || '<tr><td colspan="5">No clients.</td></tr>';
 }
-
 async function loadClients(){
   cliRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   cliShowMsg('');
@@ -641,7 +630,6 @@ const cliBackdrop = document.getElementById('cliBackdrop');
 const cliBtnClose = document.getElementById('cliBtnClose');
 const cliBtnSave  = document.getElementById('cliBtnSave');
 const cliModalTitle = document.getElementById('cliModalTitle');
-
 const cName    = document.getElementById('cName');
 const cEmail   = document.getElementById('cEmail');
 const cPhone   = document.getElementById('cPhone');
@@ -650,21 +638,16 @@ const cAddress = document.getElementById('cAddress');
 const cNotes   = document.getElementById('cNotes');
 const cliFormErr = document.getElementById('cliFormErr');
 
-function openAddClient(){
-  editingClientId = null;
-  cliModalTitle.textContent = 'Add Client';
-  cName.value=''; cEmail.value=''; cPhone.value='';
-  cRating.value='good'; cAddress.value=''; cNotes.value='';
-  cliFormErr.textContent=''; cliBackdrop.classList.add('open');
-  setTimeout(()=>cName.focus(),50);
+function openAddClient(){ editingClientId = null; cliModalTitle.textContent = 'Add Client';
+  cName.value=''; cEmail.value=''; cPhone.value=''; cRating.value='good'; cAddress.value=''; cNotes.value='';
+  cliFormErr.textContent=''; cliBackdrop.classList.add('open'); setTimeout(()=>cName.focus(),50);
 }
 function openEditClient(id){
   const c = allClients.find(x=>x.id===id); if(!c) return;
   editingClientId = id; cliModalTitle.textContent = 'Edit Client';
   cName.value=c.name||''; cEmail.value=c.email||''; cPhone.value=c.phone||'';
   cRating.value=(c.rating||'good'); cAddress.value=c.home_address||''; cNotes.value=c.notes||'';
-  cliFormErr.textContent=''; cliBackdrop.classList.add('open');
-  setTimeout(()=>cName.focus(),50);
+  cliFormErr.textContent=''; cliBackdrop.classList.add('open'); setTimeout(()=>cName.focus(),50);
 }
 function closeCliModal(){ cliBackdrop.classList.remove('open'); }
 cliBtnClose.addEventListener('click', closeCliModal);
@@ -678,9 +661,7 @@ cliBtnSave.addEventListener('click', async ()=>{
   const home_address=cAddress.value.trim();
   const internal_rating=(cRating.value||'good').toLowerCase();
   const notes=cNotes.value.trim();
-
   if(!name){ cliFormErr.textContent='Name is required.'; return; }
-
   cliBtnSave.disabled = true;
   try{
     const payload = { id: editingClientId, name, email, phone, home_address, internal_rating, notes };
@@ -689,29 +670,20 @@ cliBtnSave.addEventListener('click', async ()=>{
     const i = allClients.findIndex(x=>x.id===c.id);
     if(i>=0) allClients[i]={...allClients[i], ...c}; else allClients.unshift(c);
     renderClients(); cliShowMsg(editingClientId ? 'Client updated.' : 'Client added.'); closeCliModal();
-  }catch(e){
-    cliFormErr.textContent = e.message || 'Error saving.';
-  }finally{
-    cliBtnSave.disabled = false;
-  }
+  }catch(e){ cliFormErr.textContent = e.message || 'Error saving.'; }
+  finally{ cliBtnSave.disabled = false; }
 });
-
 cliRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr = btn.closest('tr[data-id]'); if(!tr) return;
   const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
-
   if(action==='edit'){ openEditClient(id); return; }
   if(action==='delete'){
     const c = allClients.find(x=>x.id===id); if(!c) return;
     if(!confirm(`Delete client "${c.name}"? This cannot be undone.`)) return;
-    try{
-      await api(`${API_CLI}?id=${encodeURIComponent(id)}`, 'DELETE');
-      allClients = allClients.filter(x=>x.id!==id);
-      renderClients(); cliShowMsg('Deleted.');
-    }catch(e){
-      cliShowMsg('Error deleting: ' + (e.message||e), false);
-    }
+    try{ await api(`${API_CLI}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allClients = allClients.filter(x=>x.id!==id); renderClients(); cliShowMsg('Deleted.');
+    }catch(e){ cliShowMsg('Error deleting: ' + (e.message||e), false); }
   }
 });
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
@@ -722,51 +694,46 @@ document.getElementById('btnAddClient').addEventListener('click', openAddClient)
    ========================================================= */
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
-
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 function badgeStatus(s){
-  const x = String(s||'pending').toLowerCase();
+  const x = String(s||'PENDING').toUpperCase();
   const map = {
-    pending   : 'background:#33384d;color:#cdd6ea;border:1px solid #4b5576',
-    assigned  : 'background:#23343a;color:#7fe9b2;border:1px solid #2c8e64',
-    in_progress:'background:#34301f;color:#f7b06a;border:1px solid #b78e4f',
-    done      : 'background:#1c3321;color:#84f1a8;border:1px solid #1d7f49',
-    canceled  : 'background:#3a2124;color:#ffb0b0;border:1px solid #b04747',
+    PENDING   : 'background:#33384d;color:#cdd6ea;border:1px solid #4b5576',
+    ASSIGNED  : 'background:#23343a;color:#7fe9b2;border:1px solid #2c8e64',
+    STARTED   : 'background:#34301f;color:#f7b06a;border:1px solid #b78e4f',
+    ARRIVED   : 'background:#1f2f45;color:#a3d1ff;border:1px solid #3a6ea5',
+    DONE      : 'background:#1c3321;color:#84f1a8;border:1px solid #1d7f49',
+    CANCELLED : 'background:#3a2124;color:#ffb0b0;border:1px solid #b04747',
   };
-  const style = map[x] || map.pending;
-  return `<span class="badge" style="${style}">${x.toUpperCase()}</span>`;
+  const style = map[x] || map.PENDING;
+  return `<span class="badge" style="${style}">${x}</span>`;
 }
-
 function renderReservations(list){
   resRows.innerHTML = (list||[]).map(r => {
+    const vehText = r.vehicle_label || r.vehicle_type || '-';
     const extra =
       (r.driver_name || r.notes)
-        ? `
-          <div style="margin-top:6px; font-size:12px; color:var(--muted)">
-            ${r.driver_name ? `Driver: ${escapeHtml(r.driver_name)}` : ''}
-            ${r.driver_name && r.notes ? ' · ' : ''}
-            ${r.notes ? `Notes: ${escapeHtml(r.notes)}` : ''}
-          </div>
-        `
+        ? `<div style="margin-top:6px; font-size:12px; color:var(--muted)">${r.driver_name ? `Driver: ${escapeHtml(r.driver_name)}` : ''}${r.driver_name && r.notes ? ' · ' : ''}${r.notes ? `Notes: ${escapeHtml(r.notes)}` : ''}</div>`
         : '';
-    const vehText = r.vehicle_label || r.vehicle_type || '-';
-
     return `
       <tr data-id="${r.id}">
         <td>${r.id}</td>
         <td>
           <div><strong>${escapeHtml(r.customer_name||'')}</strong></div>
-          <div style="color:var(--muted);font-size:12px">
-            ${escapeHtml(r.phone||'')} ${r.email? ' · '+escapeHtml(r.email):''}
-          </div>
+          <div style="color:var(--muted);font-size:12px">${escapeHtml(r.phone||'')} ${r.email? ' · '+escapeHtml(r.email):''}</div>
         </td>
         <td>${escapeHtml(r.pickup_location)} → ${escapeHtml(r.dropoff_location)}</td>
         <td>${fmtWhen(r.pickup_time)}</td>
+        <td>${escapeHtml(vehText)}${extra}</td>
         <td>
-          ${escapeHtml(vehText)}
-          ${extra}
+          ${badgeStatus(r.status)}
+          <div style="margin-top:6px;color:var(--muted);font-size:12px;line-height:1.35">
+            ${r.assigned_at ? `Assigned: ${fmtWhen(r.assigned_at)}<br/>` : ''}
+            ${r.started_at  ? `Started:  ${fmtWhen(r.started_at)}<br/>`  : ''}
+            ${r.arrived_at  ? `Arrived:  ${fmtWhen(r.arrived_at)}<br/>`  : ''}
+            ${r.done_at     ? `Done:     ${fmtWhen(r.done_at)}`          : ''}
+          </div>
         </td>
-        <td>${badgeStatus(r.status)}</td>
         <td class="right actions">
           <div class="btns">
             <button class="btn" data-action="assign">Assign</button>
@@ -779,47 +746,32 @@ function renderReservations(list){
     `;
   }).join('') || '<tr><td colspan="7">No reservations.</td></tr>';
 }
-
 async function loadReservations(){
   resRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   try{
-    const r = await fetch(API_RES, { headers:{ 'x-admin-key': ADMIN_KEY } });
-    const data = await r.json();
-    renderReservations(Array.isArray(data) ? data : []);
+    const data = await api(API_RES, 'GET');            // { ok, rows }
+    const list = Array.isArray(data) ? data : (data.rows || []);
+    renderReservations(list);
     resShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){
     renderReservations([]); resShowMsg('Error loading: '+(e.message||e), false);
   }
 }
-
 async function patchReservation(id, payload){
-  const r = await fetch(`${API_RES}/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers:{ 'Content-Type':'application/json', 'x-admin-key': ADMIN_KEY },
-    body: JSON.stringify(payload)
-  });
-  if (!r.ok) throw new Error('update_failed');
-  return r.json();
+  return await api(API_RES, 'PATCH', { id, ...payload });
 }
-
 resRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if (!btn) return;
   const tr = btn.closest('tr[data-id]'); if (!tr) return;
   const id = tr.getAttribute('data-id');
   const a  = btn.getAttribute('data-action');
-
   try {
     if (a === 'assign') { openAssignModal(id); return; }
-    if (a === 'start')  { await patchReservation(id, { status: 'in_progress' }); }
-    else if (a === 'done') { await patchReservation(id, { status: 'done' }); }
-    else if (a === 'cancel') {
-      if (!confirm('Cancel this reservation?')) return;
-      await patchReservation(id, { status: 'canceled' });
-    }
+    if (a === 'start')      { await patchReservation(id, { status: 'STARTED' }); }
+    else if (a === 'done')  { await patchReservation(id, { status: 'DONE' }); }
+    else if (a === 'cancel'){ if (!confirm('Cancel this reservation?')) return; await patchReservation(id, { status: 'CANCELLED' }); }
     await loadReservations();
-  } catch (e) {
-    resShowMsg('Error updating: ' + (e.message || e), false);
-  }
+  } catch (e) { resShowMsg('Error updating: ' + (e.message || e), false); }
 });
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 
@@ -831,81 +783,51 @@ const assignErr       = document.getElementById('assignErr');
 const aVehicle        = document.getElementById('aVehicle');
 const aDriver         = document.getElementById('aDriver');
 const aNotes          = document.getElementById('aNotes');
-
 let assignReservationId = null;
 let assignVehicles = [];
 
 async function ensureVehiclesLoadedForAssign() {
   try {
     if (Array.isArray(allVehicles) && allVehicles.length > 0) {
-      assignVehicles = allVehicles.map(v => ({
-        id: String(v.id),
-        plate: (v.plate || '').trim(),
-        kind: ((v.kind || 'SUV').toUpperCase() === 'VAN') ? 'VAN' : 'SUV',
-        driver_name: (v.driver_name || '').trim()
-      }));
+      assignVehicles = allVehicles.map(v => ({ id:String(v.id), plate:(v.plate||'').trim(), kind:((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV', driver_name:(v.driver_name||'').trim() }));
     } else {
       const data = await api(API_VEH, 'GET');
       const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-      assignVehicles = raw.map(v => ({
-        id: String(v.id),
-        plate: (v.plate || '').trim(),
-        kind: ((v.kind || 'SUV').toUpperCase() === 'VAN') ? 'VAN' : 'SUV',
-        driver_name: (v.driver_name || '').trim()
-      }));
+      assignVehicles = raw.map(v => ({ id:String(v.id), plate:(v.plate||'').trim(), kind:((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV', driver_name:(v.driver_name||'').trim() }));
     }
-
-    aVehicle.innerHTML = assignVehicles.map(v =>
-      `<option value="${v.id}">${escapeHtml(v.plate)} — ${v.kind} — ${escapeHtml(v.driver_name || 'No driver')}</option>`
-    ).join('');
+    aVehicle.innerHTML = assignVehicles.map(v => `<option value="${v.id}">${escapeHtml(v.plate)} — ${v.kind} — ${escapeHtml(v.driver_name || 'No driver')}</option>`).join('');
     if (assignVehicles.length > 0) aVehicle.value = assignVehicles[0].id;
-  } catch (e) {
-    assignErr.textContent = 'Error loading vehicles: ' + (e.message || e);
-  }
+  } catch (e) { assignErr.textContent = 'Error loading vehicles: ' + (e.message || e); }
 }
-
 function openAssignModal(reservationId) {
   assignReservationId = String(reservationId);
-  assignErr.textContent = '';
-  aDriver.value = '';
-  aNotes.value  = '';
-  ensureVehiclesLoadedForAssign().then(() => {
-    assignBackdrop.classList.add('open'); aVehicle.focus();
-  });
+  assignErr.textContent=''; aDriver.value=''; aNotes.value='';
+  ensureVehiclesLoadedForAssign().then(()=>{ assignBackdrop.classList.add('open'); aVehicle.focus(); });
 }
-function closeAssignModal() {
-  assignBackdrop.classList.remove('open'); assignReservationId = null;
-}
+function closeAssignModal() { assignBackdrop.classList.remove('open'); assignReservationId = null; }
 assignBtnClose.addEventListener('click', closeAssignModal);
 window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
-
 assignBtnSave.addEventListener('click', async ()=>{
   assignErr.textContent = '';
   const vehicle_id = aVehicle.value;
   if (!vehicle_id) { assignErr.textContent = 'Please select a valid vehicle.'; return; }
   const driver_name = aDriver.value.trim() || null;
   const notes       = aNotes.value.trim()  || null;
-
   assignBtnSave.disabled = true;
   try{
-    await patchReservation(assignReservationId, { status:'assigned', vehicle_id, driver_name, notes });
+    await patchReservation(assignReservationId, { status:'ASSIGNED', vehicle_id, driver_name, notes });
     closeAssignModal(); await loadReservations();
-  }catch(e){
-    assignErr.textContent = e.message || 'Error assigning.';
-  }finally{
-    assignBtnSave.disabled = false;
-  }
+  }catch(e){ assignErr.textContent = e.message || 'Error assigning.'; }
+  finally{ assignBtnSave.disabled = false; }
 });
 
 /* =========================================================
-   DRIVERS (🆕)
+   DRIVERS
    ========================================================= */
 const drvMsg  = document.getElementById('drvMsg');
 const drvRows = document.getElementById('drvRows');
 let allDrivers = [];
-
 function drvShowMsg(t, ok=true){ drvMsg.textContent=t||''; drvMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
-
 function renderDrivers(){
   drvRows.innerHTML = allDrivers.map(d=>`
     <tr data-id="${d.id}">
@@ -923,47 +845,34 @@ function renderDrivers(){
     </tr>
   `).join('') || '<tr><td colspan="5">No drivers.</td></tr>';
 }
-
 async function loadDrivers(){
-  drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
-  drvShowMsg('');
+  drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>'; drvShowMsg('');
   try{
-    const rows = await api(API_DRV, 'GET'); // devuelve array
+    const rows = await api(API_DRV, 'GET'); // tu endpoint devuelve array
     allDrivers = Array.isArray(rows) ? rows : [];
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
-  }catch(e){
-    allDrivers = []; renderDrivers(); drvShowMsg('Error loading: '+(e.message||e), false);
-  }
+  }catch(e){ allDrivers = []; renderDrivers(); drvShowMsg('Error loading: '+(e.message||e), false); }
 }
-
-// acciones de la tabla drivers (placeholders por ahora)
 drvRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr  = btn.closest('tr[data-id]'); if(!tr) return;
   const id  = tr.getAttribute('data-id');
   const a   = btn.getAttribute('data-action');
-
-  if (a==='edit'){
-    alert('Edit driver (próximo paso)');
-    return;
-  }
+  if (a==='edit'){ alert('Edit driver (próximo paso)'); return; }
   if (a==='assignments'){
-    // ejemplo simple: cargar próximas asignaciones
-    try{
-      const list = await api(`${API_DRV_ASSIGN}?driver_id=${encodeURIComponent(id)}`, 'GET');
-      alert(`Asignaciones: ${list.length}`);
+    try{ const list = await api(`${API_DRV_ASSIGN}?driver_id=${encodeURIComponent(id)}`, 'GET');
+      alert(`Asignaciones: ${Array.isArray(list)?list.length:(list.rows||[]).length}`);
     }catch(e){ alert('Error: '+(e.message||e)); }
     return;
   }
   if (a==='notify'){
     try{
       const preview = await api(API_DRV_NOTIFY, 'POST', { driver_id:id, channels:{ email:true, sms:false } });
-      alert(`Preview enviado a:\nEmail: ${preview.preview.to_email}\nSMS: ${preview.preview.to_phone}\n\n${preview.preview.text}`);
+      alert(`Preview enviado a:\nEmail: ${preview.preview?.to_email||'-'}\nSMS: ${preview.preview?.to_phone||'-'}\n\n${preview.preview?.text||''}`);
     }catch(e){ alert('Error: '+(e.message||e)); }
     return;
   }
 });
-
 document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
 document.getElementById('btnAddDriver').addEventListener('click', async ()=>{
   const name = prompt('Driver name'); if(!name) return;
