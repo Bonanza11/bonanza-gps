@@ -96,6 +96,7 @@ async function handler(req, res) {
         return res.status(400).json({ ok: false, error: "Missing fields" });
       }
 
+      // ¿existe ya por plate (insensible a mayúsculas)?
       const found = await query(
         `select id
            from vehicles
@@ -153,5 +154,5 @@ async function handler(req, res) {
   }
 }
 
-// Protegemos con roles de HQ (OWNER/ADMIN/DISPATCHER)
+// Protegido: OWNER/ADMIN/DISPATCHER (x-admin-key o Bearer JWT)
 export default requireAuth(["OWNER", "ADMIN", "DISPATCHER"])(handler);
