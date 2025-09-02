@@ -10,15 +10,25 @@ function checkKey(req) {
   return hdr && String(hdr) === String(envKey);
 }
 
+/* ---------- Validaciones ---------- */
+function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function isPhone(v) { return /^[0-9\-\+\s\(\)]{7,20}$/.test(v); }
+const PAY_MODES = new Set(["PER_RIDE", "HOURLY", "PER_LOAD"]);
+
 /* ---------- Normaliza body ---------- */
 function norm(body = {}) {
+  const email = ((body.email ?? "").toString().trim() || null)?.toLowerCase() || null;
+  const phone = (body.phone ?? "").toString().trim() || null;
+  const pay_mode = (body.pay_mode ?? "PER_RIDE").toString().trim().toUpperCase();
+
   return {
     id: body.id ? String(body.id) : null,
     name: (body.name ?? "").toString().trim(),
-    phone: (body.phone ?? "").toString().trim() || null,
-    email: ((body.email ?? "").toString().trim() || null)?.toLowerCase() || null,
+    phone,
+    email,
     license_number: (body.license_number ?? "").toString().trim() || null,
     work_mode: (body.work_mode ?? "24h").toString().trim().toLowerCase(), // "24h" | "custom"
+    pay_mode, // NUEVO
     active: body.active !== false, // por defecto true
   };
 }
@@ -35,7 +45,7 @@ export default async function handler(req, res) {
         SELECT
           id::text AS id,
           name, phone, email,
-          license_number, work_mode, active, created_at
+          license_number, work_mode, pay_mode, active, created_at
         FROM drivers
         ORDER BY created_at DESC
         LIMIT 500
@@ -49,6 +59,15 @@ export default async function handler(req, res) {
       if (!b.name) {
         return res.status(400).json({ ok: false, error: "Missing name" });
       }
+      if (b.email && !isEmail(b.email)) {
+        return res.status(400).json({ ok: false, error: "Invalid email" });
+      }
+      if (b.phone && !isPhone(b.phone)) {
+        return res.status(400).json({ ok: false, error: "Invalid phone" });
+      }
+      if (!PAY_MODES.has(b.pay_mode)) {
+        return res.status(400).json({ ok: false, error: "Invalid pay_mode" });
+      }
 
       // Update por id
       if (b.id) {
@@ -59,11 +78,12 @@ export default async function handler(req, res) {
                   email=$4,
                   license_number=$5,
                   work_mode=$6,
-                  active=$7,
+                  pay_mode=$7,
+                  active=$8,
                   updated_at = now()
             WHERE id::text = $1
-        RETURNING id::text AS id, name, phone, email, license_number, work_mode, active, created_at`,
-          [b.id, b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
+        RETURNING id::text AS id, name, phone, email, license_number, work_mode, pay_mode, active, created_at`,
+          [b.id, b.name, b.phone, b.email, b.license_number, b.work_mode, b.pay_mode, b.active]
         );
         if (!rows.length) {
           return res.status(404).json({ ok: false, error: "Driver not found" });
@@ -73,10 +93,10 @@ export default async function handler(req, res) {
 
       // Insert
       const { rows } = await pool.query(
-        `INSERT INTO drivers (name, phone, email, license_number, work_mode, active)
-         VALUES ($1,$2,$3,$4,$5,$6)
-     RETURNING id::text AS id, name, phone, email, license_number, work_mode, active, created_at`,
-        [b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
+        `INSERT INTO drivers (name, phone, email, license_number, work_mode, pay_mode, active)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)
+     RETURNING id::text AS id, name, phone, email, license_number, work_mode, pay_mode, active, created_at`,
+        [b.name, b.phone, b.email, b.license_number, b.work_mode, b.pay_mode, b.active]
       );
       return res.json({ ok: true, driver: rows[0] });
     }
