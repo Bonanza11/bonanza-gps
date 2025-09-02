@@ -139,6 +139,7 @@
     </table>
   </div>
 </section>
+
 <!-- MODAL: VEHICLE -->
 <div class="backdrop" id="vehBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
@@ -163,7 +164,6 @@
     </div>
   </div>
 </div>
-
 <!-- CLIENTS -->
 <section id="view-clients" hidden>
   <div class="wrap">
@@ -326,10 +326,10 @@
 </div>
 <script>
 /* =================== CONFIG =================== */
-const API_VEH   = '/api/admin/vehicles';
+const API_VEH   = '/api/admin/vehicles';   // Admin endpoints por x-admin-key (y opcional Bearer)
 const API_CLI   = '/api/admin/clients';
 const API_RES   = '/api/reservations';
-const API_DRV   = '/api/drivers';
+const API_DRV   = '/api/drivers';          // Lista/CRUD drivers (con requireAuth en backend)
 const API_DRV_ASSIGN = '/api/drivers/assignments';
 const API_DRV_NOTIFY = '/api/drivers/notify';
 
@@ -381,36 +381,37 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
   location.href = '/login.html';
 });
 
-/* =================== HELPERS (BEARER) =================== */
+/* =================== HELPERS =================== */
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtWhen(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
-async function getAdminToken() {
+
+/** Obtiene admin-token (si tu backend lo provee). Lo intentamos, pero no bloquea si falla. */
+async function ensureAdminToken() {
   let t = localStorage.getItem('bonanza_token');
   if (!t) {
-    const r = await fetch('/api/auth/admin-token', { 
-      method:'POST', 
-      headers:{ 'x-admin-key':'supersecreto123' } 
-    });
-    const j = await r.json();
-    if(!j.ok) throw new Error('login_required');
-    t = j.token;
-    localStorage.setItem('bonanza_token', t);
+    try{
+      const r = await fetch('/api/auth/admin-token', { method:'POST', headers:{ 'x-admin-key':'supersecreto123' } });
+      const j = await r.json();
+      if (j?.ok && j?.token) {
+        t = j.token; localStorage.setItem('bonanza_token', t);
+      }
+    }catch{ /* opcional */ }
   }
-  return t;
+  return t || null;
 }
-async function api(url, method='GET', body=null){
-  // intenta obtener token (si tienes /api/auth/admin-token); si falla, seguimos solo con x-admin-key
-  let token = null;
-  try { token = localStorage.getItem('bonanza_token'); } catch {}
-  const headers = { 'x-admin-key': 'supersecreto123' };   // <-- tu ADMIN_KEY
 
+/** Wrapper fetch: siempre manda x-admin-key y si hay, Bearer token */
+async function api(url, method='GET', body=null){
+  const headers = { 'x-admin-key': 'supersecreto123' }; // tu ADMIN_KEY (server valida igual)
+  const token = localStorage.getItem('bonanza_token');
   if (token) headers.Authorization = 'Bearer ' + token;
+
   const opt = { method, headers };
   if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
 
   const r = await fetch(url, opt);
   const text = await r.text();
-  let data; try { data = JSON.parse(text); } catch { throw new Error('API not JSON: '+text.slice(0,80)); }
+  let data; try { data = JSON.parse(text); } catch { throw new Error('API not JSON: '+text.slice(0,120)); }
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
@@ -473,6 +474,7 @@ async function loadVehicles(){
   vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   vehShowMsg('');
   try{
+    await ensureAdminToken(); // opcional
     const data = await api(API_VEH, 'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
@@ -565,8 +567,7 @@ document.getElementById('vehControls').addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-filter]'); if(!b) return;
   filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles(); setTheadTop();
 });
-
-/* =========================================================
+  /* =========================================================
    CLIENTS
    ========================================================= */
 const cliMsg  = document.getElementById('cliMsg');
@@ -757,7 +758,7 @@ function renderReservations(list){
 async function loadReservations(){
   resRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   try{
-    const data = await api(API_RES, 'GET');            // { ok, rows }
+    const data = await api(API_RES, 'GET');            // { ok, rows } o array
     const list = Array.isArray(data) ? data : (data.rows || []);
     renderReservations(list);
     resShowMsg('Loaded successfully.'); setTheadTop();
@@ -856,7 +857,7 @@ function renderDrivers(){
 async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>'; drvShowMsg('');
   try{
-    const rows = await api(API_DRV, 'GET'); // tu endpoint devuelve array
+    const rows = await api(API_DRV, 'GET'); // tu endpoint devuelve array plano
     allDrivers = Array.isArray(rows) ? rows : [];
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){ allDrivers = []; renderDrivers(); drvShowMsg('Error loading: '+(e.message||e), false); }
@@ -891,7 +892,7 @@ document.getElementById('btnAddDriver').addEventListener('click', async ()=>{
 });
 
 /* =================== BOOT =================== */
-loadVehicles(); // tab inicial; las otras se cargan al cambiar tab
+loadVehicles(); // Tab inicial
 </script>
 </body>
 </html>
