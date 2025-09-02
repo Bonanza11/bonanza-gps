@@ -6,7 +6,6 @@ export const config = { runtime: "nodejs" };
 
 /* ---------- Helpers ---------- */
 function parseBody(maybe) {
-  // Si llega string, intenta JSON.parse; si ya es objeto, devuélvelo tal cual
   if (maybe == null) return {};
   if (typeof maybe === "string") {
     try { return JSON.parse(maybe || "{}"); }
@@ -16,10 +15,18 @@ function parseBody(maybe) {
   return {};
 }
 
-function norm(body = {}) {
-  const clean = (v) => (v == null ? null : String(v).trim() || null);
+// Convierte a número o null (evita NaN y '' -> 0)
+function toNum(v) {
+  if (v === undefined || v === null) return null;
+  const s = String(v).trim();
+  if (s === "") return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
 
-  // modo de pago permitido
+function norm(body = {}) {
+  const clean = (v) => (v == null ? null : (String(v).trim() || null));
+
   const pm = String(body.pay_mode ?? "per_ride").toLowerCase().trim();
   const allowed = new Set(["per_ride", "hourly", "revenue_share"]);
   const pay_mode = allowed.has(pm) ? pm : "per_ride";
@@ -30,9 +37,9 @@ function norm(body = {}) {
     email: clean((body.email || "")?.toLowerCase()),
     phone: clean(body.phone),
     pay_mode,
-    hourly_rate: body.hourly_rate != null ? Number(body.hourly_rate) : null,
-    per_ride_rate: body.per_ride_rate != null ? Number(body.per_ride_rate) : null,
-    revenue_share: body.revenue_share != null ? Number(body.revenue_share) : null,
+    hourly_rate: toNum(body.hourly_rate),
+    per_ride_rate: toNum(body.per_ride_rate),
+    revenue_share: toNum(body.revenue_share),
     notify_email: typeof body.notify_email === "boolean" ? body.notify_email : true,
     notify_sms: typeof body.notify_sms === "boolean" ? body.notify_sms : false,
   };
@@ -48,22 +55,33 @@ async function handler(req, res) {
           id::text AS id,
           name, email, phone,
           pay_mode, hourly_rate, per_ride_rate, revenue_share,
-          notify_email, notify_sms, created_at
+          notify_email, notify_sms,
+          -- Si la columna no existe en tu esquema, asegúrate de crearla (ver migración abajo)
+          created_at
         FROM drivers
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC NULLS LAST
       `);
-      // IMPORTANTE: el frontend espera array plano
       return res.json(rows);
     }
 
     /* ===== POST: create / update ===== */
     if (req.method === "POST") {
-      // Aseguramos body válido aunque llegue vacío o como texto
       const body = parseBody(req.body);
       const d = norm(body);
 
       if (!d.name) {
         return res.status(400).json({ ok: false, error: "name_required" });
+      }
+
+      // Valida coherencia según pay_mode (opcional pero útil)
+      if (d.pay_mode === "hourly" && d.hourly_rate == null) {
+        return res.status(400).json({ ok: false, error: "hourly_rate_required" });
+      }
+      if (d.pay_mode === "per_ride" && d.per_ride_rate == null) {
+        return res.status(400).json({ ok: false, error: "per_ride_rate_required" });
+      }
+      if (d.pay_mode === "revenue_share" && d.revenue_share == null) {
+        return res.status(400).json({ ok: false, error: "revenue_share_required" });
       }
 
       // UPDATE por id
@@ -93,7 +111,6 @@ async function handler(req, res) {
         if (!rows?.length) {
           return res.status(404).json({ ok: false, error: "not_found" });
         }
-        // El frontend espera un objeto directo
         return res.json(rows[0]);
       }
 
