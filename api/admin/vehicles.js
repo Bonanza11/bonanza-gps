@@ -4,26 +4,27 @@ import { requireAuth } from "../_lib/guard.js";
 
 export const config = { runtime: "nodejs" };
 
-/* ---------- Normalización ---------- */
+/* ---------- Normaliza body ---------- */
 function norm(body = {}) {
-  const v = {
+  return {
     id: body.id ? String(body.id) : null,
     plate: (body.plate ?? "").toString().trim(),
     driver_name: (body.driver_name ?? "").toString().trim(),
-    kind: (body.kind ?? "").toString().trim().toUpperCase(),
-    year: body.year != null && String(body.year).trim() !== "" ? parseInt(body.year, 10) : null,
-    model: ((body.model ?? "").toString().trim() || null),
-    active: typeof body.active === "boolean" ? body.active : undefined,
+    kind: ((body.kind ?? "SUV").toString().trim().toUpperCase() === "VAN") ? "VAN" : "SUV",
+    year: body.year != null ? Number(body.year) : null,
+    model: (body.model ?? "").toString().trim(),
+    active: body.active !== false,
   };
-  if (v.kind !== "SUV" && v.kind !== "VAN") v.kind = "SUV";
-  return v;
 }
 
 async function handler(req, res) {
   try {
+    // ===== GET: list =====
     if (req.method === "GET") {
       const rows = await query(`
-        select id::text as id, plate, driver_name, upper(kind) as kind, year, model, active, created_at
+        select
+          id::text as id,
+          plate, driver_name, kind, year, model, active, created_at
         from vehicles
         order by created_at desc
         limit 500
@@ -31,86 +32,56 @@ async function handler(req, res) {
       return res.json({ ok: true, vehicles: rows });
     }
 
+    // ===== POST: create / update =====
     if (req.method === "POST") {
       const b = norm(req.body || {});
-      const keys = Object.keys(req.body || {});
-      const onlyToggle = b.id && typeof b.active === "boolean" &&
-                         keys.length === 2 && keys.includes("id") && keys.includes("active");
-
-      // toggle activo
-      if (onlyToggle) {
-        const { rows } = await pool.query(
-          `update vehicles set active=$2, updated_at=now()
-           where id::text=$1
-           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [b.id, b.active]
-        );
-        if (!rows.length) return res.status(404).json({ ok:false, error:"Vehicle not found" });
-        return res.json({ ok:true, vehicle: rows[0] });
+      if (!b.plate || !b.driver_name) {
+        return res.status(400).json({ ok: false, error: "Missing plate or driver_name" });
       }
 
-      // update completo
+      // update por id
       if (b.id) {
-        if (!b.plate || !b.driver_name || !b.year) {
-          return res.status(400).json({ ok:false, error:"Missing fields" });
-        }
         const { rows } = await pool.query(
           `update vehicles
-             set plate=$2, driver_name=$3, kind=$4, year=$5, model=$6,
-                 active=coalesce($7,active), updated_at=now()
-           where id::text=$1
-           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
+              set plate=$2,
+                  driver_name=$3,
+                  kind=$4,
+                  year=$5,
+                  model=$6,
+                  active=$7,
+                  updated_at=now()
+            where id::text=$1
+        returning id::text as id, plate, driver_name, kind, year, model, active, created_at`,
           [b.id, b.plate, b.driver_name, b.kind, b.year, b.model, b.active]
         );
-        if (!rows.length) return res.status(404).json({ ok:false, error:"Vehicle not found" });
-        return res.json({ ok:true, vehicle: rows[0] });
+        if (!rows.length) return res.status(404).json({ ok: false, error: "Vehicle not found" });
+        return res.json({ ok: true, vehicle: rows[0] });
       }
 
-      // insert / upsert por placa
-      if (!b.plate || !b.driver_name || !b.year) {
-        return res.status(400).json({ ok:false, error:"Missing fields" });
-      }
-
-      const found = await query(
-        `select id from vehicles where upper(plate)=upper($1) limit 1`,
-        [b.plate]
+      // crear
+      const { rows } = await pool.query(
+        `insert into vehicles (plate, driver_name, kind, year, model, active)
+         values ($1,$2,$3,$4,$5,$6)
+      returning id::text as id, plate, driver_name, kind, year, model, active, created_at`,
+        [b.plate, b.driver_name, b.kind, b.year, b.model, b.active]
       );
-
-      if (found.length) {
-        const id = found[0].id;
-        const { rows } = await pool.query(
-          `update vehicles
-             set driver_name=$2, kind=$3, year=$4, model=$5,
-                 active=coalesce($6,active), updated_at=now()
-           where id=$1
-           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [id, b.driver_name, b.kind, b.year, b.model, b.active ?? true]
-        );
-        return res.json({ ok:true, vehicle: rows[0] });
-      } else {
-        const { rows } = await pool.query(
-          `insert into vehicles (plate, driver_name, kind, year, model, active)
-           values ($1,$2,$3,$4,$5,$6)
-           returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [b.plate, b.driver_name, b.kind, b.year, b.model, b.active ?? true]
-        );
-        return res.json({ ok:true, vehicle: rows[0] });
-      }
+      return res.json({ ok: true, vehicle: rows[0] });
     }
 
+    // ===== DELETE: by id =====
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
-      if (!id) return res.status(400).json({ ok:false, error:"Missing id" });
-      const r = await pool.query(`delete from vehicles where id::text=$1`, [id]);
-      if (!r.rowCount) return res.status(404).json({ ok:false, error:"Vehicle not found" });
-      return res.json({ ok:true });
+      if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
+      const { rowCount } = await pool.query(`delete from vehicles where id::text=$1`, [id]);
+      if (!rowCount) return res.status(404).json({ ok: false, error: "Vehicle not found" });
+      return res.json({ ok: true });
     }
 
-    res.setHeader("Allow","GET,POST,DELETE");
-    return res.status(405).json({ ok:false, error:"Method Not Allowed" });
+    res.setHeader("Allow", "GET,POST,DELETE");
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   } catch (e) {
     console.error("[/api/admin/vehicles] error:", e);
-    return res.status(500).json({ ok:false, error: e?.message || "Internal error" });
+    return res.status(500).json({ ok: false, error: e.message || "Internal error" });
   }
 }
 
