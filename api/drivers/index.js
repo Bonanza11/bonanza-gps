@@ -5,6 +5,12 @@ import { requireAuth } from "../_lib/guard.js";
 export const config = { runtime: "nodejs" };
 
 /* ---------- Helpers ---------- */
+// Normaliza resultado de query: soporta { rows:[...] } o [...] directo
+function asRows(r) {
+  if (r && Array.isArray(r.rows)) return r.rows; // node-postgres: pool.query -> { rows }
+  if (Array.isArray(r)) return r;                // adaptadores que devuelven array directo
+  return [];                                     // fallback seguro
+}
 function parseBody(maybe) {
   if (maybe == null) return {};
   if (typeof maybe === "string") {
