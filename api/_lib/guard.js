@@ -9,6 +9,8 @@ export function requireAuth(allowedRoles = []) {
     try {
       // 1) Atajo HQ por x-admin-key
       if (req.headers["x-admin-key"] === ADMIN_KEY) {
+- return handler(req, res);
++ return await handler(req, res);
         req.user = { id: "hq-admin", roles: ["OWNER","ADMIN","DISPATCHER"] };
         return await handler(req, res);          // ← AQUI
       }
