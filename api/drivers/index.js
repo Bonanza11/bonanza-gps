@@ -17,9 +17,9 @@ function parseBody(maybe) {
 
 // Normaliza el resultado de query: soporta { rows:[...] } o un array directo
 function asRows(r) {
-  if (r && Array.isArray(r.rows)) return r.rows; // pool.query → { rows: [...] }
-  if (Array.isArray(r)) return r;                // adaptadores que devuelven array directo
-  return [];                                     // fallback seguro
+  if (r && Array.isArray(r.rows)) return r.rows;
+  if (Array.isArray(r)) return r;
+  return [];
 }
 
 // Convierte a número o null (evita NaN y '' -> null)
@@ -33,7 +33,6 @@ function toNum(v) {
 
 function norm(body = {}) {
   const clean = (v) => (v == null ? null : (String(v).trim() || null));
-
   const pm = String(body.pay_mode ?? "per_ride").toLowerCase().trim();
   const allowed = new Set(["per_ride", "hourly", "revenue_share"]);
   const pay_mode = allowed.has(pm) ? pm : "per_ride";
@@ -55,7 +54,7 @@ function norm(body = {}) {
 /* ---------- Handler ---------- */
 async function handler(req, res) {
   try {
-    /* ===== GET: lista ===== */
+    // ===== GET: lista =====
     if (req.method === "GET") {
       const q = await query(`
         SELECT
@@ -67,25 +66,25 @@ async function handler(req, res) {
         ORDER BY created_at DESC NULLS LAST
       `);
       const rows = asRows(q);
-      return res.status(200).json(rows); // siempre JSON, aunque []
+      return res.status(200).json(rows);
     }
 
-    /* ===== POST: create / update ===== */
+    // ===== POST: create / update =====
     if (req.method === "POST") {
       const body = parseBody(req.body);
       const d = norm(body);
 
       if (!d.name) {
-        return res.status(400).json({ ok: false, error: "name_required" });
+        return res.status(400).json({ ok:false, error:"name_required" });
       }
       if (d.pay_mode === "hourly" && d.hourly_rate == null) {
-        return res.status(400).json({ ok: false, error: "hourly_rate_required" });
+        return res.status(400).json({ ok:false, error:"hourly_rate_required" });
       }
       if (d.pay_mode === "per_ride" && d.per_ride_rate == null) {
-        return res.status(400).json({ ok: false, error: "per_ride_rate_required" });
+        return res.status(400).json({ ok:false, error:"per_ride_rate_required" });
       }
       if (d.pay_mode === "revenue_share" && d.revenue_share == null) {
-        return res.status(400).json({ ok: false, error: "revenue_share_required" });
+        return res.status(400).json({ ok:false, error:"revenue_share_required" });
       }
 
       // --- UPDATE por id
@@ -106,18 +105,15 @@ async function handler(req, res) {
        RETURNING id::text AS id, name, email, phone, pay_mode,
                  hourly_rate, per_ride_rate, revenue_share,
                  notify_email, notify_sms, created_at
-        `,
+          `,
           [
             d.id, d.name, d.email, d.phone,
             d.pay_mode, d.hourly_rate, d.per_ride_rate, d.revenue_share,
             d.notify_email, d.notify_sms
           ]
         );
-
         const rows = asRows(q);
-        if (!rows.length) {
-          return res.status(404).json({ ok: false, error: "not_found" });
-        }
+        if (!rows.length) return res.status(404).json({ ok:false, error:"not_found" });
         return res.json(rows[0]);
       }
 
@@ -130,33 +126,31 @@ async function handler(req, res) {
         RETURNING id::text AS id, name, email, phone, pay_mode,
                   hourly_rate, per_ride_rate, revenue_share,
                   notify_email, notify_sms, created_at
-      `,
+        `,
         [
           d.name, d.email, d.phone, d.pay_mode,
           d.hourly_rate, d.per_ride_rate, d.revenue_share,
           d.notify_email, d.notify_sms
         ]
       );
-
       const rows = asRows(q);
       return res.json(rows[0]);
     }
 
-    /* ===== DELETE ===== */
+    // ===== DELETE =====
     if (req.method === "DELETE") {
       const id = String(req.query?.id || "").trim();
-      if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
+      if (!id) return res.status(400).json({ ok:false, error:"missing_id" });
 
-      // Usamos RETURNING para no depender de rowCount
       const q = await query(`DELETE FROM drivers WHERE id::text=$1 RETURNING 1`, [id]);
       const rows = asRows(q);
-      if (!rows.length) return res.status(404).json({ ok: false, error: "not_found" });
+      if (!rows.length) return res.status(404).json({ ok:false, error:"not_found" });
 
-      return res.json({ ok: true });
+      return res.json({ ok:true });
     }
 
     res.setHeader("Allow", "GET, POST, DELETE");
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+    return res.status(405).json({ ok:false, error:"method_not_allowed" });
 
   } catch (e) {
     console.error("[/api/drivers] Error detallado:", e);
