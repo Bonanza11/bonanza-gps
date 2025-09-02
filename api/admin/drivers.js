@@ -1,12 +1,15 @@
 // /api/admin/drivers.js
 import { pool, query } from "../_db.js";
 
-// --- Auth ---
+// --- Auth por header x-admin-key ---
 function checkKey(req) {
   const hdr = req.headers["x-admin-key"] || req.headers["X-Admin-Key"];
   const envKey = process.env.ADMIN_KEY || "supersecreto123";
   return hdr && String(hdr) === String(envKey);
 }
+
+// Forzamos runtime Node (pg no funciona en Edge)
+export const config = { runtime: "nodejs" };
 
 // Normaliza body
 function norm(body = {}) {
@@ -16,8 +19,8 @@ function norm(body = {}) {
     phone: (body.phone ?? "").toString().trim() || null,
     email: (body.email ?? "").toString().trim().toLowerCase() || null,
     license_number: (body.license_number ?? "").toString().trim() || null,
-    work_mode: (body.work_mode ?? "24h").toString().trim().toLowerCase(), // 24h o custom
-    active: body.active !== false,
+    work_mode: (body.work_mode ?? "24h").toString().trim().toLowerCase(), // '24h' | 'custom'
+    active: body.active !== false, // por defecto true
   };
 }
 
@@ -60,7 +63,7 @@ export default async function handler(req, res) {
                   active=$7,
                   updated_at=now()
             where id::text=$1
-            returning id::text as id, name, phone, email, license_number, work_mode, active, created_at`,
+        returning id::text as id, name, phone, email, license_number, work_mode, active, created_at`,
           [b.id, b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
         );
         if (!rows.length) return res.status(404).json({ ok: false, error: "Driver not found" });
@@ -71,7 +74,7 @@ export default async function handler(req, res) {
       const { rows } = await pool.query(
         `insert into drivers (name, phone, email, license_number, work_mode, active)
          values ($1,$2,$3,$4,$5,$6)
-         returning id::text as id, name, phone, email, license_number, work_mode, active, created_at`,
+        returning id::text as id, name, phone, email, license_number, work_mode, active, created_at`,
         [b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
       );
       return res.json({ ok: true, driver: rows[0] });
@@ -81,6 +84,7 @@ export default async function handler(req, res) {
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
       if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
+
       const { rowCount } = await pool.query(`delete from drivers where id::text = $1`, [id]);
       if (!rowCount) return res.status(404).json({ ok: false, error: "Driver not found" });
       return res.json({ ok: true });
