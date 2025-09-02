@@ -15,7 +15,14 @@ function parseBody(maybe) {
   return {};
 }
 
-// Convierte a número o null (evita NaN y '' -> 0)
+// Normaliza resultado de query: soporta {rows:[...]} o [...] directo
+function asRows(r) {
+  if (r && Array.isArray(r.rows)) return r.rows;
+  if (Array.isArray(r)) return r;
+  return [];
+}
+
+// Convierte a número o null (evita NaN y '' -> null)
 function toNum(v) {
   if (v === undefined || v === null) return null;
   const s = String(v).trim();
@@ -50,18 +57,17 @@ async function handler(req, res) {
   try {
     /* ===== GET: lista ===== */
     if (req.method === "GET") {
-      const { rows } = await query(`
+      const q = await query(`
         SELECT
           id::text AS id,
           name, email, phone,
           pay_mode, hourly_rate, per_ride_rate, revenue_share,
-          notify_email, notify_sms,
-          -- Si la columna no existe en tu esquema, asegúrate de crearla (ver migración abajo)
-          created_at
+          notify_email, notify_sms, created_at
         FROM drivers
         ORDER BY created_at DESC NULLS LAST
       `);
-      return res.json(rows);
+      const rows = asRows(q);
+      return res.status(200).json(rows); // siempre JSON (aunque [])
     }
 
     /* ===== POST: create / update ===== */
@@ -72,8 +78,6 @@ async function handler(req, res) {
       if (!d.name) {
         return res.status(400).json({ ok: false, error: "name_required" });
       }
-
-      // Valida coherencia según pay_mode (opcional pero útil)
       if (d.pay_mode === "hourly" && d.hourly_rate == null) {
         return res.status(400).json({ ok: false, error: "hourly_rate_required" });
       }
@@ -86,7 +90,7 @@ async function handler(req, res) {
 
       // UPDATE por id
       if (d.id) {
-        const { rows } = await query(
+        const q = await query(
           `
           UPDATE drivers
              SET name=$2,
@@ -108,14 +112,15 @@ async function handler(req, res) {
           ]
         );
 
-        if (!rows?.length) {
+        const rows = asRows(q);
+        if (!rows.length) {
           return res.status(404).json({ ok: false, error: "not_found" });
         }
         return res.json(rows[0]);
       }
 
       // INSERT
-      const { rows } = await query(
+      const q = await query(
         `
         INSERT INTO drivers
           (name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,notify_email,notify_sms)
@@ -128,8 +133,8 @@ async function handler(req, res) {
           d.notify_email, d.notify_sms
         ]
       );
-
-      return res.json(rows[0]);
+      const rows = asRows(q);
+      return res.json(rows[0]); // seguro
     }
 
     /* ===== DELETE ===== */
@@ -137,8 +142,10 @@ async function handler(req, res) {
       const id = String(req.query?.id || "").trim();
       if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
 
-      const { rowCount } = await query(`DELETE FROM drivers WHERE id::text=$1`, [id]);
-      if (!rowCount) return res.status(404).json({ ok: false, error: "not_found" });
+      // Usamos RETURNING para contar afectados aunque no tengamos rowCount
+      const q = await query(`DELETE FROM drivers WHERE id::text=$1 RETURNING 1`, [id]);
+      const rows = asRows(q);
+      if (!rows.length) return res.status(404).json({ ok: false, error: "not_found" });
 
       return res.json({ ok: true });
     }
