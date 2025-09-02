@@ -154,9 +154,12 @@ async function handler(req, res) {
     return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
   } catch (e) {
-    console.error("[/api/drivers] ", e);
-    return res.status(500).json({ ok: false, error: "server_error", detail: String(e?.message || e) });
-  }
+  console.error("[/api/drivers] Error detallado:", e);  // <-- más información en logs
+  return res.status(500).json({
+    ok: false,
+    error: "server_error",
+    detail: e?.stack || e?.message || String(e)
+  });
 }
 
 export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
