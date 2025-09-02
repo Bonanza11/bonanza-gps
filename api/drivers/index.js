@@ -153,8 +153,8 @@ async function handler(req, res) {
     res.setHeader("Allow", "GET, POST, DELETE");
     return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
-  } catch (e) {
-  console.error("[/api/drivers] Error detallado:", e);  // <-- más información en logs
+ } catch (e) {
+  console.error("[/api/drivers] Error detallado:", e);
   return res.status(500).json({
     ok: false,
     error: "server_error",
