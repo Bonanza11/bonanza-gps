@@ -1,77 +1,106 @@
 // /api/admin/drivers.js
 import { pool, query } from "../_db.js";
-import { requireAuth } from "../_lib/guard.js";
 
 export const config = { runtime: "nodejs" };
 
-// Normaliza body
+/* ---------- Auth con ADMIN_KEY ---------- */
+function checkKey(req) {
+  const hdr = req.headers["x-admin-key"] || req.headers["X-Admin-Key"];
+  const envKey = process.env.ADMIN_KEY || "supersecreto123";
+  return hdr && String(hdr) === String(envKey);
+}
+
+/* ---------- Normaliza body ---------- */
 function norm(body = {}) {
   return {
     id: body.id ? String(body.id) : null,
     name: (body.name ?? "").toString().trim(),
     phone: (body.phone ?? "").toString().trim() || null,
-    email: (body.email ?? "").toString().trim().toLowerCase() || null,
+    email: ((body.email ?? "").toString().trim() || null)?.toLowerCase() || null,
     license_number: (body.license_number ?? "").toString().trim() || null,
-    work_mode: (body.work_mode ?? "24h").toString().trim().toLowerCase(), // 24h | custom
-    active: body.active !== false,
+    work_mode: (body.work_mode ?? "24h").toString().trim().toLowerCase(), // "24h" | "custom"
+    active: body.active !== false, // por defecto true
   };
 }
 
-async function handler(req, res) {
+export default async function handler(req, res) {
   try {
-    // GET
+    if (!checkKey(req)) {
+      return res.status(401).json({ ok: false, error: "Unauthorized" });
+    }
+
+    /* ---------- GET: lista ---------- */
     if (req.method === "GET") {
       const rows = await query(`
-        select id::text as id, name, phone, email,
-               license_number, work_mode, active, created_at
-        from drivers
-        order by created_at desc
-        limit 500
+        SELECT
+          id::text AS id,
+          name, phone, email,
+          license_number, work_mode, active, created_at
+        FROM drivers
+        ORDER BY created_at DESC
+        LIMIT 500
       `);
-      return res.json({ ok:true, drivers: rows });
+      return res.json({ ok: true, drivers: rows });
     }
 
-    // POST (create/update)
+    /* ---------- POST: create / update ---------- */
     if (req.method === "POST") {
       const b = norm(req.body || {});
-      if (!b.name) return res.status(400).json({ ok:false, error:"Missing name" });
-
-      if (b.id) {
-        const { rows } = await pool.query(
-          `update drivers
-             set name=$2, phone=$3, email=$4, license_number=$5, work_mode=$6, active=$7, updated_at=now()
-           where id::text=$1
-           returning id::text as id, name, phone, email, license_number, work_mode, active, created_at`,
-          [b.id, b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
-        );
-        if (!rows.length) return res.status(404).json({ ok:false, error:"Driver not found" });
-        return res.json({ ok:true, driver: rows[0] });
+      if (!b.name) {
+        return res.status(400).json({ ok: false, error: "Missing name" });
       }
 
+      // Update por id
+      if (b.id) {
+        const { rows } = await pool.query(
+          `UPDATE drivers
+              SET name=$2,
+                  phone=$3,
+                  email=$4,
+                  license_number=$5,
+                  work_mode=$6,
+                  active=$7,
+                  updated_at = now()
+            WHERE id::text = $1
+        RETURNING id::text AS id, name, phone, email, license_number, work_mode, active, created_at`,
+          [b.id, b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
+        );
+        if (!rows.length) {
+          return res.status(404).json({ ok: false, error: "Driver not found" });
+        }
+        return res.json({ ok: true, driver: rows[0] });
+      }
+
+      // Insert
       const { rows } = await pool.query(
-        `insert into drivers (name, phone, email, license_number, work_mode, active)
-         values ($1,$2,$3,$4,$5,$6)
-         returning id::text as id, name, phone, email, license_number, work_mode, active, created_at`,
+        `INSERT INTO drivers (name, phone, email, license_number, work_mode, active)
+         VALUES ($1,$2,$3,$4,$5,$6)
+     RETURNING id::text AS id, name, phone, email, license_number, work_mode, active, created_at`,
         [b.name, b.phone, b.email, b.license_number, b.work_mode, b.active]
       );
-      return res.json({ ok:true, driver: rows[0] });
+      return res.json({ ok: true, driver: rows[0] });
     }
 
-    // DELETE
+    /* ---------- DELETE ---------- */
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
-      if (!id) return res.status(400).json({ ok:false, error:"Missing id" });
-      const { rowCount } = await pool.query(`delete from drivers where id::text=$1`, [id]);
-      if (!rowCount) return res.status(404).json({ ok:false, error:"Driver not found" });
-      return res.json({ ok:true });
+      if (!id) {
+        return res.status(400).json({ ok: false, error: "Missing id" });
+      }
+      const { rowCount } = await pool.query(
+        `DELETE FROM drivers WHERE id::text = $1`,
+        [id]
+      );
+      if (!rowCount) {
+        return res.status(404).json({ ok: false, error: "Driver not found" });
+      }
+      return res.json({ ok: true });
     }
 
-    res.setHeader("Allow","GET,POST,DELETE");
-    return res.status(405).json({ ok:false, error:"Method Not Allowed" });
+    res.setHeader("Allow", "GET,POST,DELETE");
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   } catch (e) {
     console.error("[/api/admin/drivers] error:", e);
-    return res.status(500).json({ ok:false, error: e?.message || "Internal error" });
+    return res.status(500).json({ ok: false, error: e?.message || "Internal error" });
   }
 }
-
-export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
