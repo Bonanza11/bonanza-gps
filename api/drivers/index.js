@@ -5,12 +5,6 @@ import { requireAuth } from "../_lib/guard.js";
 export const config = { runtime: "nodejs" };
 
 /* ---------- Helpers ---------- */
-// Normaliza resultado de query: soporta { rows:[...] } o [...] directo
-function asRows(r) {
-  if (r && Array.isArray(r.rows)) return r.rows; // node-postgres: pool.query -> { rows }
-  if (Array.isArray(r)) return r;                // adaptadores que devuelven array directo
-  return [];                                     // fallback seguro
-}
 function parseBody(maybe) {
   if (maybe == null) return {};
   if (typeof maybe === "string") {
@@ -21,11 +15,11 @@ function parseBody(maybe) {
   return {};
 }
 
-// Normaliza resultado de query: soporta {rows:[...]} o [...] directo
+// Normaliza el resultado de query: soporta { rows:[...] } o un array directo
 function asRows(r) {
-  if (r && Array.isArray(r.rows)) return r.rows;
-  if (Array.isArray(r)) return r;
-  return [];
+  if (r && Array.isArray(r.rows)) return r.rows; // pool.query → { rows: [...] }
+  if (Array.isArray(r)) return r;                // adaptadores que devuelven array directo
+  return [];                                     // fallback seguro
 }
 
 // Convierte a número o null (evita NaN y '' -> null)
@@ -73,7 +67,7 @@ async function handler(req, res) {
         ORDER BY created_at DESC NULLS LAST
       `);
       const rows = asRows(q);
-      return res.status(200).json(rows); // siempre JSON (aunque [])
+      return res.status(200).json(rows); // siempre JSON, aunque []
     }
 
     /* ===== POST: create / update ===== */
@@ -94,7 +88,7 @@ async function handler(req, res) {
         return res.status(400).json({ ok: false, error: "revenue_share_required" });
       }
 
-      // UPDATE por id
+      // --- UPDATE por id
       if (d.id) {
         const q = await query(
           `
@@ -109,7 +103,9 @@ async function handler(req, res) {
                  notify_email=$9,
                  notify_sms=$10
            WHERE id::text=$1
-       RETURNING id::text AS id, name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms, created_at
+       RETURNING id::text AS id, name, email, phone, pay_mode,
+                 hourly_rate, per_ride_rate, revenue_share,
+                 notify_email, notify_sms, created_at
         `,
           [
             d.id, d.name, d.email, d.phone,
@@ -125,13 +121,15 @@ async function handler(req, res) {
         return res.json(rows[0]);
       }
 
-      // INSERT
+      // --- INSERT
       const q = await query(
         `
         INSERT INTO drivers
           (name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,notify_email,notify_sms)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-        RETURNING id::text AS id, name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms, created_at
+        RETURNING id::text AS id, name, email, phone, pay_mode,
+                  hourly_rate, per_ride_rate, revenue_share,
+                  notify_email, notify_sms, created_at
       `,
         [
           d.name, d.email, d.phone, d.pay_mode,
@@ -139,8 +137,9 @@ async function handler(req, res) {
           d.notify_email, d.notify_sms
         ]
       );
+
       const rows = asRows(q);
-      return res.json(rows[0]); // seguro
+      return res.json(rows[0]);
     }
 
     /* ===== DELETE ===== */
@@ -148,7 +147,7 @@ async function handler(req, res) {
       const id = String(req.query?.id || "").trim();
       if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
 
-      // Usamos RETURNING para contar afectados aunque no tengamos rowCount
+      // Usamos RETURNING para no depender de rowCount
       const q = await query(`DELETE FROM drivers WHERE id::text=$1 RETURNING 1`, [id]);
       const rows = asRows(q);
       if (!rows.length) return res.status(404).json({ ok: false, error: "not_found" });
@@ -159,13 +158,14 @@ async function handler(req, res) {
     res.setHeader("Allow", "GET, POST, DELETE");
     return res.status(405).json({ ok: false, error: "method_not_allowed" });
 
- } catch (e) {
-  console.error("[/api/drivers] Error detallado:", e);
-  return res.status(500).json({
-    ok: false,
-    error: "server_error",
-    detail: e?.stack || e?.message || String(e)
-  });
+  } catch (e) {
+    console.error("[/api/drivers] Error detallado:", e);
+    return res.status(500).json({
+      ok: false,
+      error: "server_error",
+      detail: e?.stack || e?.message || String(e)
+    });
+  }
 }
 
 export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
