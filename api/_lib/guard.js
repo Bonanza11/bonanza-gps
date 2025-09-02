@@ -4,19 +4,13 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto123";
 const ADMIN_KEY  = process.env.ADMIN_KEY  || "supersecreto123";
 
-/**
- * Uso:
- * export default requireAuth(['OWNER','ADMIN','DISPATCHER'])(async (req,res)=>{ ... })
- * - Si llega header x-admin-key == ADMIN_KEY, pasa directo con roles ADMIN completos.
- * - Si llega Authorization: Bearer <token>, valida JWT y roles.
- */
 export function requireAuth(allowedRoles = []) {
   return (handler) => async (req, res) => {
     try {
       // 1) Atajo HQ por x-admin-key
       if (req.headers["x-admin-key"] === ADMIN_KEY) {
         req.user = { id: "hq-admin", roles: ["OWNER","ADMIN","DISPATCHER"] };
-        return handler(req, res);
+        return await handler(req, res);          // ← AQUI
       }
 
       // 2) Bearer JWT
@@ -30,7 +24,7 @@ export function requireAuth(allowedRoles = []) {
         return res.status(403).json({ ok:false, error:"forbidden" });
       }
       req.user = { id: payload.sub, roles };
-      return handler(req, res);
+      return await handler(req, res);            // ← Y AQUI
     } catch (e) {
       console.error("[requireAuth]", e);
       return res.status(401).json({ ok:false, error:"invalid_token" });
