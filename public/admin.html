@@ -98,7 +98,6 @@
   <div class="spacer"></div>
   <span class="muted">API Vehicles: <code>/api/admin/vehicles</code></span>
 </nav>
-
 <!-- VEHICLES -->
 <section id="view-vehicles">
   <div class="wrap">
@@ -164,6 +163,7 @@
     </div>
   </div>
 </div>
+
 <!-- CLIENTS -->
 <section id="view-clients" hidden>
   <div class="wrap">
@@ -326,10 +326,10 @@
 </div>
 <script>
 /* =================== CONFIG =================== */
-const API_VEH   = '/api/admin/vehicles';   // Admin endpoints por x-admin-key (y opcional Bearer)
-const API_CLI   = '/api/admin/clients';
-const API_RES   = '/api/reservations';
-const API_DRV   = '/api/admin/drivers';          // Lista/CRUD drivers (con requireAuth en backend)
+const API_VEH   = '/api/admin/vehicles';   // admin (x-admin-key)
+const API_CLI   = '/api/admin/clients';    // admin (x-admin-key)
+const API_RES   = '/api/reservations';     // público con auth de servidor
+const API_DRV   = '/api/drivers';          // <- usa tu endpoint de drivers (array plano)
 const API_DRV_ASSIGN = '/api/drivers/assignments';
 const API_DRV_NOTIFY = '/api/drivers/notify';
 
@@ -381,28 +381,26 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
   location.href = '/login.html';
 });
 
-/* =================== HELPERS =================== */
+/* =================== HELPERS + API WRAPPER =================== */
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtWhen(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
 
-/** Obtiene admin-token (si tu backend lo provee). Lo intentamos, pero no bloquea si falla. */
+/** obtiene (opcional) admin-token; si falla no bloquea */
 async function ensureAdminToken() {
   let t = localStorage.getItem('bonanza_token');
   if (!t) {
     try{
       const r = await fetch('/api/auth/admin-token', { method:'POST', headers:{ 'x-admin-key':'supersecreto123' } });
       const j = await r.json();
-      if (j?.ok && j?.token) {
-        t = j.token; localStorage.setItem('bonanza_token', t);
-      }
-    }catch{ /* opcional */ }
+      if (j?.ok && j?.token) { t = j.token; localStorage.setItem('bonanza_token', t); }
+    }catch {}
   }
   return t || null;
 }
 
-/** Wrapper fetch: siempre manda x-admin-key y si hay, Bearer token */
+/** fetch con x-admin-key + Bearer (si existe) y parse robusto */
 async function api(url, method='GET', body=null){
-  const headers = { 'x-admin-key': 'supersecreto123' }; // tu ADMIN_KEY (server valida igual)
+  const headers = { 'x-admin-key': 'supersecreto123' };
   const token = localStorage.getItem('bonanza_token');
   if (token) headers.Authorization = 'Bearer ' + token;
 
@@ -411,14 +409,11 @@ async function api(url, method='GET', body=null){
 
   const r = await fetch(url, opt);
   const text = await r.text();
-  let data; try { data = JSON.parse(text); } catch { throw new Error('API not JSON: '+text.slice(0,120)); }
+  let data; try { data = JSON.parse(text); } catch { throw new Error('API not JSON: ' + text.slice(0,120)); }
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
-
-/* =========================================================
-   VEHICLES
-   ========================================================= */
+  /* =================== VEHICLES =================== */
 const vehMsg   = document.getElementById('vehMsg');
 const vehRows  = document.getElementById('vehRows');
 const stat = {
@@ -474,8 +469,8 @@ async function loadVehicles(){
   vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   vehShowMsg('');
   try{
-    await ensureAdminToken(); // opcional
-    const data = await api(API_VEH, 'GET');
+    await ensureAdminToken();            // opcional
+    const data = await api(API_VEH,'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
     renderVehicles();
@@ -530,16 +525,14 @@ vehBtnSave.addEventListener('click', async ()=>{
     const i = allVehicles.findIndex(x=>x.id===v.id);
     if(i>=0) allVehicles[i]={...allVehicles[i],...v}; else allVehicles.push(v);
     allVehicles.sort(sortVehicles); renderVehicles(); vehShowMsg(editingId?'Saved changes.':'Vehicle added.'); closeVehModal();
-  }catch(e){
-    vehFormErr.textContent = e.message || 'Error saving.';
-  }finally{ vehBtnSave.disabled=false; }
+  }catch(e){ vehFormErr.textContent = e.message || 'Error saving.'; }
+  finally{ vehBtnSave.disabled=false; }
 });
 
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr = btn.closest('tr[data-id]'); if(!tr) return;
   const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
-
   if (action==='edit'){ openEditVehicle(id); return; }
   if (action==='delete'){
     const v = allVehicles.find(x=>x.id===id); if(!v) return;
@@ -553,10 +546,8 @@ vehRows.addEventListener('click', async (ev)=>{
   if (action==='toggle'){
     const v = allVehicles.find(x=>x.id===id); if(!v) return;
     const next = !v.active;
-    try{
-      await api(API_VEH, 'POST', { id, active: next });
-      v.active = next; renderVehicles(); vehShowMsg('Updated.');
-    }catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
+    try{ await api(API_VEH, 'POST', { id, active: next }); v.active = next; renderVehicles(); vehShowMsg('Updated.'); }
+    catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
   }
 });
 
@@ -567,9 +558,8 @@ document.getElementById('vehControls').addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-filter]'); if(!b) return;
   filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles(); setTheadTop();
 });
-  /* =========================================================
-   CLIENTS
-   ========================================================= */
+
+/* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
 const cliStat = {
@@ -698,9 +688,7 @@ cliRows.addEventListener('click', async (ev)=>{
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
 document.getElementById('btnAddClient').addEventListener('click', openAddClient);
 
-/* =========================================================
-   RESERVATIONS
-   ========================================================= */
+/* =================== RESERVATIONS =================== */
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
@@ -758,7 +746,7 @@ function renderReservations(list){
 async function loadReservations(){
   resRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   try{
-    const data = await api(API_RES, 'GET');            // { ok, rows } o array
+    const data = await api(API_RES, 'GET');
     const list = Array.isArray(data) ? data : (data.rows || []);
     renderReservations(list);
     resShowMsg('Loaded successfully.'); setTheadTop();
@@ -830,9 +818,7 @@ assignBtnSave.addEventListener('click', async ()=>{
   finally{ assignBtnSave.disabled = false; }
 });
 
-/* =========================================================
-   DRIVERS
-   ========================================================= */
+/* =================== DRIVERS =================== */
 const drvMsg  = document.getElementById('drvMsg');
 const drvRows = document.getElementById('drvRows');
 let allDrivers = [];
@@ -857,7 +843,7 @@ function renderDrivers(){
 async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>'; drvShowMsg('');
   try{
-    const rows = await api(API_DRV, 'GET'); // tu endpoint devuelve array plano
+    const rows = await api(API_DRV, 'GET');     // /api/drivers devuelve array
     allDrivers = Array.isArray(rows) ? rows : [];
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){ allDrivers = []; renderDrivers(); drvShowMsg('Error loading: '+(e.message||e), false); }
