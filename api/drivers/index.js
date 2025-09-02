@@ -2,34 +2,23 @@
 import { query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
 
-/** Fuerza runtime Node */
 export const config = { runtime: "nodejs" };
 
 async function handler(req, res) {
   try {
-    // ------- GET: lista de choferes -------
     if (req.method === "GET") {
       const { rows } = await query(`
         SELECT
           id::text AS id,
-          name,
-          email,
-          phone,
-          pay_mode,           -- 'per_ride' | 'hourly' | etc.
-          hourly_rate,
-          per_ride_rate,
-          revenue_share,
-          notify_email,
-          notify_sms,
-          created_at
+          name, email, phone,
+          pay_mode, hourly_rate, per_ride_rate, revenue_share,
+          notify_email, notify_sms, created_at
         FROM drivers
         ORDER BY created_at DESC
       `);
-      // Devolvemos array (lo requiere admin.html)
-      return res.json(rows);
+      return res.json(rows); // array plano
     }
 
-    // ------- POST: crear/editar chofer -------
     if (req.method === "POST") {
       const {
         id = null,
@@ -44,89 +33,44 @@ async function handler(req, res) {
         notify_sms = false,
       } = req.body || {};
 
-      if (!name) {
-        return res.status(400).json({ ok: false, error: "name_required" });
-      }
+      if (!name) return res.status(400).json({ ok:false, error:"name_required" });
 
       if (id) {
-        const { rows } = await query(
-          `
+        const { rows } = await query(`
           UPDATE drivers
-             SET name          = $2,
-                 email         = $3,
-                 phone         = $4,
-                 pay_mode      = $5,
-                 hourly_rate   = $6,
-                 per_ride_rate = $7,
-                 revenue_share = $8,
-                 notify_email  = $9,
-                 notify_sms    = $10
-           WHERE id::text = $1
+             SET name=$2,email=$3,phone=$4,
+                 pay_mode=$5,hourly_rate=$6,per_ride_rate=$7,revenue_share=$8,
+                 notify_email=$9,notify_sms=$10
+           WHERE id::text=$1
        RETURNING id::text AS id, name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms, created_at
-        `,
-          [
-            id,
-            name,
-            email,
-            phone,
-            pay_mode,
-            hourly_rate,
-            per_ride_rate,
-            revenue_share,
-            notify_email,
-            notify_sms,
-          ]
-        );
-        if (!rows?.length) {
-          return res.status(404).json({ ok: false, error: "not_found" });
-        }
-        // Devolvemos el objeto directo (lo requiere admin.html)
-        return res.json(rows[0]);
-      } else {
-        const { rows } = await query(
-          `
-          INSERT INTO drivers
-            (name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       RETURNING id::text AS id, name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms, created_at
-        `,
-          [
-            name,
-            email,
-            phone,
-            pay_mode,
-            hourly_rate,
-            per_ride_rate,
-            revenue_share,
-            notify_email,
-            notify_sms,
-          ]
-        );
-        return res.json(rows[0]);
+        `,[id,name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,notify_email,notify_sms]);
+        if (!rows?.length) return res.status(404).json({ ok:false, error:"not_found" });
+        return res.json(rows[0]); // objeto directo
       }
+
+      const { rows } = await query(`
+        INSERT INTO drivers
+          (name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,notify_email,notify_sms)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        RETURNING id::text AS id, name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms, created_at
+      `,[name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,notify_email,notify_sms]);
+      return res.json(rows[0]); // objeto directo
     }
 
-    // (Opcional) DELETE por id
     if (req.method === "DELETE") {
       const id = String(req.query?.id || "");
-      if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
-
-      const { rowCount } = await query(
-        `DELETE FROM drivers WHERE id::text = $1`,
-        [id]
-      );
-      if (!rowCount) {
-        return res.status(404).json({ ok: false, error: "not_found" });
-      }
-      return res.json({ ok: true });
+      if (!id) return res.status(400).json({ ok:false, error:"missing_id" });
+      const { rowCount } = await query(`DELETE FROM drivers WHERE id::text=$1`,[id]);
+      if (!rowCount) return res.status(404).json({ ok:false, error:"not_found" });
+      return res.json({ ok:true });
     }
 
-    res.setHeader("Allow", "GET, POST, DELETE");
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
-  } catch (err) {
-    console.error("[/api/drivers] ", err);
-    return res.status(500).json({ ok: false, error: "server_error" });
+    res.setHeader("Allow","GET, POST, DELETE");
+    return res.status(405).json({ ok:false, error:"method_not_allowed" });
+  } catch (e) {
+    console.error("[/api/drivers]", e);
+    return res.status(500).json({ ok:false, error:"server_error" });
   }
 }
 
-export default requireAuth(["OWNER", "ADMIN", "DISPATCHER"])(handler);
+export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
