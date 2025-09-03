@@ -150,17 +150,54 @@
     </header>
     <div class="body">
       <div class="grid">
-        <div class="field"><label for="fPlate">Plate</label><input id="fPlate" placeholder="UT-123 ABC" autocomplete="off"></div>
-        <div class="field"><label for="fDriver">Driver Name</label><input id="fDriver" placeholder="John Doe" autocomplete="off"></div>
-        <div class="field"><label for="fKind">Type</label>
-          <select id="fKind"><option value="SUV">SUV</option><option value="VAN">VAN</option></select>
+        <!-- Plate -->
+        <div class="field">
+          <label for="fPlate">Plate</label>
+          <input id="fPlate" placeholder="UT-123 ABC" autocomplete="off">
         </div>
-        <div class="field"><label for="fYear">Year</label><input id="fYear" type="number" min="2000" max="2099" placeholder="2025"></div>
-        <div class="field full"><label for="fModel">Model / Subtype</label><input id="fModel" placeholder="Suburban LT / Sprinter 2500"></div>
-        <div class="field full"><label><input type="checkbox" id="fActive"> Active</label></div>
+
+        <!-- Driver (select) -->
+        <div class="field">
+          <label for="fDriverId">Driver</label>
+          <select id="fDriverId">
+            <option value="">— No driver —</option>
+          </select>
+        </div>
+
+        <!-- Kind -->
+        <div class="field">
+          <label for="fKind">Type</label>
+          <select id="fKind">
+            <option value="SUV">SUV</option>
+            <option value="VAN">VAN</option>
+          </select>
+        </div>
+
+        <!-- Year -->
+        <div class="field">
+          <label for="fYear">Year</label>
+          <input id="fYear" type="number" min="2000" max="2099" placeholder="2025">
+        </div>
+
+        <!-- Model -->
+        <div class="field full">
+          <label for="fModel">Model / Subtype</label>
+          <input id="fModel" placeholder="Suburban LT / Sprinter 2500">
+        </div>
+
+        <!-- Active toggle -->
+        <div class="field full">
+          <label><input type="checkbox" id="fActive"> Active</label>
+        </div>
       </div>
+
+      <!-- Error message -->
       <div id="vehFormErr" class="err-msg"></div>
-      <div class="actions"><button id="vehBtnSave" class="primary">Save</button></div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="vehBtnSave" class="primary">Save</button>
+      </div>
     </div>
   </div>
 </div>
