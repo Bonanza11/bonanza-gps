@@ -591,17 +591,55 @@ vehBtnSave.addEventListener('click', async ()=>{
 });
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr = btn.closest('tr[data-id]'); if(!tr) return;
-  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
-  if (action==='edit'){ openEditVehicle(id); return; }
-  if (action==='delete'){
+  const tr  = btn.closest('tr[data-id]'); if(!tr) return;
+  const id  = tr.getAttribute('data-id');
+  const action = btn.getAttribute('data-action');
+
+  // EDIT
+  if (action === 'edit'){ 
+    openEditVehicle(id); 
+    return; 
+  }
+
+  // DELETE
+  if (action === 'delete'){
     const v = allVehicles.find(x=>x.id===id); if(!v) return;
     if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
-    try{ await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
-      allVehicles = allVehicles.filter(x=>x.id!==id); renderVehicles(); vehShowMsg('Deleted.');
-    }catch(e){ vehShowMsg('Error deleting: '+(e.message||e), false); }
+    try{
+      await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allVehicles = allVehicles.filter(x=>x.id!==id);
+      renderVehicles();
+      vehShowMsg('Deleted.');
+    }catch(e){
+      vehShowMsg('Error deleting: ' + (e.message||e), false);
+    }
     return;
   }
+
+  // TOGGLE (Turn On/Off)  ← **ARREGLADO**
+  if (action === 'toggle'){
+    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    const next = !v.active;
+    try{
+      await api(API_VEH, 'POST', {
+        id: v.id,
+        plate: v.plate,                 // 👈 requerido por el backend
+        driver_id: v.driver_id || null,
+        driver_name: v.driver_name || null,
+        kind: v.kind,                   // 'SUV' | 'VAN'
+        year: v.year ?? null,
+        model: v.model || '',
+        active: next
+      });
+      v.active = next;
+      renderVehicles();
+      vehShowMsg('Updated.');
+    }catch(e){
+      vehShowMsg('Error updating: ' + (e.message||e), false);
+    }
+    return;
+  }
+});
   if (action==='toggle'){
     const v = allVehicles.find(x=>x.id===id); if(!v) return;
     const next = !v.active;
