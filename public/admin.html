@@ -895,16 +895,37 @@ function renderDrivers(){
       </tr>`; }).join('') || '<tr><td colspan="6">No drivers.</td></tr>';
 }
 async function loadDrivers(){
-  drvRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
+  // la tabla de drivers ahora tiene 7 columnas (por Vehicle[s])
+  drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
+
   try{
+    // 1) Asegura que haya vehículos cargados e índice disponible para poder mostrar "Vehicle(s)"
+    if (!allVehicles.length || vehByDriver.size === 0){
+      try{
+        const dataVeh = await api(API_VEH, 'GET');
+        const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+        allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+        rebuildVehIndex(); // <-- importantísimo
+      }catch(e){
+        // No bloquees la carga de drivers si falla vehículos; solo mostrará "-" en Vehicle(s)
+        console.warn('No se pudieron cargar vehículos antes de drivers:', e);
+      }
+    }
+
+    // 2) Ahora sí, carga los drivers
     await ensureAdminToken();
     const j = await api(API_DRV, 'GET');
     const raw = Array.isArray(j.drivers) ? j.drivers : [];
     allDrivers = raw.map(normalizeDriver);
-    renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
+
+    // 3) Render con la columna "Vehicle(s)" usando vehByDriver
+    renderDrivers();
+    drvShowMsg('Loaded successfully.');
+    setTheadTop();
   }catch(e){
-    allDrivers = []; renderDrivers();
+    allDrivers = [];
+    renderDrivers();
     drvShowMsg('Error loading: ' + (e.message || e), false);
   }
 }
