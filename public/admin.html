@@ -451,6 +451,23 @@ let allVehicles = [];
 let filterKind  = 'ALL';
 let editingId   = null;
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+  // --- Índice: driver_id -> [vehicles] ---
+let vehByDriver = new Map();
+
+/**
+ * Reconstruye el índice vehByDriver usando allVehicles.
+ * Clave: String(driver_id)  Valor: array de vehículos de ese driver
+ */
+function rebuildVehIndex(){
+  const map = new Map();
+  (allVehicles || []).forEach(v=>{
+    const k = v && v.driver_id ? String(v.driver_id) : null;
+    if(!k) return;
+    if(!map.has(k)) map.set(k, []);
+    map.get(k).push(v);
+  });
+  vehByDriver = map;
+}
 
 /* refs modal vehículo */
 const fPlate    = document.getElementById('fPlate');
