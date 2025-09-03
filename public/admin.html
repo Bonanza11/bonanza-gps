@@ -1110,31 +1110,48 @@ drvRows.addEventListener('click', async (ev)=>{
     return;
   }
 
-  if (a==='toggle'){
-    const d=allDrivers.find(x=>x.id===id); if(!d) return;
-    const next=!d.active; btn.disabled=true;
-    try{
-      await api(API_DRV,'POST',{
-        id:d.id, name:d.name,
-        email:d.email||null, phone:d.phone||null,
-        license_number:d.license_number||null,
-        work_mode:d.work_mode||'24h',
-        // 👇 mantener en minúscula al actualizar
-        pay_mode:(d.pay_mode||'per_ride'),
-        active:next
-      });
-      d.active=next;
-      updateCacheDriverActive(d.id, d.active); // sincroniza cache
-      renderDrivers();                        // refresca tabla Drivers
-      drvShowMsg('Updated.');
-      renderVehicles();                       // 🔥 refresca Vehicles
-    }catch(e){ 
-      drvShowMsg('Error updating: ' + (e.message||e), false); 
-    }
-    finally{ btn.disabled=false; }
-    return;
-  }
+if (a === 'toggle'){
+  const d = allDrivers.find(x=>x.id===id); if(!d) return;
+  const next = !d.active; btn.disabled = true;
 
+  try{
+    await api(API_DRV,'POST',{
+      id:d.id, name:d.name,
+      email:d.email||null, phone:d.phone||null,
+      license_number:d.license_number||null,
+      work_mode:d.work_mode||'24h',
+      pay_mode:(d.pay_mode||'per_ride'),
+      active:next
+    });
+
+    // 1) Actualiza estado local del driver
+    d.active = next;
+
+    // 2) Rehacer cacheDrivers desde allDrivers (evita helper extra)
+    cacheDrivers = allDrivers
+      .map(z => ({ id:String(z.id), name:(z.name||'').trim(), active:z.active!==false }))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+
+    // 3) Re-pinta tabla Drivers
+    renderDrivers();
+    drvShowMsg('Updated.');
+
+    // 4) 🔄 Refresca Vehicles + índice (para columna Vehicle(s) y selects)
+    const dataVeh = await api(API_VEH, 'GET');
+    const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+    allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+    rebuildVehIndex();
+
+    // 5) Si estás viendo Vehicles, re-pinta
+    if (!views.vehicles.hidden) renderVehicles();
+
+  } catch(e){
+    drvShowMsg('Error updating: ' + (e.message||e), false);
+  } finally {
+    btn.disabled = false;
+  }
+  return;
+}
   if (a==='notify'){ alert('Notificaciones: próximo paso 😉'); }
 });
 /* =================== BOOT =================== */
