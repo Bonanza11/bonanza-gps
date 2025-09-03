@@ -18,8 +18,9 @@ export default async function handler(req, res) {
     }
 
     const payload = jwt.verify(token, JWT_SECRET);
+
     const { rows } = await query(
-      "select id, name, email, phone, active, online from drivers where id=$1 limit 1",
+      "SELECT id, name, email, phone, active, online FROM drivers WHERE id=$1 LIMIT 1",
       [payload.sub]
     );
 
@@ -27,8 +28,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ ok: false, error: "not_found" });
     }
 
-    const driver = rows[0];
-    return res.json({ ok: true, driver });
+    return res.json({ ok: true, driver: rows[0] });
   } catch (e) {
     console.error("[driver-me]", e);
     return res.status(401).json({ ok: false, error: "invalid_token" });
