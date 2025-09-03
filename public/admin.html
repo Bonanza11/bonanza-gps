@@ -97,7 +97,6 @@
   <div class="spacer"></div>
   <span class="muted">API Vehicles: <code id="apiVehInfo">/api/admin/vehicles</code></span>
 </nav>
-<!-- VEHICLES -->
 <section id="view-vehicles">
   <div class="wrap">
     <div class="controls affects-sticky" id="vehControls">
@@ -160,7 +159,6 @@
     </div>
   </div>
 </div>
-<!-- CLIENTS -->
 <section id="view-clients" hidden>
   <div class="wrap">
     <div class="controls affects-sticky" id="cliControls">
@@ -219,7 +217,6 @@
     </div>
   </div>
 </div>
-<!-- RESERVATIONS -->
 <section id="view-reservations" hidden>
   <div class="wrap">
     <div class="controls affects-sticky" id="resControls">
@@ -272,35 +269,6 @@
   </div>
 </div>
 
-<!-- DRIVERS -->
-<section id="view-drivers" hidden>
-  <div class="wrap">
-    <div class="controls affects-sticky" id="drvControls">
-      <button id="btnReloadDrivers">Reload</button>
-      <button id="btnAddDriver" class="primary">Add Driver</button>
-    </div>
-
-    <div id="drvMsg" class="msg"></div>
-    <div id="stickySpacerDrivers"></div>
-
-    <table role="grid" aria-label="Drivers">
-      <thead>
-        <tr>
-          <th style="width:26%">Name</th>
-          <th style="width:26%">Email</th>
-          <th style="width:18%">Phone</th>
-          <th style="width:14%">Pay Mode</th>
-          <th style="width:110px">Active</th>
-          <th class="right" style="width:16%">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="drvRows">
-        <tr><td colspan="6">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-<!-- SETTINGS -->
 <section id="view-settings" hidden>
   <div class="wrap">
     <div class="card">
@@ -311,7 +279,6 @@
     </div>
   </div>
 </section>
-
 <!-- MODAL: DRIVER -->
 <div class="backdrop" id="drvBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drvModalTitle">
@@ -327,13 +294,13 @@
         <div class="field"><label for="dEmail">Email</label><input id="dEmail" type="email" placeholder="name@email.com" autocomplete="off"></div>
         <div class="field"><label for="dPhone">Phone</label><input id="dPhone" placeholder="801-555-0000" autocomplete="off"></div>
 
-        <!-- valores en minúsculas (BD) y etiquetas visibles en mayúsculas -->
+        <!-- Valores en MINÚSCULA (coinciden con el CHECK de DB) -->
         <div class="field"><label for="dPayMode">Pay Mode *</label>
-         <select id="dPayMode">
-  <option value="per_ride">PER_RIDE</option>
-  <option value="hourly">HOURLY</option>
-  <option value="revenue_share">REVENUE_SHARE</option>
-</select>
+          <select id="dPayMode">
+            <option value="per_ride">PER_RIDE</option>
+            <option value="hourly">HOURLY</option>
+            <option value="revenue_share">REVENUE_SHARE</option>
+          </select>
         </div>
 
         <div class="field"><label for="dLicense">License # (optional)</label><input id="dLicense" placeholder="UT-XXXXXX" autocomplete="off"></div>
@@ -347,7 +314,6 @@
     </div>
   </div>
 </div>
-
 <!-- =================== SCRIPT =================== -->
 <script>
 /* =================== CONFIG =================== */
@@ -409,6 +375,7 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
 /* =================== HELPERS + API WRAPPER =================== */
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtWhen(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
+
 async function ensureAdminToken() {
   let t = localStorage.getItem('bonanza_token');
   if (!t) {
@@ -424,8 +391,10 @@ async function api(url, method='GET', body=null){
   const headers = { 'x-admin-key': 'supersecreto123' };
   const token = localStorage.getItem('bonanza_token');
   if (token) headers.Authorization = 'Bearer ' + token;
+
   const opt = { method, headers };
   if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+
   const r = await fetch(url, opt);
   const text = await r.text();
   let data; try { data = JSON.parse(text); } catch { data = null; }
@@ -435,7 +404,8 @@ async function api(url, method='GET', body=null){
   }
   return data ?? {};
 }
-  /* =================== VEHICLES =================== */
+
+/* =================== VEHICLES =================== */
 const vehMsg   = document.getElementById('vehMsg');
 const vehRows  = document.getElementById('vehRows');
 const stat = {
@@ -450,26 +420,31 @@ let filterKind  = 'ALL';
 let editingId   = null;
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 
-/* refs modal vehicle */
-const fPlate=document.getElementById('fPlate'), fDriverId=document.getElementById('fDriverId');
-const fKind=document.getElementById('fKind'), fYear=document.getElementById('fYear');
-const fModel=document.getElementById('fModel'), fActive=document.getElementById('fActive');
-const vehBackdrop=document.getElementById('vehBackdrop'), vehBtnClose=document.getElementById('vehBtnClose');
-const vehBtnSave=document.getElementById('vehBtnSave'), vehFormErr=document.getElementById('vehFormErr');
-const vehModalTitle=document.getElementById('vehModalTitle');
+/* refs modal vehículo */
+const fPlate    = document.getElementById('fPlate');
+const fDriverId = document.getElementById('fDriverId');
+const fKind     = document.getElementById('fKind');
+const fYear     = document.getElementById('fYear');
+const fModel    = document.getElementById('fModel');
+const fActive   = document.getElementById('fActive');
+const vehBackdrop   = document.getElementById('vehBackdrop');
+const vehBtnClose   = document.getElementById('vehBtnClose');
+const vehBtnSave    = document.getElementById('vehBtnSave');
+const vehFormErr    = document.getElementById('vehFormErr');
+const vehModalTitle = document.getElementById('vehModalTitle');
 
-/* drivers cache (para selects) */
+/* Drivers cache para selects */
 let cacheDrivers = [];
 async function ensureDriversLoaded(){
   if (cacheDrivers.length) return cacheDrivers;
   if (Array.isArray(allDrivers) && allDrivers.length){
-    cacheDrivers = allDrivers.map(d=>({id:String(d.id), name:(d.name||'').trim(), active:d.active!==false}))
+    cacheDrivers = allDrivers.map(d => ({ id:String(d.id), name:(d.name||'').trim(), active:d.active!==false }))
                              .sort((a,b)=>a.name.localeCompare(b.name));
     return cacheDrivers;
   }
   const j = await api(API_DRV,'GET');
   const raw = Array.isArray(j.drivers) ? j.drivers : [];
-  cacheDrivers = raw.map(d=>({id:String(d.id), name:(d.name||'').trim(), active:d.active!==false}))
+  cacheDrivers = raw.map(d => ({ id:String(d.id), name:(d.name||'').trim(), active:d.active!==false }))
                     .sort((a,b)=>a.name.localeCompare(b.name));
   return cacheDrivers;
 }
@@ -479,15 +454,13 @@ function fillDriversSelect(list){
     (list?.length ? list.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}${d.active?'':' (OFF)'}</option>`).join('')
                   : `<option disabled>(Create a driver in Drivers)</option>`);
 }
-
 function normalizeVehicle(v){
   const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN') ? 'VAN':'SUV';
   return {
     id:String(v.id||''), plate:(v.plate||'').trim(),
     driver_id: v.driver_id ? String(v.driver_id) : (v.driverId ? String(v.driverId) : null),
     driver_name:(v.driver_name||'').trim(), kind:kindNorm,
-    year:(v.year!=null?Number(v.year):null), model:(v.model||'').trim(),
-    active:!!v.active
+    year:(v.year!=null?Number(v.year):null), model:(v.model||'').trim(), active:!!v.active
   };
 }
 function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka!==0) return ka; return (a.plate||'').localeCompare(b.plate||''); }
@@ -538,8 +511,6 @@ async function loadVehicles(){
     vehShowMsg('Error loading: '+(e.message||e), false);
   }
 }
-
-/* abrir/cerrar + guardar vehículo */
 function closeVehModal(){ vehBackdrop.classList.remove('open'); }
 vehBtnClose.addEventListener('click', closeVehModal);
 async function openAddVehicle(){
@@ -702,7 +673,7 @@ cliBtnSave.addEventListener('click', async ()=>{
   finally{ cliBtnSave.disabled = false; }
 });
 
-/* =================== RESERVATIONS (handlers) =================== */
+/* =================== RESERVATIONS =================== */
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
@@ -820,11 +791,12 @@ const drvRows  = document.getElementById('drvRows');
 let allDrivers = [];
 function drvShowMsg(t, ok=true){ drvMsg.textContent=t||''; drvMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 function normalizeDriver(d){
+  // guardamos SIEMPRE en minúscula para cumplir el CHECK (per_ride|hourly|revenue_share)
+  const raw = String(d.pay_mode || 'per_ride').toLowerCase();
+  const pay_mode = ['per_ride','hourly','revenue_share'].includes(raw) ? raw : 'per_ride';
   return { id:String(d.id||''), name:(d.name||'').trim(), email:(d.email||'').trim(), phone:(d.phone||'').trim(),
-           pay_mode:String(d.pay_mode||'per_ride').toLowerCase(),
-           license_number:(d.license_number||'').trim(),
-           work_mode:(d.work_mode||'24h').toLowerCase(),
-           active:d.active!==false };
+           pay_mode, license_number:(d.license_number||'').trim(),
+           work_mode:(d.work_mode||'24h').toLowerCase(), active:d.active!==false };
 }
 function renderDrivers(){
   drvRows.innerHTML = allDrivers.map(d=>{
@@ -834,7 +806,7 @@ function renderDrivers(){
         <td>${escapeHtml(d.name)}</td>
         <td>${escapeHtml(d.email)}</td>
         <td>${escapeHtml(d.phone)}</td>
-        <td><span class="badge">${escapeHtml(d.pay_mode.toUpperCase())}</span></td>
+        <td><span class="badge">${escapeHtml((d.pay_mode||'').toUpperCase())}</span></td>
         <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
         <td class="right actions">
           <div class="btns">
@@ -873,13 +845,19 @@ const dId=document.getElementById('dId'), dName=document.getElementById('dName')
 const drvModalTitle = document.getElementById('drvModalTitle');
 
 function openAddDriver(){ dId.value=''; drvModalTitle.textContent='Add Driver';
-  dName.value=''; dEmail.value=''; dPhone.value=''; dPayMode.value='per_ride'; dLicense.value=''; dWork.value='24h';
-  dActive.checked=true; drvFormErr.textContent=''; drvBackdrop.classList.add('open'); setTimeout(()=>dName.focus(),50); }
+  dName.value=''; dEmail.value=''; dPhone.value='';
+  dPayMode.value='per_ride'; dLicense.value=''; dWork.value='24h';
+  dActive.checked=true; drvFormErr.textContent='';
+  drvBackdrop.classList.add('open'); setTimeout(()=>dName.focus(),50);
+}
 function openEditDriver(id){
   const d = allDrivers.find(x=>x.id===id); if(!d) return;
   dId.value=d.id; drvModalTitle.textContent='Edit Driver';
-  dName.value=d.name; dEmail.value=d.email; dPhone.value=d.phone; dPayMode.value=d.pay_mode||'per_ride';
-  dLicense.value=d.license_number||''; dWork.value=d.work_mode||'24h'; dActive.checked=!!d.active;
+  dName.value=d.name; dEmail.value=d.email; dPhone.value=d.phone;
+  dPayMode.value=d.pay_mode || 'per_ride';
+  dLicense.value=d.license_number || '';
+  dWork.value=d.work_mode || '24h';
+  dActive.checked=!!d.active;
   drvFormErr.textContent=''; drvBackdrop.classList.add('open'); setTimeout(()=>dName.focus(),50);
 }
 function closeDrvModal(){ drvBackdrop.classList.remove('open'); }
@@ -889,16 +867,25 @@ window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeDrvModal(); 
 function validateDriver(){
   if (!dName.value.trim()) return 'Name is required.';
   const pm=(dPayMode.value||'').toLowerCase();
-  if(!['per_ride','hourly','revenue_share'].includes(pm)) return 'Invalid pay mode.';
+  if (!['per_ride','hourly','revenue_share'].includes(pm)) return 'Invalid pay mode.';
   const em=dEmail.value.trim(); if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return 'Invalid email.';
   const ph=dPhone.value.trim(); if (ph && !/^[0-9\-\+\s\(\)]{7,20}$/.test(ph)) return 'Invalid phone.';
   return null;
 }
+
 drvBtnSave.addEventListener('click', async ()=>{
   drvFormErr.textContent=''; const err=validateDriver(); if(err){ drvFormErr.textContent=err; return; }
-  const payload={ id:dId.value||null, name:dName.value.trim(), email:dEmail.value.trim()||null, phone:dPhone.value.trim()||null,
-                  license_number:dLicense.value.trim()||null, work_mode:(dWork.value||'24h').toLowerCase(),
-                  pay_mode:(dPayMode.value||'per_ride').toLowerCase(), active:!!dActive.checked };
+  const payload={
+    id:dId.value||null,
+    name:dName.value.trim(),
+    email:dEmail.value.trim()||null,
+    phone:dPhone.value.trim()||null,
+    license_number:dLicense.value.trim()||null,
+    work_mode:(dWork.value||'24h').toLowerCase(),
+    // 👇 se envía en minúscula (cumple constraint)
+    pay_mode:(dPayMode.value||'per_ride').toLowerCase(),
+    active:!!dActive.checked
+  };
   drvBtnSave.disabled=true;
   try{
     const j = await api(API_DRV,'POST',payload);
@@ -915,7 +902,9 @@ drvRows.addEventListener('click', async (ev)=>{
   const btn=ev.target.closest('button[data-action]'); if(!btn) return;
   const tr=btn.closest('tr[data-id]'); if(!tr) return;
   const id=tr.getAttribute('data-id'); const a=btn.getAttribute('data-action');
+
   if (a==='edit'){ openEditDriver(id); return; }
+
   if (a==='delete'){
     const d=allDrivers.find(x=>x.id===id); if(!d) return;
     if(!confirm(`Delete driver "${d.name}"? This cannot be undone.`)) return;
@@ -924,25 +913,28 @@ drvRows.addEventListener('click', async (ev)=>{
     catch(e){ drvShowMsg('Error deleting: ' + (e.message||e), false); }
     return;
   }
+
   if (a==='toggle'){
     const d=allDrivers.find(x=>x.id===id); if(!d) return;
     const next=!d.active; btn.disabled=true;
     try{
-      await api(API_DRV,'POST',{ id:d.id, name:d.name,
+      await api(API_DRV,'POST',{
+        id:d.id, name:d.name,
         email:d.email||null, phone:d.phone||null,
         license_number:d.license_number||null,
         work_mode:d.work_mode||'24h',
-        // mantener minúsculas que acepta la BD
-        pay_mode:(d.pay_mode||'per_ride').toLowerCase(),
-        active:next });
+        // 👇 mantener en minúscula al actualizar
+        pay_mode:(d.pay_mode||'per_ride'),
+        active:next
+      });
       d.active=next; renderDrivers(); drvShowMsg('Updated.');
     }catch(e){ drvShowMsg('Error updating: ' + (e.message||e), false); }
     finally{ btn.disabled=false; }
+    return;
   }
+
   if (a==='notify'){ alert('Notificaciones: próximo paso 😉'); }
 });
-document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
-document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
 
 /* =================== BOOT =================== */
 window.addEventListener('DOMContentLoaded', async ()=>{
