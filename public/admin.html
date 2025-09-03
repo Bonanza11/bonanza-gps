@@ -1036,7 +1036,7 @@ drvRows.addEventListener('click', async (ev)=>{
       name: d.name,
       email: d.email || null,
       phone: d.phone || null,
-      pay_mode: d.pay_mode || 'PER_RIDE',
+     pay_mode: (d.pay_mode || 'PER_RIDE').toUpperCase(),
       license_number: d.license_number || null,
       work_mode: d.work_mode || '24h',
       active: next
