@@ -552,6 +552,7 @@ async function loadVehicles(){
     const data = await api(API_VEH,'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
+    rebuildVehIndex(); // actualiza el índice para drivers
     await ensureDriversLoaded();
     renderVehicles();
     vehShowMsg('Loaded successfully.'); setTheadTop();
