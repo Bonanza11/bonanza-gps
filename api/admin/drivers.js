@@ -1,4 +1,4 @@
-// /api/admin/drivers.js
+// /api/admin/vehicles.js
 import { pool, query } from "../_db.js";
 
 export const config = { runtime: "nodejs" };
@@ -10,46 +10,46 @@ function checkKey(req) {
   return hdr && String(hdr) === String(envKey);
 }
 
-/* ---------- Validaciones ---------- */
-function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-function isPhone(v) { return /^[0-9\-\+\s\(\)]{7,20}$/.test(v); }
-const ALLOWED = new Set(["per_ride","hourly","per_load"]); // <- minúscula para DB
+/* ---------- Normalización & validación ---------- */
+function normVeh(b = {}) {
+  const kindIn = (b.kind ?? "SUV").toString().trim().toUpperCase();
+  const kind = kindIn === "VAN" ? "VAN" : "SUV";
 
-/* ---------- Normaliza body ---------- */
-function norm(body = {}) {
-  const email = ((body.email ?? "").toString().trim() || null)?.toLowerCase() || null;
-  const phone = (body.phone ?? "").toString().trim() || null;
-
-  // Acepta cualquier casing de entrada, pero guarda en DB en minúscula
-  const pay_mode_in  = (body.pay_mode ?? "PER_RIDE").toString().trim();
-  const pay_mode_db  = pay_mode_in.toLowerCase();     // lo que va a la DB (pasa el CHECK)
-  const pay_mode_ui  = pay_mode_db.toUpperCase();     // lo que devolvemos al frontend
+  const year =
+    b.year === null || b.year === undefined ? null : Number(b.year);
 
   return {
-    id: body.id ? String(body.id) : null,
-    name: (body.name ?? "").toString().trim(),
-    phone,
-    email,
-    license_number: (body.license_number ?? "").toString().trim() || null,
-    work_mode: (body.work_mode ?? "24h").toString().trim().toLowerCase(), // "24h" | "custom"
-    pay_mode_db,  // minúscula
-    pay_mode_ui,  // mayúscula para respuesta
-    active: body.active !== false, // por defecto true
+    id: b.id ? String(b.id) : null,
+    plate: (b.plate ?? "").toString().trim(),
+    kind,
+    year,
+    model: (b.model ?? "").toString().trim() || null,
+    active: b.active !== false,
+    driver_id: b.driver_id ? String(b.driver_id) : null,
+    // soporte legacy si mantienes columna vehicles.driver_name
+    driver_name: (b.driver_name ?? "").toString().trim() || null,
   };
 }
 
-/* ---------- Mapea fila DB -> objeto para UI ---------- */
-function rowToUi(r){
+function validateVeh(v) {
+  if (!v.plate) return "Missing plate";
+  if (v.year && (v.year < 1990 || v.year > 2099)) return "Invalid year";
+  if (!["SUV", "VAN"].includes(v.kind)) return "Invalid kind";
+  return null;
+}
+
+/* ---------- Mapea fila DB -> objeto UI ---------- */
+function rowToUi(r) {
   return {
     id: String(r.id),
-    name: r.name,
-    phone: r.phone,
-    email: r.email,
-    license_number: r.license_number,
-    work_mode: r.work_mode,
-    pay_mode: String(r.pay_mode || "per_ride").toUpperCase(), // UI siempre en MAYÚSCULA
+    plate: r.plate,
+    kind: r.kind === "VAN" ? "VAN" : "SUV",
+    year: r.year,
+    model: r.model,
     active: r.active,
-    created_at: r.created_at
+    driver_id: r.driver_id ? String(r.driver_id) : null,
+    driver_name: r.driver_name || "", // ya viene del JOIN o del fallback
+    created_at: r.created_at,
   };
 }
 
@@ -59,78 +59,110 @@ export default async function handler(req, res) {
       return res.status(401).json({ ok: false, error: "Unauthorized" });
     }
 
-    /* ---------- GET: lista ---------- */
+    /* ---------- GET: lista con JOIN a drivers ---------- */
     if (req.method === "GET") {
-      const rows = await query(`
+      const rows = await query(
+        `
         SELECT
-          id::text AS id, name, phone, email,
-          license_number, work_mode, pay_mode, active, created_at
-        FROM drivers
-        ORDER BY created_at DESC
+          v.id::text AS id,
+          v.plate,
+          v.kind,
+          v.year,
+          v.model,
+          v.active,
+          v.driver_id::text AS driver_id,
+          COALESCE(d.name, v.driver_name) AS driver_name,
+          v.created_at
+        FROM vehicles v
+        LEFT JOIN drivers d ON d.id = v.driver_id
+        ORDER BY v.created_at DESC
         LIMIT 500
-      `);
-      return res.json({ ok: true, drivers: rows.map(rowToUi) });
+        `
+      );
+      return res.json({ ok: true, vehicles: rows.map(rowToUi) });
     }
 
-    /* ---------- POST: create / update ---------- */
+    /* ---------- POST: create / update (acepta driver_id) ---------- */
     if (req.method === "POST") {
-      const b = norm(req.body || {});
-      if (!b.name)                 return res.status(400).json({ ok:false, error:"Missing name" });
-      if (b.email && !isEmail(b.email)) return res.status(400).json({ ok:false, error:"Invalid email" });
-      if (b.phone && !isPhone(b.phone)) return res.status(400).json({ ok:false, error:"Invalid phone" });
-      if (!ALLOWED.has(b.pay_mode_db))  return res.status(400).json({ ok:false, error:"Invalid pay_mode" });
+      const b = normVeh(req.body || {});
+      const err = validateVeh(b);
+      if (err) return res.status(400).json({ ok: false, error: err });
 
       // UPDATE
       if (b.id) {
         const { rows } = await pool.query(
-          `UPDATE drivers
-              SET name=$2,
-                  phone=$3,
-                  email=$4,
-                  license_number=$5,
-                  work_mode=$6,
-                  pay_mode=$7,         -- minúscula
-                  active=$8,
-                  updated_at = now()
-            WHERE id::text = $1
-        RETURNING id::text AS id, name, phone, email, license_number, work_mode, pay_mode, active, created_at`,
-          [b.id, b.name, b.phone, b.email, b.license_number, b.work_mode, b.pay_mode_db, b.active]
+          `
+          UPDATE vehicles
+             SET plate=$2,
+                 kind=$3,
+                 year=$4,
+                 model=$5,
+                 active=$6,
+                 driver_id=$7,
+                 -- si mantienes columna driver_name como texto libre:
+                 driver_name = CASE WHEN $7 IS NULL THEN $8 ELSE NULL END,
+                 updated_at = now()
+           WHERE id::text = $1
+       RETURNING
+         id::text AS id,
+         plate, kind, year, model, active,
+         driver_id::text AS driver_id,
+         (SELECT COALESCE(d.name, vehicles.driver_name)
+            FROM drivers d WHERE d.id = vehicles.driver_id) AS driver_name,
+         created_at
+          `,
+          [b.id, b.plate, b.kind, b.year, b.model, b.active, b.driver_id, b.driver_name]
         );
-        if (!rows.length) return res.status(404).json({ ok:false, error:"Driver not found" });
-        return res.json({ ok:true, driver: rowToUi(rows[0]) });
+        if (!rows.length)
+          return res.status(404).json({ ok: false, error: "Vehicle not found" });
+        return res.json({ ok: true, vehicle: rowToUi(rows[0]) });
       }
 
       // INSERT
       const { rows } = await pool.query(
-        `INSERT INTO drivers (name, phone, email, license_number, work_mode, pay_mode, active)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         RETURNING id::text AS id, name, phone, email, license_number, work_mode, pay_mode, active, created_at`,
-        [b.name, b.phone, b.email, b.license_number, b.work_mode, b.pay_mode_db, b.active]
+        `
+        INSERT INTO vehicles
+          (plate, kind, year, model, active, driver_id, driver_name)
+        VALUES
+          ($1,$2,$3,$4,$5,$6,$7)
+        RETURNING
+          id::text AS id,
+          plate, kind, year, model, active,
+          driver_id::text AS driver_id,
+          (SELECT COALESCE(d.name, vehicles.driver_name)
+             FROM drivers d WHERE d.id = vehicles.driver_id) AS driver_name,
+          created_at
+        `,
+        [b.plate, b.kind, b.year, b.model, b.active, b.driver_id, b.driver_name]
       );
-      return res.json({ ok:true, driver: rowToUi(rows[0]) });
+      return res.json({ ok: true, vehicle: rowToUi(rows[0]) });
     }
 
     /* ---------- DELETE ---------- */
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
-      if (!id) return res.status(400).json({ ok:false, error:"Missing id" });
-      const { rowCount } = await pool.query(`DELETE FROM drivers WHERE id::text = $1`, [id]);
-      if (!rowCount) return res.status(404).json({ ok:false, error:"Driver not found" });
-      return res.json({ ok:true });
+      if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
+      const { rowCount } = await pool.query(
+        `DELETE FROM vehicles WHERE id::text = $1`,
+        [id]
+      );
+      if (!rowCount)
+        return res.status(404).json({ ok: false, error: "Vehicle not found" });
+      return res.json({ ok: true });
     }
 
     res.setHeader("Allow", "GET,POST,DELETE");
-    return res.status(405).json({ ok:false, error:"Method Not Allowed" });
-
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   } catch (e) {
-    // Mapea errores PG conocidos (CHECK, NOT NULL, etc.) a 400
-    if (e && e.code === '23514') { // check_violation
-      return res.status(400).json({ ok:false, error: e.detail || 'Check constraint violation' });
+    // 23503: foreign_key_violation (p.ej., driver_id no existente)
+    if (e && e.code === "23503") {
+      return res
+        .status(400)
+        .json({ ok: false, error: "Invalid driver_id (FK violation)" });
     }
-    if (e && e.code === '23502') { // not_null_violation
-      return res.status(400).json({ ok:false, error: e.column + ' is required' });
-    }
-    console.error("[/api/admin/drivers] error:", e);
-    return res.status(500).json({ ok:false, error: e?.message || "Internal error" });
+    console.error("[/api/admin/vehicles] error:", e);
+    return res
+      .status(500)
+      .json({ ok: false, error: e?.message || "Internal error" });
   }
 }
