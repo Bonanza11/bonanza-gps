@@ -892,23 +892,29 @@ function normalizeDriver(d){
   };
 }
 function renderDrivers(){
-  drvRows.innerHTML = allDrivers.map(d=>`
-    <tr data-id="${d.id}">
-      <td>${escapeHtml(d.name)}</td>
-      <td>${escapeHtml(d.email)}</td>
-      <td>${escapeHtml(d.phone)}</td>
-      <td><span class="badge">${escapeHtml(d.pay_mode)}</span></td>
-      <td class="right actions">
-        <div class="btns">
-          <button class="btn btn-edit"   data-action="edit">Edit</button>
-          <button class="btn btn-danger" data-action="delete">Delete</button>
-          <button class="btn"            data-action="notify">Notificar</button>
-        </div>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="5">No drivers.</td></tr>';
+  drvRows.innerHTML = allDrivers.map(d=>{
+    const on = !!d.active;
+    return `
+      <tr data-id="${d.id}">
+        <td>${escapeHtml(d.name)}</td>
+        <td>${escapeHtml(d.email)}</td>
+        <td>${escapeHtml(d.phone)}</td>
+        <td><span class="badge">${escapeHtml(d.pay_mode)}</span></td>
+        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
+        <td class="right actions">
+          <div class="btns">
+            <button class="btn btn-edit"   data-action="edit">Edit</button>
+            <button class="btn btn-danger" data-action="delete">Delete</button>
+            <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">
+              ${on ? 'Turn Off' : 'Turn On'}
+            </button>
+            <button class="btn"            data-action="notify">Notificar</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="6">No drivers.</td></tr>';
 }
-
 async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   drvShowMsg('');
