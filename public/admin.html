@@ -384,16 +384,20 @@ const views = {
   drivers     : document.getElementById('view-drivers'),
   settings    : document.getElementById('view-settings'),
 };
-tabsEl.addEventListener('click', (e)=>{
+tabsEl.addEventListener('click', async (e)=>{
   const b = e.target.closest('.tab-btn'); if(!b) return;
   const t = b.dataset.tab;
   [...tabsEl.querySelectorAll('.tab-btn')].forEach(x=>x.setAttribute('aria-selected', String(x===b)));
   Object.entries(views).forEach(([key,sec])=> sec.hidden = key!==t );
   setTheadTop();
-  if (t==='vehicles') loadVehicles();
-  if (t==='clients')  loadClients();
-  if (t==='reservations') loadReservations();
-  if (t==='drivers')  loadDrivers();
+
+  if (t==='vehicles')      loadVehicles();
+  if (t==='clients')       loadClients();
+  if (t==='reservations')  loadReservations();
+  if (t==='drivers') {
+    await fetchVehiclesForDrivers(); // 👈 IMPORTANTE
+    await loadDrivers();
+  }
 });
 
 /* =================== ENV / LOGOUT =================== */
@@ -957,8 +961,7 @@ function renderDrivers(){
       </tr>`;
   }).join('') || '<tr><td colspan="7">No drivers.</td></tr>';  // 👈 7 columnas
 }
-async function loadDrivers(){
-  // la tabla de drivers ahora tiene 7 columnas (por Vehicle[s])
+  async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
 
