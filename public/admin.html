@@ -703,20 +703,14 @@ vehRows.addEventListener('click', async (ev)=>{
   }
 });
 // ===== VEHICLE BUTTON LISTENERS =====
-document.getElementById('btnAddVehicle')
-  .addEventListener('click', openAddVehicle);
-
-document.getElementById('btnReloadVehicles')
-  .addEventListener('click', loadVehicles);
-
-document.getElementById('vehControls')
-  .addEventListener('click', (e)=>{
-    const b = e.target.closest('button[data-filter]');
-    if (!b) return;
-    filterKind = b.getAttribute('data-filter') || 'ALL';
-    renderVehicles();
-    setTheadTop();
-  });
+document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
+document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
+document.getElementById('vehControls').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-filter]'); if(!b) return;
+  filterKind = b.getAttribute('data-filter') || 'ALL';
+  renderVehicles();
+  setTheadTop();
+});
 /* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
