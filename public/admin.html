@@ -468,6 +468,19 @@ function rebuildVehIndex(){
   vehByDriver = map;
 }
 
+  // Prefetch silencioso: trae vehículos si aún no están y reconstruye el índice
+async function fetchVehiclesForDrivers(){
+  if (allVehicles.length && vehByDriver.size) return; // ya tenemos data útil
+  try{
+    const data = await api(API_VEH, 'GET');
+    const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
+    allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
+    rebuildVehIndex(); // importa para la columna Vehicle(s)
+  }catch(e){
+    console.warn('Prefetch vehicles for Drivers failed:', e);
+    // No bloquea: si falla, la columna mostrará "—"
+  }
+}
 /* refs modal vehículo */
 const fPlate    = document.getElementById('fPlate');
 const fDriverId = document.getElementById('fDriverId');
