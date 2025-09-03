@@ -538,8 +538,6 @@ function computeStats(){
   stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
   stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
 }
-// --- filtro opcional por driver (clic desde Drivers) ---
-let vehFilterDriverId = null;
 
 function visibleVeh(){
   // filtro por tipo
