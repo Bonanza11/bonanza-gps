@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Bonanza — Drivers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0f1220; --card:#171a2b; --line:#2a3550; --text:#e9eef7; --muted:#a7b0c3; --ok:#22c55e; --bad:#ff6b6b;
+  }
+  *{ box-sizing:border-box }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
+  header{ padding:14px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #0003; background:#0c1020; position:sticky; top:0; z-index:10 }
+  header h1{ margin:0; font-size:18px; font-weight:800 }
+  .wrap{ max-width:900px; margin:16px auto; padding:0 16px }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:12px }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+  .muted{ color:var(--muted) }
+  button{ background:#2a3550; color:#e9eef7; border:1px solid #ffffff1f; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:14px }
+  button.primary{ background:#3b4364 }
+  button.good{ background:#12351e; border-color:#16a34a; color:#9ff5be }
+  button.bad{ background:#3a1b1b; border-color:#dc2626; color:#ffcccc }
+  input,select{ height:40px; border-radius:8px; border:1px solid #30405a; background:#12182a; color:#e9eef7; padding:0 10px }
+  .msg{ min-height:20px; color:var(--muted); margin:6px 0 }
+  .grid{ display:grid; gap:10px }
+  .job{ border:1px dashed #2a3550; border-radius:8px; padding:10px }
+  .job h3{ margin:0 0 4px; font-size:16px }
+  .badge{ padding:3px 8px; border-radius:999px; font-size:12px; font-weight:700; background:#33384d; color:#cdd6ea; border:1px solid #4b5576 }
+  .spacer{ flex:1 }
+  .right{ text-align:right }
+  .hidden{ display:none !important }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bonanza — Driver</h1>
+  <div class="spacer"></div>
+  <button id="btnLogout" class="bad">Logout</button>
+</header>
+
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <section id="view-login" class="card">
+    <h2 style="margin:0 0 8px">Login</h2>
+    <div class="row">
+      <input id="drEmail" type="email" placeholder="email@bonanza.com" style="flex:1 1 260px" />
+      <input id="drCode" placeholder="access code / PIN" style="flex:1 1 160px" />
+      <button id="btnLogin" class="primary">Enter</button>
+    </div>
+    <p id="loginMsg" class="msg"></p>
+  </section>
+
+  <!-- HOME -->
+  <section id="view-home" class="hidden">
+    <!-- Driver header -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <div id="drName" style="font-weight:800; font-size:16px">Driver</div>
+          <div class="muted" id="drMeta"></div>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnToggle" class="good">Go ONLINE</button>
+      </div>
+      <p id="topMsg" class="msg"></p>
+    </div>
+
+    <!-- My vehicle(s) -->
+    <div class="card">
+      <h2 style="margin:0 0 8px">My Vehicle(s)</h2>
+      <div id="myVehicles" class="grid"></div>
+    </div>
+
+    <!-- Assignments -->
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0">Assignments</h2>
+        <div class="spacer"></div>
+        <button id="btnReload" class="primary">Reload</button>
+      </div>
+      <p id="assignMsg" class="msg"></p>
+      <div id="assignList" class="grid"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ===== CONFIG (ajusta si tus endpoints cambian) ===== */
+const API_AUTH_DRIVER   = '/api/auth/driver-login';          // opcional si implementas login por email+pin
+const API_ME            = '/api/driver/me';                  // datos del driver y online
+const API_ASSIGNMENTS   = '/api/drivers/assignments';        // GET lista, PATCH estado
+const API_NOTIFY        = '/api/drivers/notify';             // POST notificaciones (opcional)
+const API_VEHICLES      = '/api/admin/vehicles';             // para obtener vehículos asignados (simple)
+
+/* ===== STATE ===== */
+let driverToken = localStorage.getItem('driver_token') || null;
+let me = null; // { id, name, email, phone, active, online?, vehicleIds? }
+
+/* ===== HELPERS ===== */
+function $(id){ return document.getElementById(id); }
+function show(id, on){ $(id).classList.toggle('hidden', !on); }
+function msg(el, t, ok=true){ el.textContent=t||''; el.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function when(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
+
+/* Auth wrapper */
+async function api(url, method='GET', body=null){
+  const headers = {};
+  if (driverToken) headers.Authorization = 'Bearer '+driverToken;
+  if (body){ headers['Content-Type']='application/json'; }
+  const r = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
+  const txt = await r.text();
+  let data; try{ data = JSON.parse(txt); }catch{ data = null; }
+  if (!r.ok || (data && data.ok===false)){ throw new Error((data && (data.error||data.message)) || `HTTP ${r.status}`); }
+  return data ?? {};
+}
+
+/* ===== RENDER ===== */
+function renderMe(){
+  $('drName').textContent = me?.name || 'Driver';
+  $('drMeta').textContent = [me?.email, me?.phone].filter(Boolean).join(' · ');
+  const online = !!me?.online;
+  $('btnToggle').textContent = online ? 'Go OFFLINE' : 'Go ONLINE';
+  $('btnToggle').className = online ? 'bad' : 'good';
+}
+
+function renderVehicles(vehicles){
+  const box = $('myVehicles');
+  if (!Array.isArray(vehicles) || vehicles.length===0){
+    box.innerHTML = '<div class="muted">No vehicles assigned.</div>';
+    return;
+  }
+  box.innerHTML = vehicles.map(v => `
+    <div class="job">
+      <h3>${escapeHtml(v.plate)} <span class="badge">${escapeHtml(v.kind||'')}</span></h3>
+      <div class="muted">${v.year ? v.year+' · ' : ''}${escapeHtml(v.model||'')}</div>
+      ${v.active ? '<div class="badge" style="margin-top:6px;background:#0f3f23;border:1px solid #16a34a;color:#22c55e">ACTIVE</div>'
+                 : '<div class="badge" style="margin-top:6px;background:#3b0f12;border:1px solid #dc2626;color:#ff6b6b">OFF</div>'}
+    </div>
+  `).join('');
+}
+
+function badgeStatus(s){
+  const x = String(s||'PENDING').toUpperCase();
+  const map = {
+    PENDING:'background:#33384d;color:#cdd6ea;border:1px solid #4b5576',
+    ASSIGNED:'background:#23343a;color:#7fe9b2;border:1px solid #2c8e64',
+    STARTED:'background:#34301f;color:#f7b06a;border:1px solid #b78e4f',
+    ARRIVED:'background:#1f2f45;color:#a3d1ff;border:1px solid #3a6ea5',
+    DONE:'background:#1c3321;color:#84f1a8;border:1px solid #1d7f49',
+    CANCELLED:'background:#3a2124;color:#ffb0b0;border:1px solid #b04747',
+  };
+  return `<span class="badge" style="${map[x]||map.PENDING}">${x}</span>`;
+}
+function renderAssignments(list){
+  const box = $('assignList');
+  if (!Array.isArray(list) || list.length===0){
+    box.innerHTML = '<div class="muted">No assignments yet.</div>';
+    return;
+  }
+  box.innerHTML = list.map(r => `
+    <div class="job" data-id="${r.id}">
+      <h3>#${r.id} ${badgeStatus(r.status)}</h3>
+      <div><strong>${escapeHtml(r.customer_name||'')}</strong></div>
+      <div class="muted">${escapeHtml(r.pickup_location||'')} → ${escapeHtml(r.dropoff_location||'')}</div>
+      <div class="muted">${when(r.pickup_time)}</div>
+      <div class="row" style="margin-top:8px">
+        <button data-action="start">Start</button>
+        <button data-action="arrived">Arrived</button>
+        <button data-action="done" class="good">Done</button>
+        <button data-action="cancel" class="bad">Cancel</button>
+        <div class="spacer"></div>
+        <button data-action="ping">Notify Dispatch</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ===== DATA LOADERS ===== */
+async function loadMe(){
+  const j = await api(API_ME,'GET');
+  // forma esperada: { ok:true, driver:{id,name,email,phone,active,online}, vehicles:[...] }
+  me = j.driver || j.me || null;
+  renderMe();
+  renderVehicles(j.vehicles || []);
+}
+async function loadAssignments(){
+  const j = await api(API_ASSIGNMENTS,'GET'); // espera assignments del driver autenticado
+  const list = Array.isArray(j.rows) ? j.rows : (Array.isArray(j) ? j : (j.assignments || []));
+  renderAssignments(list);
+}
+
+/* ===== ACTIONS ===== */
+$('btnLogin').addEventListener('click', async ()=>{
+  $('loginMsg').textContent = '';
+  const email = $('drEmail').value.trim();
+  const code  = $('drCode').value.trim();
+  if (!email || !code){ msg($('loginMsg'),'Email y código requeridos', false); return; }
+  try{
+    // Implementa este endpoint para emitir un token de driver
+    const j = await api(API_AUTH_DRIVER, 'POST', { email, code });
+    driverToken = j.token; localStorage.setItem('driver_token', driverToken);
+    await afterLogin();
+  }catch(e){ msg($('loginMsg'), e.message || 'Login error', false); }
+});
+
+$('btnLogout').addEventListener('click', ()=>{
+  localStorage.removeItem('driver_token'); driverToken=null; me=null;
+  show('view-login', true); show('view-home', false);
+});
+
+$('btnToggle').addEventListener('click', async ()=>{
+  if (!me) return;
+  const next = !me.online;
+  try{
+    await api(API_ME,'PATCH',{ online: next });
+    me.online = next;
+    renderMe();
+    msg($('topMsg'), next ? 'You are ONLINE' : 'You are OFFLINE', true);
+  }catch(e){ msg($('topMsg'), e.message || 'Error updating status', false); }
+});
+
+$('btnReload').addEventListener('click', async ()=>{
+  try{
+    await loadAssignments();
+    msg($('assignMsg'),'Updated.');
+  }catch(e){ msg($('assignMsg'), e.message || 'Error loading', false); }
+});
+
+$('assignList').addEventListener('click', async (ev)=>{
+  const b = ev.target.closest('button[data-action]'); if(!b) return;
+  const card = ev.target.closest('.job[data-id]'); if(!card) return;
+  const id = card.getAttribute('data-id');
+  const a  = b.getAttribute('data-action');
+  try{
+    if (a==='ping'){ await api(API_NOTIFY,'POST',{ assignment_id:id, kind:'help' }); return; }
+    if (a==='start')   await api(API_ASSIGNMENTS,'PATCH',{ id, status:'STARTED' });
+    if (a==='arrived') await api(API_ASSIGNMENTS,'PATCH',{ id, status:'ARRIVED' });
+    if (a==='done')    await api(API_ASSIGNMENTS,'PATCH',{ id, status:'DONE' });
+    if (a==='cancel'){ if(!confirm('Cancel this job?')) return; await api(API_ASSIGNMENTS,'PATCH',{ id, status:'CANCELLED' }); }
+    await loadAssignments();
+  }catch(e){ alert(e.message || 'Action error'); }
+});
+
+/* ===== BOOT ===== */
+async function afterLogin(){
+  show('view-login', false); show('view-home', true);
+  try{
+    await loadMe();
+    await loadAssignments();
+  }catch(e){
+    msg($('topMsg'), e.message || 'Load error', false);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async ()=>{
+  if (driverToken){ await afterLogin(); }
+  else { show('view-login', true); show('view-home', false); }
+});
+</script>
+</body>
+</html>
