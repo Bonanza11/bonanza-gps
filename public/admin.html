@@ -515,94 +515,100 @@ let editingId   = null;
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 
 /* ---- drivers cache para el select ---- */
-const fPlate    = document.getElementById('fPlate');
-const fDriverId = document.getElementById('fDriverId');
-const fKind     = document.getElementById('fKind');
-const fYear     = document.getElementById('fYear');
-const fModel    = document.getElementById('fModel');
-const fActive   = document.getElementById('fActive');
-const vehBackdrop   = document.getElementById('vehBackdrop');
-const vehBtnClose   = document.getElementById('vehBtnClose');
-const vehBtnSave    = document.getElementById('vehBtnSave');
-const vehFormErr    = document.getElementById('vehFormErr');
-const vehModalTitle = document.getElementById('vehModalTitle');
-
 let cacheDrivers = [];
 async function ensureDriversLoaded(){
+  // Si ya tenemos caché, úsala
   if (cacheDrivers.length) return cacheDrivers;
-  const j = await api(API_DRV,'GET');               // { ok:true, drivers:[...] }
+
+  // Si la pestaña Drivers ya cargó, usa esa lista
+  if (Array.isArray(allDrivers) && allDrivers.length){
+    cacheDrivers = allDrivers
+      .map(d => ({
+        id: String(d.id),
+        name: (d.name || '').trim(),
+        active: d.active !== false
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return cacheDrivers;
+  }
+
+  // Si no, trae desde la API
+  const j = await api(API_DRV, 'GET');  // { ok:true, drivers:[...] }
   const raw = Array.isArray(j.drivers) ? j.drivers : [];
-  cacheDrivers = raw.map(d => ({
-    id:String(d.id), name:(d.name||'').trim(), active:d.active!==false
-  })).sort((a,b)=> a.name.localeCompare(b.name));
+  cacheDrivers = raw
+    .map(d => ({
+      id: String(d.id),
+      name: (d.name || '').trim(),
+      active: d.active !== false
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   return cacheDrivers;
 }
+
 function fillDriversSelect(list){
   fDriverId.innerHTML =
     `<option value="">— No driver —</option>` +
-    list.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}${d.active?'':' (OFF)'}</option>`).join('');
+    (list && list.length
+      ? list.map(d =>
+          `<option value="${d.id}">${escapeHtml(d.name)}${d.active ? '' : ' (OFF)'}</option>`
+        ).join('')
+      : `<option value="" disabled>(Create a driver in the Drivers tab)</option>`
+    );
 }
 
-function normalizeVehicle(v){
-  const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN') ? 'VAN':'SUV';
-  return {
-    id:String(v.id||''),
-    plate:(v.plate||'').trim(),
-    driver_id: v.driver_id ? String(v.driver_id) : (v.driverId ? String(v.driverId) : (v.driver_id||null)),
-    driver_name:(v.driver_name||'').trim(),
-    kind:kindNorm,
-    year:(v.year!=null?Number(v.year):null),
-    model:(v.model||'').trim(),
-    active:!!v.active
-  };
-}
-function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka!==0) return ka; return (a.plate||'').localeCompare(b.plate||''); }
+async function openAddVehicle(){
+  editingId = null;
+  vehModalTitle.textContent = 'Add Vehicle';
+  fPlate.value = '';
+  fKind.value = 'SUV';
+  fYear.value = new Date().getFullYear();
+  fModel.value = '';
+  fActive.checked = false;
+  vehFormErr.textContent = '';
 
-function computeStats(){
-  const total=allVehicles.length, active=allVehicles.filter(v=>v.active).length;
-  stat.total.textContent=total; stat.active.textContent=active;
-  stat.inactive.textContent=Math.max(0,total-active);
-  stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
-  stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
-}
-function visibleVeh(){ return (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
+  // Placeholder mientras carga drivers
+  fDriverId.innerHTML = `<option value="">Loading drivers…</option>`;
+  try {
+    const list = await ensureDriversLoaded();
+    fillDriversSelect(list);
+    fDriverId.value = '';
+  } catch (e) {
+    vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e);
+  }
 
-function renderVehicles(){
-  computeStats();
-  const list = visibleVeh();
-  vehRows.innerHTML = list.map(v=>{
-    const on = !!v.active;
-    const drvName = v.driver_name || (v.driver_id ? (cacheDrivers.find(d=>d.id===String(v.driver_id))?.name||'') : '');
-    return `
-      <tr data-id="${v.id}">
-        <td>${escapeHtml(v.plate)}</td>
-        <td>${escapeHtml(drvName)}</td>
-        <td>${escapeHtml(v.kind)}</td>
-        <td>${v.year ?? ''}</td>
-        <td>${escapeHtml(v.model || '')}</td>
-        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-        <td class="right actions">
-          <div class="btns">
-            <button class="btn btn-edit"      data-action="edit">Edit</button>
-            <button class="btn btn-danger"    data-action="delete">Delete</button>
-            <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
+  vehBackdrop.classList.add('open');
+  setTimeout(() => fPlate.focus(), 50);
 }
 
-async function loadVehicles(){
-  vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  vehShowMsg('');
-  try{
-    await ensureAdminToken();
-    const data = await api(API_VEH,'GET');
-    const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-    allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    // precarga drivers para nombres
-    await ensureDriversLoaded();
+async function openEditVehicle(id){
+  const v = allVehicles.find(x => x.id === id);
+  if (!v) return;
+
+  editingId = id;
+  vehModalTitle.textContent = 'Edit Vehicle';
+  fPlate.value = v.plate || '';
+  fKind.value = v.kind || 'SUV';
+  fYear.value = v.year || new Date().getFullYear();
+  fModel.value = v.model || '';
+  fActive.checked = !!v.active;
+  vehFormErr.textContent = '';
+
+  // Placeholder mientras carga drivers
+  fDriverId.innerHTML = `<option value="">Loading drivers…</option>`;
+  try {
+    const list = await ensureDriversLoaded();
+    fillDriversSelect(list);
+    fDriverId.value = v.driver_id || '';
+  } catch (e) {
+    vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e);
+  }
+
+  vehBackdrop.classList.add('open');
+  setTimeout(() => fPlate.focus(), 50);
+}
+
+/* Precargar drivers en segundo plano al iniciar */
+ensureDriversLoaded().catch(() => {});
     renderVehicles();
     vehShowMsg('Loaded successfully.');
     setTheadTop();
