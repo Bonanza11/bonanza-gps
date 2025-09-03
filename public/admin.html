@@ -1124,8 +1124,10 @@ drvRows.addEventListener('click', async (ev)=>{
         active:next
       });
       d.active=next;
-      renderDrivers();
+      updateCacheDriverActive(d.id, d.active); // sincroniza cache
+      renderDrivers();                        // refresca tabla Drivers
       drvShowMsg('Updated.');
+      renderVehicles();                       // 🔥 refresca Vehicles
     }catch(e){ 
       drvShowMsg('Error updating: ' + (e.message||e), false); 
     }
