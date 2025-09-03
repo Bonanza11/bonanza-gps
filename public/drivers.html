@@ -87,16 +87,16 @@
 </div>
 
 <script>
-/* ===== CONFIG (ajusta si tus endpoints cambian) ===== */
-const API_AUTH_DRIVER   = '/api/auth/driver-login';          // opcional si implementas login por email+pin
-const API_ME            = '/api/driver/me';                  // datos del driver y online
-const API_ASSIGNMENTS   = '/api/drivers/assignments';        // GET lista, PATCH estado
-const API_NOTIFY        = '/api/drivers/notify';             // POST notificaciones (opcional)
-const API_VEHICLES      = '/api/admin/vehicles';             // si quieres cargar vehículos aparte
+/* ===== CONFIG ===== */
+const API_AUTH_DRIVER   = '/api/auth/driver-login';
+const API_ME            = '/api/driver/me';
+const API_ASSIGNMENTS   = '/api/drivers/assignments';
+const API_NOTIFY        = '/api/drivers/notify';
+const API_VEHICLES      = '/api/admin/vehicles';
 
 /* ===== STATE ===== */
 let driverToken = localStorage.getItem('driver_token') || null;
-let me = null; // { id, name, email, phone, active, online? }
+let me = null;
 
 /* ===== HELPERS ===== */
 function $(id){ return document.getElementById(id); }
@@ -125,7 +125,6 @@ function renderMe(){
   $('btnToggle').textContent = online ? 'Go OFFLINE' : 'Go ONLINE';
   $('btnToggle').className = online ? 'bad' : 'good';
 }
-
 function renderVehicles(vehicles){
   const box = $('myVehicles');
   if (!Array.isArray(vehicles) || vehicles.length===0){
@@ -141,7 +140,6 @@ function renderVehicles(vehicles){
     </div>
   `).join('');
 }
-
 function badgeStatus(s){
   const x = String(s||'PENDING').toUpperCase();
   const map = {
@@ -181,13 +179,12 @@ function renderAssignments(list){
 /* ===== DATA LOADERS ===== */
 async function loadMe(){
   const j = await api(API_ME,'GET');
-  // forma esperada: { ok:true, driver:{id,name,email,phone,active,online}, vehicles:[...] }
   me = j.driver || j.me || null;
   renderMe();
   renderVehicles(j.vehicles || []);
 }
 async function loadAssignments(){
-  const j = await api(API_ASSIGNMENTS,'GET'); // espera assignments del driver autenticado
+  const j = await api(API_ASSIGNMENTS,'GET');
   const list = Array.isArray(j.rows) ? j.rows : (Array.isArray(j) ? j : (j.assignments || []));
   renderAssignments(list);
 }
@@ -199,18 +196,15 @@ $('btnLogin').addEventListener('click', async ()=>{
   const code  = $('drCode').value.trim();
   if (!email || !code){ msg($('loginMsg'),'Email y código requeridos', false); return; }
   try{
-    // Implementa este endpoint para emitir un token de driver
     const j = await api(API_AUTH_DRIVER, 'POST', { email, code });
     driverToken = j.token; localStorage.setItem('driver_token', driverToken);
     await afterLogin();
   }catch(e){ msg($('loginMsg'), e.message || 'Login error', false); }
 });
-
 $('btnLogout').addEventListener('click', ()=>{
   localStorage.removeItem('driver_token'); driverToken=null; me=null;
   show('view-login', true); show('view-home', false);
 });
-
 $('btnToggle').addEventListener('click', async ()=>{
   if (!me) return;
   const next = !me.online;
@@ -221,14 +215,12 @@ $('btnToggle').addEventListener('click', async ()=>{
     msg($('topMsg'), next ? 'You are ONLINE' : 'You are OFFLINE', true);
   }catch(e){ msg($('topMsg'), e.message || 'Error updating status', false); }
 });
-
 $('btnReload').addEventListener('click', async ()=>{
   try{
     await loadAssignments();
     msg($('assignMsg'),'Updated.');
   }catch(e){ msg($('assignMsg'), e.message || 'Error loading', false); }
 });
-
 $('assignList').addEventListener('click', async (ev)=>{
   const b = ev.target.closest('button[data-action]'); if(!b) return;
   const card = ev.target.closest('.job[data-id]'); if(!card) return;
@@ -254,28 +246,27 @@ async function afterLogin(){
     msg($('topMsg'), e.message || 'Load error', false);
   }
 }
-
 window.addEventListener('DOMContentLoaded', async ()=>{
   if (driverToken){ await afterLogin(); }
   else { show('view-login', true); show('view-home', false); }
 });
 
-/* ===== DEV: helpers para probar desde consola ===== */
-window.renderMe = renderMe;
-window.renderVehicles = (arr)=>renderVehicles(arr||[]);
-window.renderAssignments = (arr)=>renderAssignments(arr||[]);
+/* ===== DEV HELPERS (para consola, sin recursión) ===== */
+window.setMeDemo = (obj)=>{ me=obj; renderMe(); };
+window.renderVehiclesDemo = (arr)=>{ renderVehicles(arr||[]); };
+window.renderAssignmentsDemo = (arr)=>{ renderAssignments(arr||[]); };
 window.seedDemo = function(){
   me = { id:"1", name:"John Doe", email:"driver@bonanza.com", phone:"801-555-0000", online:true };
   renderMe();
-  renderVehicles([
+  renderVehiclesDemo([
     { id:"v1", plate:"UT-123ABC", kind:"SUV", year:2021, model:"Suburban LT", active:true },
     { id:"v2", plate:"UT-456XYZ", kind:"VAN", year:2019, model:"Sprinter 2500", active:false }
   ]);
-  renderAssignments([
+  renderAssignmentsDemo([
     { id:"1001", status:"ASSIGNED", customer_name:"Mr. Bonanza", pickup_location:"SLC Airport", dropoff_location:"Park City", pickup_time: Date.now()+3600000 },
-    { id:"1002", status:"PENDING",  customer_name:"Jane Smith",   pickup_location:"Deer Valley",  dropoff_location:"Salt Lake City", pickup_time: Date.now()+7200000 }
+    { id:"1002", status:"PENDING",  customer_name:"Jane Smith",   pickup_location:"Deer Valley", dropoff_location:"Salt Lake City", pickup_time: Date.now()+7200000 }
   ]);
-  console.log('Demo seeded. You can call renderMe(), renderVehicles([...]), renderAssignments([...])');
+  console.log("Demo seeded. Usa setMeDemo(), renderVehiclesDemo(), renderAssignmentsDemo()");
 };
 </script>
 </body>
