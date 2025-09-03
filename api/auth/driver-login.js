@@ -1,50 +1,66 @@
 // /api/auth/driver-login.js
+import { query } from "../_db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { query } from "../_lib/db.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto123";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ ok:false, error:"method_not_allowed" });
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+  }
+
+  const { email, code } = req.body || {};
+  if (!email || !code) {
+    return res.status(400).json({ ok: false, error: "missing_fields" });
   }
 
   try {
-    const { email, code } = req.body || {};
-    if (!email || !code) {
-      return res.status(400).json({ ok:false, error:"missing_fields" });
-    }
-
-    const rows = await query(
-      "select id, name, email, phone, access_code, active, online from drivers where email=$1 limit 1",
+    // Busca el driver por email
+    const { rows } = await query(
+      `SELECT id, name, email, phone, active, online, password_hash
+       FROM drivers
+       WHERE lower(email) = lower($1)
+       LIMIT 1`,
       [email]
     );
-    const driver = rows[0];
-    if (!driver) return res.status(404).json({ ok:false, error:"not_found" });
 
-    // compara el code (plaintext o hashed con bcrypt)
-    let valid = false;
-    if (driver.access_code) {
-      if (driver.access_code.startsWith("$2a$")) {
-        valid = await bcrypt.compare(code, driver.access_code);
-      } else {
-        valid = driver.access_code === code;
-      }
+    const d = rows[0];
+    if (!d) {
+      return res.status(404).json({ ok: false, error: "not_found" });
     }
-    if (!valid) return res.status(401).json({ ok:false, error:"invalid_code" });
+    if (d.active === false) {
+      return res.status(403).json({ ok: false, error: "inactive_driver" });
+    }
+    if (!d.password_hash) {
+      // Seguridad: si no hay hash, fuerza error (no caigas al PIN plano)
+      return res.status(500).json({ ok: false, error: "missing_password_hash" });
+    }
 
-    // genera JWT
-    const token = jwt.sign(
-      { sub: driver.id, role:"DRIVER" },
-      JWT_SECRET,
-      { expiresIn:"12h" }
-    );
+    const ok = await bcrypt.compare(String(code), d.password_hash);
+    if (!ok) {
+      return res.status(401).json({ ok: false, error: "invalid_credentials" });
+    }
 
-    delete driver.access_code;
-    return res.json({ ok:true, token, driver });
+    // Emite JWT con rol DRIVER
+    const token = jwt.sign({ sub: d.id, roles: ["DRIVER"] }, JWT_SECRET, {
+      expiresIn: "12h",
+    });
+
+    // No expongas password_hash
+    const driver = {
+      id: d.id,
+      name: d.name,
+      email: d.email,
+      phone: d.phone,
+      active: d.active,
+      online: d.online,
+    };
+
+    return res.json({ ok: true, token, driver });
   } catch (e) {
-    console.error("[driver-login]", e);
-    return res.status(500).json({ ok:false, error:"server_error" });
+    console.error("[driver-login] error:", e);
+    return res.status(500).json({ ok: false, error: "server_error" });
   }
 }
