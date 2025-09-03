@@ -92,11 +92,11 @@ const API_AUTH_DRIVER   = '/api/auth/driver-login';          // opcional si impl
 const API_ME            = '/api/driver/me';                  // datos del driver y online
 const API_ASSIGNMENTS   = '/api/drivers/assignments';        // GET lista, PATCH estado
 const API_NOTIFY        = '/api/drivers/notify';             // POST notificaciones (opcional)
-const API_VEHICLES      = '/api/admin/vehicles';             // para obtener vehículos asignados (simple)
+const API_VEHICLES      = '/api/admin/vehicles';             // si quieres cargar vehículos aparte
 
 /* ===== STATE ===== */
 let driverToken = localStorage.getItem('driver_token') || null;
-let me = null; // { id, name, email, phone, active, online?, vehicleIds? }
+let me = null; // { id, name, email, phone, active, online? }
 
 /* ===== HELPERS ===== */
 function $(id){ return document.getElementById(id); }
@@ -259,6 +259,24 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   if (driverToken){ await afterLogin(); }
   else { show('view-login', true); show('view-home', false); }
 });
+
+/* ===== DEV: helpers para probar desde consola ===== */
+window.renderMe = renderMe;
+window.renderVehicles = (arr)=>renderVehicles(arr||[]);
+window.renderAssignments = (arr)=>renderAssignments(arr||[]);
+window.seedDemo = function(){
+  me = { id:"1", name:"John Doe", email:"driver@bonanza.com", phone:"801-555-0000", online:true };
+  renderMe();
+  renderVehicles([
+    { id:"v1", plate:"UT-123ABC", kind:"SUV", year:2021, model:"Suburban LT", active:true },
+    { id:"v2", plate:"UT-456XYZ", kind:"VAN", year:2019, model:"Sprinter 2500", active:false }
+  ]);
+  renderAssignments([
+    { id:"1001", status:"ASSIGNED", customer_name:"Mr. Bonanza", pickup_location:"SLC Airport", dropoff_location:"Park City", pickup_time: Date.now()+3600000 },
+    { id:"1002", status:"PENDING",  customer_name:"Jane Smith",   pickup_location:"Deer Valley",  dropoff_location:"Salt Lake City", pickup_time: Date.now()+7200000 }
+  ]);
+  console.log('Demo seeded. You can call renderMe(), renderVehicles([...]), renderAssignments([...])');
+};
 </script>
 </body>
 </html>
