@@ -538,7 +538,25 @@ function computeStats(){
   stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
   stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
 }
-function visibleVeh
+// --- filtro opcional por driver (clic desde Drivers) ---
+let vehFilterDriverId = null;
+
+function visibleVeh(){
+  // filtro por tipo
+  let base = (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind);
+  // filtro por driver si está activo
+  if (vehFilterDriverId) {
+    base = base.filter(v => String(v.driver_id || '') === String(vehFilterDriverId));
+  }
+  return base;
+}
+function renderVehicles(){
+  computeStats();
+  const list = visibleVeh();
+  vehRows.innerHTML = list.map(v=>{
+    const on = !!v.active;
+    const drvName = v.driver_name || (v.driver_id ? (cacheDrivers.find(d=>d.id===String(v.driver_id))?.name||'') : '');
+    return `
       <tr data-id="${v.id}">
         <td>${escapeHtml(v.plate)}</td>
         <td>${escapeHtml(drvName)}</td>
@@ -553,7 +571,8 @@ function visibleVeh
             <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
           </div>
         </td>
-      </tr>`; }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
+      </tr>`;
+  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
 }
 async function loadVehicles(){
   vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
