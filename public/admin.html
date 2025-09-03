@@ -1026,18 +1026,30 @@ drvRows.addEventListener('click', async (ev)=>{
   }
 
   if (a==='toggle'){
-    const d = allDrivers.find(x=>x.id===id); if(!d) return;
-    const next = !d.active;
-    try{
-      await api(API_DRV, 'POST', { id, active: next });  // update parcial en tu backend
-      d.active = next;
-      renderDrivers();
-      drvShowMsg('Updated.');
-    }catch(e){
-      drvShowMsg('Error updating: ' + (e.message||e), false);
-    }
-    return;
+  const d = allDrivers.find(x => x.id === id);
+  if (!d) return;
+  const next = !d.active;
+
+  try {
+    await api(API_DRV, 'POST', {
+      id: d.id,
+      name: d.name,
+      email: d.email || null,
+      phone: d.phone || null,
+      pay_mode: d.pay_mode || 'PER_RIDE',
+      license_number: d.license_number || null,
+      work_mode: d.work_mode || '24h',
+      active: next
+    });
+
+    d.active = next;
+    renderDrivers();
+    drvShowMsg('Updated.');
+  } catch (e) {
+    drvShowMsg('Error updating: ' + (e.message || e), false);
   }
+  return;
+}
 
   if (a==='notify'){
     alert('Notificaciones: próximo paso 😉');
