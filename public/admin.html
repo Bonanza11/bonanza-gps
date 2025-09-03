@@ -700,11 +700,18 @@ vehRows.addEventListener('click', async (ev)=>{
 document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
 document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
 document.getElementById('vehControls').addEventListener('click', (e)=>{
-  const b = e.target.closest('button[data-filter]'); if(!b) return;
+  const b = e.target.closest('button[data-filter]');
+  if (!b) return;
+ // 👇 Limpia cualquier filtro activo por driver
+  vehFilterDriverId = null;
+
+// Cambia el filtro por tipo
   filterKind = b.getAttribute('data-filter') || 'ALL';
+
+// Renderiza nuevamente
   renderVehicles();
   setTheadTop();
-});
+});  
 /* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
