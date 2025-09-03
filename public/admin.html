@@ -409,10 +409,10 @@
 <!-- =================== SCRIPT =================== -->
 <script>
 /* =================== CONFIG =================== */
-const API_VEH   = '/api/admin/vehicles';   // admin (x-admin-key)
-const API_CLI   = '/api/admin/clients';    // admin (x-admin-key)
-const API_RES   = '/api/reservations';     // público con auth de servidor
-const API_DRV   = '/api/admin/drivers';    // admin (x-admin-key y JSON {ok,drivers})
+const API_VEH   = '/api/admin/vehicles';
+const API_CLI   = '/api/admin/clients';
+const API_RES   = '/api/reservations';
+const API_DRV   = '/api/admin/drivers';
 const API_DRV_ASSIGN = '/api/drivers/assignments';
 const API_DRV_NOTIFY = '/api/drivers/notify';
 
@@ -468,7 +468,6 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtWhen(ts){ try{ return ts ? new Date(ts).toLocaleString() : ''; }catch{ return ts||''; } }
 
-/** obtiene (opcional) admin-token; si falla no bloquea */
 async function ensureAdminToken() {
   let t = localStorage.getItem('bonanza_token');
   if (!t) {
@@ -481,7 +480,6 @@ async function ensureAdminToken() {
   return t || null;
 }
 
-/** fetch con x-admin-key + Bearer (si existe) y parse robusto */
 async function api(url, method='GET', body=null){
   const headers = { 'x-admin-key': 'supersecreto123' };
   const token = localStorage.getItem('bonanza_token');
@@ -514,7 +512,7 @@ let editingId   = null;
 
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 
-/* ---- drivers cache para el select ---- */
+/* ---- refs modal vehicle + drivers cache ---- */
 const fPlate    = document.getElementById('fPlate');
 const fDriverId = document.getElementById('fDriverId');
 const fKind     = document.getElementById('fKind');
@@ -530,7 +528,7 @@ const vehModalTitle = document.getElementById('vehModalTitle');
 let cacheDrivers = [];
 async function ensureDriversLoaded(){
   if (cacheDrivers.length) return cacheDrivers;
-  const j = await api(API_DRV,'GET');               // { ok:true, drivers:[...] }
+  const j = await api(API_DRV,'GET');
   const raw = Array.isArray(j.drivers) ? j.drivers : [];
   cacheDrivers = raw.map(d => ({
     id:String(d.id), name:(d.name||'').trim(), active:d.active!==false
@@ -539,7 +537,7 @@ async function ensureDriversLoaded(){
 }
 function fillDriversSelect(list){
   fDriverId.innerHTML =
-    `<option value="">— No driver —</option>` +
+    `<option value="">— No driver —</option>`+
     list.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}${d.active?'':' (OFF)'}</option>`).join('');
 }
 
@@ -548,7 +546,7 @@ function normalizeVehicle(v){
   return {
     id:String(v.id||''),
     plate:(v.plate||'').trim(),
-    driver_id: v.driver_id ? String(v.driver_id) : (v.driverId ? String(v.driverId) : (v.driver_id||null)),
+    driver_id: v.driver_id ? String(v.driver_id) : (v.driverId ? String(v.driverId) : null),
     driver_name:(v.driver_name||'').trim(),
     kind:kindNorm,
     year:(v.year!=null?Number(v.year):null),
@@ -601,8 +599,7 @@ async function loadVehicles(){
     const data = await api(API_VEH,'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    // precarga drivers para nombres
-    await ensureDriversLoaded();
+    await ensureDriversLoaded(); // para mostrar nombres
     renderVehicles();
     vehShowMsg('Loaded successfully.');
     setTheadTop();
@@ -615,6 +612,7 @@ async function loadVehicles(){
 /* ---- abrir/cerrar modal ---- */
 function closeVehModal(){ vehBackdrop.classList.remove('open'); }
 vehBtnClose.addEventListener('click', closeVehModal);
+window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVehModal(); });
 
 async function openAddVehicle(){
   editingId=null; vehModalTitle.textContent='Add Vehicle';
@@ -659,7 +657,6 @@ vehBtnSave.addEventListener('click', async ()=>{
     const payload={ id:editingId, plate, driver_id, kind, year, model, active };
     const data = await api(API_VEH, 'POST', payload);
     const saved = normalizeVehicle(data.vehicle || payload);
-    // enriquecer nombre si no vino
     if (!saved.driver_name && saved.driver_id){
       saved.driver_name = cacheDrivers.find(d=>d.id===String(saved.driver_id))?.name || '';
     }
@@ -670,7 +667,7 @@ vehBtnSave.addEventListener('click', async ()=>{
   finally{ vehBtnSave.disabled=false; }
 });
 
-/* tabla vehículos: editar/borrar/toggle */
+/* tabla vehículos */
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr = btn.closest('tr[data-id]'); if(!tr) return;
@@ -814,6 +811,21 @@ cliBtnSave.addEventListener('click', async ()=>{
   }catch(e){ cliFormErr.textContent = e.message || 'Error saving.'; }
   finally{ cliBtnSave.disabled = false; }
 });
+cliRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
+  const tr = btn.closest('tr[data-id]'); if(!tr) return;
+  const id = tr.getAttribute('data-id'); const action = btn.getAttribute('data-action');
+  if(action==='edit'){ openEditClient(id); return; }
+  if(action==='delete'){
+    const c = allClients.find(x=>x.id===id); if(!c) return;
+    if(!confirm(`Delete client "${c.name}"? This cannot be undone.`)) return;
+    try{ await api(`${API_CLI}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allClients = allClients.filter(x=>x.id!==id); renderClients(); cliShowMsg('Deleted.');
+    }catch(e){ cliShowMsg('Error deleting: ' + (e.message||e), false); }
+  }
+});
+document.getElementById('btnReloadClients').addEventListener('click', loadClients);
+document.getElementById('btnAddClient').addEventListener('click', openAddClient);
 
 /* =================== RESERVATIONS =================== */
 const resMsg  = document.getElementById('resMsg');
@@ -991,7 +1003,7 @@ async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
   drvShowMsg('');
   try{
-    const j = await api(API_DRV, 'GET');        // { ok:true, drivers:[...] }
+    const j = await api(API_DRV, 'GET');
     const raw = Array.isArray(j.drivers) ? j.drivers : [];
     allDrivers = raw.map(normalizeDriver);
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
@@ -1099,7 +1111,7 @@ drvRows.addEventListener('click', async (ev)=>{
 
   if (a==='toggle'){
     const d = allDrivers.find(x => x.id === id); if (!d) return;
-    const next = !d.active; btn.disabled = true;
+    const next = !d.active; const btnEl = btn; btnEl.disabled = true;
     try{
       await api(API_DRV, 'POST', {
         id: d.id, name: d.name,
@@ -1111,7 +1123,7 @@ drvRows.addEventListener('click', async (ev)=>{
       });
       d.active = next; renderDrivers(); drvShowMsg('Updated.');
     }catch(e){ drvShowMsg('Error updating: ' + (e.message || e), false); }
-    finally{ btn.disabled = false; }
+    finally{ btnEl.disabled = false; }
     return;
   }
 
