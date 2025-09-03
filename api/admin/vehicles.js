@@ -1,3 +1,4 @@
+// /api/admin/vehicles.js
 import { pool, query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
 
@@ -9,7 +10,7 @@ function norm(body = {}) {
   return {
     id: body.id ? String(body.id) : null,
     plate: (body.plate ?? "").toString().trim(),
-    driver_id: driver_id_raw ? driver_id_raw : null,
+    driver_id: driver_id_raw || null,
     driver_name: (body.driver_name ?? "").toString().trim() || null,
     kind: ((body.kind ?? "SUV").toString().trim().toUpperCase() === "VAN") ? "VAN" : "SUV",
     year: body.year != null ? Number(body.year) : null,
@@ -18,7 +19,7 @@ function norm(body = {}) {
   };
 }
 
-/* ---------- Resuelve driver_name si driver_id está presente ---------- */
+/* Busca el nombre del driver si se envía driver_id */
 async function resolveDriverName(driver_id) {
   if (!driver_id) return null;
   const { rows } = await pool.query(
@@ -30,7 +31,7 @@ async function resolveDriverName(driver_id) {
 
 async function handler(req, res) {
   try {
-    /* ================== GET ================== */
+    // ===== GET =====
     if (req.method === "GET") {
       const rows = await query(`
         SELECT
@@ -38,11 +39,7 @@ async function handler(req, res) {
           plate,
           driver_id::text AS driver_id,
           driver_name,
-          kind,
-          year,
-          model,
-          active,
-          created_at
+          kind, year, model, active, created_at
         FROM vehicles
         ORDER BY created_at DESC
         LIMIT 500
@@ -50,30 +47,26 @@ async function handler(req, res) {
       return res.json({ ok: true, vehicles: rows });
     }
 
-    /* ================== POST ================== */
+    // ===== POST =====
     if (req.method === "POST") {
       const b = norm(req.body || {});
-      console.log("Incoming POST /vehicles payload:", b);
 
       if (!b.plate) {
         return res.status(400).json({ ok: false, error: "Missing plate" });
       }
-      if (!b.year || isNaN(b.year)) {
-        return res.status(400).json({ ok: false, error: "Missing or invalid year" });
-      }
 
-      // Resolver nombre del chofer si no viene en el payload
+      // Si hay driver_id pero no driver_name, lo busca
       let driver_name_final = b.driver_name;
       if (b.driver_id && !driver_name_final) {
         driver_name_final = await resolveDriverName(b.driver_id);
       }
 
-      /* ------ UPDATE ------ */
+      // ---- UPDATE ----
       if (b.id) {
         const { rows } = await pool.query(
           `UPDATE vehicles
            SET plate       = $2,
-               driver_id   = NULLIF($3, '')::uuid,
+               driver_id   = $3::uuid,
                driver_name = $4,
                kind        = $5,
                year        = $6,
@@ -84,48 +77,34 @@ async function handler(req, res) {
            RETURNING id::text AS id, plate, driver_id::text AS driver_id, driver_name, kind, year, model, active, created_at`,
           [b.id, b.plate, b.driver_id, driver_name_final, b.kind, b.year, b.model, b.active]
         );
-
-        if (!rows.length) {
-          return res.status(404).json({ ok: false, error: "Vehicle not found" });
-        }
-
+        if (!rows.length) return res.status(404).json({ ok: false, error: "Vehicle not found" });
         return res.json({ ok: true, vehicle: rows[0] });
       }
 
-      /* ------ INSERT ------ */
+      // ---- INSERT ----
       const { rows } = await pool.query(
         `INSERT INTO vehicles (plate, driver_id, driver_name, kind, year, model, active)
-         VALUES ($1, NULLIF($2, '')::uuid, $3, $4, $5, $6, $7)
+         VALUES ($1, $2::uuid, $3, $4, $5, $6, $7)
          RETURNING id::text AS id, plate, driver_id::text AS driver_id, driver_name, kind, year, model, active, created_at`,
         [b.plate, b.driver_id, driver_name_final, b.kind, b.year, b.model, b.active]
       );
-
       return res.json({ ok: true, vehicle: rows[0] });
     }
 
-    /* ================== DELETE ================== */
+    // ===== DELETE =====
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
-      if (!id) {
-        return res.status(400).json({ ok: false, error: "Missing id" });
-      }
-
+      if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
       const { rowCount } = await pool.query(
         `DELETE FROM vehicles WHERE id::text = $1`,
         [id]
       );
-
-      if (!rowCount) {
-        return res.status(404).json({ ok: false, error: "Vehicle not found" });
-      }
-
+      if (!rowCount) return res.status(404).json({ ok: false, error: "Vehicle not found" });
       return res.json({ ok: true });
     }
 
-    /* ================== INVALID METHOD ================== */
     res.setHeader("Allow", "GET,POST,DELETE");
     return res.status(405).json({ ok: false, error: "Method Not Allowed" });
-
   } catch (e) {
     console.error("[/api/admin/vehicles] error:", e);
     return res.status(500).json({ ok: false, error: e.message || "Internal error" });
