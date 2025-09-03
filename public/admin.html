@@ -454,6 +454,7 @@ const stat = {
 let allVehicles = [];
 let filterKind  = 'ALL';
 let editingId   = null;
+let vehFilterDriverId = null;
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
   // --- Índice: driver_id -> [vehicles] ---
 let vehByDriver = new Map();
@@ -537,14 +538,7 @@ function computeStats(){
   stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
   stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
 }
-function visibleVeh(){ return (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
-function renderVehicles(){
-  computeStats();
-  const list = visibleVeh();
-  vehRows.innerHTML = list.map(v=>{
-    const on = !!v.active;
-    const drvName = v.driver_name || (v.driver_id ? (cacheDrivers.find(d=>d.id===String(v.driver_id))?.name||'') : '');
-    return `
+function visibleVeh
       <tr data-id="${v.id}">
         <td>${escapeHtml(v.plate)}</td>
         <td>${escapeHtml(drvName)}</td>
