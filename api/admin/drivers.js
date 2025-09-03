@@ -1,4 +1,3 @@
-// /api/admin/vehicles.js
 // /api/admin/drivers.js
 import { pool, query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
@@ -7,17 +6,31 @@ export const config = { runtime: "nodejs" };
 
 /* ---------- Normaliza body ---------- */
 function norm(body = {}) {
+  // normalizar pay_mode a minúsculas válidas según el CHECK de la tabla
+  const rawPay = (body.pay_mode ?? "per_ride").toString().trim().toLowerCase();
+  const payMap = {
+    "per_ride": "per_ride",
+    "per-ride": "per_ride",
+    "hourly": "hourly",
+    // legado: si llega per_load desde UI viejas, lo mapeamos a revenue_share
+    "per_load": "revenue_share",
+    "revenue_share": "revenue_share",
+  };
+  const pay_mode = payMap[rawPay] ?? "per_ride";
+
+  // normalizar work_mode
+  const rawWork = (body.work_mode ?? "24h").toString().trim().toLowerCase();
+  const work_mode = ["24h", "custom"].includes(rawWork) ? rawWork : "24h";
+
   return {
     id: body.id ? String(body.id) : null,
     name: (body.name ?? "").toString().trim(),
-    email: (body.email ?? "").toString().trim() || null,
-    phone: (body.phone ?? "").toString().trim() || null,
-    license_number: (body.license_number ?? "").toString().trim() || null,
-    // UI envía '24h' | 'custom'
-    work_mode: ((body.work_mode ?? "24h").toString().trim() || "24h").toLowerCase(),
-    // UI envía PER_RIDE | HOURLY | PER_LOAD
-    pay_mode: (dPayMode.value || 'per_ride') , toString().trim().toUpperCase(),
-    active: body.active !== false
+    email: ((body.email ?? "").toString().trim()) || null,
+    phone: ((body.phone ?? "").toString().trim()) || null,
+    license_number: ((body.license_number ?? "").toString().trim()) || null,
+    work_mode,
+    pay_mode,
+    active: body.active !== false,
   };
 }
 
@@ -47,13 +60,15 @@ async function handler(req, res) {
     if (req.method === "POST") {
       const b = norm(req.body || {});
 
-      // Validaciones propias de DRIVERS (no plate!)
       if (!b.name) {
         return res.status(400).json({ ok: false, error: "Missing name" });
       }
-      const validPay = ["PER_RIDE", "HOURLY", "PER_LOAD"];
+      const validPay = ["per_ride", "hourly", "revenue_share"];
       if (!validPay.includes(b.pay_mode)) {
-        return res.status(400).json({ ok: false, error: "Invalid pay_mode" });
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid pay_mode (use: per_ride | hourly | revenue_share)",
+        });
       }
       const validWork = ["24h", "custom"];
       if (!validWork.includes(b.work_mode)) {
