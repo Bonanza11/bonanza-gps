@@ -78,6 +78,7 @@
         <h2 style="margin:0">Assignments</h2>
         <div class="spacer"></div>
         <button id="btnReload" class="primary">Reload</button>
+        <button id="btnLoadDemo" title="Load demo data (local only)">Load Demo</button><!-- 👈 NUEVO -->
       </div>
       <p id="assignMsg" class="msg"></p>
       <div id="assignList" class="grid"></div>
@@ -264,10 +265,26 @@ window.seedDemo = function(){
   ]);
   renderAssignmentsDemo([
     { id:"1001", status:"ASSIGNED", customer_name:"Mr. Bonanza", pickup_location:"SLC Airport", dropoff_location:"Park City", pickup_time: Date.now()+3600000 },
-    { id:"1002", status:"PENDING",  customer_name:"Jane Smith",   pickup_location:"Deer Valley", dropoff_location:"Salt Lake City", pickup_time: Date.now()+7200000 }
+    { id:"1002", status:"PENDING",  customer_name:"Jane Smith",   pickup_location:"Deer Valley",  dropoff_location:"Salt Lake City", pickup_time: Date.now()+7200000 }
   ]);
   console.log("Demo seeded. Usa setMeDemo(), renderVehiclesDemo(), renderAssignmentsDemo()");
 };
+
+/* ===== Botón visible Load Demo ===== */
+const btnLoadDemo = document.getElementById('btnLoadDemo');
+if (btnLoadDemo) {
+  btnLoadDemo.addEventListener('click', ()=>{
+    try{
+      if (typeof seedDemo !== 'function') { alert('seedDemo() no está disponible.'); return; }
+      seedDemo();
+      show('view-login', false);
+      show('view-home', true);
+      msg($('topMsg'),'Demo data loaded (local only).');
+    }catch(e){
+      alert(e.message || 'Error loading demo data');
+    }
+  });
+}
 </script>
 </body>
 </html>
