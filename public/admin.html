@@ -223,6 +223,7 @@
     </div>
   </div>
 </div>
+
 <!-- RESERVATIONS -->
 <section id="view-reservations" hidden>
   <div class="wrap">
@@ -256,47 +257,6 @@
   </div>
 </section>
 
-<!-- DRIVERS -->
-<section id="view-drivers" hidden>
-  <div class="wrap">
-    <div class="controls affects-sticky" id="drvControls">
-      <button id="btnReloadDrivers">Reload</button>
-      <button id="btnAddDriver" class="primary">Add Driver</button>
-    </div>
-
-    <div id="drvMsg" class="msg"></div>
-    <div id="stickySpacerDrivers"></div>
-
-    <table role="grid" aria-label="Drivers">
-      <thead>
-        <tr>
-          <th style="width:26%">Name</th>
-          <th style="width:26%">Email</th>
-          <th style="width:18%">Phone</th>
-          <th style="width:14%">Pay Mode</th>
-          <th style="width:110px">Active</th> <!-- NUEVO -->
-          <th class="right" style="width:16%">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="drvRows">
-        <tr><td colspan="6">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- SETTINGS -->
-<section id="view-settings" hidden>
-  <div class="wrap">
-    <div class="card">
-      <h2>Información</h2>
-      <p style="font-size:14px; margin-top:8px; color:var(--muted)">
-        Aquí podrás administrar reglas de temporada, excepción SLC, bloqueos, etc. (placeholder).
-      </p>
-    </div>
-  </div>
-</section>
-
 <!-- MODAL: ASSIGN -->
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
@@ -325,8 +285,48 @@
     </div>
   </div>
 </div>
+<!-- DRIVERS -->
+<section id="view-drivers" hidden>
+  <div class="wrap">
+    <div class="controls affects-sticky" id="drvControls">
+      <button id="btnReloadDrivers">Reload</button>
+      <button id="btnAddDriver" class="primary">Add Driver</button>
+    </div>
 
-<!-- MODAL: DRIVER (NUEVO) -->
+    <div id="drvMsg" class="msg"></div>
+    <div id="stickySpacerDrivers"></div>
+
+    <table role="grid" aria-label="Drivers">
+      <thead>
+        <tr>
+          <th style="width:26%">Name</th>
+          <th style="width:26%">Email</th>
+          <th style="width:18%">Phone</th>
+          <th style="width:14%">Pay Mode</th>
+          <th style="width:110px">Active</th>
+          <th class="right" style="width:16%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="drvRows">
+        <tr><td colspan="6">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="view-settings" hidden>
+  <div class="wrap">
+    <div class="card">
+      <h2>Información</h2>
+      <p style="font-size:14px; margin-top:8px; color:var(--muted)">
+        Aquí podrás administrar reglas de temporada, excepción SLC, bloqueos, etc. (placeholder).
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL: DRIVER -->
 <div class="backdrop" id="drvBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drvModalTitle">
     <header>
@@ -379,6 +379,8 @@
     </div>
   </div>
 </div>
+
+<!-- =================== SCRIPT =================== -->
 <script>
 /* =================== CONFIG =================== */
 const API_VEH   = '/api/admin/vehicles';   // admin (x-admin-key)
@@ -468,7 +470,8 @@ async function api(url, method='GET', body=null){
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
-
+</script>
+<script>
 /* =================== VEHICLES =================== */
 const vehMsg   = document.getElementById('vehMsg');
 const vehRows  = document.getElementById('vehRows');
@@ -743,7 +746,9 @@ cliRows.addEventListener('click', async (ev)=>{
 });
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
 document.getElementById('btnAddClient').addEventListener('click', openAddClient);
-  /* =================== RESERVATIONS =================== */
+</script>
+<script>
+/* =================== RESERVATIONS =================== */
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
@@ -873,7 +878,7 @@ assignBtnSave.addEventListener('click', async ()=>{
   finally{ assignBtnSave.disabled = false; }
 });
 
-/* =================== DRIVERS (NUEVO) =================== */
+/* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
 const drvRows  = document.getElementById('drvRows');
 let allDrivers = [];
@@ -916,10 +921,10 @@ function renderDrivers(){
   }).join('') || '<tr><td colspan="6">No drivers.</td></tr>';
 }
 async function loadDrivers(){
-  drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+  drvRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
   drvShowMsg('');
   try{
-    const j = await api(API_DRV, 'GET');         // { ok:true, drivers:[...] }
+    const j = await api(API_DRV, 'GET');        // { ok:true, drivers:[...] }
     const raw = Array.isArray(j.drivers) ? j.drivers : [];
     allDrivers = raw.map(normalizeDriver);
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
@@ -968,7 +973,7 @@ window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeDrvModal(); 
 
 function validateDriver(){
   if (!dName.value.trim()) return 'Name is required.';
-  const pm = dPayMode.value;
+  const pm = (dPayMode.value || '').toUpperCase();
   if (!['PER_RIDE','HOURLY','PER_LOAD'].includes(pm)) return 'Invalid pay mode.';
   const em = dEmail.value.trim();
   if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return 'Invalid email.';
@@ -986,15 +991,15 @@ drvBtnSave.addEventListener('click', async ()=>{
     name: dName.value.trim(),
     email: dEmail.value.trim() || null,
     phone: dPhone.value.trim() || null,
-    pay_mode: dPayMode.value,
     license_number: dLicense.value.trim() || null,
-    work_mode: dWork.value || '24h',
-    active: dActive.checked
+    work_mode: (dWork.value || '24h').toLowerCase(),
+    pay_mode: (dPayMode.value || 'PER_RIDE').toUpperCase(),  // respeta CHECK
+    active: !!dActive.checked
   };
 
   drvBtnSave.disabled = true;
   try{
-    const j = await api(API_DRV, 'POST', payload); // tu backend hace create/update
+    const j = await api(API_DRV, 'POST', payload); // create/update según id
     const saved = normalizeDriver(j.driver || payload);
     const i = allDrivers.findIndex(x=>x.id===saved.id);
     if (i>=0) allDrivers[i] = { ...allDrivers[i], ...saved };
@@ -1026,30 +1031,30 @@ drvRows.addEventListener('click', async (ev)=>{
   }
 
   if (a==='toggle'){
-  const d = allDrivers.find(x => x.id === id);
-  if (!d) return;
-  const next = !d.active;
-
-  try {
-    await api(API_DRV, 'POST', {
-      id: d.id,
-      name: d.name,
-      email: d.email || null,
-      phone: d.phone || null,
-     pay_mode: (d.pay_mode || 'PER_RIDE').toUpperCase(),
-      license_number: d.license_number || null,
-      work_mode: d.work_mode || '24h',
-      active: next
-    });
-
-    d.active = next;
-    renderDrivers();
-    drvShowMsg('Updated.');
-  } catch (e) {
-    drvShowMsg('Error updating: ' + (e.message || e), false);
+    const d = allDrivers.find(x => x.id === id); if (!d) return;
+    const next = !d.active;
+    btn.disabled = true; // UX
+    try{
+      await api(API_DRV, 'POST', {
+        id: d.id,
+        name: d.name,
+        email: d.email || null,
+        phone: d.phone || null,
+        license_number: d.license_number || null,
+        work_mode: d.work_mode || '24h',
+        pay_mode: (d.pay_mode || 'PER_RIDE').toUpperCase(), // cumple CHECK
+        active: next
+      });
+      d.active = next;
+      renderDrivers();
+      drvShowMsg('Updated.');
+    }catch(e){
+      drvShowMsg('Error updating: ' + (e.message || e), false);
+    }finally{
+      btn.disabled = false;
+    }
+    return;
   }
-  return;
-}
 
   if (a==='notify'){
     alert('Notificaciones: próximo paso 😉');
