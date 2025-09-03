@@ -873,6 +873,16 @@ function normalizeDriver(d){
   return { id:String(d.id||''), name:(d.name||'').trim(), email:(d.email||'').trim(), phone:(d.phone||'').trim(),
            pay_mode, license_number:(d.license_number||'').trim(),
            work_mode:(d.work_mode||'24h').toLowerCase(), active:d.active!==false };
+  function vehiclesLabelForDriver(driverId){
+  const list = vehByDriver.get(String(driverId)) || [];
+  if (!list.length) return '—';
+  // Ej: "UT-123 (SUV, 2022) · XY-987 (VAN)"
+  return list.map(v=>{
+    const parts = [v.kind || ''];
+    if (v.year) parts.push(String(v.year));
+    const meta = parts.filter(Boolean).join(', ');
+    return `${escapeHtml(v.plate)}${meta ? ` (${meta})` : ''}`;
+  }).join(' · ');
 }
 function renderDrivers(){
   drvRows.innerHTML = allDrivers.map(d=>{
