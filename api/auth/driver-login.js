@@ -1,48 +1,65 @@
 // /api/auth/driver-login.js
-import { query } from "../_db.js";
 import jwt from "jsonwebtoken";
+import { query } from "../_db.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto123";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
-  }
-
   try {
-    const { email, code } = req.body || {};
-    if (!email || !code) {
-      return res.status(400).json({ ok: false, error: "missing_credentials" });
+    if (req.method !== "POST") {
+      res.setHeader("Allow", "POST");
+      return res.status(405).json({ ok: false, error: "method_not_allowed" });
     }
 
-    // Buscar driver en la tabla (usando columna pin y active)
+    // lee cuerpo (soporta body como string u objeto)
+    let body = req.body;
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch {}
+    }
+    const email = (body?.email || "").trim();
+    const pin   = (body?.code  || body?.pin || "").trim();
+
+    if (!email || !pin) {
+      return res.status(400).json({ ok:false, error:"missing_email_or_pin" });
+    }
+
+    // busca chofer por email (case-insensitive)
     const { rows } = await query(
-      `SELECT id, name, email, phone, active, online
-       FROM drivers
-       WHERE lower(email) = lower($1)
-         AND pin = $2
-         AND active = true
-       LIMIT 1`,
-      [email, code]
+      `select id, name, email, active, pin
+         from drivers
+        where lower(email) = lower($1)
+        limit 1`,
+      [email]
     );
 
-    if (!rows[0]) {
-      return res.status(401).json({ ok: false, error: "driver_not_found" });
+    // si no existe, responde con 401 en vez de reventar
+    if (!rows || rows.length === 0) {
+      return res.status(401).json({ ok:false, error:"driver_not_found" });
     }
 
-    const driver = rows[0];
+    const d = rows[0];
 
-    // Generar token
+    // activo?
+    if (d.active === false) {
+      return res.status(403).json({ ok:false, error:"driver_inactive" });
+    }
+
+    // valida PIN (texto simple)
+    if (String(d.pin || "") !== String(pin)) {
+      return res.status(401).json({ ok:false, error:"wrong_pin" });
+    }
+
+    // genera JWT
     const token = jwt.sign(
-      { sub: driver.id, role: "DRIVER" },
+      { sub: d.id, roles: ["DRIVER"] },
       JWT_SECRET,
-      { expiresIn: "12h" }
+      { expiresIn: "30d" }
     );
 
-    return res.json({ ok: true, token, driver });
+    return res.json({ ok:true, token });
+
   } catch (e) {
-    console.error("[driver-login]", e);
-    return res.status(500).json({ ok: false, error: "server_error" });
+    console.error("[driver-login] error:", e);
+    return res.status(500).json({ ok:false, error:"server_error" });
   }
 }
