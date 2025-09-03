@@ -119,20 +119,20 @@
     <div id="stickySpacerVehicles"></div>
 
     <table role="grid" aria-label="Vehicles">
-      <thead>
-        <tr>
-          <th style="width:120px">Plate</th>
-          <th>Driver</th>
-          <th style="width:90px">Type</th>
-          <th style="width:80px">Year</th>
-          <th>Model</th>
-          <th style="width:110px">Active</th>
-          <th class="right" style="width:220px">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="vehRows">
-        <tr><td colspan="7">Loading…</td></tr>
-      </tbody>
+    <thead>
+  <tr>
+    <th style="width:18%">Name</th>
+    <th style="width:18%">Email</th>
+    <th style="width:14%">Phone</th>
+    <th style="width:12%">Pay Mode</th>
+    <th style="width:26%">Vehicle</th> <!-- 👈 NUEVA COLUMNA -->
+    <th style="width:12%">Active</th>
+    <th class="right" style="width:18%">Actions</th>
+  </tr>
+</thead>
+<tbody id="drvRows">
+  <tr><td colspan="7">Loading…</td></tr> <!-- 👈 ACTUALIZA colspan a 7 -->
+</tbody>
     </table>
   </div>
 </section>
@@ -311,7 +311,6 @@
     </div>
   </div>
 </section>
-<!-- ======== /DRIVERS VIEW ======== -->
 <!-- MODAL: DRIVER -->
 <div class="backdrop" id="drvBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drvModalTitle">
