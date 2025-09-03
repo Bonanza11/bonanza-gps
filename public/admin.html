@@ -887,11 +887,14 @@ function normalizeDriver(d){
 function renderDrivers(){
   drvRows.innerHTML = allDrivers.map(d=>{
     const on = !!d.active;
+    const vehText = vehiclesLabelForDriver(d.id); // 👈 aquí usamos el índice
+
     return `
       <tr data-id="${d.id}">
         <td>${escapeHtml(d.name)}</td>
         <td>${escapeHtml(d.email)}</td>
         <td>${escapeHtml(d.phone)}</td>
+        <td>${escapeHtml(vehText)}</td>                   <!-- 👈 NUEVA COLUMNA -->
         <td><span class="badge">${escapeHtml((d.pay_mode||'').toUpperCase())}</span></td>
         <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
         <td class="right actions">
@@ -902,7 +905,8 @@ function renderDrivers(){
             <button class="btn" data-action="notify">Notificar</button>
           </div>
         </td>
-      </tr>`; }).join('') || '<tr><td colspan="6">No drivers.</td></tr>';
+      </tr>`;
+  }).join('') || '<tr><td colspan="7">No drivers.</td></tr>';  // 👈 7 columnas
 }
 async function loadDrivers(){
   // la tabla de drivers ahora tiene 7 columnas (por Vehicle[s])
