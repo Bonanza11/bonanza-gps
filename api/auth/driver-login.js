@@ -1,7 +1,6 @@
 // /api/auth/driver-login.js
 import { query } from "../_db.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto123";
 
@@ -17,9 +16,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "missing_credentials" });
     }
 
-    // Busca driver por email
+    // Buscar driver por email
     const { rows } = await query(
-      "select id, email, name, phone, pin, active from drivers where lower(email)=lower($1) limit 1",
+      "SELECT id, email, name, phone, pin, active FROM drivers WHERE lower(email)=lower($1) LIMIT 1",
       [email]
     );
     if (!rows[0]) {
@@ -27,7 +26,7 @@ export default async function handler(req, res) {
     }
 
     const driver = rows[0];
-    // Comparar pin (sin hash por ahora, directo string)
+    // Comparar PIN (string directo por ahora)
     const match = String(code) === String(driver.pin);
     if (!match) {
       return res.status(401).json({ ok: false, error: "invalid_login" });
