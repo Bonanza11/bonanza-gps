@@ -761,6 +761,8 @@ resRows.addEventListener('click', async (ev)=>{
   } catch (e) { resShowMsg('Error updating: ' + (e.message || e), false); }
 });
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
+document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
+document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
 
 /* ---------- ASSIGN MODAL ---------- */
 const assignBackdrop  = document.getElementById('assignBackdrop');
