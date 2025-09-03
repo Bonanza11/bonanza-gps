@@ -1025,6 +1025,20 @@ drvRows.addEventListener('click', async (ev)=>{
     return;
   }
 
+  if (a==='toggle'){
+    const d = allDrivers.find(x=>x.id===id); if(!d) return;
+    const next = !d.active;
+    try{
+      await api(API_DRV, 'POST', { id, active: next });  // update parcial en tu backend
+      d.active = next;
+      renderDrivers();
+      drvShowMsg('Updated.');
+    }catch(e){
+      drvShowMsg('Error updating: ' + (e.message||e), false);
+    }
+    return;
+  }
+
   if (a==='notify'){
     alert('Notificaciones: próximo paso 😉');
     return;
