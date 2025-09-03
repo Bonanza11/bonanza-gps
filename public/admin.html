@@ -591,24 +591,48 @@ vehBtnSave.addEventListener('click', async ()=>{
   const year=Number(fYear.value||0);
   const model=fModel.value.trim();
   const active=!!fActive.checked;
-  if(!plate || !year){ vehFormErr.textContent='Plate and Year are required.'; return; }
+
+  if(!plate || !year){ 
+    vehFormErr.textContent='Plate and Year are required.'; 
+    return; 
+  }
+
   vehBtnSave.disabled=true;
   try{
     const payload={ id:editingId, plate, driver_id, kind, year, model, active };
-    const data = await api(API_VEH, 'POST', payload);
-    const saved = normalizeVehicle(data.vehicle || payload);
+    const data   = await api(API_VEH, 'POST', payload);
+    const saved  = normalizeVehicle(data.vehicle || payload);
+
     if (!saved.driver_name && saved.driver_id){
       saved.driver_name = cacheDrivers.find(d=>d.id===String(saved.driver_id))?.name || '';
     }
+
     const i = allVehicles.findIndex(x=>x.id===saved.id);
-    if(i>=0) allVehicles[i]={...allVehicles[i],...saved}; else allVehicles.push(saved);
-    allVehicles.sort(sortVehicles); renderVehicles(); vehShowMsg(editingId?'Saved changes.':'Vehicle added.'); closeVehModal();
-  }catch(e){ vehFormErr.textContent = e.message || 'Error saving.'; }
-  finally{ vehBtnSave.disabled=false; }
-});
+    if(i>=0) allVehicles[i]={...allVehicles[i],...saved}; 
+    else allVehicles.push(saved);
+
+    allVehicles.sort(sortVehicles);
+    rebuildVehIndex();    // 👈 importante
+    renderVehicles();
+    vehShowMsg(editingId?'Saved changes.':'Vehicle added.');
+    closeVehModal();
+  }catch(e){
+    vehFormErr.textContent = e.message || 'Error saving.';
+  }finally{
+    vehBtnSave.disabled=false;
+  }
+}); // <-- AQUÍ CIERRA EL BLOQUE DE vehBtnSave
+
+// =============================
+// Event listener para vehRows
+// =============================
 vehRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr  = btn.closest('tr[data-id]'); if(!tr) return;
+  const btn = ev.target.closest('button[data-action]'); 
+  if(!btn) return;
+
+  const tr  = btn.closest('tr[data-id]'); 
+  if(!tr) return;
+
   const id  = tr.getAttribute('data-id');
   const action = btn.getAttribute('data-action');
 
@@ -620,11 +644,13 @@ vehRows.addEventListener('click', async (ev)=>{
 
   // DELETE
   if (action === 'delete'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    const v = allVehicles.find(x=>x.id===id); 
+    if(!v) return;
     if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
     try{
       await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
       allVehicles = allVehicles.filter(x=>x.id!==id);
+      rebuildVehIndex();
       renderVehicles();
       vehShowMsg('Deleted.');
     }catch(e){
@@ -633,28 +659,29 @@ vehRows.addEventListener('click', async (ev)=>{
     return;
   }
 
-  // TOGGLE (Turn On/Off)  ← **ARREGLADO**
+  // TOGGLE
   if (action === 'toggle'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    const v = allVehicles.find(x=>x.id===id); 
+    if(!v) return;
     const next = !v.active;
     try{
       await api(API_VEH, 'POST', {
         id: v.id,
-        plate: v.plate,                 // 👈 requerido por el backend
+        plate: v.plate,
         driver_id: v.driver_id || null,
         driver_name: v.driver_name || null,
-        kind: v.kind,                   // 'SUV' | 'VAN'
+        kind: v.kind,
         year: v.year ?? null,
         model: v.model || '',
         active: next
       });
       v.active = next;
+      rebuildVehIndex();
       renderVehicles();
       vehShowMsg('Updated.');
     }catch(e){
       vehShowMsg('Error updating: ' + (e.message||e), false);
     }
-    return;
   }
 });
 /* =================== CLIENTS =================== */
