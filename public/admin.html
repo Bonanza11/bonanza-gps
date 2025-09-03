@@ -578,18 +578,37 @@ async function loadVehicles(){
   }
 }
 
-/* Modal Vehículos */
-const vehBackdrop = document.getElementById('vehBackdrop');
-const vehBtnClose = document.getElementById('vehBtnClose');
-const vehBtnSave  = document.getElementById('vehBtnSave');
-const vehFormErr  = document.getElementById('vehFormErr');
-const vehModalTitle = document.getElementById('vehModalTitle');
-const fPlate = document.getElementById('fPlate');
-const fDriver= document.getElementById('fDriver');
-const fKind  = document.getElementById('fKind');
-const fYear  = document.getElementById('fYear');
-const fModel = document.getElementById('fModel');
-const fActive= document.getElementById('fActive');
+/* ====== Refs del modal VEHICLE (añade fDriverId) ====== */
+const fPlate  = document.getElementById('fPlate');
+const fDriverId = document.getElementById('fDriverId'); // nuevo <select>
+const fKind   = document.getElementById('fKind');
+const fYear   = document.getElementById('fYear');
+const fModel  = document.getElementById('fModel');
+const fActive = document.getElementById('fActive');
+
+/* ====== Caché y carga de drivers para el <select> ====== */
+let cacheDrivers = [];
+async function ensureDriversLoaded(){
+  if (cacheDrivers.length) return cacheDrivers;
+  const j = await api('/api/admin/drivers','GET');               // { ok:true, drivers:[...] }
+  const raw = Array.isArray(j.drivers) ? j.drivers : [];
+  cacheDrivers = raw
+    .map(d => ({
+      id: String(d.id),
+      name: (d.name || '').trim(),
+      active: d.active !== false
+    }))
+    .sort((a,b) => a.name.localeCompare(b.name));
+  return cacheDrivers;
+}
+
+function fillDriversSelect(list){
+  fDriverId.innerHTML =
+    `<option value="">— No driver —</option>` +
+    list.map(d => 
+      `<option value="${d.id}">${escapeHtml(d.name)}${d.active ? '' : ' (OFF)'}</option>`
+    ).join('');
+}
 
 function openAddVehicle(){
   editingId=null; vehModalTitle.textContent='Add Vehicle';
