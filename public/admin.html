@@ -98,6 +98,7 @@
   <div class="spacer"></div>
   <span class="muted">API Vehicles: <code>/api/admin/vehicles</code></span>
 </nav>
+
 <!-- VEHICLES -->
 <section id="view-vehicles">
   <div class="wrap">
@@ -163,7 +164,6 @@
     </div>
   </div>
 </div>
-
 <!-- CLIENTS -->
 <section id="view-clients" hidden>
   <div class="wrap">
@@ -324,12 +324,66 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL: DRIVER (NUEVO) -->
+<div class="backdrop" id="drvBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drvModalTitle">
+    <header>
+      <h2 id="drvModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Driver</h2>
+      <div style="flex:1"></div>
+      <button id="drvBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <input type="hidden" id="dId">
+
+        <div class="field"><label for="dName">Name *</label>
+          <input id="dName" placeholder="John Doe" autocomplete="off">
+        </div>
+
+        <div class="field"><label for="dEmail">Email</label>
+          <input id="dEmail" type="email" placeholder="name@email.com" autocomplete="off">
+        </div>
+
+        <div class="field"><label for="dPhone">Phone</label>
+          <input id="dPhone" placeholder="801-555-0000" autocomplete="off">
+        </div>
+
+        <div class="field"><label for="dPayMode">Pay Mode *</label>
+          <select id="dPayMode">
+            <option value="PER_RIDE">PER_RIDE</option>
+            <option value="HOURLY">HOURLY</option>
+            <option value="PER_LOAD">PER_LOAD</option>
+          </select>
+        </div>
+
+        <div class="field"><label for="dLicense">License # (optional)</label>
+          <input id="dLicense" placeholder="UT-XXXXXX" autocomplete="off">
+        </div>
+
+        <div class="field"><label for="dWorkMode">Work mode</label>
+          <select id="dWorkMode">
+            <option value="24h">24h</option>
+            <option value="custom">custom</option>
+          </select>
+        </div>
+
+        <div class="field full"><label><input type="checkbox" id="dActive" checked> Active</label></div>
+      </div>
+
+      <div id="drvFormErr" class="err-msg"></div>
+      <div class="actions">
+        <button id="drvBtnSave" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
 /* =================== CONFIG =================== */
 const API_VEH   = '/api/admin/vehicles';   // admin (x-admin-key)
 const API_CLI   = '/api/admin/clients';    // admin (x-admin-key)
 const API_RES   = '/api/reservations';     // público con auth de servidor
-const API_DRV   = '/api/drivers';          // <- usa tu endpoint de drivers (array plano)
+const API_DRV   = '/api/admin/drivers';    // admin (x-admin-key y JSON {ok,drivers})
 const API_DRV_ASSIGN = '/api/drivers/assignments';
 const API_DRV_NOTIFY = '/api/drivers/notify';
 
@@ -413,7 +467,8 @@ async function api(url, method='GET', body=null){
   if (!r.ok || data.ok===false) throw new Error(data.error || ('HTTP '+r.status));
   return data;
 }
-  /* =================== VEHICLES =================== */
+
+/* =================== VEHICLES =================== */
 const vehMsg   = document.getElementById('vehMsg');
 const vehRows  = document.getElementById('vehRows');
 const stat = {
@@ -687,8 +742,7 @@ cliRows.addEventListener('click', async (ev)=>{
 });
 document.getElementById('btnReloadClients').addEventListener('click', loadClients);
 document.getElementById('btnAddClient').addEventListener('click', openAddClient);
-
-/* =================== RESERVATIONS =================== */
+  /* =================== RESERVATIONS =================== */
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
@@ -818,64 +872,161 @@ assignBtnSave.addEventListener('click', async ()=>{
   finally{ assignBtnSave.disabled = false; }
 });
 
-/* =================== DRIVERS =================== */
-const drvMsg  = document.getElementById('drvMsg');
-const drvRows = document.getElementById('drvRows');
+/* =================== DRIVERS (NUEVO) =================== */
+const drvMsg   = document.getElementById('drvMsg');
+const drvRows  = document.getElementById('drvRows');
 let allDrivers = [];
+
 function drvShowMsg(t, ok=true){ drvMsg.textContent=t||''; drvMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+function normalizeDriver(d){
+  return {
+    id: String(d.id || ''),
+    name: (d.name || '').trim(),
+    email: (d.email || '').trim(),
+    phone: (d.phone || '').trim(),
+    pay_mode: String(d.pay_mode || 'PER_RIDE').toUpperCase(),
+    license_number: (d.license_number || '').trim(),
+    work_mode: (d.work_mode || '24h').toLowerCase(),
+    active: d.active !== false
+  };
+}
 function renderDrivers(){
   drvRows.innerHTML = allDrivers.map(d=>`
     <tr data-id="${d.id}">
-      <td>${escapeHtml(d.name||'')}</td>
-      <td>${escapeHtml(d.email||'')}</td>
-      <td>${escapeHtml(d.phone||'')}</td>
-      <td>${escapeHtml((d.pay_mode||'per_ride').toUpperCase())}</td>
+      <td>${escapeHtml(d.name)}</td>
+      <td>${escapeHtml(d.email)}</td>
+      <td>${escapeHtml(d.phone)}</td>
+      <td><span class="badge">${escapeHtml(d.pay_mode)}</span></td>
       <td class="right actions">
         <div class="btns">
-          <button class="btn btn-edit" data-action="edit">Edit</button>
-          <button class="btn" data-action="assignments">Asignaciones</button>
-          <button class="btn" data-action="notify">Notificar</button>
+          <button class="btn btn-edit"   data-action="edit">Edit</button>
+          <button class="btn btn-danger" data-action="delete">Delete</button>
+          <button class="btn"            data-action="notify">Notificar</button>
         </div>
       </td>
     </tr>
   `).join('') || '<tr><td colspan="5">No drivers.</td></tr>';
 }
+
 async function loadDrivers(){
-  drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>'; drvShowMsg('');
+  drvRows.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+  drvShowMsg('');
   try{
-    const rows = await api(API_DRV, 'GET');     // /api/drivers devuelve array
-    allDrivers = Array.isArray(rows) ? rows : [];
+    const j = await api(API_DRV, 'GET');         // { ok:true, drivers:[...] }
+    const raw = Array.isArray(j.drivers) ? j.drivers : [];
+    allDrivers = raw.map(normalizeDriver);
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
-  }catch(e){ allDrivers = []; renderDrivers(); drvShowMsg('Error loading: '+(e.message||e), false); }
+  }catch(e){
+    allDrivers = []; renderDrivers();
+    drvShowMsg('Error loading: ' + (e.message || e), false);
+  }
 }
+
+/* ------- Modal Drivers ------- */
+const drvBackdrop   = document.getElementById('drvBackdrop');
+const drvBtnClose   = document.getElementById('drvBtnClose');
+const drvBtnSave    = document.getElementById('drvBtnSave');
+const drvFormErr    = document.getElementById('drvFormErr');
+
+const dId      = document.getElementById('dId');
+const dName    = document.getElementById('dName');
+const dEmail   = document.getElementById('dEmail');
+const dPhone   = document.getElementById('dPhone');
+const dPayMode = document.getElementById('dPayMode');
+const dLicense = document.getElementById('dLicense');
+const dWork    = document.getElementById('dWorkMode');
+const dActive  = document.getElementById('dActive');
+const drvModalTitle = document.getElementById('drvModalTitle');
+
+function openAddDriver(){
+  dId.value = ''; drvModalTitle.textContent='Add Driver';
+  dName.value=''; dEmail.value=''; dPhone.value='';
+  dPayMode.value='PER_RIDE'; dLicense.value=''; dWork.value='24h';
+  dActive.checked = true; drvFormErr.textContent='';
+  drvBackdrop.classList.add('open'); setTimeout(()=>dName.focus(),50);
+}
+function openEditDriver(id){
+  const d = allDrivers.find(x=>x.id===id); if(!d) return;
+  dId.value = d.id; drvModalTitle.textContent='Edit Driver';
+  dName.value=d.name; dEmail.value=d.email; dPhone.value=d.phone;
+  dPayMode.value=d.pay_mode || 'PER_RIDE';
+  dLicense.value=d.license_number || '';
+  dWork.value=d.work_mode || '24h';
+  dActive.checked = !!d.active;
+  drvFormErr.textContent=''; drvBackdrop.classList.add('open'); setTimeout(()=>dName.focus(),50);
+}
+function closeDrvModal(){ drvBackdrop.classList.remove('open'); }
+drvBtnClose.addEventListener('click', closeDrvModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeDrvModal(); });
+
+function validateDriver(){
+  if (!dName.value.trim()) return 'Name is required.';
+  const pm = dPayMode.value;
+  if (!['PER_RIDE','HOURLY','PER_LOAD'].includes(pm)) return 'Invalid pay mode.';
+  const em = dEmail.value.trim();
+  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return 'Invalid email.';
+  const ph = dPhone.value.trim();
+  if (ph && !/^[0-9\-\+\s\(\)]{7,20}$/.test(ph)) return 'Invalid phone.';
+  return null;
+}
+
+drvBtnSave.addEventListener('click', async ()=>{
+  drvFormErr.textContent='';
+  const err = validateDriver(); if (err){ drvFormErr.textContent = err; return; }
+
+  const payload = {
+    id: dId.value || null,
+    name: dName.value.trim(),
+    email: dEmail.value.trim() || null,
+    phone: dPhone.value.trim() || null,
+    pay_mode: dPayMode.value,
+    license_number: dLicense.value.trim() || null,
+    work_mode: dWork.value || '24h',
+    active: dActive.checked
+  };
+
+  drvBtnSave.disabled = true;
+  try{
+    const j = await api(API_DRV, 'POST', payload); // tu backend hace create/update
+    const saved = normalizeDriver(j.driver || payload);
+    const i = allDrivers.findIndex(x=>x.id===saved.id);
+    if (i>=0) allDrivers[i] = { ...allDrivers[i], ...saved };
+    else allDrivers.unshift(saved);
+    renderDrivers(); closeDrvModal();
+    drvShowMsg(payload.id ? 'Driver updated.' : 'Driver added.');
+  }catch(e){
+    drvFormErr.textContent = e.message || 'Error saving.';
+  }finally{ drvBtnSave.disabled = false; }
+});
+
+/* ------- eventos tabla drivers ------- */
 drvRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr  = btn.closest('tr[data-id]'); if(!tr) return;
   const id  = tr.getAttribute('data-id');
   const a   = btn.getAttribute('data-action');
-  if (a==='edit'){ alert('Edit driver (próximo paso)'); return; }
-  if (a==='assignments'){
-    try{ const list = await api(`${API_DRV_ASSIGN}?driver_id=${encodeURIComponent(id)}`, 'GET');
-      alert(`Asignaciones: ${Array.isArray(list)?list.length:(list.rows||[]).length}`);
-    }catch(e){ alert('Error: '+(e.message||e)); }
-    return;
-  }
-  if (a==='notify'){
+
+  if (a==='edit'){ openEditDriver(id); return; }
+
+  if (a==='delete'){
+    const d = allDrivers.find(x=>x.id===id); if(!d) return;
+    if(!confirm(`Delete driver "${d.name}"? This cannot be undone.`)) return;
     try{
-      const preview = await api(API_DRV_NOTIFY, 'POST', { driver_id:id, channels:{ email:true, sms:false } });
-      alert(`Preview enviado a:\nEmail: ${preview.preview?.to_email||'-'}\nSMS: ${preview.preview?.to_phone||'-'}\n\n${preview.preview?.text||''}`);
-    }catch(e){ alert('Error: '+(e.message||e)); }
+      await api(`${API_DRV}?id=${encodeURIComponent(id)}`, 'DELETE');
+      allDrivers = allDrivers.filter(x=>x.id!==id); renderDrivers(); drvShowMsg('Deleted.');
+    }catch(e){ drvShowMsg('Error deleting: ' + (e.message||e), false); }
+    return;
+  }
+
+  if (a==='notify'){
+    alert('Notificaciones: próximo paso 😉');
     return;
   }
 });
+
+/* ------- botones header drivers ------- */
 document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
-document.getElementById('btnAddDriver').addEventListener('click', async ()=>{
-  const name = prompt('Driver name'); if(!name) return;
-  try{
-    const d = await api(API_DRV, 'POST', { name, pay_mode:'per_ride', per_ride_rate:35 });
-    allDrivers.unshift(d); renderDrivers(); drvShowMsg('Driver added.');
-  }catch(e){ drvShowMsg('Error: '+(e.message||e), false); }
-});
+document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
 
 /* =================== BOOT =================== */
 loadVehicles(); // Tab inicial
