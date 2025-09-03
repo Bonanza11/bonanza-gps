@@ -1086,7 +1086,6 @@ drvBtnSave.addEventListener('click', async ()=>{
   }catch(e){ drvFormErr.textContent = e.message || 'Error saving.'; }
   finally{ drvBtnSave.disabled=false; }
 });
-
 /* ------- eventos tabla drivers ------- */
 drvRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
@@ -1099,9 +1098,15 @@ drvRows.addEventListener('click', async (ev)=>{
   if (a==='delete'){
     const d=allDrivers.find(x=>x.id===id); if(!d) return;
     if(!confirm(`Delete driver "${d.name}"? This cannot be undone.`)) return;
-    try{ await api(`${API_DRV}?id=${encodeURIComponent(id)}`,'DELETE');
-      allDrivers=allDrivers.filter(x=>x.id!==id); renderDrivers(); drvShowMsg('Deleted.'); }
-    catch(e){ drvShowMsg('Error deleting: ' + (e.message||e), false); }
+    try{ 
+      await api(`${API_DRV}?id=${encodeURIComponent(id)}`,'DELETE');
+      allDrivers=allDrivers.filter(x=>x.id!==id); 
+      renderDrivers(); 
+      drvShowMsg('Deleted.'); 
+    }
+    catch(e){ 
+      drvShowMsg('Error deleting: ' + (e.message||e), false); 
+    }
     return;
   }
 
@@ -1118,15 +1123,18 @@ drvRows.addEventListener('click', async (ev)=>{
         pay_mode:(d.pay_mode||'per_ride'),
         active:next
       });
-      d.active=next; renderDrivers(); drvShowMsg('Updated.');
-    }catch(e){ drvShowMsg('Error updating: ' + (e.message||e), false); }
+      d.active=next;
+      renderDrivers();
+      drvShowMsg('Updated.');
+    }catch(e){ 
+      drvShowMsg('Error updating: ' + (e.message||e), false); 
+    }
     finally{ btn.disabled=false; }
     return;
   }
 
   if (a==='notify'){ alert('Notificaciones: próximo paso 😉'); }
 });
-
 /* =================== BOOT =================== */
 window.addEventListener('DOMContentLoaded', async ()=>{
   setTheadTop();
