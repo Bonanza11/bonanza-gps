@@ -640,20 +640,6 @@ vehRows.addEventListener('click', async (ev)=>{
     return;
   }
 });
-  if (action==='toggle'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
-    const next = !v.active;
-    try{ await api(API_VEH, 'POST', { id, active: next }); v.active = next; renderVehicles(); vehShowMsg('Updated.'); }
-    catch(e){ vehShowMsg('Error updating: '+(e.message||e), false); }
-  }
-});
-document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
-document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
-document.getElementById('vehControls').addEventListener('click', (e)=>{
-  const b = e.target.closest('button[data-filter]'); if(!b) return;
-  filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles(); setTheadTop();
-});
-
 /* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
