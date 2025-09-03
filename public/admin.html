@@ -515,6 +515,16 @@ async function ensureDriversLoaded(){
                     .sort((a,b)=>a.name.localeCompare(b.name));
   return cacheDrivers;
 }
+  // --- Helper para reconstruir cacheDrivers a partir de allDrivers ---
+function rebuildCacheDrivers(){
+  cacheDrivers = (allDrivers || [])
+    .map(d => ({
+      id: String(d.id),
+      name: (d.name || '').trim(),
+      active: d.active !== false
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
 function fillDriversSelect(list){
   fDriverId.innerHTML =
     `<option value="">— No driver —</option>` +
