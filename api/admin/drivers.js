@@ -16,7 +16,7 @@ function norm(body = {}) {
     // UI envía '24h' | 'custom'
     work_mode: ((body.work_mode ?? "24h").toString().trim() || "24h").toLowerCase(),
     // UI envía PER_RIDE | HOURLY | PER_LOAD
-    pay_mode: (body.pay_mode ?? "PER_RIDE").toString().trim().toUpperCase(),
+    pay_mode: (dPayMode.value || 'per_ride') , toString().trim().toUpperCase(),
     active: body.active !== false
   };
 }
