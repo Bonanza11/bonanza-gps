@@ -249,6 +249,7 @@
     </div>
   </div>
 </div>
+
 <!-- RESERVATIONS -->
 <section id="view-reservations" hidden>
   <div class="wrap">
@@ -408,10 +409,10 @@
 <!-- =================== SCRIPT =================== -->
 <script>
 /* =================== CONFIG =================== */
-const API_VEH   = '/api/admin/vehicles';
-const API_CLI   = '/api/admin/clients';
-const API_RES   = '/api/reservations';
-const API_DRV   = '/api/admin/drivers';
+const API_VEH   = '/api/admin/vehicles';   // admin (x-admin-key)
+const API_CLI   = '/api/admin/clients';    // admin (x-admin-key)
+const API_RES   = '/api/reservations';     // público con auth de servidor
+const API_DRV   = '/api/admin/drivers';    // admin (x-admin-key y JSON {ok,drivers})
 const API_DRV_ASSIGN = '/api/drivers/assignments';
 const API_DRV_NOTIFY = '/api/drivers/notify';
 
@@ -513,94 +514,107 @@ let editingId   = null;
 
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
 
-/* ---- refs modal vehicle ---- */
-const fPlate    = document.getElementById('fPlate');
-const fDriverId = document.getElementById('fDriverId');
-const fKind     = document.getElementById('fKind');
-const fYear     = document.getElementById('fYear');
-const fModel    = document.getElementById('fModel');
-const fActive   = document.getElementById('fActive');
-const vehBackdrop   = document.getElementById('vehBackdrop');
-const vehBtnClose   = document.getElementById('vehBtnClose');
-const vehBtnSave    = document.getElementById('vehBtnSave');
-const vehFormErr    = document.getElementById('vehFormErr');
-const vehModalTitle = document.getElementById('vehModalTitle');
-
 /* ---- drivers cache para el select ---- */
 let cacheDrivers = [];
 async function ensureDriversLoaded(){
+  // Si ya tenemos caché, úsala
   if (cacheDrivers.length) return cacheDrivers;
-  const j = await api(API_DRV,'GET'); // {ok,drivers}
+
+  // Si la pestaña Drivers ya cargó, usa esa lista
+  if (Array.isArray(allDrivers) && allDrivers.length){
+    cacheDrivers = allDrivers
+      .map(d => ({
+        id: String(d.id),
+        name: (d.name || '').trim(),
+        active: d.active !== false
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return cacheDrivers;
+  }
+
+  // Si no, trae desde la API
+  const j = await api(API_DRV, 'GET');  // { ok:true, drivers:[...] }
   const raw = Array.isArray(j.drivers) ? j.drivers : [];
-  cacheDrivers = raw.map(d => ({
-    id:String(d.id), name:(d.name||'').trim(), active:d.active!==false
-  })).sort((a,b)=> a.name.localeCompare(b.name));
+  cacheDrivers = raw
+    .map(d => ({
+      id: String(d.id),
+      name: (d.name || '').trim(),
+      active: d.active !== false
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   return cacheDrivers;
 }
+
 function fillDriversSelect(list){
   fDriverId.innerHTML =
     `<option value="">— No driver —</option>` +
-    list.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}${d.active?'':' (OFF)'}</option>`).join('');
+    (list && list.length
+      ? list.map(d =>
+          `<option value="${d.id}">${escapeHtml(d.name)}${d.active ? '' : ' (OFF)'}</option>`
+        ).join('')
+      : `<option value="" disabled>(Create a driver in the Drivers tab)</option>`
+    );
 }
 
-function normalizeVehicle(v){
-  const kindNorm = ((v.kind||'').toString().trim().toUpperCase()==='VAN') ? 'VAN':'SUV';
-  return {
-    id:String(v.id||''),
-    plate:(v.plate||'').trim(),
-    driver_id: v.driver_id ? String(v.driver_id) : (v.driverId ? String(v.driverId) : null),
-    driver_name:(v.driver_name||'').trim(),
-    kind:kindNorm, year:(v.year!=null?Number(v.year):null),
-    model:(v.model||'').trim(), active:!!v.active
-  };
-}
-function sortVehicles(a,b){ const ka=(a.kind||'').localeCompare(b.kind||''); if(ka!==0) return ka; return (a.plate||'').localeCompare(b.plate||''); }
-function computeStats(){
-  const total=allVehicles.length, active=allVehicles.filter(v=>v.active).length;
-  stat.total.textContent=total; stat.active.textContent=active;
-  stat.inactive.textContent=Math.max(0,total-active);
-  stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
-  stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
-}
-function visibleVeh(){ return (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind); }
+async function openAddVehicle(){
+  editingId = null;
+  vehModalTitle.textContent = 'Add Vehicle';
+  fPlate.value = '';
+  fKind.value = 'SUV';
+  fYear.value = new Date().getFullYear();
+  fModel.value = '';
+  fActive.checked = false;
+  vehFormErr.textContent = '';
 
-function renderVehicles(){
-  computeStats();
-  const list = visibleVeh();
-  vehRows.innerHTML = list.map(v=>{
-    const on = !!v.active;
-    const drvName = v.driver_name || (v.driver_id ? (cacheDrivers.find(d=>d.id===String(v.driver_id))?.name||'') : '');
-    return `
-      <tr data-id="${v.id}">
-        <td>${escapeHtml(v.plate)}</td>
-        <td>${escapeHtml(drvName)}</td>
-        <td>${escapeHtml(v.kind)}</td>
-        <td>${v.year ?? ''}</td>
-        <td>${escapeHtml(v.model || '')}</td>
-        <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-        <td class="right actions">
-          <div class="btns">
-            <button class="btn btn-edit" data-action="edit">Edit</button>
-            <button class="btn btn-danger" data-action="delete">Delete</button>
-            <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
-          </div>
-        </td>
-      </tr>`;
-  }).join('') || '<tr><td colspan="7">No vehicles.</td></tr>';
+  // Placeholder mientras carga drivers
+  fDriverId.innerHTML = `<option value="">Loading drivers…</option>`;
+  try {
+    const list = await ensureDriversLoaded();
+    fillDriversSelect(list);
+    fDriverId.value = '';
+  } catch (e) {
+    vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e);
+  }
+
+  vehBackdrop.classList.add('open');
+  setTimeout(() => fPlate.focus(), 50);
 }
 
-async function loadVehicles(){
-  vehRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
-  vehShowMsg('');
-  try{
-    await ensureAdminToken();
-    const data = await api(API_VEH,'GET');
-    const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-    allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    await ensureDriversLoaded();
-    renderVehicles(); vehShowMsg('Loaded successfully.'); setTheadTop();
+async function openEditVehicle(id){
+  const v = allVehicles.find(x => x.id === id);
+  if (!v) return;
+
+  editingId = id;
+  vehModalTitle.textContent = 'Edit Vehicle';
+  fPlate.value = v.plate || '';
+  fKind.value = v.kind || 'SUV';
+  fYear.value = v.year || new Date().getFullYear();
+  fModel.value = v.model || '';
+  fActive.checked = !!v.active;
+  vehFormErr.textContent = '';
+
+  // Placeholder mientras carga drivers
+  fDriverId.innerHTML = `<option value="">Loading drivers…</option>`;
+  try {
+    const list = await ensureDriversLoaded();
+    fillDriversSelect(list);
+    fDriverId.value = v.driver_id || '';
+  } catch (e) {
+    vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e);
+  }
+
+  vehBackdrop.classList.add('open');
+  setTimeout(() => fPlate.focus(), 50);
+}
+
+/* Precargar drivers en segundo plano al iniciar */
+ensureDriversLoaded().catch(() => {});
+    renderVehicles();
+    vehShowMsg('Loaded successfully.');
+    setTheadTop();
   }catch(e){
-    allVehicles=[]; renderVehicles(); vehShowMsg('Error loading: '+(e.message||e), false);
+    allVehicles=[]; renderVehicles();
+    vehShowMsg('Error loading: '+(e.message||e), false);
   }
 }
 
@@ -610,20 +624,28 @@ vehBtnClose.addEventListener('click', closeVehModal);
 
 async function openAddVehicle(){
   editingId=null; vehModalTitle.textContent='Add Vehicle';
-  fPlate.value=''; fKind.value='SUV'; fYear.value=new Date().getFullYear();
-  fModel.value=''; fActive.checked=false; vehFormErr.textContent='';
-  try{ const list = await ensureDriversLoaded(); fillDriversSelect(list); fDriverId.value=''; }
-  catch(e){ vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e); }
+  fPlate.value=''; fKind.value='SUV';
+  fYear.value=new Date().getFullYear(); fModel.value='';
+  fActive.checked=false; vehFormErr.textContent='';
+  try{
+    const list = await ensureDriversLoaded();
+    fillDriversSelect(list);
+    fDriverId.value = '';
+  }catch(e){ vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e); }
   vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
+
 async function openEditVehicle(id){
   const v = allVehicles.find(x=>x.id===id); if(!v) return;
   editingId=id; vehModalTitle.textContent='Edit Vehicle';
   fPlate.value=v.plate||''; fKind.value=v.kind||'SUV';
   fYear.value=v.year||new Date().getFullYear(); fModel.value=v.model||'';
   fActive.checked=!!v.active; vehFormErr.textContent='';
-  try{ const list = await ensureDriversLoaded(); fillDriversSelect(list); fDriverId.value = v.driver_id || ''; }
-  catch(e){ vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e); }
+  try{
+    const list = await ensureDriversLoaded();
+    fillDriversSelect(list);
+    fDriverId.value = v.driver_id || '';
+  }catch(e){ vehFormErr.textContent = 'Error loading drivers: ' + (e.message || e); }
   vehBackdrop.classList.add('open'); setTimeout(()=>fPlate.focus(),50);
 }
 
@@ -636,13 +658,14 @@ vehBtnSave.addEventListener('click', async ()=>{
   const year=Number(fYear.value||0);
   const model=fModel.value.trim();
   const active=!!fActive.checked;
-  if(!plate || !year){ vehFormErr.textContent='Plate and Year are required.'; return; }
 
+  if(!plate || !year){ vehFormErr.textContent='Plate and Year are required.'; return; }
   vehBtnSave.disabled=true;
   try{
     const payload={ id:editingId, plate, driver_id, kind, year, model, active };
     const data = await api(API_VEH, 'POST', payload);
     const saved = normalizeVehicle(data.vehicle || payload);
+    // enriquecer nombre si no vino
     if (!saved.driver_name && saved.driver_id){
       saved.driver_name = cacheDrivers.find(d=>d.id===String(saved.driver_id))?.name || '';
     }
@@ -653,7 +676,7 @@ vehBtnSave.addEventListener('click', async ()=>{
   finally{ vehBtnSave.disabled=false; }
 });
 
-/* tabla vehículos */
+/* tabla vehículos: editar/borrar/toggle */
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr = btn.closest('tr[data-id]'); if(!tr) return;
@@ -683,7 +706,6 @@ document.getElementById('vehControls').addEventListener('click', (e)=>{
   filterKind = b.getAttribute('data-filter') || 'ALL'; renderVehicles(); setTheadTop();
 });
 </script>
-
 <script>
 /* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
@@ -739,7 +761,8 @@ async function loadClients(){
     const data = await api(API_CLI, 'GET');
     const raw  = Array.isArray(data.clients) ? data.clients : [];
     allClients = raw.map(normalizeClient);
-    renderClients(); cliShowMsg('Loaded successfully.'); setTheadTop();
+    renderClients();
+    cliShowMsg('Loaded successfully.'); setTheadTop();
   }catch(e){
     allClients = []; renderClients();
     const msg = (String(e.message||'').includes('404'))
@@ -797,9 +820,7 @@ cliBtnSave.addEventListener('click', async ()=>{
   }catch(e){ cliFormErr.textContent = e.message || 'Error saving.'; }
   finally{ cliBtnSave.disabled = false; }
 });
-</script>
 
-<script>
 /* =================== RESERVATIONS =================== */
 const resMsg  = document.getElementById('resMsg');
 const resRows = document.getElementById('resRows');
@@ -866,6 +887,23 @@ async function loadReservations(){
     renderReservations([]); resShowMsg('Error loading: '+(e.message||e), false);
   }
 }
+async function patchReservation(id, payload){
+  return await api(API_RES, 'PATCH', { id, ...payload });
+}
+resRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if (!btn) return;
+  const tr = btn.closest('tr[data-id]'); if (!tr) return;
+  const id = tr.getAttribute('data-id');
+  const a  = btn.getAttribute('data-action');
+  try {
+    if (a === 'assign') { openAssignModal(id); return; }
+    if (a === 'start')      { await patchReservation(id, { status: 'STARTED' }); }
+    else if (a === 'done')  { await patchReservation(id, { status: 'DONE' }); }
+    else if (a === 'cancel'){ if (!confirm('Cancel this reservation?')) return; await patchReservation(id, { status: 'CANCELLED' }); }
+    await loadReservations();
+  } catch (e) { resShowMsg('Error updating: ' + (e.message || e), false); }
+});
+document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 
 /* ---------- ASSIGN MODAL ---------- */
 const assignBackdrop  = document.getElementById('assignBackdrop');
@@ -907,14 +945,12 @@ assignBtnSave.addEventListener('click', async ()=>{
   const notes       = aNotes.value.trim()  || null;
   assignBtnSave.disabled = true;
   try{
-    await api(API_RES, 'PATCH', { id: assignReservationId, status:'ASSIGNED', vehicle_id, driver_name, notes });
+    await patchReservation(assignReservationId, { status:'ASSIGNED', vehicle_id, driver_name, notes });
     closeAssignModal(); await loadReservations();
   }catch(e){ assignErr.textContent = e.message || 'Error assigning.'; }
   finally{ assignBtnSave.disabled = false; }
 });
-</script>
 
-<script>
 /* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
 const drvRows  = document.getElementById('drvRows');
@@ -961,7 +997,7 @@ async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
   drvShowMsg('');
   try{
-    const j = await api(API_DRV, 'GET');
+    const j = await api(API_DRV, 'GET');        // { ok:true, drivers:[...] }
     const raw = Array.isArray(j.drivers) ? j.drivers : [];
     allDrivers = raw.map(normalizeDriver);
     renderDrivers(); drvShowMsg('Loaded successfully.'); setTheadTop();
@@ -1069,7 +1105,7 @@ drvRows.addEventListener('click', async (ev)=>{
 
   if (a==='toggle'){
     const d = allDrivers.find(x => x.id === id); if (!d) return;
-    const next = !d.active; const btnEl = ev.target.closest('button'); btnEl.disabled = true;
+    const next = !d.active; btn.disabled = true;
     try{
       await api(API_DRV, 'POST', {
         id: d.id, name: d.name,
@@ -1081,7 +1117,7 @@ drvRows.addEventListener('click', async (ev)=>{
       });
       d.active = next; renderDrivers(); drvShowMsg('Updated.');
     }catch(e){ drvShowMsg('Error updating: ' + (e.message || e), false); }
-    finally{ btnEl.disabled = false; }
+    finally{ btn.disabled = false; }
     return;
   }
 
