@@ -1,6 +1,6 @@
 // /api/auth/driver-login.js
-import { query } from "../../_db.js";
 import jwt from "jsonwebtoken";
+import { query } from "../_db.js";          // usa tu helper de DB
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto123";
 
@@ -11,45 +11,66 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, code } = req.body;
-    if (!email || !code) {
-      return res.status(400).json({ ok: false, error: "missing_credentials" });
+    // Asegura body JSON
+    let body = req.body;
+    if (!body) {
+      // Vercel suele parsear req.body, pero por si acaso…
+      const raw = await new Promise((resolve) => {
+        let data = "";
+        req.on("data", (c) => (data += c));
+        req.on("end", () => resolve(data));
+      });
+      if (raw) {
+        try { body = JSON.parse(raw); } catch { /* noop */ }
+      }
     }
 
-    const { rows } = await query(
-      `select id, name, email, pin, active from drivers where lower(email)=lower($1) limit 1`,
+    const email = String(body?.email || "").trim().toLowerCase();
+    const code  = String(body?.code  || body?.pin || "").trim();
+
+    if (!email || !code) {
+      return res.status(400).json({ ok:false, error:"missing_credentials" });
+    }
+
+    // Busca driver
+    const result = await query(
+      `select id, name, email, phone, pin, active, online
+         from drivers
+        where lower(email) = lower($1)
+        limit 1`,
       [email]
     );
 
-    if (rows.length === 0) {
-      return res.status(401).json({ ok: false, error: "driver_not_found" });
+    const d = result?.rows?.[0];
+    if (!d) {
+      return res.status(401).json({ ok:false, error:"driver_not_found" });
+    }
+    if (d.active === false) {
+      return res.status(403).json({ ok:false, error:"driver_inactive" });
     }
 
-    const driver = rows[0];
-
-    if (!driver.active) {
-      return res.status(403).json({ ok: false, error: "inactive_driver" });
+    // Valida PIN (texto contra texto)
+    const okPin = String(d.pin ?? "").trim() === String(code).trim();
+    if (!okPin) {
+      return res.status(401).json({ ok:false, error:"bad_pin" });
     }
 
-    if (driver.pin !== code) {
-      return res.status(401).json({ ok: false, error: "invalid_pin" });
-    }
-
-    // Generar token
+    // Token de 30 días
     const token = jwt.sign(
-      { sub: driver.id, role: "DRIVER" },
+      { sub: d.id, roles: ["DRIVER"] },
       JWT_SECRET,
-      { expiresIn: "12h" }
+      { expiresIn: "30d" }
     );
 
-    return res.json({
-      ok: true,
-      token,
-      driver: { id: driver.id, name: driver.name, email: driver.email },
-    });
+    // Resumen seguro del driver
+    const driver = {
+      id: d.id, name: d.name, email: d.email, phone: d.phone,
+      active: d.active, online: d.online
+    };
 
+    return res.json({ ok:true, token, driver });
   } catch (e) {
-    console.error("[driver-login] error", e);
-    return res.status(500).json({ ok: false, error: "server_error" });
+    console.error("[driver-login] error:", e);
+    return res.status(500).json({ ok:false, error:"server_error" });
   }
 }
