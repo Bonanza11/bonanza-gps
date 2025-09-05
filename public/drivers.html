@@ -78,7 +78,7 @@
         <h2 style="margin:0">Assignments</h2>
         <div class="spacer"></div>
         <button id="btnReload" class="primary">Reload</button>
-        <button id="btnLoadDemo" title="Load demo data (local only)">Load Demo</button><!-- 👈 NUEVO -->
+        <button id="btnLoadDemo" title="Load demo data (local only)">Load Demo</button>
       </div>
       <p id="assignMsg" class="msg"></p>
       <div id="assignList" class="grid"></div>
@@ -90,7 +90,7 @@
 <script>
 /* ===== CONFIG ===== */
 const API_AUTH_DRIVER   = '/api/auth/driver-login';
-const API_ME            = '/api/driver/me';
+const API_ME            = '/api/drivers/me';            // << corregido
 const API_ASSIGNMENTS   = '/api/drivers/assignments';
 const API_NOTIFY        = '/api/drivers/notify';
 const API_VEHICLES      = '/api/admin/vehicles';
