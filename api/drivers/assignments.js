@@ -1,57 +1,62 @@
-// /api/driver/me.js
 import { query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
 
-// GET  : retorna perfil del chofer + sus vehículos
-// PATCH: { online: boolean } -> actualiza estado online
 async function handler(req, res) {
-  // Solo DRIVER, DISPATCHER, ADMIN u OWNER
-  const userId = req.user?.id; // viene del JWT (payload.sub)
-  if (!userId) return res.status(401).json({ ok: false, error: "no_sub" });
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ ok:false, error:"no_sub" });
 
-  // Mapea userId -> driver.id
-  const drvQ = await query(
-    `select d.id, d.name, d.email, d.phone, d.active, d.online
-       from drivers d
-      where d.id = $1
-         or d.user_id = $1
-      limit 1`,
-    [userId]
-  );
-  const d = drvQ.rows[0];
-  if (!d) return res.status(404).json({ ok: false, error: "driver_not_found" });
+  let { driver_id, driver_email, from, to } = req.query || {};
+  driver_id = (driver_id || "").trim();
+  driver_email = (driver_email || "").trim();
+
+  let actingDriverId = null;
+  if (req.user?.roles?.includes("DRIVER")) {
+    actingDriverId = userId;
+  } else {
+    if (!driver_id && driver_email) {
+      const found = await query(`select id from drivers where lower(email)=lower($1) limit 1`, [driver_email]);
+      driver_id = found.rows?.[0]?.id || "";
+    }
+    actingDriverId = driver_id || null;
+  }
+
+  if (!actingDriverId) return res.status(400).json({ ok:false, error:"missing_driver_ref" });
 
   if (req.method === "PATCH") {
-    const { online } = req.body || {};
-    if (typeof online !== "boolean") {
-      return res.status(400).json({ ok: false, error: "invalid_online" });
-    }
+    const { id, status } = req.body || {};
+    if (!id || !status) return res.status(400).json({ ok:false, error:"missing_fields" });
+
     const up = await query(
-      `update drivers set online = $2 where id = $1 returning online`,
-      [d.id, online]
+      `update reservations
+          set status = $2
+        where id = $1 and driver_id = $3
+        returning id, status`,
+      [id, String(status||"").toUpperCase(), actingDriverId]
     );
-    return res.json({ ok: true, driver: { ...d, online: up.rows[0].online } });
+    if (!up.rows?.[0]) return res.status(404).json({ ok:false, error:"not_found_or_forbidden" });
+    return res.json({ ok:true, row: up.rows[0] });
   }
 
   if (req.method !== "GET") {
-    res.setHeader("Allow", "GET, PATCH");
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+    res.setHeader("Allow","GET, PATCH");
+    return res.status(405).json({ ok:false, error:"method_not_allowed" });
   }
 
-  // Vehículos asignados a este driver
-  const veh = await query(
-    `select id, plate, kind, year, model, active, driver_id
-       from vehicles
-      where driver_id = $1
-      order by kind asc, plate asc`,
-    [d.id]
+  const { rows } = await query(
+    `select r.id, r.customer_name, r.email, r.phone,
+            r.pickup_location, r.dropoff_location, r.pickup_time,
+            r.vehicle_type, r.status, r.notes,
+            v.plate as vehicle_plate
+       from reservations r
+       left join vehicles v on v.id = r.vehicle_id
+      where r.driver_id = $1::uuid
+        and ($2::timestamptz is null or r.pickup_time >= $2::timestamptz)
+        and ($3::timestamptz is null or r.pickup_time <= $3::timestamptz)
+      order by r.pickup_time asc`,
+    [actingDriverId, from || null, to || null]
   );
 
-  return res.json({
-    ok: true,
-    driver: d,
-    vehicles: veh.rows || [],
-  });
+  return res.json({ ok:true, rows });
 }
 
-export default requireAuth(["DRIVER", "DISPATCHER", "ADMIN", "OWNER"])(handler);
+export default requireAuth(["DRIVER","DISPATCHER","ADMIN","OWNER"])(handler);
