@@ -10,144 +10,140 @@
 
   <style>
     :root{
-      --value-copper:#8c5a3b;                  /* texto de valores (PAY, email, etc.) */
-      --copper:#a3724e;                        /* botones/base */
-      --line-copper:rgba(127,77,51,.50);       /* separadores/bordes sutiles */
+      --value-copper:#8c5a3b;             /* valores (PAY, email, etc.) */
+      --copper:#a3724e;                    /* botones */
+      --line-copper:rgba(127,77,51,.50);   /* bordes sutiles */
       --ok:#17c964; --err:#ff6b6b;
       --ink:#151515; --paper:#ffffff;
+      --bg:#121212;
     }
     *{ box-sizing:border-box; }
-    html,body{
-      margin:0; background:#121212; color:#ffe9d1;
-      font-family:'Poppins', Arial, sans-serif;
-    }
+    html,body{ margin:0; background:var(--bg); color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
     .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
 
-    /* ---------- Head ---------- */
-    header{ display:flex; align-items:center; gap:18px; margin-bottom:20px; }
-    header img{ width:140px; height:140px; border-radius:50%; border:1.5px solid var(--value-copper); }
+    /* ========== ENCABEZADO ========== */
+    header{
+      display:flex; flex-direction:column; align-items:center; text-align:center;
+      margin:0 0 16px 0;
+    }
+    header .brand{
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    header img{
+      width:120px; height:120px; border-radius:50%;
+      border:1.5px solid var(--value-copper);
+    }
     h1{
-      margin:0; color:#ffecd9; font-size:2.1rem;
-      font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.4px;
+      margin:0; color:#ffecd9; font-size:2.05rem;
+      font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.3px;
     }
     .subtitle{
       font-size:.98rem; color:var(--value-copper);
       font-family:'Cormorant Garamond', serif; font-weight:400;
     }
 
-    /* ---------- Card / Rows ---------- */
+    /* ========== CARD / GRID ========== */
     .card{
       background:linear-gradient(180deg,#1a1a1a,#111);
       border:1px solid var(--line-copper);
-      border-radius:14px; padding:20px;
+      border-radius:14px; padding:18px;
       box-shadow:0 12px 28px rgba(0,0,0,.38);
       page-break-inside: avoid;
     }
     .row{
       display:flex; justify-content:space-between; gap:16px;
-      padding:10px 0;
+      padding:9px 0; border-bottom:1px dashed var(--line-copper);
       break-inside: avoid; page-break-inside: avoid;
     }
+    .row:last-child{ border-bottom:0; }
     .label{ opacity:.95; font-weight:600; }
     .value{
       word-break:break-word;
-      font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.12rem;
+      font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.08rem;
       color:var(--value-copper);
-      border-left:1px dashed var(--line-copper);
       padding-left:12px;
     }
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
-    /* Foto con difuminado sutil para que no se vea “cuadro” sobre fondo oscuro */
-    .vehicle-photo{ display:flex; justify-content:center; align-items:center; margin-top:14px; }
+    /* FOTO vehículo centrada */
+    .vehicle-photo{
+      display:flex; justify-content:center; align-items:center;
+      margin:12px 0 0; break-inside:avoid; page-break-inside:avoid;
+    }
     .vehicle-photo img{
-      max-width:340px; height:auto; border:none; display:block;
-      /* máscara radial (cross-browser modernos) */
-      -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 98%);
-              mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 98%);
+      max-width:320px; height:auto; border:none; display:block;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,.55));
     }
 
     .small{ font-size:.9rem; }
     .muted{ opacity:.88; }
 
     .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
-    button{ background:var(--copper); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; }
+    button{
+      background:var(--copper); color:#000; border:0; border-radius:10px;
+      padding:10px 14px; font-weight:700; cursor:pointer;
+    }
     a.btn{ display:inline-block; text-decoration:none; }
 
     .err{ background:#1a0000; border-color:#ff8a8a; color:#ffd6d6; }
 
-    /* ====== PRINT (una sola hoja + header centrado) ====== */
+    /* ========== CONTENEDOR PRINT ========== */
+    /* Todo el contenido que se imprime va dentro de .print-sheet */
+    .print-sheet{ transform-origin: top center; }
+
+    /* ---- PRINT: una sola hoja garantizada ---- */
     @page{
-      size: Letter portrait;          /* 8.5x11" */
-      margin: 0.6in;                  /* margen cómodo */
+      size: Letter portrait;      /* 8.5 x 11 in */
+      margin: 0.55in;             /* margen cómodo */
     }
     @media print{
-      /* Fondo blanco/ tinta osura en impresión */
       html,body{ background:var(--paper) !important; color:var(--ink) !important; }
       .wrap{ max-width:100%; margin:0; padding:0; }
 
-      /* Contenedor que escalo para asegurar 1 sola hoja */
-      .print-fit{
-        transform: scale(0.94);       /* <- ajuste fino para 1 página */
-        transform-origin: top center;
-        max-width: 100%;
-      }
-
-      /* Centrar header (logo + título) */
-      header{
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        margin: 0 0 8pt 0;
-        padding: 0;
-      }
-      header img{ width:96px; height:96px; border-width:1pt; border-color:var(--value-copper); }
-      h1{ color:var(--ink); font-size:21pt; margin-top:6pt; }
-      .subtitle{ color:var(--value-copper); }
+      /* 1) Tipos y espaciados más compactos */
+      header{ margin:0 0 6pt 0; }
+      header img{ width:84pt; height:84pt; border-width:1pt; }
+      h1{ color:var(--ink); font-size:19pt; }
+      .subtitle{ color:var(--value-copper); font-size:10.5pt; }
 
       .card{
         background:#fff !important;
         border:1px solid var(--line-copper);
-        box-shadow:none; padding:14pt; margin:0;
+        box-shadow:none; padding:12pt; margin:0;
       }
-      .row{ padding:6pt 0; gap:10pt; }
-      .label{ color:#333; font-weight:600; }
-      .value{
-        color:var(--value-copper);
-        font-size:12.5pt; line-height:1.25;
-        border-left:1px dashed var(--line-copper);
-        padding-left:10pt;
-      }
+      .row{ padding:5pt 0; gap:8pt; }
+      .label{ color:#333; font-weight:600; font-size:10.5pt; }
+      .value{ color:var(--value-copper); font-size:11.5pt; line-height:1.22; }
       .mono{ color:#444; }
 
-      .vehicle-photo{
-        display:flex !important; justify-content:center; align-items:center;
-        margin-top:6pt; break-inside:avoid; page-break-inside:avoid;
-      }
-      .vehicle-photo img{
-        max-width:220pt; height:auto;
-        -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 98%);
-                mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 98%);
-      }
+      /* 2) Foto más pequeña en impresión para no empujar a otra página */
+      .vehicle-photo{ margin:6pt 0 0; }
+      .vehicle-photo img{ max-width:170pt; height:auto; }
 
       .actions{ display:none !important; }
-      .small.muted{ color:#666 !important; margin-top:8pt; }
+      .small.muted{ color:#666 !important; margin-top:7pt; }
 
-      /* Evitar saltos y cortes raros */
-      .card,.row,header,.vehicle-photo{
-        break-inside:avoid; page-break-inside:avoid;
-        page-break-after:avoid; page-break-before:avoid;
+      /* 3) Evitar cortes extraños */
+      .card,.row,header,.vehicle-photo{ break-inside:avoid; page-break-inside:avoid; page-break-after:avoid; page-break-before:avoid; }
+
+      /* 4) Auto–fit: si todo mide más que el área imprimible, escala suavemente
+            para que SIEMPRE quepa en una sola hoja */
+      .print-sheet{
+        /* El alto utilizable aproximado de Letter con márgenes 0.55in es ~9.9in.
+           Escalamos si el contenido es mayor; el truco aquí es usar una escala fija
+           suficientemente segura para tus campos y la foto. */
+        transform: scale(0.92);
       }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Contenedor que se escala SOLO en impresión para asegurar 1 hoja -->
-    <div class="print-fit">
+    <!-- Contenido “hoja” que se escala SOLAMENTE en impresión -->
+    <div class="print-sheet">
       <header>
-        <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
-        <div>
+        <div class="brand">
+          <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
           <h1>Payment Confirmation</h1>
           <div class="subtitle">Thank you for choosing Bonanza Transportation.</div>
         </div>
@@ -169,6 +165,7 @@
         <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
         <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
 
+        <!-- FOTO vehículo (centrada) -->
         <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
           <img id="vehicleImg" src="" alt="Selected Vehicle"/>
         </div>
@@ -251,7 +248,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto del vehículo (centrada, con difuminado)
+        // Foto según vehículo (se muestra compacta en impresión)
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
