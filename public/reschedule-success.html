@@ -10,36 +10,22 @@
 
   <style>
     :root{
-      /* Cobre ligeramente más claro/visible */
-      --value-copper:#8c5a3b;              /* texto de valores (PAY, email, etc.) y subtítulo */
-      --copper:#a3724e;                    /* botones/base */
-      --line-copper:rgba(127,77,51,.50);   /* separadores/bordes sutiles */
-      --ok:#17c964;
-      --err:#ff6b6b;
-      --ink:#151515;
-      --paper:#ffffff;
+      --value-copper:#8c5a3b;
+      --copper:#a3724e;
+      --line-copper:rgba(127,77,51,.50);
+      --ok:#17c964; --err:#ff6b6b;
+      --ink:#151515; --paper:#ffffff;
     }
-
     *{ box-sizing:border-box; }
-    html,body{
-      margin:0;
-      background:#121212;                  /* un poco más claro que #111 */
-      color:#ffe9d1;
-      font-family:'Poppins', Arial, sans-serif;
-    }
+    html,body{ margin:0; background:#121212; color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
     .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
 
     /* ---------- Head ---------- */
     header{ display:flex; align-items:center; gap:18px; margin-bottom:20px; }
-    /* Anillo: mismo color del subtítulo y a la mitad de grosor */
-    header img{
-      width:140px; height:140px; border-radius:50%;
-      border:1.5px solid var(--value-copper);
-    }
+    header img{ width:140px; height:140px; border-radius:50%; border:1.5px solid var(--value-copper); }
     h1{
       margin:0; color:#ffecd9; font-size:2.1rem;
       font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.4px;
-      text-transform:none;
     }
     .subtitle{
       font-size:.98rem; color:var(--value-copper);
@@ -48,7 +34,7 @@
 
     /* ---------- Card / Rows ---------- */
     .card{
-      background:linear-gradient(180deg,#1a1a1a,#111);  /* un pelín más claro */
+      background:linear-gradient(180deg,#1a1a1a,#111);
       border:1px solid var(--line-copper);
       border-radius:14px; padding:20px;
       box-shadow:0 12px 28px rgba(0,0,0,.38);
@@ -59,130 +45,128 @@
       padding:10px 0;
       break-inside: avoid; page-break-inside: avoid;
     }
-    .label{
-      opacity:.95; font-weight:600; font-family:'Poppins', sans-serif;
-    }
+    .label{ opacity:.95; font-weight:600; }
     .value{
       word-break:break-word;
       font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.12rem;
-      color:var(--value-copper);                 /* valores más claros/elegantes */
-      border-left:1px dashed var(--line-copper); /* separador vertical sutil */
+      color:var(--value-copper);
+      border-left:1px dashed var(--line-copper);
       padding-left:12px;
     }
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
-    /* Foto del vehículo: centrada, sin marco y al doble de tamaño */
-    .vehicle-photo{
-      display:flex; justify-content:center; align-items:center;
-      margin-top:14px;
-    }
-    .vehicle-photo img{
-      max-width:340px; height:auto;         /* doble que antes */
-      border:none;                           /* sin marco */
-    }
+    .vehicle-photo{ display:flex; justify-content:center; align-items:center; margin-top:14px; }
+    .vehicle-photo img{ max-width:340px; height:auto; border:none; }
 
     .small{ font-size:.9rem; }
     .muted{ opacity:.88; }
 
     .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
-    button{
-      background:var(--copper); color:#000; border:0; border-radius:10px;
-      padding:10px 14px; font-weight:700; cursor:pointer;
-    }
+    button{ background:var(--copper); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; }
     a.btn{ display:inline-block; text-decoration:none; }
 
     .err{ background:#1a0000; border-color:#ff8a8a; color:#ffd6d6; }
 
-    /* =========================
-            IMPRESIÓN (1 HOJA)
-       ========================= */
+    /* ====== PRINT (una sola hoja + header centrado) ====== */
     @page{
-      size: Letter portrait;      /* 8.5x11" */
-      margin: 0.6in;              /* márgenes controlados */
+      size: Letter portrait;
+      margin: 0.6in;
     }
     @media print{
       html,body{ background:var(--paper) !important; color:var(--ink) !important; }
-      .wrap{ max-width: 100%; margin: 0; padding: 0; }
-      header{ margin: 0 0 8pt 0; padding: 0; }
-      header img{ width: 96px; height: 96px; border-width:1pt; border-color:var(--value-copper); }
-      h1{ color: var(--ink); font-size: 21pt; }
-      .subtitle{ color: var(--value-copper); }
+      .wrap{ max-width:100%; margin:0; padding:0; }
+
+      /* Escala ligera para garantizar 1 hoja */
+      .print-fit{
+        transform: scale(0.95);
+        transform-origin: top center;
+      }
+
+      /* Centrar header en impresión */
+      header{
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin: 0 0 8pt 0;
+        padding: 0;
+      }
+      header img{ width:96px; height:96px; border-width:1pt; border-color:var(--value-copper); }
+      h1{ color:var(--ink); font-size:21pt; }
+      .subtitle{ color:var(--value-copper); }
 
       .card{
         background:#fff !important;
         border:1px solid var(--line-copper);
-        box-shadow:none; padding: 14pt; margin: 0;
+        box-shadow:none; padding:14pt; margin:0;
       }
-      .row{ padding: 6pt 0; gap: 10pt; }
+      .row{ padding:6pt 0; gap:10pt; }
       .label{ color:#333; font-weight:600; }
       .value{
-        color: var(--value-copper);
-        font-size: 12.5pt; line-height: 1.25;
+        color:var(--value-copper);
+        font-size:12.5pt; line-height:1.25;
         border-left:1px dashed var(--line-copper);
         padding-left:10pt;
       }
       .mono{ color:#444; }
 
-      .vehicle-photo{
-        display:flex !important; justify-content:center; align-items:center;
-        margin-top: 6pt; break-inside: avoid; page-break-inside: avoid;
-      }
-      .vehicle-photo img{ max-width: 220pt; height: auto; border: none; } /* doble tamaño y sin marco */
+      .vehicle-photo{ display:flex !important; justify-content:center; align-items:center; margin-top:6pt; break-inside:avoid; page-break-inside:avoid; }
+      .vehicle-photo img{ max-width:220pt; height:auto; }
 
       .actions{ display:none !important; }
-      .small.muted{ color:#666 !important; margin-top: 8pt; }
+      .small.muted{ color:#666 !important; margin-top:8pt; }
 
-      /* Evitar cortes */
-      .card, .row { break-inside: avoid; page-break-inside: avoid; }
-      header, .card, .row, .vehicle-photo { page-break-after: avoid; page-break-before: avoid; }
+      /* Evitar cortes raros */
+      .card,.row,header,.vehicle-photo{ break-inside:avoid; page-break-inside:avoid; page-break-after:avoid; page-break-before:avoid; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
-      <div>
-        <h1>Payment Confirmation</h1>
-        <div class="subtitle">Thank you for choosing Bonanza Transportation.</div>
+    <!-- Contenedor que se escala SOLO en impresión para asegurar 1 hoja -->
+    <div class="print-fit">
+      <header>
+        <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
+        <div>
+          <h1>Payment Confirmation</h1>
+          <div class="subtitle">Thank you for choosing Bonanza Transportation.</div>
+        </div>
+      </header>
+
+      <div id="box" class="card">
+        <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
+        <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
+        <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
+        <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
+        <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
+        <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
+
+        <div class="row"><div class="label">Customer Name</div><div class="value" id="v_name">—</div></div>
+        <div class="row"><div class="label">Customer Phone</div><div class="value" id="v_phone">—</div></div>
+
+        <div class="row"><div class="label">Pickup</div><div class="value" id="v_pickup">—</div></div>
+        <div class="row"><div class="label">Drop-off</div><div class="value" id="v_dropoff">—</div></div>
+        <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
+        <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
+
+        <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
+          <img id="vehicleImg" src="" alt="Selected Vehicle"/>
+        </div>
+
+        <div class="small muted" id="v_note" style="margin-top:10px">
+          A copy of this receipt has been saved. You can print or download it.
+        </div>
+
+        <div class="actions">
+          <button onclick="window.print()">Print / Save PDF</button>
+          <a id="backLink" class="btn"><button type="button">Back to Reschedule</button></a>
+          <a href="/index.html" class="btn"><button type="button">Go to Main Page</button></a>
+        </div>
       </div>
-    </header>
 
-    <div id="box" class="card">
-      <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
-      <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
-      <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
-      <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
-      <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
-      <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
-
-      <div class="row"><div class="label">Customer Name</div><div class="value" id="v_name">—</div></div>
-      <div class="row"><div class="label">Customer Phone</div><div class="value" id="v_phone">—</div></div>
-
-      <div class="row"><div class="label">Pickup</div><div class="value" id="v_pickup">—</div></div>
-      <div class="row"><div class="label">Drop-off</div><div class="value" id="v_dropoff">—</div></div>
-      <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
-      <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
-
-      <!-- FOTO vehículo (centrada, sin marco, tamaño x2) -->
-      <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
-        <img id="vehicleImg" src="" alt="Selected Vehicle"/>
-      </div>
-
-      <div class="small muted" id="v_note" style="margin-top:10px">
-        A copy of this receipt has been saved. You can print or download it.
-      </div>
-
-      <div class="actions">
-        <button onclick="window.print()">Print / Save PDF</button>
-        <a id="backLink" class="btn"><button type="button">Back to Reschedule</button></a>
-        <a href="/index.html" class="btn"><button type="button">Go to Main Page</button></a>
-      </div>
+      <p class="small muted" style="margin:12px 2px 0">
+        Need help? Text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
+      </p>
     </div>
-
-    <p class="small muted" style="margin:12px 2px 0">
-      Need help? Text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
-    </p>
   </div>
 
   <script>
@@ -215,7 +199,6 @@
       }catch{}
       return '—';
     }
-
     function getAmountCents(session){
       if (typeof session.amount_total === 'number') return session.amount_total;
       if (typeof session.amount_subtotal === 'number') return session.amount_subtotal;
@@ -247,7 +230,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto del vehículo (centrada, sin marco, tamaño x2)
+        // Foto según vehículo
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
