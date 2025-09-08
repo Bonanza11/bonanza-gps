@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Payment Confirmation — Bonanza Transportation</title>
 
-  <!-- Elegante tipografía -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Tipografías elegantes -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
 
   <style>
     :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
@@ -20,16 +20,52 @@
     .wrap{max-width:900px;margin:32px auto 80px;padding:0 16px}
     header{display:flex;align-items:center;gap:18px;margin-bottom:20px}
     header img{width:140px;height:140px;border-radius:50%;border:3px solid var(--copper)}
-    h1{margin:0;color:#ffe3bf;font-size:2rem;font-weight:700;letter-spacing:.5px}
-    .card{background:linear-gradient(180deg,#121212,#0b0b0b);border:1px solid rgba(168,116,79,.45);
-          border-radius:14px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.45)}
-    .row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
+    h1{
+      margin:0;
+      color:#ffe3bf;
+      font-size:2.2rem;
+      font-family:'Playfair Display', serif;
+      font-weight:700;
+      letter-spacing:.5px;
+    }
+    .card{
+      background:linear-gradient(180deg,#121212,#0b0b0b);
+      border:1px solid rgba(168,116,79,.45);
+      border-radius:14px;
+      padding:20px;
+      box-shadow:0 12px 28px rgba(0,0,0,.45)
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      padding:10px 0;
+      border-bottom:1px dashed rgba(168,116,79,.35)
+    }
     .row:last-child{border-bottom:0}
-    .label{opacity:.85;font-weight:500}
-    .value{font-weight:600;color:#ffe3bf;word-break:break-word}
+    .label{
+      opacity:.85;
+      font-weight:500;
+      font-family:'Poppins', sans-serif;
+    }
+    .value{
+      font-weight:600;
+      color:#ffe3bf;
+      word-break:break-word;
+      font-family:'Playfair Display', serif;
+      font-size:1.05rem;
+    }
     .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
     .actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-    button{background:var(--copper);color:#000;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    button{
+      background:var(--copper);
+      color:#000;
+      border:0;
+      border-radius:10px;
+      padding:10px 14px;
+      font-weight:700;
+      cursor:pointer
+    }
     a.btn{display:inline-block;text-decoration:none}
     .muted{opacity:.85}
     .small{font-size:.9rem}
@@ -88,7 +124,6 @@
   </div>
 
   <script>
-    // ---- URL params ----
     const params    = new URLSearchParams(location.search);
     const sessionId = params.get('session_id') || params.get('session') || '';
     const cn        = params.get('cn') || '';
@@ -96,7 +131,6 @@
     document.getElementById('v_cn').textContent = cn || '—';
     document.getElementById('backLink').href = '/reschedule.html' + (cn ? ('?cn=' + encodeURIComponent(cn)) : '');
 
-    // ---- helpers ----
     const $ = (id) => document.getElementById(id);
     const set = (id, val) => { $(id).textContent = (val==null || val==='') ? '—' : String(val); };
     const fmtUSD = (cents) => (typeof cents==='number')
@@ -107,13 +141,11 @@
       set('v_status','ERROR'); set('v_note','Error loading receipt: ' + msg);
     };
 
-    // Payment method extraction (robusto a distintas formas del objeto)
     function getPaymentMethod(session){
       try{
         if (Array.isArray(session.payment_method_types) && session.payment_method_types.length){
           return session.payment_method_types[0].toUpperCase();
         }
-        // si expandiste payment_intent
         const ch = session.payment_intent?.charges?.data?.[0];
         if (ch?.payment_method_details?.type){
           return String(ch.payment_method_details.type).toUpperCase();
@@ -122,66 +154,44 @@
       return '—';
     }
 
-    // Total amount extraction con varios fallbacks
     function getAmountCents(session){
       if (typeof session.amount_total === 'number') return session.amount_total;
       if (typeof session.amount_subtotal === 'number') return session.amount_subtotal;
-      // si expandiste payment_intent
       if (typeof session.payment_intent?.amount_received === 'number') return session.payment_intent.amount_received;
       if (typeof session.payment_intent?.amount === 'number') return session.payment_intent.amount;
       return null;
     }
 
-    // ---- main loader ----
     async function loadSession(){
       if (!sessionId){ showError('Missing session_id in URL.'); return; }
       try{
         const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const payload = await r.json();
-
-        // Soporta tanto {session:{...}} como {...}
         const s  = payload.session || payload;
         const md = s.metadata || payload.metadata || {};
 
-        // status / id
         set('v_status', (s.payment_status || s.status || 'PAID').toString().toUpperCase());
         set('v_sid', s.id || sessionId);
-
-        // amount
         set('v_amount', fmtUSD(getAmountCents(s)));
-
-        // email
-        const email = s.customer_details?.email || s.customer_email || md.email || null;
-        set('v_email', email);
-
-        // payment method
+        set('v_email', s.customer_details?.email || s.customer_email || md.email || null);
         set('v_pm', getPaymentMethod(s));
-
-        // cliente
         set('v_name',  md.fullname || md.name || payload.name || null);
         set('v_phone', md.phone || null);
-
-        // viaje
         set('v_pickup',  md.pickup  || md.pickup_location  || null);
         set('v_dropoff', md.dropoff || md.dropoff_location || null);
         const dt = [md.date, md.time].filter(Boolean).join(' ');
         set('v_dt', dt || null);
-
-        // vehículo
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // foto vehículo opcional
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
           if (low.includes('suv')) { img.src = '/images/suburban.png'; photo.style.display='block'; }
           else if (low.includes('van')) { img.src = '/images/van-sprinter.png'; photo.style.display='block'; }
           else { photo.style.display='none'; }
-        }else{
-          photo.style.display='none';
-        }
+        } else { photo.style.display='none'; }
 
         $('v_note').innerHTML =
           `Receipt stored. Session <span class="mono">${s.id || sessionId}</span>. You will receive an email confirmation shortly.`;
