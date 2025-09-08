@@ -9,71 +9,113 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
-    :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;
-      background:#000;
-      color:#ffddae;
-      font-family:'Poppins', Arial, sans-serif;
+    :root {
+      --copper: #a8744f;
+      --dark-copper: #8a5e3b; /* cobre más oscuro para valores elegantes */
+      --ok: #17c964;
+      --err: #ff6b6b;
     }
-    .wrap{max-width:900px;margin:32px auto 80px;padding:0 16px}
-    header{display:flex;align-items:center;gap:18px;margin-bottom:20px}
-    header img{width:140px;height:140px;border-radius:50%;border:3px solid var(--copper)}
-    h1{
-      margin:0;
-      color:#ffe3bf;
-      font-size:2.2rem;
-      font-family:'Playfair Display', serif;
-      font-weight:500; /* más estilizado */
-      letter-spacing:.5px;
-      text-transform:none; /* ya no todo en mayúsculas */
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #000;
+      color: #ffddae;
+      font-family: 'Poppins', Arial, sans-serif;
     }
-    .card{
-      background:linear-gradient(180deg,#121212,#0b0b0b);
-      border:1px solid rgba(168,116,79,.45);
-      border-radius:14px;
-      padding:20px;
-      box-shadow:0 12px 28px rgba(0,0,0,.45)
+    .wrap {
+      max-width: 900px;
+      margin: 32px auto 80px;
+      padding: 0 16px;
     }
-    .row{
-      display:flex;
-      justify-content:space-between;
-      gap:16px;
-      padding:10px 0;
-      border-bottom:1px dashed rgba(168,116,79,.35)
+    header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 20px;
     }
-    .row:last-child{border-bottom:0}
-    .label{
-      opacity:.85;
-      font-weight:500;
-      font-family:'Poppins', sans-serif;
+    header img {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 3px solid var(--copper);
     }
-    .value{
-      color:#ffe3bf;
-      word-break:break-word;
-      font-family:'Playfair Display', serif;
-      font-weight:400;   /* más fino, no tan bold */
-      font-size:1.05rem;
+    h1 {
+      margin: 0;
+      color: #ffe3bf;
+      font-size: 2.2rem;
+      font-family: 'Playfair Display', serif;
+      font-weight: 500; /* más estilizado */
+      letter-spacing: .5px;
+      text-transform: none; /* Payment Confirmation normal */
     }
-    .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
-    .actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-    button{
-      background:var(--copper);
-      color:#000;
-      border:0;
-      border-radius:10px;
-      padding:10px 14px;
-      font-weight:700;
-      cursor:pointer
+    .subtitle {
+      font-size: .95rem;
+      color: var(--dark-copper);
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
     }
-    a.btn{display:inline-block;text-decoration:none}
-    .muted{opacity:.85}
-    .small{font-size:.9rem}
-    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:14px 0}
-    .vehicle-photo{text-align:center;margin-top:20px}
-    .vehicle-photo img{max-width:400px;border-radius:12px;border:2px solid var(--copper)}
+    .card {
+      background: linear-gradient(180deg, #121212, #0b0b0b);
+      border: 1px solid rgba(168,116,79,.45);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.45);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(168,116,79,.35);
+    }
+    .row:last-child { border-bottom: 0; }
+    .label {
+      opacity: .85;
+      font-weight: 500;
+      font-family: 'Poppins', sans-serif;
+    }
+    .value {
+      word-break: break-word;
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;  /* más fino */
+      font-size: 1.05rem;
+      color: var(--dark-copper);
+    }
+    .err {
+      background: #1a0000;
+      border-color: #ff8a8a;
+      color: #ffd6d6;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: var(--copper);
+      color: #000;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    a.btn { display: inline-block; text-decoration: none; }
+    .muted { opacity: .85; }
+    .small { font-size: .9rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; }
+    .hr {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(192,139,92,.35), transparent);
+      margin: 14px 0;
+    }
+    .vehicle-photo { text-align: center; margin-top: 20px; }
+    .vehicle-photo img {
+      max-width: 400px;
+      border-radius: 12px;
+      border: 2px solid var(--copper);
+    }
   </style>
 </head>
 <body>
@@ -82,7 +124,7 @@
       <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
       <div>
         <h1>Payment Confirmation</h1>
-        <div class="small muted">Thank you for choosing Bonanza Transportation.</div>
+        <div class="subtitle">Thank you for choosing Bonanza Transportation.</div>
       </div>
     </header>
 
