@@ -15,8 +15,8 @@
       --line-copper:rgba(127,77,51,.50);   /* bordes sutiles */
       --ok:#17c964; --err:#ff6b6b;
       --ink:#151515; --paper:#ffffff;
-      /* Fondo más profundo, igual al del landing */
-      --bg:#0a0a0a;
+      /* Negro absoluto para integración con SUV */
+      --bg:#050505;
     }
     *{ box-sizing:border-box; }
     html,body{ margin:0; background:var(--bg); color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
@@ -45,11 +45,10 @@
 
     /* ========== CARD / GRID ========== */
     .card{
-      /* Integración con el fondo de la foto: negro más profundo */
-      background:linear-gradient(180deg,#0d0d0d,#0a0a0a);
+      background:linear-gradient(180deg,#080808,#050505);
       border:1px solid var(--line-copper);
       border-radius:14px; padding:18px;
-      box-shadow:0 18px 36px rgba(0,0,0,.55);
+      box-shadow:0 18px 36px rgba(0,0,0,.6);
       page-break-inside: avoid;
     }
     .row{
@@ -74,7 +73,6 @@
     }
     .vehicle-photo img{
       max-width:320px; height:auto; border:none; display:block;
-      /* Sombra suave para integrarlo aún mejor */
       filter: drop-shadow(0 8px 22px rgba(0,0,0,.6));
     }
 
