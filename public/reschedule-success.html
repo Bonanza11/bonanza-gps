@@ -10,14 +10,17 @@
 
   <style>
     :root{
-      --value-copper:#8c5a3b;
-      --copper:#a3724e;
-      --line-copper:rgba(127,77,51,.50);
+      --value-copper:#8c5a3b;                  /* texto de valores (PAY, email, etc.) */
+      --copper:#a3724e;                        /* botones/base */
+      --line-copper:rgba(127,77,51,.50);       /* separadores/bordes sutiles */
       --ok:#17c964; --err:#ff6b6b;
       --ink:#151515; --paper:#ffffff;
     }
     *{ box-sizing:border-box; }
-    html,body{ margin:0; background:#121212; color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
+    html,body{
+      margin:0; background:#121212; color:#ffe9d1;
+      font-family:'Poppins', Arial, sans-serif;
+    }
     .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
 
     /* ---------- Head ---------- */
@@ -56,7 +59,7 @@
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
     .vehicle-photo{ display:flex; justify-content:center; align-items:center; margin-top:14px; }
-    .vehicle-photo img{ max-width:340px; height:auto; border:none; }
+    .vehicle-photo img{ max-width:340px; height:auto; border:none; display:block; }
 
     .small{ font-size:.9rem; }
     .muted{ opacity:.88; }
@@ -80,6 +83,7 @@
       .print-fit{
         transform: scale(0.95);
         transform-origin: top center;
+        max-width: 100%;
       }
 
       /* Centrar header en impresión */
@@ -230,7 +234,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto según vehículo
+        // Foto del vehículo (centrada)
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
