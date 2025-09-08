@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Payment Confirmation — Bonanza Transportation</title>
 
-  <!-- Tipografías elegantes -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Tipografías -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
@@ -25,8 +25,9 @@
       color:#ffe3bf;
       font-size:2.2rem;
       font-family:'Playfair Display', serif;
-      font-weight:700;
+      font-weight:500; /* más estilizado */
       letter-spacing:.5px;
+      text-transform:none; /* ya no todo en mayúsculas */
     }
     .card{
       background:linear-gradient(180deg,#121212,#0b0b0b);
@@ -49,10 +50,10 @@
       font-family:'Poppins', sans-serif;
     }
     .value{
-      font-weight:600;
       color:#ffe3bf;
       word-break:break-word;
       font-family:'Playfair Display', serif;
+      font-weight:400;   /* más fino, no tan bold */
       font-size:1.05rem;
     }
     .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
@@ -80,7 +81,7 @@
     <header>
       <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
       <div>
-        <h1>Payment Confirmed</h1>
+        <h1>Payment Confirmation</h1>
         <div class="small muted">Thank you for choosing Bonanza Transportation.</div>
       </div>
     </header>
