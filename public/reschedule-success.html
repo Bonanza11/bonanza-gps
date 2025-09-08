@@ -15,7 +15,7 @@
       --line-copper:rgba(127,77,51,.50);   /* bordes sutiles */
       --ok:#17c964; --err:#ff6b6b;
       --ink:#151515; --paper:#ffffff;
-      --bg:#050505;                        /* negro absoluto para integrar imágenes */
+      --bg:#050505;                        /* negro absoluto p/ integrar imágenes */
     }
     *{ box-sizing:border-box; }
     html,body{ margin:0; background:var(--bg); color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
@@ -42,10 +42,10 @@
 
     /* ========== CARD / GRID ========== */
     .card{
-      background:var(--bg);                 /* MISMO tono que el body (sin gradiente) */
+      background:var(--bg);
       border:1px solid var(--line-copper);
       border-radius:14px; padding:18px;
-      box-shadow:0 18px 36px rgba(0,0,0,.6); /* relieve muy sutil para no “flotar” */
+      box-shadow:0 18px 36px rgba(0,0,0,.6);
       page-break-inside: avoid;
     }
     .row{
@@ -70,7 +70,6 @@
     }
     .vehicle-photo img{
       max-width:320px; height:auto; border:none; display:block;
-      /* sombra para que “respire” sobre el fondo negro */
       filter: drop-shadow(0 8px 22px rgba(0,0,0,.6));
     }
 
@@ -98,14 +97,14 @@
       html,body{ background:var(--paper) !important; color:var(--ink) !important; }
       .wrap{ max-width:100%; margin:0; padding:0; }
 
-      /* 1) Tipos y espaciados más compactos */
+      /* Tipos y espaciados más compactos */
       header{ margin:0 0 6pt 0; }
       header img{ width:84pt; height:84pt; border-width:1pt; }
       h1{ color:var(--ink); font-size:19pt; }
       .subtitle{ color:var(--value-copper); font-size:10.5pt; }
 
       .card{
-        background:#fff !important;          /* en papel, fondo blanco */
+        background:#fff !important;
         border:1px solid var(--line-copper);
         box-shadow:none; padding:12pt; margin:0;
       }
@@ -114,17 +113,17 @@
       .value{ color:var(--value-copper); font-size:11.5pt; line-height:1.22; }
       .mono{ color:#444; }
 
-      /* 2) Foto más pequeña en impresión para no empujar a otra página */
+      /* Foto más pequeña en impresión para no empujar a otra página */
       .vehicle-photo{ margin:6pt 0 0; }
       .vehicle-photo img{ max-width:170pt; height:auto; }
 
       .actions{ display:none !important; }
       .small.muted{ color:#666 !important; margin-top:7pt; }
 
-      /* 3) Evitar cortes extraños */
+      /* Evitar cortes */
       .card,.row,header,.vehicle-photo{ break-inside:avoid; page-break-inside:avoid; page-break-after:avoid; page-break-before:avoid; }
 
-      /* 4) Auto–fit para SIEMPRE caber en 1 hoja */
+      /* Auto–fit para SIEMPRE caber en 1 hoja */
       .print-sheet{ transform: scale(0.92); }
     }
   </style>
