@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reschedule — Bonanza Transportation</title>
-<style>
+  <style>
   :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:#000;color:var(--copper);font-family:Arial,Helvetica,sans-serif}
@@ -62,51 +62,22 @@
   }
   #flightNumber::placeholder,#flightOrigin::placeholder,#jsxFlightNumber::placeholder,#jsxOrigin::placeholder,#tailNumber::placeholder,#pvtOrigin::placeholder{
     color:#c9a97c!important;opacity:.85!important;
-  }  #flightNumber::placeholder,
-  #flightOrigin::placeholder {
-    color:#c9a97c!important;
-    opacity:.85!important;
   }
 
-/* === ICONOS BLANCOS DE FECHA Y HORA === */
-#newDate,
-#newTime {
-  padding-right: 38px !important; /* deja espacio para el icono */
-}
-
-/* Calendario blanco */
-#newDate::-webkit-calendar-picker-indicator {
-  background: no-repeat center / 18px 18px
-    url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
-  <rect x='3' y='4' width='18' height='18' rx='2' ry='2'/>\
-  <line x1='16' y1='2' x2='16' y2='6'/>\
-  <line x1='8' y1='2' x2='8' y2='6'/>\
-  <line x1='3' y1='10' x2='21' y2='10'/>\
-</svg>");
-  opacity: 1 !important;
-  filter: none !important;
-  cursor: pointer;
-}
-
-/* Reloj blanco */
-#newTime::-webkit-calendar-picker-indicator {
-  background: no-repeat center / 18px 18px
-    url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>\
-  <circle cx='12' cy='13' r='8'/>\
-  <line x1='12' y1='13' x2='12' y2='9'/>\
-  <line x1='12' y1='13' x2='15' y2='15'/>\
-</svg>");
-  opacity: 1 !important;
-  filter: none !important;
-  cursor: pointer;
-}
-
-/* Mantener esquema oscuro (Firefox + WebKit) */
-#newDate, #newTime { color-scheme: dark; }
-</style>
-  
+  /* === ICONOS BLANCOS DE FECHA Y HORA === */
+  #newDate, #newTime { padding-right:38px !important; }
+  #newDate::-webkit-calendar-picker-indicator {
+    background: no-repeat center / 18px 18px
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='18' rx='2' ry='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>");
+    opacity:1 !important; filter:none !important; cursor:pointer;
+  }
+  #newTime::-webkit-calendar-picker-indicator {
+    background: no-repeat center / 18px 18px
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='13' r='8'/><line x1='12' y1='13' x2='12' y2='9'/><line x1='12' y1='13' x2='15' y2='15'/></svg>");
+    opacity:1 !important; filter:none !important; cursor:pointer;
+  }
+  #newDate, #newTime { color-scheme: dark; }
+  </style>
 </head>
 <body>
   <header>
@@ -233,14 +204,10 @@
   /************ CONFIG ************/
   const STRIPE_PK = 'pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp';
   const stripe = Stripe(STRIPE_PK);
-      /* ==== Money helpers (evitan montos locos) ==== */
-  function roundUSD(n){
-    return Math.round((Number(n)||0) * 100) / 100; // 2 decimales
-  }
+  function roundUSD(n){ return Math.round((Number(n)||0) * 100) / 100; }
   function assertDiffUSD(usd){
     if (!Number.isFinite(usd)) throw new Error('Invalid amount');
     if (usd < 0) throw new Error('Negative amount');
-    // Límite de seguridad (ajusta si quieres)
     if (usd > 5000) throw new Error('Amount too large for reschedule diff');
   }
   const MAX_RESCHEDULES = 2;
@@ -449,9 +416,8 @@
     return (d<start)||(d>end);
   }
 
-  /* ===== Reschedule pricing with outside‑county surcharge ===== */
-  const RS_BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT"; /* base for surcharge */
-
+  /* ===== Surcharge por condado ===== */
+  const RS_BASE_ADDRESS = "13742 N Jordanelle Pkwy, Kamas, UT";
   let __rsGeocoder = null;
   function rsGetGeocoder(){ if(!__rsGeocoder) __rsGeocoder = new google.maps.Geocoder(); return __rsGeocoder; }
   function rsCountyFromPlace(p){
@@ -492,7 +458,6 @@
     return d < start || d > end;
   }
 
-  /* REPLACEMENT: recalc() with county surcharge and NO REFUND rule display */
   async function recalc(){
     if(!booking) return;
 
@@ -502,13 +467,11 @@
 
     const base = calculateBase(miles || 0);
 
-    // Counties (inline first, fallback to Geocoder)
     const pickCountyRaw = rsCountyFromPlace(pickupPlace) || await rsCountyByPlaceId(pickupPlace?.place_id);
     const dropCountyRaw = rsCountyFromPlace(dropoffPlace) || await rsCountyByPlaceId(dropoffPlace?.place_id);
     const pickupAllowed = rsIsAllowedCounty(pickCountyRaw);
     const dropAllowed   = rsIsAllowedCounty(dropCountyRaw);
 
-    // Surcharge rule
     let surcharge = 0;
     const pickupIsAirport = isAirport(pickupPlace||null);
 
@@ -526,7 +489,6 @@
       }
     }catch(_){ surcharge = 0; }
 
-    // Date/Time & fees
     const dateStr = el('newDate')?.value || "";
     const timeStr = el('newTime')?.value || "";
     const afterHours = rsIsAfterHours(dateStr, timeStr);
@@ -537,17 +499,14 @@
     const newTotal = rsApplyVehicle(base + surcharge + ahFee + mgFee);
     const original = Number(booking.quotedTotal || booking.quoted_total || 0);
 
-    // === REGLA DE RESCHEDULE: nunca devolvemos si baja ===
     let diffRaw = Math.round((newTotal - original) * 100) / 100;
     const diffForUI = Math.max(diffRaw, 0);
 
-    // KPIs
     el('kpiMiles').textContent = miles ? miles.toFixed(1) : '—';
     el('kpiNew').textContent   = fmtMoney(newTotal);
     el('kpiDiff').textContent  = fmtMoney(diffForUI);
     el('kpiAH').textContent    = afterHours ? 'Yes (+20%)' : 'No';
 
-    // Breakdown
     const rows = [];
     rows.push(`<div class="row"><span>Base (${miles?miles.toFixed(1):'—'} mi)</span><span>$${fmtMoney(base)}</span></div>`);
     if (surcharge > 0) rows.push(`<div class="row"><span>Distance Surcharge</span><span>$${fmtMoney(surcharge)}</span></div>`);
@@ -556,20 +515,17 @@
     rows.push(`<div class="divider"></div><div class="row total"><span>Total</span><span>$${fmtMoney(newTotal)}</span></div>`);
     el('breakdown').innerHTML = rows.join('');
 
-    // Cache + Save enable
     booking.__calc = {
       newTotal,
-      diff: diffRaw,            // real (puede ser negativo)
-      diffForUI,                // mostrado/cobrado (nunca < 0)
+      diff: diffRaw,
+      diffForUI,
       afterHours, miles, surcharge, mgFee, selectedVehicle, mgChoice, dateStr, timeStr
     };
     const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
     el('btnSave').disabled = !canSave;
   }
 
-  /* —— Eventos DOM —— */
   document.addEventListener('DOMContentLoaded', ()=>{
-    // LOAD
     el('btnLoad').addEventListener('click', ()=>{
       const cn = el('cn').value.trim();
       if(!cn){ el('cn').classList.add('invalid'); return; }
@@ -579,7 +535,6 @@
     const qcn = new URL(window.location.href).searchParams.get('cn');
     if (qcn){ el('cn').value=qcn; loadBooking(qcn); }
 
-    // Vehicle & M&G
     document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
       b.addEventListener('click', ()=>{
         if (reachedLimit) return;
@@ -600,7 +555,6 @@
     });
   });
 
-  /* —— Google Maps —— */
   function routeAsync(opts){
     return new Promise((res,rej)=>{
       directionsService.route(opts,(r,s)=> s==='OK'&&r?res(r):rej(s||'ROUTE_ERROR'));
@@ -676,7 +630,8 @@
 
   <!-- Google Maps (después de definir initMapReschedule) -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
-      <!-- Flight + Origin confirmation (Reschedule) -->
+
+  <!-- Flight + Origin confirmation (Reschedule) -->
   <script>
   const RS_AIRLINES = new Set([
     "AA","DL","UA","WN","AS","B6","F9","NK","HA","AC","AM","AF","BA","KL","LH","VS","IB","TK","QR","EK",
@@ -846,29 +801,21 @@
     setTimeout(rsMaybeCheckBackend, 150);
   });
   </script>
+
   <script>
-// === Save Changes handler (RECOMENDADO: envía `difference` en USD) ===
+// === Save Changes handler ===
 el('btnSave').addEventListener('click', async ()=>{
   try{
-    if (!booking?.__calc) {
-      alert('Please calculate the route first.');
-      return;
-    }
+    if (!booking?.__calc) { alert('Please calculate the route first.'); return; }
 
     const cn = booking?.cn || el('cn')?.value?.trim();
-    if (!cn) {
-      alert('Missing reservation code (CN).');
-      return;
-    }
+    if (!cn) { alert('Missing reservation code (CN).'); return; }
 
     const {
-      newTotal,        // número en USD (float)
-      diffForUI,       // NUNCA negativo (muestra/cobra)
-      dateStr, timeStr,
+      newTotal, diffForUI, dateStr, timeStr,
       miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours
     } = booking.__calc;
 
-    // 1) Guarda la reprogramación primero (sin cobrar aún)
     const saveResp = await fetch('/api/book/reschedule', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -876,15 +823,7 @@ el('btnSave').addEventListener('click', async ()=>{
         cn,
         newDate: dateStr || el('newDate')?.value || '',
         newTime: timeStr || el('newTime')?.value || '',
-        quote: {
-          newTotal,
-          miles,
-          afterHours,
-          surcharge,
-          mgFee,
-          vehicleType: selectedVehicle,
-          meetAndGreet: mgChoice
-        }
+        quote: { newTotal, miles, afterHours, surcharge, mgFee, vehicleType: selectedVehicle, meetAndGreet: mgChoice }
       })
     });
 
@@ -893,25 +832,22 @@ el('btnSave').addEventListener('click', async ()=>{
       throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
     }
 
-    // 2) NO REFUND RULE → si la diferencia <= 0, no se cobra nada
     const payableUSD = roundUSD(Math.max(diffForUI ?? 0, 0));
     if (payableUSD <= 0) {
-      el('resultCard').style.display = 'block';
-      el('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
       return;
     }
 
-    // 3) Validación de monto (USD, no centavos)
     assertDiffUSD(payableUSD);
 
-    // 4) Crea sesión de Stripe → tu endpoint espera `difference` en USD (float)
     const sessionResp = await fetch('/api/create-checkout-session-diff', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         cn,
-        difference: payableUSD,                 // 👈 en USD (ej. 42.50)
-        email: booking?.email || '',            // opcional: prefill en Checkout
+        difference: payableUSD,
+        email: booking?.email || '',
         fullname: booking?.fullname || '',
         phone: booking?.phone || '',
         pickup: booking?.pickup || '',
@@ -929,8 +865,7 @@ el('btnSave').addEventListener('click', async ()=>{
       throw new Error(sessionData?.detail || sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
     }
 
-    // 5) Redirección a Stripe Checkout
-    const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
+    const { error } = await Stripe(STRIPE_PK).redirectToCheckout({ sessionId: sessionData.id });
     if (error) throw error;
 
   } catch (e) {
@@ -938,6 +873,6 @@ el('btnSave').addEventListener('click', async ()=>{
     alert('Error: ' + (e?.message || e));
   }
 });
-</script>
+  </script>
 </body>
 </html>
