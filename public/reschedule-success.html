@@ -10,20 +10,21 @@
 
   <style>
     :root{
-      /* Tonos cobre más oscuros */
-      --copper:#9a6a46;          /* base (más oscuro que antes) */
-      --dark-copper:#5a3a26;     /* texto valores/subtítulo */
-      --line-copper:rgba(90,58,38,.55);  /* líneas y separadores */
+      /* Tonos ajustados (ligeramente más claros/“fuertes”) */
+      --copper:#a3724e;           /* base del borde y botones */
+      --value-copper:#7f4d33;     /* color de los valores (PAY, email, etc.) */
+      --line-copper:rgba(127,77,51,.50);   /* separadores/bordes sutiles */
       --ok:#17c964;
       --err:#ff6b6b;
-      --ink:#161616;
+      --ink:#151515;
       --paper:#ffffff;
     }
+
     *{ box-sizing:border-box; }
     html,body{
       margin:0;
-      background:#000;               /* pantalla: dark */
-      color:#ffddae;
+      background:#111;                 /* un poco más claro que #000 */
+      color:#ffe9d1;                   /* texto más claro */
       font-family:'Poppins', Arial, sans-serif;
     }
     .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
@@ -32,52 +33,53 @@
     header{ display:flex; align-items:center; gap:18px; margin-bottom:20px; }
     header img{ width:140px; height:140px; border-radius:50%; border:3px solid var(--copper); }
     h1{
-      margin:0; color:#ffe3bf; font-size:2.2rem;
-      font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.5px;
+      margin:0; color:#ffecd9; font-size:2.1rem;
+      font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.4px;
       text-transform:none;
     }
     .subtitle{
-      font-size:.95rem; color:var(--dark-copper);
+      font-size:.98rem; color:var(--value-copper);
       font-family:'Cormorant Garamond', serif; font-weight:400;
     }
 
     /* ---------- Card / Rows ---------- */
     .card{
-      position: relative;
-      background:linear-gradient(180deg,#121212,#0b0b0b);
+      background:linear-gradient(180deg,#171717,#101010);  /* un pelín más claro */
       border:1px solid var(--line-copper);
       border-radius:14px; padding:20px;
-      box-shadow:0 12px 28px rgba(0,0,0,.45);
+      box-shadow:0 12px 28px rgba(0,0,0,.38);
       page-break-inside: avoid;
     }
     .row{
       display:flex; justify-content:space-between; gap:16px;
-      padding:10px 0; border-bottom:1px dashed var(--line-copper);
+      padding:10px 0;
+      /* SIN línea horizontal */
       break-inside: avoid; page-break-inside: avoid;
     }
-    .row:last-child{ border-bottom:0; }
     .label{
-      opacity:.9; font-weight:600; font-family:'Poppins', sans-serif;
+      opacity:.95; font-weight:600; font-family:'Poppins', sans-serif;
     }
     .value{
       word-break:break-word;
       font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.12rem;
-      color:var(--dark-copper);                    /* ← valores más oscuros */
-      border-left:1px dashed var(--line-copper);   /* ← línea vertical sutil */
+      color:var(--value-copper);                 /* valores más “fuertes” */
+      border-left:1px dashed var(--line-copper); /* separador vertical sutil */
       padding-left:12px;
     }
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
-    /* Foto de vehículo */
-    .vehicle-photo{ display:flex; justify-content:flex-end; margin-top:10px; }
+    /* Foto de vehículo (centrada) */
+    .vehicle-photo{
+      display:flex; justify-content:center; align-items:center;  /* centrada */
+      margin-top:12px;
+    }
     .vehicle-photo img{
-      max-width:160px; height:auto;
+      max-width:170px; height:auto;
       border-radius:10px; border:2px solid var(--copper);
     }
 
-    .hr{ height:1px; background:linear-gradient(90deg,transparent,var(--line-copper),transparent); margin:14px 0; }
     .small{ font-size:.9rem; }
-    .muted{ opacity:.85; }
+    .muted{ opacity:.88; }
 
     .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
     button{
@@ -98,42 +100,38 @@
     @media print{
       html,body{ background:var(--paper) !important; color:var(--ink) !important; }
       .wrap{ max-width: 100%; margin: 0; padding: 0; }
-      header{ margin: 0 0 10px 0; padding: 0; }
+      header{ margin: 0 0 8pt 0; padding: 0; }
       header img{ width: 96px; height: 96px; border-width:2px; }
-      h1{ color: var(--ink); font-size: 22pt; }
-      .subtitle{ color: var(--dark-copper); }
+      h1{ color: var(--ink); font-size: 21pt; }
+      .subtitle{ color: var(--value-copper); }
 
       .card{
         background:#fff !important;
         border:1px solid var(--line-copper);
         box-shadow:none; padding: 14pt; margin: 0;
       }
-      .row{
-        padding: 6pt 0; gap: 10pt;
-        border-bottom: 1px dashed var(--line-copper);  /* ← línea horizontal más oscura */
-      }
+      .row{ padding: 6pt 0; gap: 10pt; /* sin línea horizontal */ }
       .label{ color:#333; font-weight:600; }
       .value{
-        color: var(--dark-copper);                     /* ← valores más oscuros */
+        color: var(--value-copper);
         font-size: 12.5pt; line-height: 1.25;
-        border-left:1px dashed var(--line-copper);     /* ← línea vertical más oscura */
+        border-left:1px dashed var(--line-copper);     /* línea vertical sutil */
         padding-left:10pt;
       }
       .mono{ color:#444; }
 
       .vehicle-photo{
-        display:flex !important; justify-content:flex-end;
+        display:flex !important; justify-content:center; align-items:center;  /* centrada al imprimir */
         margin-top: 6pt; break-inside: avoid; page-break-inside: avoid;
       }
       .vehicle-photo img{ max-width: 110pt; height: auto; border-width: 1.5pt; }
 
       .actions{ display:none !important; }
       .small.muted{ color:#666 !important; margin-top: 8pt; }
-      .hr{ margin: 8pt 0; background:linear-gradient(90deg,transparent,var(--line-copper),transparent); }
 
       /* Evitar cortes */
       .card, .row { break-inside: avoid; page-break-inside: avoid; }
-      header, .card, .row, .hr, .vehicle-photo { page-break-after: avoid; page-break-before: avoid; }
+      header, .card, .row, .vehicle-photo { page-break-after: avoid; page-break-before: avoid; }
     }
   </style>
 </head>
@@ -163,14 +161,12 @@
       <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
       <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
 
-      <!-- FOTO vehículo -->
+      <!-- FOTO vehículo (centrada) -->
       <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
         <img id="vehicleImg" src="" alt="Selected Vehicle"/>
       </div>
 
-      <div class="hr"></div>
-
-      <div class="small muted" id="v_note">
+      <div class="small muted" id="v_note" style="margin-top:10px">
         A copy of this receipt has been saved. You can print or download it.
       </div>
 
@@ -248,7 +244,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto del vehículo
+        // Foto del vehículo (centrada)
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
