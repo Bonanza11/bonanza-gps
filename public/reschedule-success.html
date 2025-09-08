@@ -10,9 +10,9 @@
 
   <style>
     :root{
-      /* Tonos ajustados (ligeramente más claros/“fuertes”) */
-      --copper:#a3724e;           /* base del borde y botones */
-      --value-copper:#7f4d33;     /* color de los valores (PAY, email, etc.) */
+      /* Cobre ligeramente más claro/visible */
+      --value-copper:#8c5a3b;              /* texto de valores (PAY, email, etc.) y subtítulo */
+      --copper:#a3724e;                    /* botones/base */
       --line-copper:rgba(127,77,51,.50);   /* separadores/bordes sutiles */
       --ok:#17c964;
       --err:#ff6b6b;
@@ -23,15 +23,19 @@
     *{ box-sizing:border-box; }
     html,body{
       margin:0;
-      background:#111;                 /* un poco más claro que #000 */
-      color:#ffe9d1;                   /* texto más claro */
+      background:#121212;                  /* un poco más claro que #111 */
+      color:#ffe9d1;
       font-family:'Poppins', Arial, sans-serif;
     }
     .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
 
     /* ---------- Head ---------- */
     header{ display:flex; align-items:center; gap:18px; margin-bottom:20px; }
-    header img{ width:140px; height:140px; border-radius:50%; border:3px solid var(--copper); }
+    /* Anillo: mismo color del subtítulo y a la mitad de grosor */
+    header img{
+      width:140px; height:140px; border-radius:50%;
+      border:1.5px solid var(--value-copper);
+    }
     h1{
       margin:0; color:#ffecd9; font-size:2.1rem;
       font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.4px;
@@ -44,7 +48,7 @@
 
     /* ---------- Card / Rows ---------- */
     .card{
-      background:linear-gradient(180deg,#171717,#101010);  /* un pelín más claro */
+      background:linear-gradient(180deg,#1a1a1a,#111);  /* un pelín más claro */
       border:1px solid var(--line-copper);
       border-radius:14px; padding:20px;
       box-shadow:0 12px 28px rgba(0,0,0,.38);
@@ -53,7 +57,6 @@
     .row{
       display:flex; justify-content:space-between; gap:16px;
       padding:10px 0;
-      /* SIN línea horizontal */
       break-inside: avoid; page-break-inside: avoid;
     }
     .label{
@@ -62,20 +65,20 @@
     .value{
       word-break:break-word;
       font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.12rem;
-      color:var(--value-copper);                 /* valores más “fuertes” */
+      color:var(--value-copper);                 /* valores más claros/elegantes */
       border-left:1px dashed var(--line-copper); /* separador vertical sutil */
       padding-left:12px;
     }
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
-    /* Foto de vehículo (centrada) */
+    /* Foto del vehículo: centrada, sin marco y al doble de tamaño */
     .vehicle-photo{
-      display:flex; justify-content:center; align-items:center;  /* centrada */
-      margin-top:12px;
+      display:flex; justify-content:center; align-items:center;
+      margin-top:14px;
     }
     .vehicle-photo img{
-      max-width:170px; height:auto;
-      border-radius:10px; border:2px solid var(--copper);
+      max-width:340px; height:auto;         /* doble que antes */
+      border:none;                           /* sin marco */
     }
 
     .small{ font-size:.9rem; }
@@ -101,7 +104,7 @@
       html,body{ background:var(--paper) !important; color:var(--ink) !important; }
       .wrap{ max-width: 100%; margin: 0; padding: 0; }
       header{ margin: 0 0 8pt 0; padding: 0; }
-      header img{ width: 96px; height: 96px; border-width:2px; }
+      header img{ width: 96px; height: 96px; border-width:1pt; border-color:var(--value-copper); }
       h1{ color: var(--ink); font-size: 21pt; }
       .subtitle{ color: var(--value-copper); }
 
@@ -110,21 +113,21 @@
         border:1px solid var(--line-copper);
         box-shadow:none; padding: 14pt; margin: 0;
       }
-      .row{ padding: 6pt 0; gap: 10pt; /* sin línea horizontal */ }
+      .row{ padding: 6pt 0; gap: 10pt; }
       .label{ color:#333; font-weight:600; }
       .value{
         color: var(--value-copper);
         font-size: 12.5pt; line-height: 1.25;
-        border-left:1px dashed var(--line-copper);     /* línea vertical sutil */
+        border-left:1px dashed var(--line-copper);
         padding-left:10pt;
       }
       .mono{ color:#444; }
 
       .vehicle-photo{
-        display:flex !important; justify-content:center; align-items:center;  /* centrada al imprimir */
+        display:flex !important; justify-content:center; align-items:center;
         margin-top: 6pt; break-inside: avoid; page-break-inside: avoid;
       }
-      .vehicle-photo img{ max-width: 110pt; height: auto; border-width: 1.5pt; }
+      .vehicle-photo img{ max-width: 220pt; height: auto; border: none; } /* doble tamaño y sin marco */
 
       .actions{ display:none !important; }
       .small.muted{ color:#666 !important; margin-top: 8pt; }
@@ -161,7 +164,7 @@
       <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
       <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
 
-      <!-- FOTO vehículo (centrada) -->
+      <!-- FOTO vehículo (centrada, sin marco, tamaño x2) -->
       <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
         <img id="vehicleImg" src="" alt="Selected Vehicle"/>
       </div>
@@ -244,7 +247,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto del vehículo (centrada)
+        // Foto del vehículo (centrada, sin marco, tamaño x2)
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
