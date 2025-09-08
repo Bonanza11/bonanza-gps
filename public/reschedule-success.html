@@ -6,115 +6,155 @@
   <title>Payment Confirmation — Bonanza Transportation</title>
 
   <!-- Tipografías -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --copper: #a8744f;
-      --dark-copper: #8a5e3b; /* cobre más oscuro para valores elegantes */
-      --ok: #17c964;
-      --err: #ff6b6b;
+    :root{
+      --copper:#a8744f;
+      --dark-copper:#845a39;
+      --ok:#17c964;
+      --err:#ff6b6b;
+      --ink:#161616;
+      --paper:#ffffff;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      background: #000;
-      color: #ffddae;
-      font-family: 'Poppins', Arial, sans-serif;
+    *{ box-sizing:border-box; }
+    html,body{
+      margin:0;
+      background:#000;               /* pantalla: dark */
+      color:#ffddae;
+      font-family:'Poppins', Arial, sans-serif;
     }
-    .wrap {
-      max-width: 900px;
-      margin: 32px auto 80px;
-      padding: 0 16px;
+    .wrap{
+      max-width:900px;
+      margin:32px auto 80px;
+      padding:0 16px;
     }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      margin-bottom: 20px;
+
+    /* ---------- Head ---------- */
+    header{
+      display:flex; align-items:center; gap:18px; margin-bottom:20px;
     }
-    header img {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      border: 3px solid var(--copper);
+    header img{
+      width:140px; height:140px; border-radius:50%;
+      border:3px solid var(--copper);
     }
-    h1 {
-      margin: 0;
-      color: #ffe3bf;
-      font-size: 2.2rem;
-      font-family: 'Playfair Display', serif;
-      font-weight: 500; /* más estilizado */
-      letter-spacing: .5px;
-      text-transform: none; /* Payment Confirmation normal */
+    h1{
+      margin:0; color:#ffe3bf; font-size:2.2rem;
+      font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.5px;
+      text-transform:none;
     }
-    .subtitle {
-      font-size: .95rem;
-      color: var(--dark-copper);
-      font-family: 'Playfair Display', serif;
-      font-weight: 400;
+    .subtitle{
+      font-size:.95rem; color:var(--dark-copper);
+      font-family:'Cormorant Garamond', serif; font-weight:400;
     }
-    .card {
-      background: linear-gradient(180deg, #121212, #0b0b0b);
-      border: 1px solid rgba(168,116,79,.45);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 12px 28px rgba(0,0,0,.45);
+
+    /* ---------- Card / Rows ---------- */
+    .card{
+      background:linear-gradient(180deg,#121212,#0b0b0b);
+      border:1px solid rgba(168,116,79,.45);
+      border-radius:14px; padding:20px;
+      box-shadow:0 12px 28px rgba(0,0,0,.45);
+      page-break-inside: avoid;
     }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 10px 0;
-      border-bottom: 1px dashed rgba(168,116,79,.35);
+    .row{
+      display:flex; justify-content:space-between; gap:16px;
+      padding:10px 0; border-bottom:1px dashed rgba(168,116,79,.35);
+      break-inside: avoid; page-break-inside: avoid;
     }
-    .row:last-child { border-bottom: 0; }
-    .label {
-      opacity: .85;
-      font-weight: 500;
-      font-family: 'Poppins', sans-serif;
+    .row:last-child{ border-bottom:0; }
+    .label{
+      opacity:.85; font-weight:500; font-family:'Poppins', sans-serif;
     }
-    .value {
-      word-break: break-word;
-      font-family: 'Playfair Display', serif;
-      font-weight: 400;  /* más fino */
-      font-size: 1.05rem;
-      color: var(--dark-copper);
+    .value{
+      word-break:break-word;
+      font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.12rem;
+      color:var(--dark-copper);
     }
-    .err {
-      background: #1a0000;
-      border-color: #ff8a8a;
-      color: #ffd6d6;
+    .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
+
+    .vehicle-photo{ text-align:center; margin-top:20px; }
+    .vehicle-photo img{ max-width:400px; border-radius:12px; border:2px solid var(--copper); }
+    .hr{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:14px 0; }
+
+    .small{ font-size:.9rem; }
+    .muted{ opacity:.85; }
+
+    .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+    button{
+      background:var(--copper); color:#000; border:0; border-radius:10px;
+      padding:10px 14px; font-weight:700; cursor:pointer;
     }
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-      flex-wrap: wrap;
+    a.btn{ display:inline-block; text-decoration:none; }
+
+    .err{ background:#1a0000; border-color:#ff8a8a; color:#ffd6d6; }
+
+    /* =========================
+            IMPRESIÓN (1 HOJA)
+       ========================= */
+    @page{
+      size: Letter portrait;         /* Fuerza 8.5x11" */
+      margin: 0.6in;                 /* Márgenes controlados */
     }
-    button {
-      background: var(--copper);
-      color: #000;
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    a.btn { display: inline-block; text-decoration: none; }
-    .muted { opacity: .85; }
-    .small { font-size: .9rem; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; }
-    .hr {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(192,139,92,.35), transparent);
-      margin: 14px 0;
-    }
-    .vehicle-photo { text-align: center; margin-top: 20px; }
-    .vehicle-photo img {
-      max-width: 400px;
-      border-radius: 12px;
-      border: 2px solid var(--copper);
+    @media print{
+      html,body{
+        background:var(--paper) !important;
+        color:var(--ink) !important;
+      }
+      .wrap{
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      header{
+        margin: 0 0 10px 0;
+        padding: 0;
+      }
+      header img{
+        width: 96px; height: 96px; border-width:2px;
+      }
+      h1{
+        color: var(--ink);
+        font-size: 22pt;               /* elegante pero compacto */
+      }
+      .subtitle{ color:#6c6c6c; }
+
+      .card{
+        background:#fff !important;    /* papel */
+        border:1px solid rgba(168,116,79,.65);
+        box-shadow:none;
+        padding: 14pt;
+        margin: 0;                     /* sin márgenes extra que rompan */
+      }
+      .row{
+        padding: 6pt 0;                /* más compacto */
+        gap: 10pt;
+        border-bottom: 1px dashed rgba(168,116,79,.6);
+      }
+      .label{
+        color:#333;
+        font-weight:600;
+      }
+      .value{
+        color:#6b4a2f;                 /* cobre más oscuro */
+        font-size: 12.5pt;             /* estilizado, no grueso */
+        line-height: 1.25;
+      }
+      .mono{ color:#444; }
+      .vehicle-photo{ display:none !important; } /* ocultar imagen para asegurar 1 hoja */
+      .actions, .small.muted + .actions{ display:none !important; } /* sin botones */
+      .small.muted{
+        color:#666 !important;
+        margin-top: 8pt;
+      }
+      .hr{ margin: 8pt 0; }
+
+      /* Evitar que se corte en mitad de filas o del bloque */
+      .card, .row { break-inside: avoid; page-break-inside: avoid; }
+      header, .card, .row, .hr { page-break-after: avoid; page-break-before: avoid; }
+
+      /* Micro-ajuste si aún se extiende (quita comentario si lo necesitas)
+      body{ transform: scale(0.98); transform-origin: top left; }
+      */
     }
   </style>
 </head>
@@ -161,7 +201,7 @@
       </div>
     </div>
 
-    <p class="small muted" style="margin-top:12px">
+    <p class="small muted" style="margin:12px 2px 0">
       Need help? Text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
     </p>
   </div>
@@ -174,7 +214,7 @@
     document.getElementById('v_cn').textContent = cn || '—';
     document.getElementById('backLink').href = '/reschedule.html' + (cn ? ('?cn=' + encodeURIComponent(cn)) : '');
 
-    const $ = (id) => document.getElementById(id);
+    const $   = (id) => document.getElementById(id);
     const set = (id, val) => { $(id).textContent = (val==null || val==='') ? '—' : String(val); };
     const fmtUSD = (cents) => (typeof cents==='number')
       ? (cents/100).toLocaleString('en-US',{style:'currency',currency:'USD'})
