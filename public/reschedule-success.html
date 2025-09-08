@@ -4,29 +4,37 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Payment Confirmation — Bonanza Transportation</title>
+
+  <!-- Elegante tipografía -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root{--copper:#a8744f;--ok:#17c964;--err:#ff6b6b}
     *{box-sizing:border-box}
-    html,body{margin:0;background:#000;color:#ffddae;font-family:Arial,Helvetica,sans-serif}
+    html,body{
+      margin:0;
+      background:#000;
+      color:#ffddae;
+      font-family:'Poppins', Arial, sans-serif;
+    }
     .wrap{max-width:900px;margin:32px auto 80px;padding:0 16px}
     header{display:flex;align-items:center;gap:18px;margin-bottom:20px}
     header img{width:140px;height:140px;border-radius:50%;border:3px solid var(--copper)}
-    h1{margin:0;color:#ffe3bf;font-size:1.8rem}
+    h1{margin:0;color:#ffe3bf;font-size:2rem;font-weight:700;letter-spacing:.5px}
     .card{background:linear-gradient(180deg,#121212,#0b0b0b);border:1px solid rgba(168,116,79,.45);
           border-radius:14px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.45)}
-    .row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
+    .row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
     .row:last-child{border-bottom:0}
-    .label{opacity:.9}
-    .value{font-weight:700;color:#ffe3bf;word-break:break-word}
-    .kudos{margin:10px 0 0;color:var(--ok)}
+    .label{opacity:.85;font-weight:500}
+    .value{font-weight:600;color:#ffe3bf;word-break:break-word}
     .err{background:#1a0000;border-color:#ff8a8a;color:#ffd6d6}
     .actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-    button{background:var(--copper);color:#000;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+    button{background:var(--copper);color:#000;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
     a.btn{display:inline-block;text-decoration:none}
     .muted{opacity:.85}
     .small{font-size:.9rem}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:12px 0}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:14px 0}
     .vehicle-photo{text-align:center;margin-top:20px}
     .vehicle-photo img{max-width:400px;border-radius:12px;border:2px solid var(--copper)}
   </style>
