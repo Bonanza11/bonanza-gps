@@ -5,262 +5,244 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Payment Confirmation — Bonanza Transportation</title>
 
-  <!-- Tipografías -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Tipografías elegantes -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      /* Cobre ligeramente más claro/visible */
-      --value-copper:#8c5a3b;              /* texto de valores (PAY, email, etc.) y subtítulo */
-      --copper:#a3724e;                    /* botones/base */
-      --line-copper:rgba(127,77,51,.50);   /* separadores/bordes sutiles */
-      --ok:#17c964;
-      --err:#ff6b6b;
-      --ink:#151515;
-      --paper:#ffffff;
+      /* Tono cobre equilibrado (ligeramente más claro) */
+      --copper: #C69167;          /* base */
+      --copper-strong: #D6A37B;   /* valores a la derecha */
+      --copper-muted: #AC7C55;    /* sutil */
+      --bg: #0b0b0b;              /* fondo un poco más claro */
+      --card: #121212;
+      --text: #FFEBD2;            /* texto claro cálido */
+      --muted: #EFDCC8;           /* etiquetas (labels) */
+      --ok: #18c77b;
+      --err: #ff6b6b;
     }
 
-    *{ box-sizing:border-box; }
-    html,body{
-      margin:0;
-      background:#121212;                  /* un poco más claro que #111 */
-      color:#ffe9d1;
-      font-family:'Poppins', Arial, sans-serif;
-    }
-    .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
+    *{ box-sizing:border-box }
+    html,body{ margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap{ max-width:880px; margin:28px auto 56px; padding:0 16px; }
 
-    /* ---------- Head ---------- */
-    header{ display:flex; align-items:center; gap:18px; margin-bottom:20px; }
-    /* Anillo: mismo color del subtítulo y a la mitad de grosor */
+    /* Encabezado */
+    header{ display:flex; align-items:center; gap:18px; margin-bottom:18px }
     header img{
-      width:140px; height:140px; border-radius:50%;
-      border:1.5px solid var(--value-copper);
+      width:120px; height:120px; border-radius:50%;
+      border:2px solid var(--copper); /* anillo más delgado + mismo color que el thank-you */
+      object-fit:cover;
     }
-    h1{
-      margin:0; color:#ffecd9; font-size:2.1rem;
-      font-family:'Cormorant Garamond', serif; font-weight:500; letter-spacing:.4px;
-      text-transform:none;
+    .title{
+      margin:0; color:var(--text);
+      font: 600 32px/1.15 "Playfair Display", serif;
+      letter-spacing: .2px;
     }
     .subtitle{
-      font-size:.98rem; color:var(--value-copper);
-      font-family:'Cormorant Garamond', serif; font-weight:400;
+      margin-top:6px; font-size:.95rem; color:var(--copper);
     }
 
-    /* ---------- Card / Rows ---------- */
+    /* Tarjeta principal */
     .card{
-      background:linear-gradient(180deg,#1a1a1a,#111);  /* un pelín más claro */
-      border:1px solid var(--line-copper);
-      border-radius:14px; padding:20px;
-      box-shadow:0 12px 28px rgba(0,0,0,.38);
+      background:linear-gradient(180deg,var(--card),#0f0f0f);
+      border:1px solid rgba(198,145,103,.45);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:0 12px 28px rgba(0,0,0,.45);
       page-break-inside: avoid;
     }
-    .row{
-      display:flex; justify-content:space-between; gap:16px;
-      padding:10px 0;
-      break-inside: avoid; page-break-inside: avoid;
-    }
+
+    /* Grid sin líneas (se removieron por pedido) */
+    .rows{ display:grid; grid-template-columns: 1fr 1.2fr; gap:8px 18px; align-items:baseline; }
     .label{
-      opacity:.95; font-weight:600; font-family:'Poppins', sans-serif;
+      color:var(--muted);
+      font-weight: 500;
+      letter-spacing:.2px;
+      font-size: 14.5px;
     }
     .value{
-      word-break:break-word;
-      font-family:'Cormorant Garamond', serif; font-weight:400; font-size:1.12rem;
-      color:var(--value-copper);                 /* valores más claros/elegantes */
-      border-left:1px dashed var(--line-copper); /* separador vertical sutil */
-      padding-left:12px;
+      color: var(--copper-strong);
+      font: 600 17px/1.35 "Playfair Display", serif; /* elegante y más fino */
+      letter-spacing: .15px;
     }
-    .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
 
-    /* Foto del vehículo: centrada, sin marco y al doble de tamaño */
+    .note{
+      margin-top:12px; font-size:.95rem; color:var(--muted);
+    }
+
+    .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap }
+    .btn{
+      text-decoration:none;
+      background:var(--copper); color:#000;
+      border:0; border-radius:10px; padding:10px 14px;
+      font-weight:800; cursor:pointer;
+      display:inline-block;
+    }
+    .btn:focus{ outline:2px solid rgba(214,163,123,.4); outline-offset:2px; }
+
+    /* Foto vehículo centrada, grande, sin marco, con degradado de fusión */
     .vehicle-photo{
       display:flex; justify-content:center; align-items:center;
-      margin-top:14px;
+      margin: 8px 0 2px;
+      page-break-inside: avoid;
     }
     .vehicle-photo img{
-      max-width:340px; height:auto;         /* doble que antes */
-      border:none;                           /* sin marco */
+      max-width: 520px; /* ~ el doble que antes pero cuidando 1 página */
+      height:auto;
+      border:none;
+
+      /* Difuminado de bordes para integrarlo al fondo negro */
+      -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 78%, rgba(0,0,0,0) 100%);
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      -webkit-mask-size: 120% 120%;
+
+      mask-image: radial-gradient(circle, rgba(0,0,0,1) 78%, rgba(0,0,0,0) 100%);
+      mask-repeat: no-repeat;
+      mask-position: center;
+      mask-size: 120% 120%;
     }
 
-    .small{ font-size:.9rem; }
-    .muted{ opacity:.88; }
+    .small{ font-size:.92rem; }
+    .muted{ color:var(--muted); }
 
-    .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
-    button{
-      background:var(--copper); color:#000; border:0; border-radius:10px;
-      padding:10px 14px; font-weight:700; cursor:pointer;
-    }
-    a.btn{ display:inline-block; text-decoration:none; }
-
-    .err{ background:#1a0000; border-color:#ff8a8a; color:#ffd6d6; }
-
-    /* =========================
-            IMPRESIÓN (1 HOJA)
-       ========================= */
+    /* PRINT: 1 sola página */
     @page{
-      size: Letter portrait;      /* 8.5x11" */
-      margin: 0.6in;              /* márgenes controlados */
+      size: Letter;
+      margin: 14mm;
     }
     @media print{
-      html,body{ background:var(--paper) !important; color:var(--ink) !important; }
-      .wrap{ max-width: 100%; margin: 0; padding: 0; }
-      header{ margin: 0 0 8pt 0; padding: 0; }
-      header img{ width: 96px; height: 96px; border-width:1pt; border-color:var(--value-copper); }
-      h1{ color: var(--ink); font-size: 21pt; }
-      .subtitle{ color: var(--value-copper); }
-
-      .card{
-        background:#fff !important;
-        border:1px solid var(--line-copper);
-        box-shadow:none; padding: 14pt; margin: 0;
+      body{
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      .row{ padding: 6pt 0; gap: 10pt; }
-      .label{ color:#333; font-weight:600; }
-      .value{
-        color: var(--value-copper);
-        font-size: 12.5pt; line-height: 1.25;
-        border-left:1px dashed var(--line-copper);
-        padding-left:10pt;
-      }
-      .mono{ color:#444; }
-
-      .vehicle-photo{
-        display:flex !important; justify-content:center; align-items:center;
-        margin-top: 6pt; break-inside: avoid; page-break-inside: avoid;
-      }
-      .vehicle-photo img{ max-width: 220pt; height: auto; border: none; } /* doble tamaño y sin marco */
-
-      .actions{ display:none !important; }
-      .small.muted{ color:#666 !important; margin-top: 8pt; }
-
-      /* Evitar cortes */
-      .card, .row { break-inside: avoid; page-break-inside: avoid; }
-      header, .card, .row, .vehicle-photo { page-break-after: avoid; page-break-before: avoid; }
+      .wrap{ margin:0 auto; }
+      header, .card, .vehicle-photo{ page-break-inside: avoid; }
+      .actions{ display:none !important; } /* no mostrar botones en PDF */
     }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <!-- Header -->
     <header>
-      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
+      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation">
       <div>
-        <h1>Payment Confirmation</h1>
+        <h1 class="title">Payment Confirmation</h1>
         <div class="subtitle">Thank you for choosing Bonanza Transportation.</div>
       </div>
     </header>
 
+    <!-- Card -->
     <div id="box" class="card">
-      <div class="row"><div class="label">Status</div><div class="value" id="v_status">Loading…</div></div>
-      <div class="row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
-      <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
-      <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
-      <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
-      <div class="row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
+      <div class="rows">
+        <div class="label">Status</div>           <div class="value" id="v_status">Loading…</div>
+        <div class="label">Reservation (CN)</div>  <div class="value mono" id="v_cn">—</div>
+        <div class="label">Amount Paid</div>       <div class="value" id="v_amount">—</div>
+        <div class="label">Payer Email</div>       <div class="value" id="v_email">—</div>
+        <div class="label">Payment Method</div>    <div class="value" id="v_pm">—</div>
+        <div class="label">Stripe Session</div>    <div class="value mono" id="v_sid">—</div>
 
-      <div class="row"><div class="label">Customer Name</div><div class="value" id="v_name">—</div></div>
-      <div class="row"><div class="label">Customer Phone</div><div class="value" id="v_phone">—</div></div>
+        <div class="label">Customer Name</div>     <div class="value" id="v_name">—</div>
+        <div class="label">Customer Phone</div>    <div class="value" id="v_phone">—</div>
 
-      <div class="row"><div class="label">Pickup</div><div class="value" id="v_pickup">—</div></div>
-      <div class="row"><div class="label">Drop-off</div><div class="value" id="v_dropoff">—</div></div>
-      <div class="row"><div class="label">Date / Time</div><div class="value" id="v_dt">—</div></div>
-      <div class="row"><div class="label">Vehicle</div><div class="value" id="v_vehicle">—</div></div>
-
-      <!-- FOTO vehículo (centrada, sin marco, tamaño x2) -->
-      <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
-        <img id="vehicleImg" src="" alt="Selected Vehicle"/>
+        <div class="label">Pickup</div>            <div class="value" id="v_pickup">—</div>
+        <div class="label">Drop-off</div>          <div class="value" id="v_dropoff">—</div>
+        <div class="label">Date & Time</div>       <div class="value" id="v_dt">—</div>
+        <div class="label">Vehicle</div>           <div class="value" id="v_vehicle">—</div>
       </div>
 
-      <div class="small muted" id="v_note" style="margin-top:10px">
-        A copy of this receipt has been saved. You can print or download it.
+      <!-- Foto vehículo -->
+      <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
+        <img id="vehicleImg" src="" alt="Selected Vehicle">
+      </div>
+
+      <div class="note small" id="v_note">
+        Receipt stored. You can print or download it.
       </div>
 
       <div class="actions">
-        <button onclick="window.print()">Print / Save PDF</button>
-        <a id="backLink" class="btn"><button type="button">Back to Reschedule</button></a>
-        <a href="/index.html" class="btn"><button type="button">Go to Main Page</button></a>
+        <button class="btn" onclick="window.print()">Print / Save PDF</button>
+        <a id="backLink" class="btn">Back to Reschedule</a>
+        <a href="/index.html" class="btn">Go to Main Page</a>
       </div>
     </div>
 
-    <p class="small muted" style="margin:12px 2px 0">
+    <p class="small muted" style="margin-top:12px">
       Need help? Text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
     </p>
   </div>
 
   <script>
-    const params    = new URLSearchParams(location.search);
-    const sessionId = params.get('session_id') || params.get('session') || '';
-    const cn        = params.get('cn') || '';
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('session_id') || '';
+    const cn = params.get('cn') || '';
 
     document.getElementById('v_cn').textContent = cn || '—';
     document.getElementById('backLink').href = '/reschedule.html' + (cn ? ('?cn=' + encodeURIComponent(cn)) : '');
 
-    const $   = (id) => document.getElementById(id);
-    const set = (id, val) => { $(id).textContent = (val==null || val==='') ? '—' : String(val); };
-    const fmtUSD = (cents) => (typeof cents==='number')
-      ? (cents/100).toLocaleString('en-US',{style:'currency',currency:'USD'})
-      : '—';
-    const showError = (msg) => {
-      const card = $('box'); card.classList.add('err');
-      set('v_status','ERROR'); set('v_note','Error loading receipt: ' + msg);
-    };
-
-    function getPaymentMethod(session){
-      try{
-        if (Array.isArray(session.payment_method_types) && session.payment_method_types.length){
-          return session.payment_method_types[0].toUpperCase();
-        }
-        const ch = session.payment_intent?.charges?.data?.[0];
-        if (ch?.payment_method_details?.type){
-          return String(ch.payment_method_details.type).toUpperCase();
-        }
-      }catch{}
-      return '—';
-    }
-
-    function getAmountCents(session){
-      if (typeof session.amount_total === 'number') return session.amount_total;
-      if (typeof session.amount_subtotal === 'number') return session.amount_subtotal;
-      if (typeof session.payment_intent?.amount_received === 'number') return session.payment_intent.amount_received;
-      if (typeof session.payment_intent?.amount === 'number') return session.payment_intent.amount;
-      return null;
-    }
-
     async function loadSession(){
-      if (!sessionId){ showError('Missing session_id in URL.'); return; }
+      if (!sessionId){
+        showError('Missing session_id in URL.');
+        return;
+      }
       try{
         const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const payload = await r.json();
-        const s  = payload.session || payload;
-        const md = s.metadata || payload.metadata || {};
+        const s = await r.json();
 
-        set('v_status', (s.payment_status || s.status || 'PAID').toString().toUpperCase());
-        set('v_sid', s.id || sessionId);
-        set('v_amount', fmtUSD(getAmountCents(s)));
-        set('v_email', s.customer_details?.email || s.customer_email || md.email || null);
-        set('v_pm', getPaymentMethod(s));
-        set('v_name',  md.fullname || md.name || payload.name || null);
-        set('v_phone', md.phone || null);
-        set('v_pickup',  md.pickup  || md.pickup_location  || null);
-        set('v_dropoff', md.dropoff || md.dropoff_location || null);
-        const dt = [md.date, md.time].filter(Boolean).join(' ');
-        set('v_dt', dt || null);
-        const vlabel = md.vehicleType || md.vehicle || null;
-        set('v_vehicle', vlabel);
+        const md = s.metadata || {};
+        // Estado
+        document.getElementById('v_status').textContent = (s.payment_status || 'PAID').toUpperCase();
 
-        // Foto del vehículo (centrada, sin marco, tamaño x2)
-        const photo = $('vehiclePhoto'), img = $('vehicleImg');
-        if (typeof vlabel === 'string'){
-          const low = vlabel.toLowerCase();
-          if (low.includes('suv')) { img.src = '/images/suburban.png'; photo.style.display='flex'; }
-          else if (low.includes('van')) { img.src = '/images/van-sprinter.png'; photo.style.display='flex'; }
-          else { photo.style.display='none'; }
-        } else { photo.style.display='none'; }
+        // Monto
+        const cents = (typeof s.amount_total === 'number') ? s.amount_total : 0;
+        const usd = (cents/100).toLocaleString('en-US', { style:'currency', currency:'USD' });
+        document.getElementById('v_amount').textContent = usd;
 
-        $('v_note').innerHTML =
+        // Email y método de pago (si está disponible)
+        document.getElementById('v_email').textContent = s.customer_details?.email || md.email || '—';
+        document.getElementById('v_pm').textContent    = s.payment_method_types?.[0]?.toUpperCase?.() || md.pay_method || 'CARD';
+        document.getElementById('v_sid').textContent   = s.id || sessionId;
+
+        // Datos del cliente y del viaje
+        document.getElementById('v_name').textContent   = md.fullname || '—';
+        document.getElementById('v_phone').textContent  = md.phone || '—';
+        document.getElementById('v_pickup').textContent = md.pickup || '—';
+        document.getElementById('v_dropoff').textContent= md.dropoff || '—';
+        document.getElementById('v_dt').textContent     = [md.date, md.time].filter(Boolean).join(' ') || '—';
+        const vehicleType = md.vehicleType || md.vehicle || '';
+        document.getElementById('v_vehicle').textContent= vehicleType || '—';
+
+        // Imagen del vehículo (centrada, sin marco, con degradado)
+        const vehicleImg = document.getElementById('vehicleImg');
+        const vehiclePhoto = document.getElementById('vehiclePhoto');
+        const vt = vehicleType.toLowerCase();
+        if (vt.includes('suv')){
+          vehicleImg.src = '/images/suburban.png';
+          vehiclePhoto.style.display = 'flex';
+        } else if (vt.includes('van')){
+          vehicleImg.src = '/images/van-sprinter.png';
+          vehiclePhoto.style.display = 'flex';
+        } else {
+          vehiclePhoto.style.display = 'none';
+        }
+
+        document.getElementById('v_note').innerHTML =
           `Receipt stored. Session <span class="mono">${s.id || sessionId}</span>. You will receive an email confirmation shortly.`;
+
       }catch(err){
-        showError(err.message || err);
+        showError(err.message);
       }
+    }
+
+    function showError(msg){
+      const card = document.getElementById('box');
+      card.style.borderColor = 'rgba(255, 138, 138, .55)';
+      document.getElementById('v_status').textContent = 'ERROR';
+      document.getElementById('v_note').textContent = 'Error loading receipt: ' + msg;
     }
 
     loadSession();
