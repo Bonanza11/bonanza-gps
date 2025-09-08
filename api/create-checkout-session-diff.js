@@ -18,6 +18,7 @@
 //
 // Respuesta: { ok:true, id:"cs_test_...", url:"https://checkout.stripe.com/..." }
 
+
 import Stripe from "stripe";
 
 export const config = { runtime: "nodejs" }; // evita edge runtime
