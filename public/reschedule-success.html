@@ -15,8 +15,7 @@
       --line-copper:rgba(127,77,51,.50);   /* bordes sutiles */
       --ok:#17c964; --err:#ff6b6b;
       --ink:#151515; --paper:#ffffff;
-      /* Negro absoluto para integración con SUV */
-      --bg:#050505;
+      --bg:#050505;                        /* negro absoluto para integrar imágenes */
     }
     *{ box-sizing:border-box; }
     html,body{ margin:0; background:var(--bg); color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
@@ -27,9 +26,7 @@
       display:flex; flex-direction:column; align-items:center; text-align:center;
       margin:0 0 16px 0;
     }
-    header .brand{
-      display:flex; flex-direction:column; align-items:center; gap:10px;
-    }
+    header .brand{ display:flex; flex-direction:column; align-items:center; gap:10px; }
     header img{
       width:120px; height:120px; border-radius:50%;
       border:1.5px solid var(--value-copper);
@@ -45,10 +42,10 @@
 
     /* ========== CARD / GRID ========== */
     .card{
-      background:linear-gradient(180deg,#080808,#050505);
+      background:var(--bg);                 /* MISMO tono que el body (sin gradiente) */
       border:1px solid var(--line-copper);
       border-radius:14px; padding:18px;
-      box-shadow:0 18px 36px rgba(0,0,0,.6);
+      box-shadow:0 18px 36px rgba(0,0,0,.6); /* relieve muy sutil para no “flotar” */
       page-break-inside: avoid;
     }
     .row{
@@ -73,6 +70,7 @@
     }
     .vehicle-photo img{
       max-width:320px; height:auto; border:none; display:block;
+      /* sombra para que “respire” sobre el fondo negro */
       filter: drop-shadow(0 8px 22px rgba(0,0,0,.6));
     }
 
@@ -107,7 +105,7 @@
       .subtitle{ color:var(--value-copper); font-size:10.5pt; }
 
       .card{
-        background:#fff !important;
+        background:#fff !important;          /* en papel, fondo blanco */
         border:1px solid var(--line-copper);
         box-shadow:none; padding:12pt; margin:0;
       }
@@ -126,14 +124,13 @@
       /* 3) Evitar cortes extraños */
       .card,.row,header,.vehicle-photo{ break-inside:avoid; page-break-inside:avoid; page-break-after:avoid; page-break-before:avoid; }
 
-      /* 4) Auto–fit: escala suave para que SIEMPRE quepa en 1 hoja */
+      /* 4) Auto–fit para SIEMPRE caber en 1 hoja */
       .print-sheet{ transform: scale(0.92); }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Contenido “hoja” que se escala SOLAMENTE en impresión -->
     <div class="print-sheet">
       <header>
         <div class="brand">
