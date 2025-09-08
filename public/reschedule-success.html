@@ -58,8 +58,14 @@
     }
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
+    /* Foto con difuminado sutil para que no se vea “cuadro” sobre fondo oscuro */
     .vehicle-photo{ display:flex; justify-content:center; align-items:center; margin-top:14px; }
-    .vehicle-photo img{ max-width:340px; height:auto; border:none; display:block; }
+    .vehicle-photo img{
+      max-width:340px; height:auto; border:none; display:block;
+      /* máscara radial (cross-browser modernos) */
+      -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 98%);
+              mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 98%);
+    }
 
     .small{ font-size:.9rem; }
     .muted{ opacity:.88; }
@@ -72,21 +78,22 @@
 
     /* ====== PRINT (una sola hoja + header centrado) ====== */
     @page{
-      size: Letter portrait;
-      margin: 0.6in;
+      size: Letter portrait;          /* 8.5x11" */
+      margin: 0.6in;                  /* margen cómodo */
     }
     @media print{
+      /* Fondo blanco/ tinta osura en impresión */
       html,body{ background:var(--paper) !important; color:var(--ink) !important; }
       .wrap{ max-width:100%; margin:0; padding:0; }
 
-      /* Escala ligera para garantizar 1 hoja */
+      /* Contenedor que escalo para asegurar 1 sola hoja */
       .print-fit{
-        transform: scale(0.95);
+        transform: scale(0.94);       /* <- ajuste fino para 1 página */
         transform-origin: top center;
         max-width: 100%;
       }
 
-      /* Centrar header en impresión */
+      /* Centrar header (logo + título) */
       header{
         flex-direction: column;
         align-items: center;
@@ -95,7 +102,7 @@
         padding: 0;
       }
       header img{ width:96px; height:96px; border-width:1pt; border-color:var(--value-copper); }
-      h1{ color:var(--ink); font-size:21pt; }
+      h1{ color:var(--ink); font-size:21pt; margin-top:6pt; }
       .subtitle{ color:var(--value-copper); }
 
       .card{
@@ -113,14 +120,24 @@
       }
       .mono{ color:#444; }
 
-      .vehicle-photo{ display:flex !important; justify-content:center; align-items:center; margin-top:6pt; break-inside:avoid; page-break-inside:avoid; }
-      .vehicle-photo img{ max-width:220pt; height:auto; }
+      .vehicle-photo{
+        display:flex !important; justify-content:center; align-items:center;
+        margin-top:6pt; break-inside:avoid; page-break-inside:avoid;
+      }
+      .vehicle-photo img{
+        max-width:220pt; height:auto;
+        -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 98%);
+                mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 98%);
+      }
 
       .actions{ display:none !important; }
       .small.muted{ color:#666 !important; margin-top:8pt; }
 
-      /* Evitar cortes raros */
-      .card,.row,header,.vehicle-photo{ break-inside:avoid; page-break-inside:avoid; page-break-after:avoid; page-break-before:avoid; }
+      /* Evitar saltos y cortes raros */
+      .card,.row,header,.vehicle-photo{
+        break-inside:avoid; page-break-inside:avoid;
+        page-break-after:avoid; page-break-before:avoid;
+      }
     }
   </style>
 </head>
@@ -234,7 +251,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto del vehículo (centrada)
+        // Foto del vehículo (centrada, con difuminado)
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
