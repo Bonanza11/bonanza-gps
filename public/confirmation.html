@@ -1,175 +1,74 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #111;
-        color: #fff;
-        padding: 20px;
-      }
-      .container {
-        max-width: 600px;
-        margin: auto;
-        border: 2px solid #b87333;
-        border-radius: 8px;
-        padding: 20px;
-        background-color: #1a1a1a;
-      }
-      .header {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .header img {
-        max-width: 120px;
-        margin-bottom: 10px;
-      }
-      .header h1 {
-        color: #b87333;
-        font-size: 22px;
-      }
-      .details {
-        background: #222;
-        padding: 15px;
-        border-radius: 6px;
-        margin-top: 10px;
-      }
-      .details p {
-        margin: 6px 0;
-        font-size: 14px;
-      }
-      .footer {
-        margin-top: 20px;
-        font-size: 12px;
-        color: #ccc;
-        text-align: center;
-      }
-      .footer a {
-        color: #b87333;
-        text-decoration: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Header -->
-      <div class="header">
-        <img src="https://i.ibb.co/x1z4x5m/bonanza-logo.png" alt="Bonanza Logo" />
-        <h1>Reservation Confirmed</h1>
-        <p>Thank you for choosing <strong>Bonanza Transportation</strong></p>
-      </div>
-
-      <!-- Details -->
-      <div class="details">
-        <p><strong>Reservation Code (CN):</strong> {{CN}}</p>
-        <p><strong>Status:</strong> PAID</p>
-        <p><strong>Amount Paid:</strong> ${{amount}}</p>
-        <p><strong>Customer Name:</strong> {{name}}</p>
-        <p><strong>Customer Phone:</strong> {{phone}}</p>
-        <p><strong>Email:</strong> {{email}}</p>
-        <p><strong>Pickup:</strong> {{pickup}}</p>
-        <p><strong>Drop-off:</strong> {{dropoff}}</p>
-        <p><strong>Date & Time:</strong> {{date}} {{time}}</p>
-        <p><strong>Vehicle:</strong> {{vehicle}}</p>
-      </div>
-
-      <!-- Footer -->
-      <div class="footer">
-        <p>
-          For any changes, contact us at
-          <a href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a>
-        </p>
-        <p>or text us at (786) 369-6320</p>
-        <p>Park City • Salt Lake City • Deer Valley</p>
-      </div>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reservation Confirmed — Bonanza</title>
+  <style>
+    :root{
+      --bg:#111; --card:#1a1a1a; --line:#b87333; --text:#fff; --muted:#ccc; --accent:#b87333;
+    }
+    *{ box-sizing:border-box }
+    body{
+      margin:0; padding:20px;
+      background-color:var(--bg); color:var(--text);
+      font-family:Arial, Helvetica, sans-serif;
+    }
+    .container{
+      max-width:600px; margin:auto;
+      border:2px solid var(--line); border-radius:8px;
+      padding:20px; background-color:var(--card);
+    }
+    .header{ text-align:center; margin-bottom:20px }
+    .header img{ max-width:120px; margin-bottom:10px }
+    .header h1{ color:var(--accent); font-size:22px; margin:6px 0 }
+    .subtitle{ color:var(--muted); margin:0 }
+    .details{
+      background:#222; padding:15px; border-radius:6px; margin-top:10px
+    }
+    .details p{ margin:6px 0; font-size:14px }
+    .label{ color:var(--muted) }
+    .value{ color:#fff }
+    .footer{
+      margin-top:20px; font-size:12px; color:var(--muted); text-align:center
+    }
+    .footer a{ color:var(--accent); text-decoration:none }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <img src="https://i.ibb.co/x1z4x5m/bonanza-logo.png" alt="Bonanza Logo" />
+      <h1>Reservation Confirmed</h1>
+      <p class="subtitle">Thank you for choosing <strong>Bonanza Transportation</strong></p>
     </div>
-  </body>
-</html><!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #111;
-        color: #fff;
-        padding: 20px;
-      }
-      .container {
-        max-width: 600px;
-        margin: auto;
-        border: 2px solid #b87333;
-        border-radius: 8px;
-        padding: 20px;
-        background-color: #1a1a1a;
-      }
-      .header {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .header img {
-        max-width: 120px;
-        margin-bottom: 10px;
-      }
-      .header h1 {
-        color: #b87333;
-        font-size: 22px;
-      }
-      .details {
-        background: #222;
-        padding: 15px;
-        border-radius: 6px;
-        margin-top: 10px;
-      }
-      .details p {
-        margin: 6px 0;
-        font-size: 14px;
-      }
-      .footer {
-        margin-top: 20px;
-        font-size: 12px;
-        color: #ccc;
-        text-align: center;
-      }
-      .footer a {
-        color: #b87333;
-        text-decoration: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Header -->
-      <div class="header">
-        <img src="https://i.ibb.co/x1z4x5m/bonanza-logo.png" alt="Bonanza Logo" />
-        <h1>Reservation Confirmed</h1>
-        <p>Thank you for choosing <strong>Bonanza Transportation</strong></p>
-      </div>
 
-      <!-- Details -->
-      <div class="details">
-        <p><strong>Reservation Code (CN):</strong> {{CN}}</p>
-        <p><strong>Status:</strong> PAID</p>
-        <p><strong>Amount Paid:</strong> ${{amount}}</p>
-        <p><strong>Customer Name:</strong> {{name}}</p>
-        <p><strong>Customer Phone:</strong> {{phone}}</p>
-        <p><strong>Email:</strong> {{email}}</p>
-        <p><strong>Pickup:</strong> {{pickup}}</p>
-        <p><strong>Drop-off:</strong> {{dropoff}}</p>
-        <p><strong>Date & Time:</strong> {{date}} {{time}}</p>
-        <p><strong>Vehicle:</strong> {{vehicle}}</p>
-      </div>
+    <!-- Details -->
+    <div class="details">
+      <p><span class="label"><strong>Reservation Code (CN):</strong></span> <span class="value">{{CN}}</span></p>
+      <p><span class="label"><strong>Status:</strong></span> <span class="value">PAID</span></p>
+      <p><span class="label"><strong>Amount Paid:</strong></span> <span class="value">${{amount}}</span></p>
 
-      <!-- Footer -->
-      <div class="footer">
-        <p>
-          For any changes, contact us at
-          <a href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a>
-        </p>
-        <p>or text us at (786) 369-6320</p>
-        <p>Park City • Salt Lake City • Deer Valley</p>
-      </div>
+      <p><span class="label"><strong>Customer Name:</strong></span> <span class="value">{{name}}</span></p>
+      <p><span class="label"><strong>Customer Phone:</strong></span> <span class="value">{{phone}}</span></p>
+      <p><span class="label"><strong>Email:</strong></span> <span class="value">{{email}}</span></p>
+
+      <p><span class="label"><strong>Pickup:</strong></span> <span class="value">{{pickup}}</span></p>
+      <p><span class="label"><strong>Drop-off:</strong></span> <span class="value">{{dropoff}}</span></p>
+      <p><span class="label"><strong>Date & Time:</strong></span> <span class="value">{{date}} {{time}}</span></p>
+      <p><span class="label"><strong>Vehicle:</strong></span> <span class="value">{{vehicle}}</span></p>
     </div>
-  </body>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        For any changes, contact us at
+        <a href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a>
+      </p>
+      <p>or text us at (786) 369-6320</p>
+      <p>Park City • Salt Lake City • Deer Valley</p>
+    </div>
+  </div>
+</body>
 </html>
