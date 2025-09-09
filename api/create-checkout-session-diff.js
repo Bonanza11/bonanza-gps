@@ -1,23 +1,5 @@
 // /api/create-checkout-session-diff.js
 // Crea una sesión de Stripe para cobrar la DIFERENCIA de una reserva reprogramada.
-// Body esperado (JSON):
-// {
-//   "cn": "BZ-20250110-ABCD",
-//   "difference": 42.50,              // importe a cobrar (USD), DEBE ser > 0
-//   "email": "cliente@ejemplo.com",   // opcional: prefill en Checkout
-//   "fullname": "John Doe",           // opcional: metadata
-//   "phone": "(555) 123-4567",        // opcional: metadata
-//   "pickup": "SLC Airport",          // opcional: metadata
-//   "dropoff": "Deer Valley",         // opcional: metadata
-//   "date": "2025-07-04",             // opcional: metadata (nueva fecha)
-//   "time": "14:30",                  // opcional: metadata (nueva hora)
-//   "vehicleType": "SUV",             // opcional: metadata
-//   "originalTotal": 199.00,          // opcional: metadata (ayuda en HQ)
-//   "newTotal": 241.50                // opcional: metadata (ayuda en HQ)
-// }
-//
-// Respuesta: { ok:true, id:"cs_test_...", url:"https://checkout.stripe.com/..." }
-
 
 import Stripe from "stripe";
 
@@ -83,15 +65,18 @@ export default async function handler(req, res) {
 
     const amount_cents = toCents(difference);
 
-    // Idempotency para evitar sesiones duplicadas si el cliente reintenta muy rápido
-    const idemKey = `diff:${cn}:${amount_cents}:${Date.now()}`;
+    // Base URL robusta para Vercel (prod y local)
+    const proto = req.headers["x-forwarded-proto"] || "https";
+    const host  = req.headers["x-forwarded-host"]  || req.headers.host;
+    const baseUrl = `${proto}://${host}`;
+
+    // Idempotency (suficiente para reintentos inmediatos del mismo intento)
+    const idemKey = `diff:${cn}:${amount_cents}:${Math.floor(Date.now()/1000)}`;
 
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
-        // Prefill de email en la pantalla de Stripe (opcional)
         customer_email: email && String(email).trim() ? String(email).trim() : undefined,
-
         payment_method_types: ["card"],
         allow_promotion_codes: false,
 
@@ -109,11 +94,12 @@ export default async function handler(req, res) {
           },
         ],
 
-        // Redirecciones
-        success_url: `${req.headers.origin || "https://bonanza.example"}/success?kind=diff&cn=${encodeURIComponent(cn)}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin || "https://bonanza.example"}/cancel?kind=diff&cn=${encodeURIComponent(cn)}`,
+        // ✅ Redirige a tu página NUEVA de éxito para reprogramaciones
+        success_url: `${baseUrl}/reschedule-payment-success.html?cn=${encodeURIComponent(cn)}&session_id={CHECKOUT_SESSION_ID}`,
+        // (Recomendado) volver al flujo de reprogramación si cancela
+        cancel_url: `${baseUrl}/reschedule.html?cn=${encodeURIComponent(cn)}`,
 
-        // Metadata (muy útil para el webhook y HQ)
+        // Metadata útil
         metadata: {
           kind: "DIFF",
           cn,
