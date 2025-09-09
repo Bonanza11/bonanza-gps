@@ -77,6 +77,18 @@
     opacity:1 !important; filter:none !important; cursor:pointer;
   }
   #newDate, #newTime { color-scheme: dark; }
+    /* ===== Top bar / Home button ===== */
+.topbar{
+  max-width:820px; width:92vw; margin:0 auto 8px;
+  display:flex; justify-content:flex-end; padding:0 16px;
+}
+.home-btn{
+  display:inline-block; text-decoration:none; font-weight:800;
+  background:var(--copper, #a8744f); color:#000; border-radius:10px;
+  padding:10px 14px; line-height:1; box-shadow:0 8px 18px rgba(0,0,0,.35);
+}
+.home-btn:focus{ outline:2px solid rgba(168,116,79,.6); outline-offset:3px; }
+@media print { .topbar{ display:none !important; } }
   </style>
 </head>
 <body>
