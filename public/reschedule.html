@@ -801,9 +801,8 @@
     setTimeout(rsMaybeCheckBackend, 150);
   });
   </script>
-
   <script>
-// === Save Changes handler ===
+// === Save Changes handler (PARCHE: redirige si NO hay pago y usa 'stripe' correcto) ===
 el('btnSave').addEventListener('click', async ()=>{
   try{
     if (!booking?.__calc) { alert('Please calculate the route first.'); return; }
@@ -816,6 +815,7 @@ el('btnSave').addEventListener('click', async ()=>{
       miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours
     } = booking.__calc;
 
+    // 1) Guardar cambio en backend
     const saveResp = await fetch('/api/book/reschedule', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -832,13 +832,16 @@ el('btnSave').addEventListener('click', async ()=>{
       throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
     }
 
+    // 2) Si NO hay pago adicional => redirige a página de éxito sin cobro
     const payableUSD = roundUSD(Math.max(diffForUI ?? 0, 0));
     if (payableUSD <= 0) {
-      document.getElementById('resultCard').style.display = 'block';
-      document.getElementById('result').textContent = '✔ Reprogrammed. No additional payment required (no refunds on reschedules).';
+      const url = new URL('/reschedule-nopay-success.html', window.location.origin);
+      url.searchParams.set('cn', cn);
+      window.location.href = url.toString();
       return;
     }
 
+    // 3) Si SÍ hay pago => Stripe Checkout
     assertDiffUSD(payableUSD);
 
     const sessionResp = await fetch('/api/create-checkout-session-diff', {
@@ -865,7 +868,8 @@ el('btnSave').addEventListener('click', async ()=>{
       throw new Error(sessionData?.detail || sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
     }
 
-    const { error } = await Stripe(STRIPE_PK).redirectToCheckout({ sessionId: sessionData.id });
+    // **Usar la instancia 'stripe' ya creada arriba**
+    const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
     if (error) throw error;
 
   } catch (e) {
@@ -873,6 +877,6 @@ el('btnSave').addEventListener('click', async ()=>{
     alert('Error: ' + (e?.message || e));
   }
 });
-  </script>
+</script>
 </body>
 </html>
