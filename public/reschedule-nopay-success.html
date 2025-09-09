@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reschedule Success — Bonanza Transportation</title>
+  <style>
+  :root{ --copper:#a8744f; --ok:#17c964; }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#000;color:var(--copper);
+    font-family:Arial,Helvetica,sans-serif;height:100%;}
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:20px;}
+  header{margin-bottom:20px;}
+  .logo{width:140px;height:140px;border-radius:50%;border:2px solid var(--copper);
+    object-fit:cover;box-shadow:0 0 6px rgba(168,116,79,.45);}
+  h1{color:#ffddae;margin:10px 0;font-size:1.6rem}
+  p{margin:6px 0;color:#ffddae;font-size:1rem;}
+  .highlight{color:var(--ok);font-weight:700;}
+  .card{border:1px solid rgba(168,116,79,.45);border-radius:14px;
+    background:linear-gradient(180deg,#121212,#0b0b0b);
+    box-shadow:0 8px 20px rgba(0,0,0,.45);padding:20px;max-width:480px;width:92vw;}
+  button{margin-top:18px;padding:12px 16px;font-size:1rem;font-weight:700;
+    border-radius:10px;border:0;cursor:pointer;width:100%;}
+  .btn-main{background:var(--copper);color:#000;}
+  .btn-alt{background:#1a1a1a;color:var(--copper);border:1px solid var(--copper);}
+  </style>
+</head>
+<body>
+    <header>
+    <img src="/images/bonanza-logo.PNG" alt="Bonanza Logo" class="logo"/>
+  </header>
+  <main>
+    <div class="card">
+      <h1>✔ Reschedule Confirmed</h1>
+      <p>Your booking has been successfully <span class="highlight">rescheduled</span>.</p>
+      <p>No additional payment was required (no refunds on reschedules).</p>
+      <div id="cnBox" style="margin-top:10px;font-size:1.05rem;color:#ffddae;"></div>
+      <button class="btn-main" onclick="window.location.href='/'">
+        Back to Home
+      </button>
+      <button class="btn-alt" onclick="window.location.href='/reschedule.html'">
+        Reschedule Another
+      </button>
+    </div>
+  </main>
+    <script>
+  // Leer CN de query param y mostrarlo
+  (function(){
+    const u = new URL(window.location.href);
+    const cn = u.searchParams.get('cn') || '';
+    if (cn) {
+      document.getElementById('cnBox').innerHTML =
+        `<strong>Reservation Code (CN):</strong> ${cn}`;
+    }
+  })();
+  </script>
+</body>
+</html>
