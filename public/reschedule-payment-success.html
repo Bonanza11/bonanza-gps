@@ -5,152 +5,146 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Payment Successful — Bonanza Transportation</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Cormorant+Garamond:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#050505;        /* mismo negro profundo que usamos en success de reschedule */
-      --paper:#ffffff;
-      --ink:#141414;
-      --copper:#a8744f;
-      --copper-2:#8c5a3b;
-      --ok:#16c172;
+      --value-copper:#8c5a3b;
+      --copper:#a3724e;
+      --line-copper:rgba(127,77,51,.50);
+      --ok:#17c964; --paper:#fff; --ink:#151515;
+      --bg:#050505; /* negro profundo para integrar imágenes */
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:#f5e9d6;font-family:'Poppins',Arial,Helvetica,sans-serif}
-    .wrap{max-width:840px;margin:36px auto 80px;padding:0 16px}
-    header{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:18px}
-    header img{width:116px;height:116px;border-radius:50%;border:1.5px solid var(--copper-2)}
-    h1{margin:14px 0 6px;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:2rem;letter-spacing:.2px;color:#ffecd9}
-    .subtitle{color:var(--copper-2);font-family:'Cormorant Garamond',serif}
+    *{ box-sizing:border-box }
+    html,body{ margin:0; background:var(--bg); color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
+    .wrap{ max-width:900px; margin:32px auto 80px; padding:0 16px; }
 
-    .card{
-      background:#0a0a0a;border:1px solid rgba(168,116,79,.5);border-radius:14px;
-      padding:22px;box-shadow:0 18px 36px rgba(0,0,0,.6);
-    }
+    header{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px; margin-bottom:12px; }
+    header img{ width:120px; height:120px; border-radius:50%; border:1.5px solid var(--value-copper); }
+    h1{ margin:0; font-family:'Cormorant Garamond', serif; font-size:2.05rem; color:#ffecd9; font-weight:500; letter-spacing:.3px; }
+    .subtitle{ color:var(--value-copper); font-family:'Cormorant Garamond', serif; }
 
-    .ok-row{display:flex;flex-direction:column;align-items:center;gap:12px;margin:6px 0 12px}
-    .check{
-      width:72px;height:72px;border-radius:50%;background:var(--ok);
-      display:grid;place-items:center;box-shadow:0 0 0 6px rgba(22,193,114,.15);
-    }
-    .check svg{width:36px;height:36px;fill:#fff}
-    .big{font-size:1.5rem;font-weight:700;color:#eafbea}
-    .muted{opacity:.88}
+    .card{ background:var(--bg); border:1px solid var(--line-copper); border-radius:14px; padding:18px; box-shadow:0 18px 36px rgba(0,0,0,.6); }
+    .success-row{ display:flex; align-items:center; gap:10px; margin:4px 0 10px }
+    .check{ width:26px; height:26px; border-radius:6px; background:#0d3a1e; border:1px solid #1faa66; display:grid; place-items:center; }
+    .check svg{ width:18px; height:18px; fill:#97f3c1 }
+    .success-text{ font-weight:700; color:#d6ffd6; }
 
-    .details{
-      margin-top:8px;padding:14px;border-radius:10px;
-      background:rgba(255,255,255,.02);border:1px dashed rgba(168,116,79,.45);
-    }
-    .row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed rgba(168,116,79,.35)}
-    .row:last-child{border-bottom:0}
-    .label{font-weight:600;opacity:.95}
-    .value{color:var(--copper-2);font-family:'Cormorant Garamond',serif;font-size:1.1rem}
+    .grid-row{ display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-bottom:1px dashed var(--line-copper); }
+    .grid-row:last-child{ border-bottom:0 }
+    .label{ opacity:.95; font-weight:600; }
+    .value{ color:var(--value-copper); font-family:'Cormorant Garamond', serif; font-size:1.08rem; word-break:break-word; }
+    .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
-    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
-    .btn{display:inline-block;border:0;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none}
-    .btn.primary{background:var(--copper);color:#000}
-    .btn.ghost{background:transparent;color:#ffecd9;border:1px solid rgba(168,116,79,.5)}
-    .note{margin-top:10px;font-size:.95rem}
+    .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+    button{ background:var(--copper); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; }
+    a.btn{ text-decoration:none }
 
-    /* Print: 1 sola hoja, centrado */
-    @page{ size: Letter portrait; margin: 0.6in; }
+    .small{ font-size:.9rem } .muted{ opacity:.88 }
+
+    /* Print: 1 hoja */
+    @page{ size:Letter portrait; margin:0.55in; }
     @media print{
-      html,body{background:var(--paper)!important;color:var(--ink)!important}
-      header img{border-color:var(--copper-2)}
-      .card{background:#fff;border:1px solid rgba(168,116,79,.5);box-shadow:none}
-      .value{color:#7a5238}
-      .btn,.actions{display:none!important}
+      html,body{ background:var(--paper) !important; color:var(--ink) !important; }
+      .wrap{ max-width:100%; margin:0; padding:0 }
+      header img{ width:84pt; height:84pt; border-width:1pt }
+      h1{ color:var(--ink); font-size:19pt }
+      .card{ background:#fff !important; border:1px solid var(--line-copper); box-shadow:none; padding:12pt }
+      .grid-row{ padding:5pt 0; gap:8pt }
+      .label{ color:#333; font-weight:600; font-size:10.5pt }
+      .value{ color:var(--value-copper); font-size:11.5pt; line-height:1.22 }
+      .actions{ display:none !important }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation">
+      <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation"/>
       <h1>Payment Successful</h1>
       <div class="subtitle">Thank you for choosing Bonanza Transportation.</div>
     </header>
 
-    <div class="card">
-      <div class="ok-row">
-        <div class="check" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-        </div>
-        <div class="big">Payment Successful!</div>
-        <div class="muted">You’ll receive a confirmation email shortly.</div>
+    <div class="card" id="box">
+      <div class="success-row">
+        <span class="check" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20.285 6.709a1 1 0 0 1 0 1.414l-9.19 9.19a1 1 0 0 1-1.414 0L3.715 11.55a1 1 0 1 1 1.414-1.414l5.048 5.048 8.483-8.475a1 1 0 0 1 1.625 0z"/></svg>
+        </span>
+        <div class="success-text">Payment captured successfully.</div>
       </div>
 
-      <!-- Datos de la transacción -->
-      <div class="details" id="details" style="display:none">
-        <div class="row"><div class="label">Reservation (CN)</div><div class="value" id="v_cn">—</div></div>
-        <div class="row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
-        <div class="row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
-        <div class="row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
-        <div class="row"><div class="label">Stripe Session</div><div class="value" id="v_sid">—</div></div>
+      <div class="grid-row"><div class="label">Status</div><div class="value" id="v_status">PAID</div></div>
+      <div class="grid-row"><div class="label">Reservation (CN)</div><div class="value mono" id="v_cn">—</div></div>
+      <div class="grid-row"><div class="label">Amount Paid</div><div class="value" id="v_amount">—</div></div>
+      <div class="grid-row"><div class="label">Payer Email</div><div class="value" id="v_email">—</div></div>
+      <div class="grid-row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
+      <div class="grid-row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
+
+      <div class="small muted" id="note" style="margin-top:10px">
+        A receipt will be emailed shortly. You can also print/save this page.
       </div>
 
       <div class="actions">
-        <!-- Botón a tu recibo imprimible detallado -->
-        <a id="btnReceipt" class="btn primary" href="#">View Printable Receipt</a>
-        <a id="btnResched" class="btn ghost" href="#">Back to Reschedule</a>
-        <a href="/index.html" class="btn ghost">Return to Home</a>
-      </div>
-
-      <div class="note muted" style="text-align:center">
-        If you need assistance, text <strong>(786) 683-5128</strong> or email <strong>bonanzatransportation1@outlook.com</strong>.
+        <button onclick="window.print()">Print / Save PDF</button>
+        <a id="viewDetails" class="btn"><button type="button">View Detailed Receipt</button></a>
+        <a href="/index.html" class="btn"><button type="button">Return to Home</button></a>
       </div>
     </div>
   </div>
 
   <script>
-    const qs = new URLSearchParams(location.search);
-    const sessionId = qs.get('session_id') || '';
-    const cn = qs.get('cn') || '';
+    const qs   = new URLSearchParams(location.search);
+    const sid  = qs.get('session_id') || qs.get('session') || '';
+    const cn   = qs.get('cn') || '';
 
-    // Configurar botones (enlazan con tus páginas existentes)
-    const receiptHref = '/reschedule-success.html' + (sessionId || cn
-      ? `?${new URLSearchParams({ cn, session_id: sessionId }).toString()}`
-      : '');
-    document.getElementById('btnReceipt').href = receiptHref;
-
-    const reschedHref = '/reschedule.html' + (cn ? `?cn=${encodeURIComponent(cn)}` : '');
-    document.getElementById('btnResched').href = reschedHref;
-
-    // Mostrar CN siempre
+    // Link a la confirmación detallada de reprogramación (si hay CN):
+    const detailsHref = cn ? `/reschedule-success.html?cn=${encodeURIComponent(cn)}&session_id=${encodeURIComponent(sid||'')}` : '/reschedule-success.html';
+    document.getElementById('viewDetails').href = detailsHref;
     document.getElementById('v_cn').textContent = cn || '—';
 
-    // Si tenemos session_id, cargamos datos para mostrar monto/email/método
-    (async function load(){
-      if (!sessionId) return; // sin sesión, dejamos la tarjeta simple
+    const $ = (id)=>document.getElementById(id);
+    const set = (id,val)=>{ $(id).textContent = (val==null||val==='') ? '—' : String(val); };
+    const fmtUSD = (cents)=> (typeof cents==='number') ? (cents/100).toLocaleString('en-US',{style:'currency',currency:'USD'}) : '—';
+
+    function getPaymentMethod(session){
       try{
-        const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
-        if(!r.ok) throw new Error(`HTTP ${r.status}`);
-        const s = await r.json();
+        if (Array.isArray(session.payment_method_types) && session.payment_method_types.length)
+          return session.payment_method_types[0].toUpperCase();
+        const ch = session.payment_intent?.charges?.data?.[0];
+        if (ch?.payment_method_details?.type)
+          return String(ch.payment_method_details.type).toUpperCase();
+      }catch(_){}
+      return 'CARD';
+    }
 
-        const amountCents =
-          (typeof s.amount_total === 'number') ? s.amount_total :
-          (typeof s.amount_subtotal === 'number') ? s.amount_subtotal :
-          (typeof s.payment_intent?.amount_received === 'number') ? s.payment_intent.amount_received :
-          null;
-        const usd = (amountCents!=null) ? (amountCents/100).toLocaleString('en-US',{style:'currency',currency:'USD'}) : '—';
+    async function load(){
+      if (!sid) { $('note').textContent = 'Payment confirmed. (Missing session_id in URL for extra details.)'; return; }
+      try{
+        const r = await fetch(`/api/checkout-session?session_id=${encodeURIComponent(sid)}`);
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        const payload = await r.json();
+        const s  = payload.session || payload;
+        const md = s.metadata || payload.metadata || {};
 
-        const pm =
-          (Array.isArray(s.payment_method_types) && s.payment_method_types[0]) ? s.payment_method_types[0].toUpperCase() :
-          (s.payment_intent?.charges?.data?.[0]?.payment_method_details?.type
-            ? String(s.payment_intent.charges.data[0].payment_method_details.type).toUpperCase()
-            : '—');
+        set('v_status', (s.payment_status || s.status || 'PAID').toString().toUpperCase());
+        set('v_sid', s.id || sid);
 
-        document.getElementById('v_amount').textContent = usd;
-        document.getElementById('v_email').textContent = s.customer_details?.email || s.customer_email || '—';
-        document.getElementById('v_pm').textContent = pm;
-        document.getElementById('v_sid').textContent = s.id || sessionId;
+        // Monto cobrado en esta sesión (más preciso que amount_total si es pago de diferencia)
+        const cents = (typeof s.amount_total === 'number') ? s.amount_total
+                     : (typeof s.amount_subtotal === 'number') ? s.amount_subtotal
+                     : (typeof s.payment_intent?.amount_received === 'number') ? s.payment_intent.amount_received
+                     : (typeof s.payment_intent?.amount === 'number') ? s.payment_intent.amount
+                     : null;
+        set('v_amount', fmtUSD(cents));
 
-        document.getElementById('details').style.display = 'block';
+        set('v_email', s.customer_details?.email || s.customer_email || md.email || '—');
+        set('v_pm', getPaymentMethod(s));
+
+        $('note').innerHTML = `Receipt stored. Session <span class="mono">${s.id || sid}</span>. A confirmation email will arrive shortly.`;
       }catch(e){
-        // Si falla, dejamos la pantalla simple sin detalles
-        console.error('load session failed:', e);
+        $('note').textContent = 'Payment confirmed, but we could not load extra details: ' + (e?.message||e);
       }
-    })();
+    }
+    load();
   </script>
 </body>
 </html>
