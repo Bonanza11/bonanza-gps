@@ -238,7 +238,7 @@
         const vlabel = md.vehicleType || md.vehicle || null;
         set('v_vehicle', vlabel);
 
-        // Foto según vehículo (se muestra compacta en impresión)
+        // Foto según vehículo
         const photo = $('vehiclePhoto'), img = $('vehicleImg');
         if (typeof vlabel === 'string'){
           const low = vlabel.toLowerCase();
@@ -254,7 +254,22 @@
       }
     }
 
-    loadSession();
+    // === NUEVO: persistir/actualizar la reserva en DB con el session_id ===
+    async function persistBooking(){
+      if (!sessionId) return;
+      try{
+        await fetch('/api/book/upsert-from-session', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ session_id: sessionId })
+        }).catch(()=>{});
+      }catch(_){}
+    }
+
+    (async ()=>{
+      await loadSession();
+      persistBooking(); // no bloquea la UI
+    })();
   </script>
 </body>
 </html>
