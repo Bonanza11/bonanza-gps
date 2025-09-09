@@ -12,7 +12,7 @@
       --copper:#a3724e;
       --line-copper:rgba(127,77,51,.50);
       --ok:#17c964; --paper:#fff; --ink:#151515;
-      --bg:#050505; /* negro profundo para integrar imágenes */
+      --bg:#050505;
     }
     *{ box-sizing:border-box }
     html,body{ margin:0; background:var(--bg); color:#ffe9d1; font-family:'Poppins', Arial, sans-serif; }
@@ -35,6 +35,16 @@
     .value{ color:var(--value-copper); font-family:'Cormorant Garamond', serif; font-size:1.08rem; word-break:break-word; }
     .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace; }
 
+    /* Foto del vehículo */
+    .vehicle-photo{
+      display:flex; justify-content:center; align-items:center;
+      margin:16px 0 0;
+    }
+    .vehicle-photo img{
+      max-width:320px; height:auto; border:none; display:block;
+      filter: drop-shadow(0 8px 22px rgba(0,0,0,.6));
+    }
+
     .actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
     button{ background:var(--copper); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; }
     a.btn{ text-decoration:none }
@@ -53,6 +63,7 @@
       .label{ color:#333; font-weight:600; font-size:10.5pt }
       .value{ color:var(--value-copper); font-size:11.5pt; line-height:1.22 }
       .actions{ display:none !important }
+      .vehicle-photo img{ max-width:170pt; }
     }
   </style>
 </head>
@@ -79,6 +90,11 @@
       <div class="grid-row"><div class="label">Payment Method</div><div class="value" id="v_pm">—</div></div>
       <div class="grid-row"><div class="label">Stripe Session</div><div class="value mono" id="v_sid">—</div></div>
 
+      <!-- Foto vehículo -->
+      <div class="vehicle-photo" id="vehiclePhoto" style="display:none">
+        <img id="vehicleImg" src="" alt="Selected Vehicle"/>
+      </div>
+
       <div class="small muted" id="note" style="margin-top:10px">
         A receipt will be emailed shortly. You can also print/save this page.
       </div>
@@ -96,7 +112,6 @@
     const sid  = qs.get('session_id') || qs.get('session') || '';
     const cn   = qs.get('cn') || '';
 
-    // Link a la confirmación detallada de reprogramación (si hay CN):
     const detailsHref = cn ? `/reschedule-success.html?cn=${encodeURIComponent(cn)}&session_id=${encodeURIComponent(sid||'')}` : '/reschedule-success.html';
     document.getElementById('viewDetails').href = detailsHref;
     document.getElementById('v_cn').textContent = cn || '—';
@@ -128,7 +143,6 @@
         set('v_status', (s.payment_status || s.status || 'PAID').toString().toUpperCase());
         set('v_sid', s.id || sid);
 
-        // Monto cobrado en esta sesión (más preciso que amount_total si es pago de diferencia)
         const cents = (typeof s.amount_total === 'number') ? s.amount_total
                      : (typeof s.amount_subtotal === 'number') ? s.amount_subtotal
                      : (typeof s.payment_intent?.amount_received === 'number') ? s.payment_intent.amount_received
@@ -138,6 +152,12 @@
 
         set('v_email', s.customer_details?.email || s.customer_email || md.email || '—');
         set('v_pm', getPaymentMethod(s));
+
+        // Mostrar foto de vehículo
+        const vlabel = md.vehicleType || md.vehicle || '';
+        const photo  = $('vehiclePhoto'), img=$('vehicleImg');
+        if (/suv/i.test(vlabel)) { img.src='/images/suburban.png'; photo.style.display='flex'; }
+        else if (/van/i.test(vlabel)) { img.src='/images/van-sprinter.png'; photo.style.display='flex'; }
 
         $('note').innerHTML = `Receipt stored. Session <span class="mono">${s.id || sid}</span>. A confirmation email will arrive shortly.`;
       }catch(e){
