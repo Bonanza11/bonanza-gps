@@ -1,6 +1,18 @@
 // /api/book/get.js
 import { neon } from "@neondatabase/serverless";
 
+/** Normaliza el CN en el backend: quita espacios raros, pasa a MAYÚSCULAS y
+ *  convierte cualquier guion “fancy” a guion normal. */
+function normalizeCn(raw = "") {
+  return String(raw)
+    .trim()
+    // guiones unicode -> '-'
+    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-")
+    // eliminar espacios y no alfanumérico salvo '-'
+    .replace(/[^\w-]/g, "")
+    .toUpperCase();
+}
+
 export default async function handler(req, res) {
   /* ===== CORS ===== */
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -14,13 +26,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok:false, error:"method_not_allowed" });
   }
 
-  const cn = (req.query.cn || "").trim();
+  const rawCn = (req.query.cn || "");
+  const cn = normalizeCn(rawCn);
   if (!cn) return res.status(400).json({ ok:false, error:"missing_cn" });
 
   try {
     const sql = neon(process.env.DATABASE_URL);
 
+    // Hacemos la comparación con el mismo proceso de normalización en SQL
+    // para evitar fallos por mayúsculas, espacios o guiones “especiales”.
     const rows = await sql`
+      WITH inp AS (
+        SELECT ${cn}::text AS ncn
+      )
       SELECT
         id,
         confirmation_number,
@@ -47,8 +65,12 @@ export default async function handler(req, res) {
         updated_at,
         COALESCE(reschedules_count, 0) AS reschedules_count,
         COALESCE(reschedules, '[]'::jsonb) AS reschedules
-      FROM bookings
-      WHERE confirmation_number = ${cn}
+      FROM bookings b
+      JOIN inp ON
+        /* normalizamos en SQL: quitamos todo menos A-Z 0-9 y '-' y pasamos a UPPER */
+        UPPER(REGEXP_REPLACE(b.confirmation_number, '[^A-Za-z0-9-]', '', 'g'))
+        =
+        inp.ncn
       LIMIT 1
     `;
 
@@ -58,7 +80,6 @@ export default async function handler(req, res) {
 
     const b = rows[0];
 
-    // Normalizamos nombres (camelCase) para que calcen con tu front
     const booking = {
       id: b.id,
       cn: b.confirmation_number,
@@ -83,7 +104,6 @@ export default async function handler(req, res) {
       stripe_payment_intent: b.stripe_payment_intent,
       created_at: b.created_at,
       updated_at: b.updated_at,
-      // 👇 nuevos
       reschedulesCount: Number(b.reschedules_count || 0),
       reschedules: b.reschedules
     };
