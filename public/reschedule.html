@@ -547,36 +547,29 @@
     const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
     el('btnSave').disabled = !canSave;
   }
-
+    
   document.addEventListener('DOMContentLoaded', ()=>{
-    el('btnLoad').addEventListener('click', ()=>{
-      const cn = el('cn').value.trim();
-      if(!cn){ el('cn').classList.add('invalid'); return; }
-      loadBooking(cn);
-      const u = new URL(window.location.href); u.searchParams.set('cn', cn); window.history.replaceState({}, '', u.toString());
-    });
-    const qcn = new URL(window.location.href).searchParams.get('cn');
-    if (qcn){ el('cn').value=qcn; loadBooking(qcn); }
-
-    document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        if (reachedLimit) return;
-        document.querySelectorAll('#vehToggle .veh-btn').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        selectedVehicle = b.dataset.type || 'suv';
-        updateMeetGreetVisibility();
-        if (calculatedOnce) recalc();
-      });
-    });
-    document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        if (reachedLimit) return;
-        mgChoice = b.dataset.choice;
-        document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
-        if (calculatedOnce) recalc();
-      });
+  // 🔧 Mantener SOLO los toggles aquí (vehículo y meet & greet)
+  document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if (reachedLimit) return;
+      document.querySelectorAll('#vehToggle .veh-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      selectedVehicle = b.dataset.type || 'suv';
+      updateMeetGreetVisibility();
+      if (calculatedOnce) recalc();
     });
   });
+
+  document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if (reachedLimit) return;
+      mgChoice = b.dataset.choice;
+      document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
+      if (calculatedOnce) recalc();
+    });
+  });
+});
 
   function routeAsync(opts){
     return new Promise((res,rej)=>{
