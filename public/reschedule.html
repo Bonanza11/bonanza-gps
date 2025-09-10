@@ -900,6 +900,67 @@ el('btnSave').addEventListener('click', async ()=>{
     alert('Error: ' + (e?.message || e));
   }
 });
+<script>
+/* === Normalización y autoload del CN === */
+function normalizeCnClient(v=""){
+  return v.trim()
+    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-") // guiones raros → normal
+    .replace(/[^\w-]/g, "") // quita espacios extraños
+    .toUpperCase();
+}
+
+// patrón: BZ-YYYYMMDD-XXXX
+const CN_RX = /^BZ-\d{8}-[A-Z0-9]{4}$/i;
+
+let __cnTimer = null;
+function tryAutoLoadCN(){
+  const input = el('cn');
+  if (!input) return;
+  const val = normalizeCnClient(input.value);
+  if (CN_RX.test(val)){
+    clearTimeout(__cnTimer);
+    __cnTimer = setTimeout(()=> loadBooking(val), 150);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  // ENTER en el campo CN
+  el('cn').addEventListener('keydown', (ev)=>{
+    if (ev.key === 'Enter'){
+      ev.preventDefault();
+      const val = normalizeCnClient(el('cn').value);
+      if (!val){ el('cn').classList.add('invalid'); return; }
+      el('cn').value = val;
+      loadBooking(val);
+      const u = new URL(location.href);
+      u.searchParams.set('cn', val);
+      history.replaceState({}, '', u.toString());
+    }
+  });
+
+  // autoload si pega o escribe el CN completo
+  ['input','paste','change'].forEach(evt=>{
+    el('cn').addEventListener(evt, ()=>{
+      clearTimeout(__cnTimer);
+      __cnTimer = setTimeout(tryAutoLoadCN, 200);
+    });
+  });
+
+  // botón Load
+  document.getElementById('btnLoad')?.addEventListener('click', ()=>{
+    const val = normalizeCnClient(el('cn').value);
+    if (!val){ el('cn').classList.add('invalid'); return; }
+    el('cn').value = val;
+    loadBooking(val);
+    const u = new URL(location.href);
+    u.searchParams.set('cn', val);
+    history.replaceState({}, '', u.toString());
+  });
+
+  // carga automática si viene ?cn= en la URL
+  const qcn = normalizeCnClient(new URL(location.href).searchParams.get('cn') || '');
+  if (qcn){ el('cn').value = qcn; tryAutoLoadCN(); }
+});
 </script>
 </body>
 </html>
