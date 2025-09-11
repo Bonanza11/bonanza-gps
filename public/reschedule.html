@@ -4,6 +4,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reschedule — Bonanza Transportation</title>
+
+  <!-- Stripe (debe cargarse antes de crear la instancia) -->
+  <script src="https://js.stripe.com/v3"></script>
+
   <style>
   :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
   *{box-sizing:border-box}
@@ -60,7 +64,7 @@
   #flightNumber:focus,#flightOrigin:focus,#jsxFlightNumber:focus,#jsxOrigin:focus,#tailNumber:focus,#pvtOrigin:focus{
     border-color:var(--copper)!important;box-shadow:0 0 0 3px rgba(168,116,79,.18)!important;outline:none!important;
   }
-  #flightNumber::placeholder,#flightOrigin::placeholder,#jsxFlightNumber::placeholder,#jsxOrigin::placeholder,#tailNumber::placeholder,#pvtOrigin::placeholder{
+  #flightNumber::placeholder,#flightOrigin::placeholder,#jsxFlightNumber::placeholder,#jsxOrigin::placeholder{
     color:#c9a97c!important;opacity:.85!important;
   }
 
@@ -77,35 +81,32 @@
     opacity:1 !important; filter:none !important; cursor:pointer;
   }
   #newDate, #newTime { color-scheme: dark; }
-    /* ===== Top bar / Home button ===== */
-.topbar{
-  max-width:820px; width:92vw; margin:0 auto 8px;
-  display:flex; justify-content:flex-end; padding:0 16px;
-}
-.home-btn{
-  display:inline-block; text-decoration:none; font-weight:800;
-  background: linear-gradient(135deg, #b87333, #8b4513);
-  color:#000; border-radius:10px;
-  padding:10px 14px; line-height:1;
-  box-shadow:0 0 12px rgba(139,69,19,0.65), 0 8px 18px rgba(0,0,0,.45);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.home-btn:hover{
-  transform: scale(1.05);
-  box-shadow:0 0 18px rgba(139,69,19,0.9), 0 10px 22px rgba(0,0,0,.6);
-}
-.home-btn:focus{ outline:2px solid rgba(168,116,79,.6); outline-offset:3px; }
-@media print { .topbar{ display:none !important; } }
+
+  /* ===== Top bar / Home button ===== */
+  .topbar{ max-width:820px; width:92vw; margin:0 auto 8px; display:flex; justify-content:flex-end; padding:0 16px; }
+  .home-btn{
+    display:inline-block; text-decoration:none; font-weight:800;
+    background: linear-gradient(135deg, #b87333, #8b4513);
+    color:#000; border-radius:10px;
+    padding:10px 14px; line-height:1;
+    box-shadow:0 0 12px rgba(139,69,19,0.65), 0 8px 18px rgba(0,0,0,.45);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .home-btn:hover{ transform: scale(1.05); box-shadow:0 0 18px rgba(139,69,19,0.9), 0 10px 22px rgba(0,0,0,.6); }
+  .home-btn:focus{ outline:2px solid rgba(168,116,79,.6); outline-offset:3px; }
+  @media print { .topbar{ display:none !important; } }
   </style>
 </head>
 <body>
   <header>
     <img class="logo" src="/images/bonanza-logo.PNG" alt="Bonanza Transportation Logo"/>
   </header>
-    <!-- 🔽 Aquí agregas el botón Home -->
+
+  <!-- Botón Home arriba (todas menos la principal) -->
   <nav class="topbar">
     <a class="home-btn" href="/index.html" aria-label="Go to Home">Home</a>
   </nav>
+
   <main>
     <!-- LOAD -->
     <div class="card" id="loadCard">
@@ -222,18 +223,18 @@
       <div id="result" class="hint"></div>
     </div>
   </main>
-    <script src="https://js.stripe.com/v3"></script>
-  <script>
+    <script>
   /************ CONFIG ************/
   const STRIPE_PK = 'pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp';
   const stripe = Stripe(STRIPE_PK);
+
   function roundUSD(n){ return Math.round((Number(n)||0) * 100) / 100; }
   function assertDiffUSD(usd){
     if (!Number.isFinite(usd)) throw new Error('Invalid amount');
     if (usd < 0) throw new Error('Negative amount');
     if (usd > 5000) throw new Error('Amount too large for reschedule diff');
   }
-  const MAX_RESCHEDULES = 2;
+  const MAX_RESCHEDULES = 2;                 /* ✅ nombre consistente */
   const FLIGHTCHECK_URL = "https://flightcheck-7728622851.us-west3.run.app/flight";
 
   /************ STATE ************/
@@ -427,16 +428,14 @@
     if (mi <= 55) return 250;
     return mi * 5.4;
   }
-  function applyVehicleMultiplier(total){ return (selectedVehicle==='van') ? Math.round(total*1.30) : total; }
-  function getMGFee(){ return mgChoice!=='none' ? 50 : 0; }
-  const OPERATING_START="06:00", OPERATING_END="23:00";
-  function isAfterHours(dateStr, timeStr){
+  function rsApplyVehicle(total){ return (selectedVehicle === 'van') ? Math.round(total * 1.30) : total; }
+  function rsGetMGFee(){ return mgChoice !== 'none' ? 50 : 0; }
+  function rsIsAfterHours(dateStr,timeStr){
     if(!dateStr || !timeStr) return false;
     const d = new Date(`${dateStr}T${timeStr}:00`);
-    const [sh,sm]=OPERATING_START.split(':').map(Number), [eh,em]=OPERATING_END.split(':').map(Number);
-    const start=new Date(d); start.setHours(sh,sm,0,0);
-    const end  =new Date(d); end.setHours(eh,em,0,0);
-    return (d<start)||(d>end);
+    const start = new Date(d); start.setHours(6,0,0,0);
+    const end   = new Date(d); end.setHours(23,0,0,0);
+    return d < start || d > end;
   }
 
   /* ===== Surcharge por condado ===== */
@@ -470,15 +469,6 @@
       }, (r,s)=> s==="OK" && r ? resolve(r) : reject(s||"ROUTE_ERROR"))
     );
     return trip.routes[0].legs[0].distance.value / 1609.34;
-  }
-  function rsApplyVehicle(total){ return (selectedVehicle === 'van') ? Math.round(total * 1.30) : total; }
-  function rsGetMGFee(){ return mgChoice !== 'none' ? 50 : 0; }
-  function rsIsAfterHours(dateStr,timeStr){
-    if(!dateStr || !timeStr) return false;
-    const d = new Date(`${dateStr}T${timeStr}:00`);
-    const start = new Date(d); start.setHours(6,0,0,0);
-    const end   = new Date(d); end.setHours(23,0,0,0);
-    return d < start || d > end;
   }
 
   async function recalc(){
@@ -547,29 +537,28 @@
     const canSave = calculatedOnce && !!dateStr && !!timeStr && !reachedLimit;
     el('btnSave').disabled = !canSave;
   }
-    
-  document.addEventListener('DOMContentLoaded', ()=>{
-  // 🔧 Mantener SOLO los toggles aquí (vehículo y meet & greet)
-  document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      if (reachedLimit) return;
-      document.querySelectorAll('#vehToggle .veh-btn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      selectedVehicle = b.dataset.type || 'suv';
-      updateMeetGreetVisibility();
-      if (calculatedOnce) recalc();
-    });
-  });
 
-  document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      if (reachedLimit) return;
-      mgChoice = b.dataset.choice;
-      document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
-      if (calculatedOnce) recalc();
+  // Toggles (vehículo y meet & greet)
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.querySelectorAll('#vehToggle .veh-btn').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if (reachedLimit) return;
+        document.querySelectorAll('#vehToggle .veh-btn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        selectedVehicle = b.dataset.type || 'suv';
+        updateMeetGreetVisibility();
+        if (calculatedOnce) recalc();
+      });
+    });
+    document.querySelectorAll('#mgWrap .mg-btn').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if (reachedLimit) return;
+        mgChoice = b.dataset.choice;
+        document.querySelectorAll('#mgWrap .mg-btn').forEach(x=>x.classList.toggle('active', x===b));
+        if (calculatedOnce) recalc();
+      });
     });
   });
-});
 
   function routeAsync(opts){
     return new Promise((res,rej)=>{
@@ -581,6 +570,7 @@
     if (p.place_id) return { placeId: p.place_id };
     return p.formatted_address || p.name || null;
   }
+
   function initMapReschedule(){
     map = new google.maps.Map(el('map'), { center:{lat:40.7587,lng:-111.8762}, zoom:10 });
     directionsService = new google.maps.DirectionsService();
@@ -643,8 +633,7 @@
   }
   window.initMapReschedule = initMapReschedule;
   </script>
-
-  <!-- Google Maps (después de definir initMapReschedule) -->
+    <!-- Google Maps (después de definir initMapReschedule) -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMapReschedule"></script>
 
   <!-- Flight + Origin confirmation (Reschedule) -->
@@ -712,7 +701,7 @@
     const hint =document.getElementById('flightHint');
     if(!input||!hint) return;
     function update(){
-      const r=rsValidateFlightValue(input.value||'');
+      const r=rsValidateFlightValue(input.value||'());
       hint.textContent = r.ok ? 'Format looks good' : r.msg;
       hint.className   = 'hint ' + (r.ok ? 'ok' : 'err');
       hint.style.display='block';
@@ -817,111 +806,127 @@
     setTimeout(rsMaybeCheckBackend, 150);
   });
   </script>
-  <script>
-// === Save Changes handler (PARCHE: redirige si NO hay pago y usa 'stripe' correcto) ===
-el('btnSave').addEventListener('click', async ()=>{
-  try{
-    if (!booking?.__calc) { alert('Please calculate the route first.'); return; }
+    <script>
+  // === Save Changes handler ===
+  el('btnSave').addEventListener('click', async ()=>{
+    try{
+      if (!booking?.__calc) { alert('Please calculate the route first.'); return; }
 
-    const cn = booking?.cn || el('cn')?.value?.trim();
-    if (!cn) { alert('Missing reservation code (CN).'); return; }
+      const cn = booking?.cn || el('cn')?.value?.trim();
+      if (!cn) { alert('Missing reservation code (CN).'); return; }
 
-    const {
-      newTotal, diffForUI, dateStr, timeStr,
-      miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours
-    } = booking.__calc;
+      const {
+        newTotal, diffForUI, dateStr, timeStr,
+        miles, surcharge, mgFee, selectedVehicle, mgChoice, afterHours
+      } = booking.__calc;
 
-    // 1) Guardar cambio en backend
-    const saveResp = await fetch('/api/book/reschedule', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        cn,
-        newDate: dateStr || el('newDate')?.value || '',
-        newTime: timeStr || el('newTime')?.value || '',
-        quote: { newTotal, miles, afterHours, surcharge, mgFee, vehicleType: selectedVehicle, meetAndGreet: mgChoice }
-      })
+      // 1) Guardar cambio en backend
+      const saveResp = await fetch('/api/book/reschedule', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          cn,
+          newDate: dateStr || el('newDate')?.value || '',
+          newTime: timeStr || el('newTime')?.value || '',
+          quote: { newTotal, miles, afterHours, surcharge, mgFee, vehicleType: selectedVehicle, meetAndGreet: mgChoice }
+        })
+      });
+
+      const saveData = await saveResp.json().catch(()=> ({}));
+      if (!saveResp.ok || !saveData?.ok) {
+        throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
+      }
+
+      // 2) Si NO hay pago adicional => redirige a página de éxito sin cobro
+      const payableUSD = roundUSD(Math.max(diffForUI ?? 0, 0));
+      if (payableUSD <= 0) {
+        const url = new URL('/reschedule-nopay-success.html', window.location.origin);
+        url.searchParams.set('cn', cn);
+        window.location.href = url.toString();
+        return;
+      }
+
+      // 3) Si SÍ hay pago => Stripe Checkout
+      assertDiffUSD(payableUSD);
+
+      const sessionResp = await fetch('/api/create-checkout-session-diff', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          cn,
+          difference: payableUSD,
+          email: booking?.email || '',
+          fullname: booking?.fullname || '',
+          phone: booking?.phone || '',
+          pickup: booking?.pickup || '',
+          dropoff: booking?.dropoff || '',
+          date: (dateStr || el('newDate')?.value || ''),
+          time: (timeStr || el('newTime')?.value || ''),
+          vehicleType: (selectedVehicle || booking?.vehicleType || 'suv'),
+          originalTotal: Number(booking.quotedTotal || booking.quoted_total || 0),
+          newTotal: Number(newTotal || 0)
+        })
+      });
+
+      const sessionData = await sessionResp.json().catch(()=> ({}));
+      if (!sessionResp.ok || !sessionData?.id) {
+        throw new Error(sessionData?.detail || sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
+      if (error) throw error;
+
+    } catch (e) {
+      console.error(e);
+      alert('Error: ' + (e?.message || e));
+    }
+  });
+
+  /* === Normalización y autoload del CN === */
+  function normalizeCnClient(v=""){
+    return v.trim()
+      .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-") // guiones raros → normal
+      .replace(/[^\w-]/g, "") // quita caracteres extraños
+      .toUpperCase();
+  }
+  const CN_RX = /^BZ-\d{8}-[A-Z0-9]{4}$/i;
+  let __cnTimer = null;
+
+  function tryAutoLoadCN(){
+    const input = el('cn');
+    if (!input) return;
+    const val = normalizeCnClient(input.value);
+    if (CN_RX.test(val)){
+      clearTimeout(__cnTimer);
+      __cnTimer = setTimeout(()=> loadBooking(val), 150);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // ENTER en el campo CN
+    el('cn').addEventListener('keydown', (ev)=>{
+      if (ev.key === 'Enter'){
+        ev.preventDefault();
+        const val = normalizeCnClient(el('cn').value);
+        if (!val){ el('cn').classList.add('invalid'); return; }
+        el('cn').value = val;
+        loadBooking(val);
+        const u = new URL(location.href);
+        u.searchParams.set('cn', val);
+        history.replaceState({}, '', u.toString());
+      }
     });
 
-    const saveData = await saveResp.json().catch(()=> ({}));
-    if (!saveResp.ok || !saveData?.ok) {
-      throw new Error(saveData?.error || `Cannot reschedule (HTTP ${saveResp.status})`);
-    }
-
-    // 2) Si NO hay pago adicional => redirige a página de éxito sin cobro
-    const payableUSD = roundUSD(Math.max(diffForUI ?? 0, 0));
-    if (payableUSD <= 0) {
-      const url = new URL('/reschedule-nopay-success.html', window.location.origin);
-      url.searchParams.set('cn', cn);
-      window.location.href = url.toString();
-      return;
-    }
-
-    // 3) Si SÍ hay pago => Stripe Checkout
-    assertDiffUSD(payableUSD);
-
-    const sessionResp = await fetch('/api/create-checkout-session-diff', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        cn,
-        difference: payableUSD,
-        email: booking?.email || '',
-        fullname: booking?.fullname || '',
-        phone: booking?.phone || '',
-        pickup: booking?.pickup || '',
-        dropoff: booking?.dropoff || '',
-        date: (dateStr || el('newDate')?.value || ''),
-        time: (timeStr || el('newTime')?.value || ''),
-        vehicleType: (selectedVehicle || booking?.vehicleType || 'suv'),
-        originalTotal: Number(booking.quotedTotal || booking.quoted_total || 0),
-        newTotal: Number(newTotal || 0)
-      })
+    // autoload si pega o escribe el CN completo
+    ['input','paste','change'].forEach(evt=>{
+      el('cn').addEventListener(evt, ()=>{
+        clearTimeout(__cnTimer);
+        __cnTimer = setTimeout(tryAutoLoadCN, 200);
+      });
     });
 
-    const sessionData = await sessionResp.json().catch(()=> ({}));
-    if (!sessionResp.ok || !sessionData?.id) {
-      throw new Error(sessionData?.detail || sessionData?.error || `Stripe error (HTTP ${sessionResp.status})`);
-    }
-
-    // **Usar la instancia 'stripe' ya creada arriba**
-    const { error } = await stripe.redirectToCheckout({ sessionId: sessionData.id });
-    if (error) throw error;
-
-  } catch (e) {
-    console.error(e);
-    alert('Error: ' + (e?.message || e));
-  }
-});
-    </script> 
-<script>
-/* === Normalización y autoload del CN === */
-function normalizeCnClient(v=""){
-  return v.trim()
-    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-") // guiones raros → normal
-    .replace(/[^\w-]/g, "") // quita espacios extraños
-    .toUpperCase();
-}
-
-// patrón: BZ-YYYYMMDD-XXXX
-const CN_RX = /^BZ-\d{8}-[A-Z0-9]{4}$/i;
-
-let __cnTimer = null;
-function tryAutoLoadCN(){
-  const input = el('cn');
-  if (!input) return;
-  const val = normalizeCnClient(input.value);
-  if (CN_RX.test(val)){
-    clearTimeout(__cnTimer);
-    __cnTimer = setTimeout(()=> loadBooking(val), 150);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  // ENTER en el campo CN
-  el('cn').addEventListener('keydown', (ev)=>{
-    if (ev.key === 'Enter'){
-      ev.preventDefault();
+    // botón Load
+    document.getElementById('btnLoad')?.addEventListener('click', ()=>{
       const val = normalizeCnClient(el('cn').value);
       if (!val){ el('cn').classList.add('invalid'); return; }
       el('cn').value = val;
@@ -929,32 +934,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
       const u = new URL(location.href);
       u.searchParams.set('cn', val);
       history.replaceState({}, '', u.toString());
-    }
-  });
-
-  // autoload si pega o escribe el CN completo
-  ['input','paste','change'].forEach(evt=>{
-    el('cn').addEventListener(evt, ()=>{
-      clearTimeout(__cnTimer);
-      __cnTimer = setTimeout(tryAutoLoadCN, 200);
     });
-  });
 
-  // botón Load
-  document.getElementById('btnLoad')?.addEventListener('click', ()=>{
-    const val = normalizeCnClient(el('cn').value);
-    if (!val){ el('cn').classList.add('invalid'); return; }
-    el('cn').value = val;
-    loadBooking(val);
-    const u = new URL(location.href);
-    u.searchParams.set('cn', val);
-    history.replaceState({}, '', u.toString());
+    // carga automática si viene ?cn= en la URL
+    const qcn = normalizeCnClient(new URL(location.href).searchParams.get('cn') || '');
+    if (qcn){ el('cn').value = qcn; tryAutoLoadCN(); }
   });
-
-  // carga automática si viene ?cn= en la URL
-  const qcn = normalizeCnClient(new URL(location.href).searchParams.get('cn') || '');
-  if (qcn){ el('cn').value = qcn; tryAutoLoadCN(); }
-});
-</script>
+  </script>
 </body>
 </html>
