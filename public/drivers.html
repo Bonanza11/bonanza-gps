@@ -27,13 +27,12 @@
   .job h3{ margin:0 0 4px; font-size:16px }
   .badge{ padding:3px 8px; border-radius:999px; font-size:12px; font-weight:700; background:#33384d; color:#cdd6ea; border:1px solid #4b5576 }
   .spacer{ flex:1 }
-  .right{ text-align:right }
   .hidden{ display:none !important }
 </style>
 </head>
 <body>
 <header>
-  <h1>Bonanza — Driver</h1>
+  <h1>Bonanza — Drivers</h1>
   <div class="spacer"></div>
   <button id="btnLogout" class="bad">Logout</button>
 </header>
@@ -90,10 +89,9 @@
 <script>
 /* ===== CONFIG ===== */
 const API_AUTH_DRIVER   = '/api/auth/driver-login';
-const API_ME            = '/api/drivers/me';            // << corregido
+const API_ME            = '/api/drivers/me';
 const API_ASSIGNMENTS   = '/api/drivers/assignments';
 const API_NOTIFY        = '/api/drivers/notify';
-const API_VEHICLES      = '/api/admin/vehicles';
 
 /* ===== STATE ===== */
 let driverToken = localStorage.getItem('driver_token') || null;
@@ -186,7 +184,7 @@ async function loadMe(){
 }
 async function loadAssignments(){
   const j = await api(API_ASSIGNMENTS,'GET');
-  const list = Array.isArray(j.rows) ? j.rows : (Array.isArray(j) ? j : (j.assignments || []));
+  const list = Array.isArray(j.rows) ? j.rows : (j.assignments || []);
   renderAssignments(list);
 }
 
@@ -252,39 +250,23 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   else { show('view-login', true); show('view-home', false); }
 });
 
-/* ===== DEV HELPERS (para consola, sin recursión) ===== */
-window.setMeDemo = (obj)=>{ me=obj; renderMe(); };
-window.renderVehiclesDemo = (arr)=>{ renderVehicles(arr||[]); };
-window.renderAssignmentsDemo = (arr)=>{ renderAssignments(arr||[]); };
+/* ===== DEMO HELPERS ===== */
 window.seedDemo = function(){
   me = { id:"1", name:"John Doe", email:"driver@bonanza.com", phone:"801-555-0000", online:true };
   renderMe();
-  renderVehiclesDemo([
+  renderVehicles([
     { id:"v1", plate:"UT-123ABC", kind:"SUV", year:2021, model:"Suburban LT", active:true },
     { id:"v2", plate:"UT-456XYZ", kind:"VAN", year:2019, model:"Sprinter 2500", active:false }
   ]);
-  renderAssignmentsDemo([
+  renderAssignments([
     { id:"1001", status:"ASSIGNED", customer_name:"Mr. Bonanza", pickup_location:"SLC Airport", dropoff_location:"Park City", pickup_time: Date.now()+3600000 },
     { id:"1002", status:"PENDING",  customer_name:"Jane Smith",   pickup_location:"Deer Valley",  dropoff_location:"Salt Lake City", pickup_time: Date.now()+7200000 }
   ]);
-  console.log("Demo seeded. Usa setMeDemo(), renderVehiclesDemo(), renderAssignmentsDemo()");
+  show('view-login', false);
+  show('view-home', true);
+  msg($('topMsg'),'Demo data loaded (local only).');
 };
-
-/* ===== Botón visible Load Demo ===== */
-const btnLoadDemo = document.getElementById('btnLoadDemo');
-if (btnLoadDemo) {
-  btnLoadDemo.addEventListener('click', ()=>{
-    try{
-      if (typeof seedDemo !== 'function') { alert('seedDemo() no está disponible.'); return; }
-      seedDemo();
-      show('view-login', false);
-      show('view-home', true);
-      msg($('topMsg'),'Demo data loaded (local only).');
-    }catch(e){
-      alert(e.message || 'Error loading demo data');
-    }
-  });
-}
+$('btnLoadDemo').addEventListener('click', ()=>{ window.seedDemo(); });
 </script>
 </body>
 </html>
