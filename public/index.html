@@ -581,22 +581,36 @@
 📱 Text messages only: (786) 683-5128<br>
 📧 Email: bonanzatransportation1@outlook.com<br>
 📍 Park City, Utah — USA</p>
-<!-- Botón Admin visible -->
-<div style="text-align:left; margin-top:20px;">
+<!-- Botón Admin + Drivers visibles dentro del modal -->
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
   <a href="/admin.html"
      style="display:inline-block; 
             padding:10px 20px; 
-            background:rgba(0,0,0,0.85);   /* 👈 recuadro más oscuro */
-            color:rgba(168,116,79,0.6);    /* 👈 letras cobre opacas */
+            background:rgba(0,0,0,0.85);
+            color:rgba(168,116,79,0.6);
             font-weight:600; 
             border-radius:8px; 
             text-decoration:none; 
-            border:1px solid rgba(168,116,79,0.25); /* 👈 borde muy sutil */
-            box-shadow:none;                /* sin brillos */
+            border:1px solid rgba(168,116,79,0.25);
+            box-shadow:none;
             transition:background .2s ease-in-out, color .2s ease-in-out;">
-        Headquarters 🇺🇸 
+    Headquarters 🇺🇸
   </a>
-</div>    
+
+  <a href="/drivers.html"
+     style="display:inline-block; 
+            padding:10px 20px; 
+            background:rgba(0,0,0,0.85);
+            color:rgba(168,116,79,0.6);
+            font-weight:600; 
+            border-radius:8px; 
+            text-decoration:none; 
+            border:1px solid rgba(168,116,79,0.25);
+            box-shadow:none;
+            transition:background .2s ease-in-out, color .2s ease-in-out;">
+    Drivers 
+  </a>
+</div>
         <script>
 /* ===== Config ===== */
 const SUV_IMG = "/images/suburban.png";
