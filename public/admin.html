@@ -1002,7 +1002,15 @@ resRows.addEventListener('click', async (ev)=>{
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
 document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
-
+  
+  // Filtro: mostrar archivados
+const chkShowArchived = document.getElementById('chkShowArchived');
+if (chkShowArchived){
+  chkShowArchived.addEventListener('change', ()=>{
+    renderDrivers();
+    setTheadTop(); // recalcula sticky por si cambia la altura
+  });
+}
 /* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
 const drvRows  = document.getElementById('drvRows');
