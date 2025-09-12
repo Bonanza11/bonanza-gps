@@ -1,15 +1,4 @@
 // /api/drivers/notify.js
-// Crea un resumen de asignaciones para un driver y opcionalmente ENVÍA el email.
-// Body esperado (POST):
-// {
-//   "driver_id": "uuid",                             // requerido
-//   "reservation_ids": [123,124],                    // opcional; si no viene, usa rango
-//   "from": "2025-09-01T00:00:00Z",                 // opcional si no pasas reservation_ids
-//   "to":   "2025-09-07T23:59:59Z",                 // opcional si no pasas reservation_ids
-//   "channels": { "email": true, "sms": false },    // sms queda en preview (sin proveedor)
-//   "send": true,                                    // si true y channels.email -> envía
-//   "subject": "Your assignments for this week"      // opcional
-// }
 import { query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
 import { sendEmail } from "../email/send.js";
@@ -28,9 +17,7 @@ function parseBody(maybe) {
 const strOrNull = v => (v === undefined || v === null || String(v).trim() === "" ? null : String(v).trim());
 const toIntArray = (arr) =>
   Array.isArray(arr)
-    ? arr
-        .map(x => (x === "" || x === null || x === undefined ? null : Number(x)))
-        .filter(Number.isInteger)
+    ? arr.map(x => (x === "" || x === null || x === undefined ? null : Number(x))).filter(Number.isInteger)
     : [];
 const toBool = (v, def=false) => {
   if (v === undefined || v === null || v === "") return def;
@@ -91,7 +78,7 @@ function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, c => ({'&'
 async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({ ok:false, error:"method_not_allowed" });
+    return res.status(405).json({ error:"method_not_allowed" });
   }
 
   try {
@@ -107,7 +94,7 @@ async function handler(req, res) {
       subject = "Your Bonanza assignments"
     } = body || {};
 
-    if (!driver_id) return res.status(400).json({ ok:false, error:"missing_driver_id" });
+    if (!driver_id) return res.status(400).json({ error:"missing_driver_id" });
 
     reservation_ids = toIntArray(reservation_ids);
     from = strOrNull(from);
@@ -118,14 +105,14 @@ async function handler(req, res) {
 
     // 1) Driver
     const dres = await query(
-      `SELECT id, name, email, phone
+      `SELECT id::text AS id, name, email, phone
          FROM drivers
-        WHERE id = $1::uuid
+        WHERE id::text = $1
         LIMIT 1`,
       [String(driver_id)]
     );
     const driver = dres?.rows?.[0];
-    if (!driver) return res.status(404).json({ ok:false, error:"driver_not_found" });
+    if (!driver) return res.status(404).json({ error:"driver_not_found" });
 
     // 2) Rides
     let rides = [];
@@ -133,7 +120,7 @@ async function handler(req, res) {
       const r = await query(
         `SELECT id, customer_name, phone, pickup_location, dropoff_location, pickup_time
            FROM reservations
-          WHERE id = ANY($1::int[]) AND driver_id = $2::uuid
+          WHERE id = ANY($1::int[]) AND driver_id::text = $2
           ORDER BY pickup_time ASC
           LIMIT 200`,
         [reservation_ids, driver.id]
@@ -143,7 +130,7 @@ async function handler(req, res) {
       const r = await query(
         `SELECT id, customer_name, phone, pickup_location, dropoff_location, pickup_time
            FROM reservations
-          WHERE driver_id = $1::uuid
+          WHERE driver_id::text = $1
             AND ($2::timestamptz IS NULL OR pickup_time >= $2::timestamptz)
             AND ($3::timestamptz IS NULL OR pickup_time <= $3::timestamptz)
             AND (
@@ -180,7 +167,7 @@ async function handler(req, res) {
       });
       sentEmail = true;
 
-      // (opcional) log en una tabla de auditoría si existe:
+      // log opcional
       try {
         await query(
           `INSERT INTO driver_notifications (driver_id, channel, subject, payload, created_at)
@@ -190,22 +177,16 @@ async function handler(req, res) {
       } catch { /* no romper si la tabla no existe */ }
     }
 
-    // (sms) no implementado – queda como preview
-    const sentSms = false;
-
     return res.json({
-      ok: true,
       preview,
       channels: { email: chEmail, sms: chSms },
       counts: { rides: rides.length },
-      sent: { email: sentEmail, sms: sentSms }
+      sent: { email: sentEmail, sms: false }
     });
   } catch (err) {
     console.error("[/api/drivers/notify] error:", err);
-    return res.status(500).json({ ok:false, error:"server_error", detail: err?.message || String(err) });
+    return res.status(500).json({ error:"server_error", detail: err?.message || String(err) });
   }
 }
 
-// Protegido: OWNER/ADMIN/DISPATCHER.
-// Tu guard ya permite bypass con x-admin-key si coincide con ADMIN_KEY.
 export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
