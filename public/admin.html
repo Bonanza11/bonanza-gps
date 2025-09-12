@@ -221,7 +221,15 @@
       <button id="btnReloadRes">Reload</button>
     </div>
 
-   <!-- DRIVERS SUMMARY -->
+   <div class="controls affects-sticky" id="drvControls">
+  <button id="btnReloadDrivers">Reload</button>
+  <button id="btnAddDriver" class="primary">Add Driver</button>
+  <label style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
+    <input type="checkbox" id="chkShowArchived">
+    <span class="muted">Show archived</span>
+  </label>
+</div>
+
 <div id="summaryDrivers" class="affects-sticky" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px">
   <div class="card"><h2>TOTAL DRIVERS</h2><p id="drvTotal">0</p></div>
   <div class="card"><h2>ACTIVE</h2><p id="drvActive">0</p></div>
