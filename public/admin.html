@@ -222,12 +222,18 @@
       <button id="btnReloadRes">Reload</button>
     </div>
 
-    <div class="card affects-sticky" style="margin-bottom:12px">
-      <h2 style="margin:0; font-size:12px; color:var(--muted)">RESERVATIONS</h2>
-      <p id="resMsg" class="msg" style="margin:6px 0 0"></p>
-    </div>
+   <!-- DRIVERS SUMMARY -->
+<div id="summaryDrivers" class="affects-sticky" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px">
+  <div class="card"><h2>TOTAL DRIVERS</h2><p id="drvTotal">0</p></div>
+  <div class="card"><h2>ACTIVE</h2><p id="drvActive">0</p></div>
+  <div class="card"><h2>ARCHIVED</h2><p id="drvArchived">0</p></div>
+  <div class="card" style="flex:1">
+    <h2 style="margin:0; font-size:12px; color:var(--muted)">DRIVERS</h2>
+    <p id="drvMsg" class="msg" style="margin:6px 0 0"></p>
+  </div>
+</div>
 
-    <div id="stickySpacerReservations"></div>
+<div id="stickySpacerDrivers"></div>
 
     <table role="grid" aria-label="Reservations">
       <thead>
