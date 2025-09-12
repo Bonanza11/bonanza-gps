@@ -1023,8 +1023,8 @@ if (chkShowArchived){
   });
 }
 /* =================== DRIVERS =================== */
-const drvMsg   = document.getElementById('drvMsg');
-const drvRows  = document.getElementById('drvRows');
+let drvMsg;   // se asigna cuando el DOM está listo
+let drvRows;  // se asigna cuando el DOM está listo
 let allDrivers = [];
 const drvStat = {
   total:    document.getElementById('drvTotal'),
