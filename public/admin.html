@@ -99,13 +99,13 @@
 </nav>
 <section id="view-vehicles">
   <div class="wrap">
-    <div class="controls affects-sticky" id="vehControls">
-      <button data-filter="ALL">All</button>
-      <button data-filter="SUV">SUV</button>
-      <button data-filter="VAN">VAN</button>
-      <button id="btnReloadVehicles">Reload</button>
-      <button id="btnAddVehicle" class="primary">Add Vehicle</button>
-    </div>
+<div class="controls affects-sticky" id="vehControls">
+  <button data-filter="ALL">All</button>
+  <button data-filter="SUV">SUV</button>
+  <button data-filter="VAN">VAN</button>
+  <button id="btnReloadVehicles">Reload</button>
+  <button id="btnAddVehicle" class="primary">Add Vehicle</button>
+</div>
 
     <div id="summaryVehicles" class="affects-sticky">
       <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
@@ -117,26 +117,24 @@
 
     <div id="vehMsg" class="msg"></div>
     <div id="stickySpacerVehicles"></div>
-
     <table role="grid" aria-label="Vehicles">
-      <thead>
-        <tr>
-          <th style="width:120px">Plate</th>
-          <th>Driver</th>
-          <th style="width:90px">Type</th>
-          <th style="width:80px">Year</th>
-          <th>Model</th>
-          <th style="width:110px">Active</th>
-          <th class="right" style="width:220px">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="vehRows">
-        <tr><td colspan="7">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <thead>
+  <tr>
+      <th style="width:120px">Plate</th>
+      <th>Driver</th>
+      <th style="width:90px">Type</th>
+      <th style="width:80px">Year</th>
+      <th>Model</th>
+      <th style="width:110px">Active</th>
+      <th class="right" style="width:220px">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="vehRows">
+    <tr><td colspan="7">Loading…</td></tr>
+  </tbody>
+</table>
 </section>
-
+  
 <!-- MODAL: VEHICLE -->
 <div class="backdrop" id="vehBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
@@ -223,7 +221,25 @@
       <button id="btnReloadRes">Reload</button>
     </div>
 
-    <div id="stickySpacerReservations"></div>
+  <div class="controls affects-sticky" id="vehControls">
+  <button data-filter="ALL">All</button>
+  <button data-filter="SUV">SUV</button>
+  <button data-filter="VAN">VAN</button>
+  <button id="btnReloadVehicles">Reload</button>
+  <button id="btnAddVehicle" class="primary">Add Vehicle</button>
+</div>
+
+<div id="summaryDrivers" class="affects-sticky" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px">
+  <div class="card"><h2>TOTAL DRIVERS</h2><p id="drvTotal">0</p></div>
+  <div class="card"><h2>ACTIVE</h2><p id="drvActive">0</p></div>
+  <div class="card"><h2>ARCHIVED</h2><p id="drvArchived">0</p></div>
+  <div class="card" style="flex:1">
+    <h2 style="margin:0; font-size:12px; color:var(--muted)">DRIVERS</h2>
+    <p id="drvMsg" class="msg" style="margin:6px 0 0"></p>
+  </div>
+</div>
+
+<div id="stickySpacerDrivers"></div>
 
     <table role="grid" aria-label="Reservations">
       <thead>
@@ -243,7 +259,6 @@
     </table>
   </div>
 </section>
-
 <!-- MODAL: ASSIGN -->
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
@@ -274,6 +289,214 @@
     </div>
   </div>
 </div>
+
+<script>
+  /* ------- Assign Modal (Reservations) ------- */
+  const assignBackdrop  = document.getElementById('assignBackdrop');
+  const assignBtnClose  = document.getElementById('assignBtnClose');
+  const assignBtnSave   = document.getElementById('assignBtnSave');
+  const aVehicle        = document.getElementById('aVehicle');
+  const aDriver         = document.getElementById('aDriver');
+  const aNotes          = document.getElementById('aNotes');
+  const assignErr       = document.getElementById('assignErr');
+
+  let currentAssignResId = null;
+
+  function closeAssignModal(){
+    assignBackdrop.classList.remove('open');
+    currentAssignResId = null;
+    aVehicle.innerHTML = '';
+    aDriver.value = '';
+    aNotes.value  = '';
+    assignErr.textContent = '';
+    // Recalcular sticky tras cerrar
+    requestAnimationFrame(() => (typeof setTheadTop === 'function') && setTheadTop());
+  }
+
+  assignBtnClose.addEventListener('click', closeAssignModal);
+  window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeAssignModal(); });
+  // Cerrar al hacer clic fuera del cuadro
+  assignBackdrop.addEventListener('click', (e) => { if (e.target === assignBackdrop) closeAssignModal(); });
+
+  function fillAssignVehicles(){
+    // Solo vehículos activos; orden consistente; etiquetas saneadas
+    const list = (allVehicles || [])
+      .filter(v => v.active)
+      .sort(sortVehicles);
+
+    if (!list.length){
+      aVehicle.innerHTML = '<option value="" disabled selected>(no active vehicles)</option>';
+      return;
+    }
+
+    aVehicle.innerHTML = list.map(v=>{
+      const label = [escapeHtml(v.plate), escapeHtml(v.kind), v.year ? String(v.year) : '']
+        .filter(Boolean).join(' · ');
+      return `<option value="${v.id}">${label}</option>`;
+    }).join('');
+  }
+
+  // Abre el modal y preselecciona el vehículo si la reserva ya tiene vehicle_id
+  async function openAssignModal(resId){
+    currentAssignResId = String(resId);
+    assignErr.textContent = '';
+
+    try{
+      // Asegura vehículos cargados
+      if (!allVehicles.length){
+        const dataVeh = await api(API_VEH, 'GET');
+        const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+        allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+        rebuildVehIndex();
+      }
+      fillAssignVehicles();
+
+      // Intentar leer la reserva para preseleccionar vehicle_id (si tu API lo permite)
+      try{
+        const res = await api(`${API_RES}?id=${encodeURIComponent(resId)}`, 'GET');
+        const r = (Array.isArray(res) ? res[0] : res) || {};
+        if (r && r.vehicle_id){
+          aVehicle.value = String(r.vehicle_id);
+          // Si el option aún no existe, elige la primera opción válida
+          if (!aVehicle.value){
+            const first = aVehicle.querySelector('option[value]');
+            if (first) aVehicle.value = first.value;
+          }
+        }
+      }catch(e){
+        // Silencioso si el endpoint no soporta GET por id
+        console.warn('No se pudo leer la reserva por ID (preselección):', e);
+      }
+
+    }catch(e){
+      console.warn('No se pudieron cargar vehículos para Assign:', e);
+      aVehicle.innerHTML = '<option value="" disabled selected>(error loading vehicles)</option>';
+    }
+
+    assignBackdrop.classList.add('open');
+    // Ajusta el sticky si es necesario y enfoca el select
+    if (typeof setTheadTop === 'function') requestAnimationFrame(() => setTheadTop());
+    setTimeout(()=>aVehicle.focus(), 20);
+  }
+
+  // Guardar asignación
+  assignBtnSave.addEventListener('click', async ()=>{
+    assignErr.textContent = '';
+    if (!currentAssignResId){ assignErr.textContent = 'No reservation selected.'; return; }
+
+    const vehicle_id  = aVehicle.value || null;
+    const driver_name = aDriver.value.trim() || null;
+    const notes       = aNotes.value.trim() || null;
+
+    if (!vehicle_id){ assignErr.textContent = 'Select a vehicle.'; return; }
+
+    assignBtnSave.disabled = true;
+    try{
+      await patchReservation(currentAssignResId, {
+        vehicle_id,
+        driver_name,
+        notes,
+        status: 'ASSIGNED'
+      });
+
+      closeAssignModal();
+      await loadReservations();
+      resShowMsg && resShowMsg('Reservation assigned.');
+    }catch(e){
+      assignErr.textContent = e.message || 'Error saving assignment.';
+    }finally{
+      assignBtnSave.disabled = false;
+    }
+  });
+</script>
+<!-- <<< ASSIGN MODAL BLOCK END <<< -->
+<!-- ========= DRIVERS VIEW ========= -->
+<section id="view-drivers" hidden>
+  <div class="wrap">
+
+    <div class="controls affects-sticky" id="drvControls">
+      <button id="btnReloadDrivers">Reload</button>
+      <button id="btnAddDriver" class="primary">Add Driver</button>
+      <label style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
+        <input type="checkbox" id="chkShowArchived">
+        <span class="muted">Show archived</span>
+      </label>
+    </div>
+
+    <div id="summaryDrivers" class="affects-sticky" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px">
+      <div class="card"><h2>TOTAL DRIVERS</h2><p id="drvTotal">0</p></div>
+      <div class="card"><h2>ACTIVE</h2><p id="drvActive">0</p></div>
+      <div class="card"><h2>ARCHIVED</h2><p id="drvArchived">0</p></div>
+      <div class="card" style="flex:1">
+        <h2 style="margin:0; font-size:12px; color:var(--muted)">DRIVERS</h2>
+        <p id="drvMsg" class="msg" style="margin:6px 0 0"></p>
+      </div>
+    </div>
+
+    <div id="stickySpacerDrivers"></div>
+
+    <table role="grid" aria-label="Drivers">
+      <thead>
+  <tr>
+    <th style="width:20%">Name</th>
+    <th style="width:20%">Email</th>
+    <th style="width:14%">Phone</th>
+    <th style="width:20%">Vehicle(s)</th>
+    <th style="width:10%">Pay Mode</th>
+    <th style="width:8%">Active</th>
+    <th class="right" style="width:8%">Actions</th>
+  </tr>
+</thead>
+      <tbody id="drvRows">
+  <tr><td colspan="7">Loading…</td></tr>
+</tbody>
+    </table>
+  </div>
+  </section>
+  <!-- ========= SETTINGS VIEW ========= -->
+<section id="view-settings" hidden>
+  <div class="wrap">
+    <div class="card">
+      <h2>Información</h2>
+      <p style="font-size:14px; margin-top:8px; color:var(--muted)">
+        Aquí podrás administrar reglas de temporada, excepción SLC, bloqueos, etc. (placeholder).
+      </p>
+    </div>
+  </div>
+</section>
+<!-- MODAL: DRIVER -->
+<div class="backdrop" id="drvBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drvModalTitle">
+    <header>
+      <h2 id="drvModalTitle" style="margin:0;font-size:16px;font-weight:800">Add Driver</h2>
+      <div style="flex:1"></div>
+      <button id="drvBtnClose">Close</button>
+    </header>
+    <div class="body">
+      <div class="grid">
+        <input type="hidden" id="dId">
+        <div class="field"><label for="dName">Name *</label><input id="dName" placeholder="John Doe" autocomplete="off"></div>
+        <div class="field"><label for="dEmail">Email</label><input id="dEmail" type="email" placeholder="name@email.com" autocomplete="off"></div>
+        <div class="field"><label for="dPhone">Phone</label><input id="dPhone" placeholder="801-555-0000" autocomplete="off"></div>
+        <div class="field"><label for="dPayMode">Pay Mode *</label>
+          <select id="dPayMode">
+            <option value="per_ride">PER_RIDE</option>
+            <option value="hourly">HOURLY</option>
+            <option value="revenue_share">REVENUE_SHARE</option>
+          </select>
+        </div>
+        <div class="field"><label for="dLicense">License # (optional)</label><input id="dLicense" placeholder="UT-XXXXXX" autocomplete="off"></div>
+        <div class="field"><label for="dWorkMode">Work mode</label>
+          <select id="dWorkMode"><option value="24h">24h</option><option value="custom">custom</option></select>
+        </div>
+        <div class="field full"><label><input type="checkbox" id="dActive" checked> Active</label></div>
+      </div>
+      <div id="drvFormErr" class="err-msg"></div>
+      <div class="actions"><button id="drvBtnSave" class="primary">Save</button></div>
+    </div>
+  </div>
+</div>
+<!-- =================== SCRIPT =================== -->
 <script>
 /* =================== CONFIG =================== */
 const API_VEH   = '/api/admin/vehicles';
@@ -290,6 +513,7 @@ function setTheadTop(){
   let top = 0;
   if (header) top += header.getBoundingClientRect().height;
 
+  // Contar SOLO las barras visibles (ignora secciones ocultas)
   const bars = Array.from(document.querySelectorAll('.affects-sticky'))
     .filter(el => !el.closest('section[hidden]'));
 
@@ -300,7 +524,10 @@ function setTheadTop(){
     const mb   = parseFloat(cs.marginBottom) || 0;
     top += rect.height + mt + mb;
   }
+
+  // Pequeño margen para que no se pegue
   top += 6;
+
   document.documentElement.style.setProperty('--theadTop', `${top}px`);
 }
 window.addEventListener('resize', setTheadTop);
@@ -325,14 +552,14 @@ tabsEl.addEventListener('click', async (e)=>{
   if (t==='clients')       loadClients();
   if (t==='reservations')  loadReservations();
   if (t==='drivers') {
-    try {
-      await fetchVehiclesForDrivers();
-      await loadDrivers();
-    } catch (err) {
-      console.error('Error loading drivers tab:', err);
-      drvShowMsg('Error loading drivers: ' + (err.message || err), false);
-    }
+  try {
+    await fetchVehiclesForDrivers();
+    await loadDrivers();
+  } catch (err) {
+    console.error('Error loading drivers tab:', err);
+    drvShowMsg('Error loading drivers: ' + (err.message || err), false);
   }
+}
 });
 
 /* =================== ENV / LOGOUT =================== */
@@ -375,7 +602,8 @@ async function api(url, method='GET', body=null){
   }
   return data ?? {};
 }
-  /* =================== VEHICLES =================== */
+
+/* =================== VEHICLES =================== */
 const vehMsg   = document.getElementById('vehMsg');
 const vehRows  = document.getElementById('vehRows');
 const stat = {
@@ -402,6 +630,7 @@ function rebuildVehIndex(){
   });
   vehByDriver = map;
 }
+
 async function fetchVehiclesForDrivers(){
   if (allVehicles.length && vehByDriver.size) return;
   try{
@@ -467,6 +696,7 @@ function computeStats(){
   stat.suv.textContent=allVehicles.filter(v=>v.kind==='SUV').length;
   stat.van.textContent=allVehicles.filter(v=>v.kind==='VAN').length;
 }
+
 function visibleVeh(){
   let base = (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind);
   if (vehFilterDriverId) base = base.filter(v => String(v.driver_id || '') === String(vehFilterDriverId));
@@ -489,7 +719,7 @@ function renderVehicles(){
         <td class="right actions">
           <div class="btns">
             <button class="btn btn-edit" data-action="edit">Edit</button>
-            <button class="btn btn-danger" data-action="delete">Archive</button>
+           <button class="btn btn-danger" data-action="delete">Archive</button>
             <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on?'Turn Off':'Turn On'}</button>
           </div>
         </td>
@@ -545,7 +775,10 @@ vehBtnSave.addEventListener('click', async ()=>{
   const model=fModel.value.trim();
   const active=!!fActive.checked;
 
-  if(!plate || !year){ vehFormErr.textContent='Plate and Year are required.'; return; }
+  if(!plate || !year){ 
+    vehFormErr.textContent='Plate and Year are required.'; 
+    return; 
+  }
 
   vehBtnSave.disabled=true;
   try{
@@ -572,16 +805,20 @@ vehBtnSave.addEventListener('click', async ()=>{
     vehBtnSave.disabled=false;
   }
 });
+  // listeners tabla vehículos
 vehRows.addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('button[data-action]'); if(!btn) return;
-  const tr  = btn.closest('tr[data-id]'); if(!tr) return;
+  const btn = ev.target.closest('button[data-action]'); 
+  if(!btn) return;
+  const tr  = btn.closest('tr[data-id]'); 
+  if(!tr) return;
   const id  = tr.getAttribute('data-id');
   const action = btn.getAttribute('data-action');
 
   if (action === 'edit'){ openEditVehicle(id); return; }
 
   if (action === 'delete'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    const v = allVehicles.find(x=>x.id===id); 
+    if(!v) return;
     if(!confirm(`Delete vehicle "${v.plate}"? This cannot be undone.`)) return;
     try{
       await api(`${API_VEH}?id=${encodeURIComponent(id)}`, 'DELETE');
@@ -596,7 +833,8 @@ vehRows.addEventListener('click', async (ev)=>{
   }
 
   if (action === 'toggle'){
-    const v = allVehicles.find(x=>x.id===id); if(!v) return;
+    const v = allVehicles.find(x=>x.id===id); 
+    if(!v) return;
     const next = !v.active;
     try{
       await api(API_VEH, 'POST', {
@@ -627,8 +865,9 @@ document.getElementById('vehControls').addEventListener('click', (e)=>{
   filterKind = b.getAttribute('data-filter') || 'ALL';
   renderVehicles();
   setTheadTop();
-});
-  /* =================== CLIENTS =================== */
+});  
+
+/* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
 const cliStat = {
@@ -769,92 +1008,31 @@ async function loadReservations(){
   }
 }
 async function patchReservation(id, payload){ return await api(API_RES, 'PATCH', { id, ...payload }); }
-
-/* ------- Assign Modal (Reservations) ------- */
-const assignBackdrop  = document.getElementById('assignBackdrop');
-const assignBtnClose  = document.getElementById('assignBtnClose');
-const assignBtnSave   = document.getElementById('assignBtnSave');
-const aVehicle        = document.getElementById('aVehicle');
-const aDriver         = document.getElementById('aDriver');
-const aNotes          = document.getElementById('aNotes');
-const assignErr       = document.getElementById('assignErr');
-let currentAssignResId = null;
-
-function closeAssignModal(){
-  assignBackdrop.classList.remove('open');
-  currentAssignResId = null;
-  aVehicle.innerHTML = '';
-  aDriver.value = '';
-  aNotes.value  = '';
-  assignErr.textContent = '';
-  requestAnimationFrame(() => (typeof setTheadTop === 'function') && setTheadTop());
-}
-assignBtnClose.addEventListener('click', closeAssignModal);
-window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeAssignModal(); });
-assignBackdrop.addEventListener('click', (e) => { if (e.target === assignBackdrop) closeAssignModal(); });
-
-function fillAssignVehicles(){
-  const list = (allVehicles || []).filter(v => v.active).sort(sortVehicles);
-  if (!list.length){
-    aVehicle.innerHTML = '<option value="" disabled selected>(no active vehicles)</option>';
-    return;
-  }
-  aVehicle.innerHTML = list.map(v=>{
-    const label = [escapeHtml(v.plate), escapeHtml(v.kind), v.year ? String(v.year) : ''].filter(Boolean).join(' · ');
-    return `<option value="${v.id}">${label}</option>`;
-  }).join('');
-}
-async function openAssignModal(resId){
-  currentAssignResId = String(resId);
-  assignErr.textContent = '';
-  try{
-    if (!allVehicles.length){
-      const dataVeh = await api(API_VEH, 'GET');
-      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-      allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
-      rebuildVehIndex();
-    }
-    fillAssignVehicles();
-    try{
-      const res = await api(`${API_RES}?id=${encodeURIComponent(resId)}`, 'GET');
-      const r = (Array.isArray(res) ? res[0] : res) || {};
-      if (r && r.vehicle_id){
-        aVehicle.value = String(r.vehicle_id);
-        if (!aVehicle.value){
-          const first = aVehicle.querySelector('option[value]');
-          if (first) aVehicle.value = first.value;
-        }
-      }
-    }catch(e){ console.warn('No se pudo leer la reserva por ID (preselección):', e); }
-  }catch(e){
-    console.warn('No se pudieron cargar vehículos para Assign:', e);
-    aVehicle.innerHTML = '<option value="" disabled selected>(error loading vehicles)</option>';
-  }
-  assignBackdrop.classList.add('open');
-  if (typeof setTheadTop === 'function') requestAnimationFrame(() => setTheadTop());
-  setTimeout(()=>aVehicle.focus(), 20);
-}
-assignBtnSave.addEventListener('click', async ()=>{
-  assignErr.textContent = '';
-  if (!currentAssignResId){ assignErr.textContent = 'No reservation selected.'; return; }
-  const vehicle_id  = aVehicle.value || null;
-  const driver_name = aDriver.value.trim() || null;
-  const notes       = aNotes.value.trim() || null;
-  if (!vehicle_id){ assignErr.textContent = 'Select a vehicle.'; return; }
-
-  assignBtnSave.disabled = true;
-  try{
-    await patchReservation(currentAssignResId, { vehicle_id, driver_name, notes, status: 'ASSIGNED' });
-    closeAssignModal();
+resRows.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('button[data-action]'); if (!btn) return;
+  const tr = btn.closest('tr[data-id]'); if (!tr) return;
+  const id = tr.getAttribute('data-id');
+  const a  = btn.getAttribute('data-action');
+  try {
+    if (a === 'assign') { openAssignModal(id); return; }
+    if (a === 'start')      { await patchReservation(id, { status: 'STARTED' }); }
+    else if (a === 'done')  { await patchReservation(id, { status: 'DONE' }); }
+    else if (a === 'cancel'){ if (!confirm('Cancel this reservation?')) return; await patchReservation(id, { status: 'CANCELLED' }); }
     await loadReservations();
-    resShowMsg && resShowMsg('Reservation assigned.');
-  }catch(e){
-    assignErr.textContent = e.message || 'Error saving assignment.';
-  }finally{
-    assignBtnSave.disabled = false;
-  }
+  } catch (e) { resShowMsg('Error updating: ' + (e.message || e), false); }
 });
-
+document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
+document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
+document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
+  
+  // Filtro: mostrar archivados
+const chkShowArchived = document.getElementById('chkShowArchived');
+if (chkShowArchived){
+  chkShowArchived.addEventListener('change', ()=>{
+    renderDrivers();
+    setTheadTop(); // recalcula sticky por si cambia la altura
+  });
+}
 /* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
 const drvRows  = document.getElementById('drvRows');
@@ -869,17 +1047,21 @@ function normalizeDriver(d){
   const raw = String(d.pay_mode || 'per_ride').toLowerCase();
   const pay_mode = ['per_ride','hourly','revenue_share'].includes(raw) ? raw : 'per_ride';
   return {
-    id:String(d.id||''), name:(d.name||'').trim(), email:(d.email||'').trim(),
-    phone:(d.phone||'').trim(), pay_mode,
+    id:String(d.id||''),
+    name:(d.name||'').trim(),
+    email:(d.email||'').trim(),
+    phone:(d.phone||'').trim(),
+    pay_mode,
     license_number:(d.license_number||'').trim(),
     work_mode:(d.work_mode||'24h').toLowerCase(),
     active:d.active!==false
   };
 }
-function computeDrvStats(){
+  function computeDrvStats(){
   const total    = allDrivers.length;
   const active   = allDrivers.filter(d => d.active !== false).length;
   const archived = Math.max(0, total - active);
+
   if (drvStat.total)    drvStat.total.textContent    = String(total);
   if (drvStat.active)   drvStat.active.textContent   = String(active);
   if (drvStat.archived) drvStat.archived.textContent = String(archived);
@@ -888,7 +1070,8 @@ function vehiclesLabelForDriver(driverId){
   const list = vehByDriver.get(String(driverId)) || [];
   if (!list.length) return '—';
   return list.map(v=>{
-    const parts = [v.kind || '']; if (v.year) parts.push(String(v.year));
+    const parts = [v.kind || ''];
+    if (v.year) parts.push(String(v.year));
     const meta = parts.filter(Boolean).join(', ');
     return `${escapeHtml(v.plate)}${meta ? ` (${meta})` : ''}`;
   }).join(' · ');
@@ -927,21 +1110,23 @@ async function loadDrivers(){
       try{
         const dataVeh = await api(API_VEH, 'GET');
         const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-        allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+        allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
         rebuildVehIndex();
       }catch(e){
         console.warn('No se pudieron cargar vehículos antes de drivers:', e);
       }
     }
     await ensureAdminToken();
+// Pide todos los drivers (incluidos archivados) si el backend lo soporta.
+// Si el backend ignora ?all=1, simplemente devuelve lo mismo de antes.
+const j = await api(`${API_DRV}?all=1`, 'GET');
 
-    const j = await api(`${API_DRV}?all=1`, 'GET');
-    console.log('GET /drivers payload:', j);
-    const raw = Array.isArray(j?.drivers) ? j.drivers
-              : Array.isArray(j)         ? j
-              : [];
-    allDrivers = raw.map(normalizeDriver);
-    computeDrvStats();
+// 🔹 Log para verificar qué devuelve realmente el endpoint
+console.log('GET /drivers payload:', j);
+console.log('Drivers count recibido:', Array.isArray(j.drivers) ? j.drivers.length : 'formato inesperado');
+
+const raw = Array.isArray(j.drivers) ? j.drivers : [];
+ allDrivers = raw.map(normalizeDriver);
     renderDrivers();
     drvShowMsg('Loaded successfully.');
     setTheadTop();
@@ -949,7 +1134,6 @@ async function loadDrivers(){
     allDrivers = [];
     renderDrivers();
     drvShowMsg('Error loading: ' + (e.message || e), false);
-    console.error('loadDrivers error:', e);
   }
 }
 
@@ -992,6 +1176,7 @@ function validateDriver(){
   const ph=dPhone.value.trim(); if (ph && !/^[0-9\-\+\s\(\)]{7,20}$/.test(ph)) return 'Invalid phone.';
   return null;
 }
+
 drvBtnSave.addEventListener('click', async ()=>{
   drvFormErr.textContent=''; const err=validateDriver(); if(err){ drvFormErr.textContent=err; return; }
   const payload={
@@ -1022,30 +1207,33 @@ drvRows.addEventListener('click', async (ev)=>{
 
   if (a==='edit'){ openEditDriver(id); return; }
 
-  if (a === 'delete') {
-    const d = allDrivers.find(x => x.id === id); if (!d) return;
-    if (!confirm(`Archive driver "${d.name}"? You can restore later.`)) return;
-    try {
-      await api(API_DRV, 'POST', {
-        id: d.id, name: d.name,
-        email: d.email || null, phone: d.phone || null,
-        license_number: d.license_number || null,
-        work_mode: d.work_mode || '24h',
-        pay_mode: (d.pay_mode || 'per_ride'),
-        active: false
-      });
-      d.active = false;
-      renderDrivers();
-      drvShowMsg('Archived (set to OFF).');
-    } catch (e) {
-      drvShowMsg('Error archiving: ' + (e.message || e), false);
-    }
-    return;
+if (a === 'delete') {
+  const d = allDrivers.find(x => x.id === id); if (!d) return;
+  if (!confirm(`Archive driver "${d.name}"? You can restore later.`)) return;
+  try {
+    await api(API_DRV, 'POST', {
+      id: d.id,
+      name: d.name,
+      email: d.email || null,
+      phone: d.phone || null,
+      license_number: d.license_number || null,
+      work_mode: d.work_mode || '24h',
+      pay_mode: (d.pay_mode || 'per_ride'),
+      active: false
+    });
+    d.active = false;
+    renderDrivers();
+    drvShowMsg('Archived (set to OFF).');
+  } catch (e) {
+    drvShowMsg('Error archiving: ' + (e.message || e), false);
   }
+  return;
+}
 
   if (a === 'toggle'){
     const d = allDrivers.find(x=>x.id===id); if(!d) return;
     const next = !d.active; btn.disabled = true;
+
     try{
       await api(API_DRV,'POST',{
         id:d.id, name:d.name,
@@ -1055,10 +1243,13 @@ drvRows.addEventListener('click', async (ev)=>{
         pay_mode:(d.pay_mode||'per_ride'),
         active:next
       });
+
       d.active = next;
+
       cacheDrivers = allDrivers
         .map(z => ({ id:String(z.id), name:(z.name||'').trim(), active:z.active!==false }))
         .sort((a,b)=>a.name.localeCompare(b.name));
+
       renderDrivers();
       drvShowMsg('Updated.');
 
@@ -1066,7 +1257,9 @@ drvRows.addEventListener('click', async (ev)=>{
       const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
       allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
       rebuildVehIndex();
+
       if (!views.vehicles.hidden) renderVehicles();
+
     } catch(e){
       drvShowMsg('Error updating: ' + (e.message||e), false);
     } finally {
@@ -1076,20 +1269,6 @@ drvRows.addEventListener('click', async (ev)=>{
   }
   if (a==='notify'){ alert('Notificaciones: próximo paso 😉'); }
 });
-
-/* =================== BOOT =================== */
-document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
-document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
-document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
-
-const chkShowArchived = document.getElementById('chkShowArchived');
-if (chkShowArchived){
-  chkShowArchived.addEventListener('change', ()=>{
-    renderDrivers();
-    setTheadTop();
-  });
-}
-
 window.addEventListener('DOMContentLoaded', async ()=>{
   setTheadTop();
   await ensureAdminToken();
