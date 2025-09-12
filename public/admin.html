@@ -413,14 +413,24 @@
 <!-- ========= DRIVERS VIEW ========= -->
 <section id="view-drivers" hidden>
   <div class="wrap">
+
     <div class="controls affects-sticky" id="drvControls">
       <button id="btnReloadDrivers">Reload</button>
       <button id="btnAddDriver" class="primary">Add Driver</button>
+      <label style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
+        <input type="checkbox" id="chkShowArchived">
+        <span class="muted">Show archived</span>
+      </label>
     </div>
 
-    <div class="card affects-sticky" style="margin-bottom:12px">
-      <h2 style="margin:0; font-size:12px; color:var(--muted)">DRIVERS</h2>
-      <p id="drvMsg" class="msg" style="margin:6px 0 0"></p>
+    <div id="summaryDrivers" class="affects-sticky" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px">
+      <div class="card"><h2>TOTAL DRIVERS</h2><p id="drvTotal">0</p></div>
+      <div class="card"><h2>ACTIVE</h2><p id="drvActive">0</p></div>
+      <div class="card"><h2>ARCHIVED</h2><p id="drvArchived">0</p></div>
+      <div class="card" style="flex:1">
+        <h2 style="margin:0; font-size:12px; color:var(--muted)">DRIVERS</h2>
+        <p id="drvMsg" class="msg" style="margin:6px 0 0"></p>
+      </div>
     </div>
 
     <div id="stickySpacerDrivers"></div>
