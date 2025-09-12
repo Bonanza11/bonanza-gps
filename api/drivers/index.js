@@ -15,21 +15,12 @@ function parseBody(maybe) {
   return {};
 }
 
-// rows: soporta { rows:[...] } o array directo
 function asRows(r) {
   if (r && Array.isArray(r.rows)) return r.rows;
   if (Array.isArray(r)) return r;
   return [];
 }
 
-// string -> trimmed or null
-function cleanStr(v) {
-  if (v == null) return null;
-  const s = String(v).trim();
-  return s === "" ? null : s;
-}
-
-// number -> finite or null
 function toNum(v) {
   if (v === undefined || v === null) return null;
   const s = String(v).trim();
@@ -38,182 +29,176 @@ function toNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-// boolean flexible ("true"/"false"/1/0/yes/no)
-function toBool(v, def = null) {
-  if (v === undefined || v === null || v === "") return def;
-  if (typeof v === "boolean") return v;
-  const s = String(v).trim().toLowerCase();
-  if (["1", "true", "yes", "y", "on"].includes(s)) return true;
-  if (["0", "false", "no", "n", "off"].includes(s)) return false;
-  return def;
-}
-
 function norm(body = {}) {
-  const payRaw = String(body.pay_mode ?? "per_ride").toLowerCase().trim();
+  const clean = (v) => (v == null ? null : (String(v).trim() || null));
+  const pm = String(body.pay_mode ?? "per_ride").toLowerCase().trim();
   const allowed = new Set(["per_ride", "hourly", "revenue_share"]);
-  const pay_mode = allowed.has(payRaw) ? payRaw : "per_ride";
+  const pay_mode = allowed.has(pm) ? pm : "per_ride";
 
-  const email = cleanStr((body.email || "")?.toLowerCase());
-
+  const email = clean((body.email || "").toLowerCase());
   return {
-    id: cleanStr(body.id),
-    name: cleanStr(body.name),
+    id: clean(body.id),
+    name: clean(body.name),
     email,
-    phone: cleanStr(body.phone),
+    phone: clean(body.phone),
     pay_mode,
     hourly_rate: toNum(body.hourly_rate),
     per_ride_rate: toNum(body.per_ride_rate),
     revenue_share: toNum(body.revenue_share),
-    notify_email: toBool(body.notify_email, true),
-    notify_sms: toBool(body.notify_sms, false),
-    active: toBool(body.active, null),     // null => no cambiar
-    online: toBool(body.online, null),     // null => no cambiar
-    pin: cleanStr(body.pin)                // opcional (p.ej. “1234”)
+    notify_email: typeof body.notify_email === "boolean" ? body.notify_email : true,
+    notify_sms: typeof body.notify_sms === "boolean" ? body.notify_sms : false,
+    // campos opcionales que tal vez tengas en el modal:
+    license_no: clean(body.license_no),
+    work_mode: clean(body.work_mode), // p.e. '24h'
+    active: typeof body.active === "boolean" ? body.active : true,
   };
 }
 
 /* ---------- Handler ---------- */
 async function handler(req, res) {
   try {
-    // ===== GET: lista =====
     if (req.method === "GET") {
       const q = await query(`
         SELECT
           id::text AS id,
           name, email, phone,
           pay_mode, hourly_rate, per_ride_rate, revenue_share,
-          notify_email, notify_sms, active, online, created_at
+          notify_email, notify_sms,
+          license_no, work_mode, active,
+          created_at
         FROM drivers
         ORDER BY created_at DESC NULLS LAST
       `);
-      return res.status(200).json({ ok: true, rows: asRows(q) });
+      return res.status(200).json(asRows(q));
     }
 
-    // ===== POST: create / update =====
     if (req.method === "POST") {
       const body = parseBody(req.body);
       const d = norm(body);
 
-      if (!d.name) {
-        return res.status(400).json({ ok:false, error:"name_required" });
-      }
-      if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) {
-        return res.status(400).json({ ok:false, error:"invalid_email" });
-      }
-      if (d.pay_mode === "hourly" && d.hourly_rate == null) {
+      if (!d.name)  return res.status(400).json({ ok:false, error:"name_required" });
+      if (!d.email) return res.status(400).json({ ok:false, error:"email_required" });
+
+      if (d.pay_mode === "hourly" && d.hourly_rate == null)
         return res.status(400).json({ ok:false, error:"hourly_rate_required" });
-      }
-      if (d.pay_mode === "per_ride" && d.per_ride_rate == null) {
+      if (d.pay_mode === "per_ride" && d.per_ride_rate == null)
         return res.status(400).json({ ok:false, error:"per_ride_rate_required" });
-      }
-      if (d.pay_mode === "revenue_share" && d.revenue_share == null) {
+      if (d.pay_mode === "revenue_share" && d.revenue_share == null)
         return res.status(400).json({ ok:false, error:"revenue_share_required" });
-      }
 
-      // --- Verifica email duplicado (si viene email)
-      if (d.email) {
-        if (d.id) {
-          const dupe = await query(
-            `SELECT 1 FROM drivers WHERE lower(email)=lower($1) AND id::text <> $2 LIMIT 1`,
-            [d.email, d.id]
-          );
-          if (asRows(dupe).length) {
-            return res.status(409).json({ ok:false, error:"email_in_use" });
-          }
-        } else {
-          const dupe = await query(
-            `SELECT 1 FROM drivers WHERE lower(email)=lower($1) LIMIT 1`,
-            [d.email]
-          );
-          if (asRows(dupe).length) {
-            return res.status(409).json({ ok:false, error:"email_in_use" });
-          }
-        }
-      }
-
-      // --- UPDATE por id
+      // --- UPDATE por id (editar)
       if (d.id) {
-        // armamos columnas dinámicamente para no sobreescribir con nulls “no intencionales”
-        const sets = [
-          ["name", d.name],
-          ["email", d.email],
-          ["phone", d.phone],
-          ["pay_mode", d.pay_mode],
-          ["hourly_rate", d.hourly_rate],
-          ["per_ride_rate", d.per_ride_rate],
-          ["revenue_share", d.revenue_share],
-          ["notify_email", d.notify_email],
-          ["notify_sms", d.notify_sms],
-        ];
-        if (d.active !== null) sets.push(["active", d.active]);
-        if (d.online !== null) sets.push(["online", d.online]);
-        if (d.pin !== null)    sets.push(["pin", d.pin]);
-
-        const fields = [];
-        const values = [d.id];
-        sets.forEach(([col, val], i) => {
-          fields.push(`${col} = $${i + 2}`);
-          values.push(val);
-        });
-
         const q = await query(
           `
-            UPDATE drivers
-               SET ${fields.join(", ")}
-             WHERE id::text = $1
-         RETURNING id::text AS id, name, email, phone, pay_mode,
-                   hourly_rate, per_ride_rate, revenue_share,
-                   notify_email, notify_sms, active, online, created_at
+          UPDATE drivers
+             SET name=$2,
+                 email=$3,
+                 phone=$4,
+                 pay_mode=$5,
+                 hourly_rate=$6,
+                 per_ride_rate=$7,
+                 revenue_share=$8,
+                 notify_email=$9,
+                 notify_sms=$10,
+                 license_no=$11,
+                 work_mode=$12,
+                 active=$13
+           WHERE id::text=$1
+       RETURNING id::text AS id, name, email, phone, pay_mode,
+                 hourly_rate, per_ride_rate, revenue_share,
+                 notify_email, notify_sms, license_no, work_mode, active, created_at
           `,
-          values
+          [
+            d.id, d.name, d.email, d.phone,
+            d.pay_mode, d.hourly_rate, d.per_ride_rate, d.revenue_share,
+            d.notify_email, d.notify_sms, d.license_no, d.work_mode, d.active
+          ]
         );
         const rows = asRows(q);
         if (!rows.length) return res.status(404).json({ ok:false, error:"not_found" });
-        return res.json({ ok:true, driver: rows[0] });
+        return res.status(200).json(rows[0]);
       }
 
-      // --- INSERT
-      const q = await query(
-        `
+      // ---------- INSERT (crear) ----------
+      try {
+        const q = await query(
+          `
           INSERT INTO drivers
             (name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,
-             notify_email,notify_sms,active,online,pin)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,true),COALESCE($11,false),$12)
+             notify_email,notify_sms,license_no,work_mode,active)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
           RETURNING id::text AS id, name, email, phone, pay_mode,
                     hourly_rate, per_ride_rate, revenue_share,
-                    notify_email, notify_sms, active, online, created_at
+                    notify_email, notify_sms, license_no, work_mode, active, created_at
+          `,
+          [
+            d.name, d.email, d.phone, d.pay_mode,
+            d.hourly_rate, d.per_ride_rate, d.revenue_share,
+            d.notify_email, d.notify_sms, d.license_no, d.work_mode, d.active
+          ]
+        );
+        return res.status(201).json(asRows(q)[0]);
+      } catch (e) {
+        // Manejo fino: email duplicado
+        if (e && (e.code === '23505') && /drivers_email_key/i.test(e.constraint || "")) {
+          return res.status(409).json({ ok:false, error:"email_exists" });
+        }
+        console.error("[/api/drivers INSERT] error:", e);
+        return res.status(500).json({ ok:false, error:"server_error" });
+      }
+
+      /* ===== OPCIÓN UPSERT (SI LA QUIERES) =====
+      // Sustituye el bloque de INSERT anterior por este para "crear o actualizar por email"
+      const q = await query(
+        `
+        INSERT INTO drivers
+          (name,email,phone,pay_mode,hourly_rate,per_ride_rate,revenue_share,
+           notify_email,notify_sms,license_no,work_mode,active)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        ON CONFLICT (email) DO UPDATE SET
+          name=EXCLUDED.name,
+          phone=EXCLUDED.phone,
+          pay_mode=EXCLUDED.pay_mode,
+          hourly_rate=EXCLUDED.hourly_rate,
+          per_ride_rate=EXCLUDED.per_ride_rate,
+          revenue_share=EXCLUDED.revenue_share,
+          notify_email=EXCLUDED.notify_email,
+          notify_sms=EXCLUDED.notify_sms,
+          license_no=EXCLUDED.license_no,
+          work_mode=EXCLUDED.work_mode,
+          active=EXCLUDED.active
+        RETURNING id::text AS id, name, email, phone, pay_mode,
+                  hourly_rate, per_ride_rate, revenue_share,
+                  notify_email, notify_sms, license_no, work_mode, active, created_at
         `,
         [
           d.name, d.email, d.phone, d.pay_mode,
           d.hourly_rate, d.per_ride_rate, d.revenue_share,
-          d.notify_email, d.notify_sms,
-          d.active, d.online, d.pin
+          d.notify_email, d.notify_sms, d.license_no, d.work_mode, d.active
         ]
       );
       const rows = asRows(q);
-      return res.json({ ok:true, driver: rows[0] });
+      return res.status(200).json(rows[0]);
+      ===== FIN OPCIÓN UPSERT ===== */
     }
 
-    // ===== DELETE =====
     if (req.method === "DELETE") {
-      const id = cleanStr(req.query?.id);
+      const id = String(req.query?.id || "").trim();
       if (!id) return res.status(400).json({ ok:false, error:"missing_id" });
 
-      const q = await query(`DELETE FROM drivers WHERE id::text=$1 RETURNING 1`, [id]);
-      if (!asRows(q).length) return res.status(404).json({ ok:false, error:"not_found" });
+      const q = await query(`DELETE FROM drivers WHERE id::text=$1 RETURNING 1 AS ok`, [id]);
+      const rows = asRows(q);
+      if (!rows.length) return res.status(404).json({ ok:false, error:"not_found" });
 
       return res.json({ ok:true });
     }
 
     res.setHeader("Allow", "GET, POST, DELETE");
     return res.status(405).json({ ok:false, error:"method_not_allowed" });
+
   } catch (e) {
-    console.error("[/api/drivers] error:", e);
-    return res.status(500).json({
-      ok: false,
-      error: "server_error",
-      detail: e?.message || String(e)
-    });
+    console.error("[/api/drivers] Error:", e);
+    return res.status(500).json({ ok:false, error:"server_error" });
   }
 }
 
