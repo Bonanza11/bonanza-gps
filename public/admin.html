@@ -1094,28 +1094,39 @@ function renderDrivers(){
 async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
+
   try{
+    // Asegura vehículos para poder calcular "Vehicle(s)" por driver
     if (!allVehicles.length || vehByDriver.size === 0){
       try{
         const dataVeh = await api(API_VEH, 'GET');
-        const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+        const rawVeh  = Array.isArray(dataVeh?.vehicles) ? dataVeh.vehicles
+                     : Array.isArray(dataVeh)            ? dataVeh
+                     : [];
         allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
         rebuildVehIndex();
       }catch(e){
-        console.warn('No se pudieron cargar vehículos antes de drivers:', e);
+        console.warn('Prefetch vehicles before drivers failed:', e);
       }
     }
+
     await ensureAdminToken();
-// Pide todos los drivers (incluidos archivados) si el backend lo soporta.
-// Si el backend ignora ?all=1, simplemente devuelve lo mismo de antes.
-const j = await api(`${API_DRV}?all=1`, 'GET');
 
-// 🔹 Log para verificar qué devuelve realmente el endpoint
-console.log('GET /drivers payload:', j);
-console.log('Drivers count recibido:', Array.isArray(j.drivers) ? j.drivers.length : 'formato inesperado');
+    // GET drivers (soporta {drivers:[...]} o [...])
+    const j = await api(`${API_DRV}?all=1`, 'GET');
 
-const raw = Array.isArray(j.drivers) ? j.drivers : [];
- allDrivers = raw.map(normalizeDriver);
+    // Mini verificación: qué llegó realmente
+    console.log('GET /drivers payload:', j);
+
+    const raw = Array.isArray(j?.drivers) ? j.drivers
+              : Array.isArray(j)          ? j
+              : [];
+
+    allDrivers = raw.map(normalizeDriver);
+
+    // Si tienes contadores, actualízalos
+    if (typeof computeDrvStats === 'function') computeDrvStats();
+
     renderDrivers();
     drvShowMsg('Loaded successfully.');
     setTheadTop();
