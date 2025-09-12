@@ -99,13 +99,14 @@
 </nav>
 <section id="view-vehicles">
   <div class="wrap">
-    <div class="controls affects-sticky" id="vehControls">
-      <button data-filter="ALL">All</button>
-      <button data-filter="SUV">SUV</button>
-      <button data-filter="VAN">VAN</button>
-      <button id="btnReloadVehicles">Reload</button>
-      <button id="btnAddVehicle" class="primary">Add Vehicle</button>
-    </div>
+   <div class="controls affects-sticky" id="drvControls">
+  <button id="btnReloadDrivers">Reload</button>
+  <button id="btnAddDriver" class="primary">Add Driver</button>
+  <label style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
+    <input type="checkbox" id="chkShowArchived">
+    <span class="muted">Show archived</span>
+  </label>
+</div>
 
     <div id="summaryVehicles" class="affects-sticky">
       <div class="card"><h2>TOTAL VEHICLES</h2><p id="statTotal">0</p></div>
