@@ -4,20 +4,19 @@ import { query } from "../_db.js";
 
 const ALLOWED = ["DRIVER", "ADMIN", "DISPATCHER", "OWNER"];
 
-/* Util: crea Date ISO local a partir de date_iso + time_hhmm */
+/* Util: crea Date ISO a partir de date_iso + time_hhmm */
 function combineDateTime(dateIso, hhmm) {
   try {
     if (!dateIso) return null;
     const t = (hhmm || "00:00").padStart(5, "0");
     const d = new Date(`${dateIso}T${t}:00`);
-    // si viene en formato “YYYY-MM-DD” sin TZ, esto ya nos da un Date válido
     return d.toISOString();
   } catch {
     return null;
   }
 }
 
-/* Lee asignaciones de la base tratando distintos esquemas conocidos */
+/* Lee asignaciones para un driver probando distintos esquemas */
 async function fetchAssignmentsForDriver(driverId) {
   // 1) Tabla assignments (preferida)
   try {
@@ -48,7 +47,6 @@ async function fetchAssignmentsForDriver(driverId) {
          COALESCE(fullname, customer_name) AS customer_name,
          pickup AS pickup_location,
          dropoff AS dropoff_location,
-         -- intenta varias columnas de fecha/hora
          COALESCE(
            pickup_time,
            appointment_time,
@@ -115,13 +113,12 @@ async function fetchAssignmentsForDriver(driverId) {
     return rows;
   } catch (_) {}
 
-  // Nada
+  // Nada disponible
   return [];
 }
 
-/* Actualiza status en la primera tabla que exista y tenga ese registro */
+/* Actualiza status en la primera tabla que exista y contenga ese registro */
 async function updateStatus({ id, driverId, status }) {
-  // validación simple del status
   const ALLOWED_STATUS = new Set([
     "PENDING", "ASSIGNED", "STARTED", "ARRIVED", "DONE", "CANCELLED"
   ]);
