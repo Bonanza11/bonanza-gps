@@ -1102,20 +1102,51 @@ function renderDrivers(){
       </tr>`;
   }).join('') || '<tr><td colspan="7">No drivers.</td></tr>';
 }
+// ===== REEMPLAZO COMPLETO: loadDrivers() =====
 async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
+
   try{
+    // Prefetch de vehículos para poder mostrar "Vehicle(s)" por driver
     if (!allVehicles.length || vehByDriver.size === 0){
       try{
         const dataVeh = await api(API_VEH, 'GET');
         const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-        allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+        allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
         rebuildVehIndex();
       }catch(e){
         console.warn('No se pudieron cargar vehículos antes de drivers:', e);
       }
     }
+
+    await ensureAdminToken();
+
+    // 🔹 Pide todos los drivers si el backend lo soporta (?all=1 es opcional)
+    const j = await api(`${API_DRV}?all=1`, 'GET');
+
+    // 🔹 Mini verificación en consola para ver exactamente qué llega
+    console.log('GET /drivers payload:', j);
+    const raw = Array.isArray(j?.drivers) ? j.drivers
+              : Array.isArray(j)         ? j       // por si el endpoint devuelve un array directo
+              : [];
+
+    allDrivers = raw.map(normalizeDriver);
+
+    // (Opcional) Actualiza los contadores si tienes el summary de drivers
+    if (typeof computeDrvStats === 'function') computeDrvStats();
+
+    renderDrivers();
+    drvShowMsg('Loaded successfully.');
+    setTheadTop();
+  }catch(e){
+    allDrivers = [];
+    renderDrivers();
+    drvShowMsg('Error loading: ' + (e.message || e), false);
+    console.error('loadDrivers error:', e);
+  }
+}
+// ===== FIN REEMPLAZO =====
     await ensureAdminToken();
 // Pide todos los drivers (incluidos archivados) si el backend lo soporta.
 // Si el backend ignora ?all=1, simplemente devuelve lo mismo de antes.
