@@ -247,102 +247,6 @@
   </div>
 </section>
 <!-- MODAL: ASSIGN -->
-<!-- >>> ASSIGN MODAL BLOCK START (JS + HTML) >>> -->
-<script>
-  /* ------- Assign Modal (Reservations) ------- */
-  const assignBackdrop  = document.getElementById('assignBackdrop');
-  const assignBtnClose  = document.getElementById('assignBtnClose');
-  const assignBtnSave   = document.getElementById('assignBtnSave');
-  const aVehicle        = document.getElementById('aVehicle');
-  const aDriver         = document.getElementById('aDriver');
-  const aNotes          = document.getElementById('aNotes');
-  const assignErr       = document.getElementById('assignErr');
-
-  let currentAssignResId = null;
-
-  function closeAssignModal(){
-    assignBackdrop.classList.remove('open');
-    currentAssignResId = null;
-    aVehicle.innerHTML = '';
-    aDriver.value = '';
-    aNotes.value  = '';
-    assignErr.textContent = '';
-    // Recalcular sticky tras cerrar
-    requestAnimationFrame(() => setTheadTop && setTheadTop());
-  }
-
-  assignBtnClose.addEventListener('click', closeAssignModal);
-  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeAssignModal(); });
-
-  // Cerrar al hacer clic fuera del cuadro
-  assignBackdrop.addEventListener('click', (e) => {
-    if (e.target === assignBackdrop) closeAssignModal();
-  });
-
-  function fillAssignVehicles(){
-    // Solo vehículos activos; orden consistente; etiquetas saneadas
-    const list = (allVehicles || [])
-      .filter(v => v.active)
-      .sort(sortVehicles);
-
-    if (!list.length){
-      aVehicle.innerHTML = '<option value="" disabled selected>(no active vehicles)</option>';
-      return;
-    }
-
-    aVehicle.innerHTML = list.map(v=>{
-      const label = [escapeHtml(v.plate), escapeHtml(v.kind), v.year ? String(v.year) : '']
-        .filter(Boolean)
-        .join(' · ');
-      return `<option value="${v.id}">${label}</option>`;
-    }).join('');
-  }
-
- async function openAssignModal(resId){
-  currentAssignResId = String(resId);
-  assignErr.textContent = '';
-
-  try{
-    // Asegura vehículos cargados
-    if (!allVehicles.length){
-      const dataVeh = await api(API_VEH, 'GET');
-      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-      allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
-      rebuildVehIndex();
-    }
-    fillAssignVehicles();
-
-    // 🔹 Intentar obtener la reserva por ID para preseleccionar vehicle_id
-    // (si tu API no soporta GET ?id=..., no pasa nada: se ignora el error)
-    try{
-      const res = await api(`${API_RES}?id=${encodeURIComponent(resId)}`, 'GET');
-      // Soporta tanto { ... } como [ { ... } ]
-      const r = (Array.isArray(res) ? res[0] : res) || {};
-      if (r && r.vehicle_id){
-        aVehicle.value = String(r.vehicle_id);
-        // Si por alguna razón el option no existe (dataset viejo), forzamos a la primera opción válida
-        if (!aVehicle.value){
-          const first = aVehicle.querySelector('option[value]');
-          if (first) aVehicle.value = first.value;
-        }
-      }
-    }catch(e){
-      // Silencioso: si el endpoint no soporta GET por id, el modal sigue funcionando.
-      console.warn('No se pudo leer la reserva por ID (para preseleccionar):', e);
-    }
-
-  }catch(e){
-    console.warn('No se pudieron cargar vehículos para Assign:', e);
-    aVehicle.innerHTML = '<option value="" disabled selected>(error loading vehicles)</option>';
-  }
-
-  assignBackdrop.classList.add('open');
-  // Ajusta el sticky si es necesario y enfoca el select
-  if (typeof setTheadTop === 'function') requestAnimationFrame(() => setTheadTop());
-  setTimeout(()=>aVehicle.focus(), 20);
-}
-</script>
-<!-- MODAL: ASSIGN -->
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
     <header>
@@ -372,6 +276,126 @@
     </div>
   </div>
 </div>
+
+<script>
+  /* ------- Assign Modal (Reservations) ------- */
+  const assignBackdrop  = document.getElementById('assignBackdrop');
+  const assignBtnClose  = document.getElementById('assignBtnClose');
+  const assignBtnSave   = document.getElementById('assignBtnSave');
+  const aVehicle        = document.getElementById('aVehicle');
+  const aDriver         = document.getElementById('aDriver');
+  const aNotes          = document.getElementById('aNotes');
+  const assignErr       = document.getElementById('assignErr');
+
+  let currentAssignResId = null;
+
+  function closeAssignModal(){
+    assignBackdrop.classList.remove('open');
+    currentAssignResId = null;
+    aVehicle.innerHTML = '';
+    aDriver.value = '';
+    aNotes.value  = '';
+    assignErr.textContent = '';
+    // Recalcular sticky tras cerrar
+    requestAnimationFrame(() => (typeof setTheadTop === 'function') && setTheadTop());
+  }
+
+  assignBtnClose.addEventListener('click', closeAssignModal);
+  window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeAssignModal(); });
+  // Cerrar al hacer clic fuera del cuadro
+  assignBackdrop.addEventListener('click', (e) => { if (e.target === assignBackdrop) closeAssignModal(); });
+
+  function fillAssignVehicles(){
+    // Solo vehículos activos; orden consistente; etiquetas saneadas
+    const list = (allVehicles || [])
+      .filter(v => v.active)
+      .sort(sortVehicles);
+
+    if (!list.length){
+      aVehicle.innerHTML = '<option value="" disabled selected>(no active vehicles)</option>';
+      return;
+    }
+
+    aVehicle.innerHTML = list.map(v=>{
+      const label = [escapeHtml(v.plate), escapeHtml(v.kind), v.year ? String(v.year) : '']
+        .filter(Boolean).join(' · ');
+      return `<option value="${v.id}">${label}</option>`;
+    }).join('');
+  }
+
+  // Abre el modal y preselecciona el vehículo si la reserva ya tiene vehicle_id
+  async function openAssignModal(resId){
+    currentAssignResId = String(resId);
+    assignErr.textContent = '';
+
+    try{
+      // Asegura vehículos cargados
+      if (!allVehicles.length){
+        const dataVeh = await api(API_VEH, 'GET');
+        const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+        allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+        rebuildVehIndex();
+      }
+      fillAssignVehicles();
+
+      // Intentar leer la reserva para preseleccionar vehicle_id (si tu API lo permite)
+      try{
+        const res = await api(`${API_RES}?id=${encodeURIComponent(resId)}`, 'GET');
+        const r = (Array.isArray(res) ? res[0] : res) || {};
+        if (r && r.vehicle_id){
+          aVehicle.value = String(r.vehicle_id);
+          // Si el option aún no existe, elige la primera opción válida
+          if (!aVehicle.value){
+            const first = aVehicle.querySelector('option[value]');
+            if (first) aVehicle.value = first.value;
+          }
+        }
+      }catch(e){
+        // Silencioso si el endpoint no soporta GET por id
+        console.warn('No se pudo leer la reserva por ID (preselección):', e);
+      }
+
+    }catch(e){
+      console.warn('No se pudieron cargar vehículos para Assign:', e);
+      aVehicle.innerHTML = '<option value="" disabled selected>(error loading vehicles)</option>';
+    }
+
+    assignBackdrop.classList.add('open');
+    // Ajusta el sticky si es necesario y enfoca el select
+    if (typeof setTheadTop === 'function') requestAnimationFrame(() => setTheadTop());
+    setTimeout(()=>aVehicle.focus(), 20);
+  }
+
+  // Guardar asignación
+  assignBtnSave.addEventListener('click', async ()=>{
+    assignErr.textContent = '';
+    if (!currentAssignResId){ assignErr.textContent = 'No reservation selected.'; return; }
+
+    const vehicle_id  = aVehicle.value || null;
+    const driver_name = aDriver.value.trim() || null;
+    const notes       = aNotes.value.trim() || null;
+
+    if (!vehicle_id){ assignErr.textContent = 'Select a vehicle.'; return; }
+
+    assignBtnSave.disabled = true;
+    try{
+      await patchReservation(currentAssignResId, {
+        vehicle_id,
+        driver_name,
+        notes,
+        status: 'ASSIGNED'
+      });
+
+      closeAssignModal();
+      await loadReservations();
+      resShowMsg && resShowMsg('Reservation assigned.');
+    }catch(e){
+      assignErr.textContent = e.message || 'Error saving assignment.';
+    }finally{
+      assignBtnSave.disabled = false;
+    }
+  });
+</script>
 <!-- <<< ASSIGN MODAL BLOCK END <<< -->
 <!-- ========= DRIVERS VIEW ========= -->
 <section id="view-drivers" hidden>
@@ -977,81 +1001,6 @@ resRows.addEventListener('click', async (ev)=>{
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
 document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
-/* =================== ASSIGN MODAL (Reservations) =================== */
-const assignBackdrop = document.getElementById('assignBackdrop');
-const assignBtnClose = document.getElementById('assignBtnClose');
-const assignBtnSave  = document.getElementById('assignBtnSave');
-const aVehicle = document.getElementById('aVehicle');
-const aDriver  = document.getElementById('aDriver');
-const aNotes   = document.getElementById('aNotes');
-const assignErr= document.getElementById('assignErr');
-
-let assignResId = null;
-
-function closeAssignModal(){ assignBackdrop.classList.remove('open'); }
-assignBtnClose.addEventListener('click', closeAssignModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
-
-function optionsForVehicles(list){
-  if (!list || !list.length) return '<option disabled>No vehicles available</option>';
-  return list.map(v=>{
-    const meta = [v.kind||'', v.year||''].filter(Boolean).join(', ');
-    const label = `${v.plate}${meta?` (${meta})`:''}`;
-    return `<option value="${v.id}">${escapeHtml(label)}</option>`;
-  }).join('');
-}
-
-async function openAssignModal(resId){
-  assignResId = resId;
-  assignErr.textContent = '';
-  aDriver.value = '';
-  aNotes.value  = '';
-
-  // Asegurar flota en memoria
-  try{
-    if (!allVehicles.length){
-      const dataVeh = await api(API_VEH, 'GET');
-      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-      allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
-      rebuildVehIndex();
-    }
-  }catch(e){ /* no-bloqueante */ }
-
-  // Llenar selector
-  const usable = allVehicles.filter(v => v.active);
-  aVehicle.innerHTML = optionsForVehicles(usable);
-
-  assignBackdrop.classList.add('open');
-  setTimeout(()=>aVehicle.focus(), 50);
-}
-
-assignBtnSave.addEventListener('click', async ()=>{
-  assignErr.textContent = '';
-  if (!assignResId){ assignErr.textContent='Internal error: no reservation id.'; return; }
-  const vehicle_id = aVehicle.value || '';
-  if (!vehicle_id){ assignErr.textContent='Choose a vehicle.'; return; }
-
-  assignBtnSave.disabled = true;
-  try{
-    // 1) Persistir asignación (usa el endpoint de reservas si tu backend lo maneja allí)
-    await patchReservation(assignResId, {
-      status: 'ASSIGNED',
-      vehicle_id,
-      driver_name: aDriver.value.trim() || null,
-      notes: aNotes.value.trim() || null
-    });
-
-    // 2) (opcional) Notificar conductor / sistema
-    // await api(API_DRV_NOTIFY,'POST',{ reservation_id: assignResId, vehicle_id, driver_name: aDriver.value.trim()||null, notes: aNotes.value.trim()||null });
-
-    closeAssignModal();
-    await loadReservations();
-  }catch(e){
-    assignErr.textContent = e.message || 'Error saving assignment.';
-  }finally{
-    assignBtnSave.disabled = false;
-  }
-});
 
 /* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
