@@ -636,15 +636,25 @@ const vehModalTitle = document.getElementById('vehModalTitle');
 let cacheDrivers = [];
 async function ensureDriversLoaded(){
   if (cacheDrivers.length) return cacheDrivers;
+
+  // Si ya tenemos allDrivers, úsalo
   if (Array.isArray(allDrivers) && allDrivers.length){
-    cacheDrivers = allDrivers.map(d => ({ id:String(d.id), name:(d.name||'').trim(), active:d.active!==false }))
-                             .sort((a,b)=>a.name.localeCompare(b.name));
+    cacheDrivers = allDrivers
+      .map(d => ({ id:String(d.id), name:(d.name||'').trim(), active:d.active!==false }))
+      .sort((a,b)=>a.name.localeCompare(b.name));
     return cacheDrivers;
   }
-  const j = await api(API_DRV,'GET');
-  const raw = Array.isArray(j.drivers) ? j.drivers : [];
-  cacheDrivers = raw.map(d => ({ id:String(d.id), name:(d.name||'').trim(), active:d.active!==false }))
-                    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Llama a la API y acepta dos formatos: {drivers:[...]} o [...]
+  const j = await api(API_DRV, 'GET');
+  const raw = Array.isArray(j?.drivers) ? j.drivers
+            : Array.isArray(j)          ? j
+            : [];
+
+  cacheDrivers = raw
+    .map(d => ({ id:String(d.id), name:(d.name||'').trim(), active:d.active!==false }))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
   return cacheDrivers;
 }
 function rebuildCacheDrivers(){
