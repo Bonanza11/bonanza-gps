@@ -1278,7 +1278,14 @@ if (a === 'delete') {
   if (a==='notify'){ alert('Notificaciones: próximo paso 😉'); }
 });
 window.addEventListener('DOMContentLoaded', async ()=>{
+  // 1) Cálculo inicial del sticky
   setTheadTop();
+
+  // 2) Inicializa referencias que se usan en Drivers (evita TDZ)
+  drvMsg  = document.getElementById('drvMsg');
+  drvRows = document.getElementById('drvRows');
+
+  // 3) Token + primer render de Vehicles
   await ensureAdminToken();
   await loadVehicles();
 });
