@@ -1021,6 +1021,11 @@ if (chkShowArchived){
 const drvMsg   = document.getElementById('drvMsg');
 const drvRows  = document.getElementById('drvRows');
 let allDrivers = [];
+const drvStat = {
+  total:    document.getElementById('drvTotal'),
+  active:   document.getElementById('drvActive'),
+  archived: document.getElementById('drvArchived'),
+};
 function drvShowMsg(t, ok=true){ drvMsg.textContent=t||''; drvMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 function normalizeDriver(d){
   const raw = String(d.pay_mode || 'per_ride').toLowerCase();
