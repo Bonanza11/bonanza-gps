@@ -397,9 +397,14 @@ tabsEl.addEventListener('click', async (e)=>{
   if (t==='clients')       loadClients();
   if (t==='reservations')  loadReservations();
   if (t==='drivers') {
+  try {
     await fetchVehiclesForDrivers();
     await loadDrivers();
+  } catch (err) {
+    console.error('Error loading drivers tab:', err);
+    drvShowMsg('Error loading drivers: ' + (err.message || err), false);
   }
+}
 });
 
 /* =================== ENV / LOGOUT =================== */
