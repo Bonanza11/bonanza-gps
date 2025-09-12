@@ -1033,7 +1033,10 @@ function vehiclesLabelForDriver(driverId){
   }).join(' · ');
 }
 function renderDrivers(){
-  drvRows.innerHTML = allDrivers.map(d=>{
+  const showArchived = !!(document.getElementById('chkShowArchived')?.checked);
+  const base = showArchived ? allDrivers : allDrivers.filter(d => d.active !== false);
+
+  drvRows.innerHTML = base.map(d=>{
     const on = !!d.active;
     const vehText = vehiclesLabelForDriver(d.id);
     return `
@@ -1047,7 +1050,7 @@ function renderDrivers(){
         <td class="right actions">
           <div class="btns">
             <button class="btn btn-edit"   data-action="edit">Edit</button>
-            <button class="btn btn-danger" data-action="delete">Delete</button>
+            <button class="btn btn-danger" data-action="delete">Archive</button>
             <button class="btn ${on?'btn-toggle-on':'btn-toggle-off'}" data-action="toggle">${on ? 'Turn Off' : 'Turn On'}</button>
             <button class="btn" data-action="notify">Notificar</button>
           </div>
