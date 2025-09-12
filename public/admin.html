@@ -1117,9 +1117,16 @@ async function loadDrivers(){
       }
     }
     await ensureAdminToken();
-    const j = await api(API_DRV, 'GET');
-    const raw = Array.isArray(j.drivers) ? j.drivers : [];
-    allDrivers = raw.map(normalizeDriver);
+// Pide todos los drivers (incluidos archivados) si el backend lo soporta.
+// Si el backend ignora ?all=1, simplemente devuelve lo mismo de antes.
+const j = await api(`${API_DRV}?all=1`, 'GET');
+
+// 🔹 Log para verificar qué devuelve realmente el endpoint
+console.log('GET /drivers payload:', j);
+console.log('Drivers count recibido:', Array.isArray(j.drivers) ? j.drivers.length : 'formato inesperado');
+
+const raw = Array.isArray(j.drivers) ? j.drivers : [];
+ allDrivers = raw.map(normalizeDriver);
     renderDrivers();
     drvShowMsg('Loaded successfully.');
     setTheadTop();
