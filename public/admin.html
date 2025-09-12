@@ -1011,8 +1011,11 @@ resRows.addEventListener('click', async (ev)=>{
   } catch (e) { resShowMsg('Error updating: ' + (e.message || e), false); }
 });
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
-document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
-document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
+const btnAddDriver = document.getElementById('btnAddDriver');
+if (btnAddDriver) btnAddDriver.addEventListener('click', openAddDriver);
+
+const btnReloadDrivers = document.getElementById('btnReloadDrivers');
+if (btnReloadDrivers) btnReloadDrivers.addEventListener('click', loadDrivers);
   
   // Filtro: mostrar archivados
 const chkShowArchived = document.getElementById('chkShowArchived');
