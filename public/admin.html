@@ -1041,6 +1041,15 @@ function normalizeDriver(d){
     active:d.active!==false
   };
 }
+  function computeDrvStats(){
+  const total    = allDrivers.length;
+  const active   = allDrivers.filter(d => d.active !== false).length;
+  const archived = Math.max(0, total - active);
+
+  if (drvStat.total)    drvStat.total.textContent    = String(total);
+  if (drvStat.active)   drvStat.active.textContent   = String(active);
+  if (drvStat.archived) drvStat.archived.textContent = String(archived);
+}
 function vehiclesLabelForDriver(driverId){
   const list = vehByDriver.get(String(driverId)) || [];
   if (!list.length) return '—';
