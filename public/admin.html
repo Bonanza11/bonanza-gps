@@ -1031,7 +1031,13 @@ const drvStat = {
   active:   document.getElementById('drvActive'),
   archived: document.getElementById('drvArchived'),
 };
-function drvShowMsg(t, ok=true){ drvMsg.textContent=t||''; drvMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
+function drvShowMsg(t, ok=true){
+  if (!drvMsg) drvMsg = document.getElementById('drvMsg');
+  if (drvMsg){
+    drvMsg.textContent = t || '';
+    drvMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)';
+  }
+}
 function normalizeDriver(d){
   const raw = String(d.pay_mode || 'per_ride').toLowerCase();
   const pay_mode = ['per_ride','hourly','revenue_share'].includes(raw) ? raw : 'per_ride';
