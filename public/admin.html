@@ -247,6 +247,97 @@
   </div>
 </section>
 <!-- MODAL: ASSIGN -->
+  /* ------- Assign Modal (Reservations) ------- */
+const assignBackdrop  = document.getElementById('assignBackdrop');
+const assignBtnClose  = document.getElementById('assignBtnClose');
+const assignBtnSave   = document.getElementById('assignBtnSave');
+const aVehicle        = document.getElementById('aVehicle');
+const aDriver         = document.getElementById('aDriver');
+const aNotes          = document.getElementById('aNotes');
+const assignErr       = document.getElementById('assignErr');
+
+let currentAssignResId = null;
+
+function closeAssignModal(){
+  assignBackdrop.classList.remove('open');
+  currentAssignResId = null;
+  aVehicle.innerHTML = '';
+  aDriver.value = '';
+  aNotes.value  = '';
+  assignErr.textContent = '';
+}
+
+assignBtnClose.addEventListener('click', closeAssignModal);
+window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeAssignModal(); });
+
+function fillAssignVehicles(){
+  // Usa allVehicles ya normalizados; si no hay, muestra placeholder.
+  const opts = (allVehicles || []).map(v => {
+    const label = [v.plate, v.kind, v.year || ''].filter(Boolean).join(' · ');
+    return `<option value="${v.id}">${label}</option>`;
+  }).join('');
+  aVehicle.innerHTML = opts || '<option value="">(no vehicles)</option>';
+}
+
+/**
+ * Abre el modal de asignación para una reserva.
+ * @param {string|number} resId
+ */
+async function openAssignModal(resId){
+  currentAssignResId = String(resId);
+  assignErr.textContent = '';
+
+  try{
+    // Asegura vehículos cargados
+    if (!allVehicles.length){
+      const dataVeh = await api(API_VEH, 'GET');
+      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+      allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+      rebuildVehIndex();
+    }
+    fillAssignVehicles();
+  }catch(e){
+    console.warn('No se pudieron cargar vehículos para Assign:', e);
+    aVehicle.innerHTML = '<option value="">(error loading vehicles)</option>';
+  }
+
+  assignBackdrop.classList.add('open');
+  setTimeout(()=>aVehicle.focus(), 20);
+}
+
+// Guardar asignación
+assignBtnSave.addEventListener('click', async ()=>{
+  assignErr.textContent = '';
+  if (!currentAssignResId){ assignErr.textContent = 'No reservation selected.'; return; }
+
+  const vehicle_id = aVehicle.value || null;
+  const driver_name = aDriver.value.trim() || null;
+  const notes = aNotes.value.trim() || null;
+
+  if (!vehicle_id){
+    assignErr.textContent = 'Select a vehicle.';
+    return;
+  }
+
+  assignBtnSave.disabled = true;
+  try{
+    // PATCH a la reserva con la asignación básica.
+    await patchReservation(currentAssignResId, {
+      vehicle_id,
+      driver_name,
+      notes,
+      status: 'ASSIGNED'
+    });
+
+    closeAssignModal();
+    await loadReservations();
+    resShowMsg('Reservation assigned.');
+  }catch(e){
+    assignErr.textContent = e.message || 'Error saving assignment.';
+  }finally{
+    assignBtnSave.disabled = false;
+  }
+});
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
     <header>
