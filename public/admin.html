@@ -133,8 +133,9 @@
     <tr><td colspan="7">Loading…</td></tr>
   </tbody>
 </table>
-  </div>
-</section<!-- MODAL: VEHICLE -->
+</section>
+  
+<!-- MODAL: VEHICLE -->
 <div class="backdrop" id="vehBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
     <header>
@@ -354,17 +355,24 @@ document.getElementById('apiVehInfo').textContent = API_VEH;
 /* =================== STICKY TOP =================== */
 function setTheadTop(){
   const header = document.querySelector('header');
-  const bars   = document.querySelectorAll('.affects-sticky');
   let top = 0;
   if (header) top += header.getBoundingClientRect().height;
-  bars.forEach(el => {
+
+  // Contar SOLO las barras visibles (ignora secciones ocultas)
+  const bars = Array.from(document.querySelectorAll('.affects-sticky'))
+    .filter(el => !el.closest('section[hidden]'));
+
+  for (const el of bars) {
     const rect = el.getBoundingClientRect();
     const cs   = getComputedStyle(el);
-    const mt   = parseFloat(cs.marginTop)  || 0;
+    const mt   = parseFloat(cs.marginTop) || 0;
     const mb   = parseFloat(cs.marginBottom) || 0;
     top += rect.height + mt + mb;
-  });
+  }
+
+  // Pequeño margen para que no se pegue
   top += 6;
+
   document.documentElement.style.setProperty('--theadTop', `${top}px`);
 }
 window.addEventListener('resize', setTheadTop);
@@ -856,6 +864,81 @@ resRows.addEventListener('click', async (ev)=>{
 document.getElementById('btnReloadRes').addEventListener('click', loadReservations);
 document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
 document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
+/* =================== ASSIGN MODAL (Reservations) =================== */
+const assignBackdrop = document.getElementById('assignBackdrop');
+const assignBtnClose = document.getElementById('assignBtnClose');
+const assignBtnSave  = document.getElementById('assignBtnSave');
+const aVehicle = document.getElementById('aVehicle');
+const aDriver  = document.getElementById('aDriver');
+const aNotes   = document.getElementById('aNotes');
+const assignErr= document.getElementById('assignErr');
+
+let assignResId = null;
+
+function closeAssignModal(){ assignBackdrop.classList.remove('open'); }
+assignBtnClose.addEventListener('click', closeAssignModal);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
+
+function optionsForVehicles(list){
+  if (!list || !list.length) return '<option disabled>No vehicles available</option>';
+  return list.map(v=>{
+    const meta = [v.kind||'', v.year||''].filter(Boolean).join(', ');
+    const label = `${v.plate}${meta?` (${meta})`:''}`;
+    return `<option value="${v.id}">${escapeHtml(label)}</option>`;
+  }).join('');
+}
+
+async function openAssignModal(resId){
+  assignResId = resId;
+  assignErr.textContent = '';
+  aDriver.value = '';
+  aNotes.value  = '';
+
+  // Asegurar flota en memoria
+  try{
+    if (!allVehicles.length){
+      const dataVeh = await api(API_VEH, 'GET');
+      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+      allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+      rebuildVehIndex();
+    }
+  }catch(e){ /* no-bloqueante */ }
+
+  // Llenar selector
+  const usable = allVehicles.filter(v => v.active);
+  aVehicle.innerHTML = optionsForVehicles(usable);
+
+  assignBackdrop.classList.add('open');
+  setTimeout(()=>aVehicle.focus(), 50);
+}
+
+assignBtnSave.addEventListener('click', async ()=>{
+  assignErr.textContent = '';
+  if (!assignResId){ assignErr.textContent='Internal error: no reservation id.'; return; }
+  const vehicle_id = aVehicle.value || '';
+  if (!vehicle_id){ assignErr.textContent='Choose a vehicle.'; return; }
+
+  assignBtnSave.disabled = true;
+  try{
+    // 1) Persistir asignación (usa el endpoint de reservas si tu backend lo maneja allí)
+    await patchReservation(assignResId, {
+      status: 'ASSIGNED',
+      vehicle_id,
+      driver_name: aDriver.value.trim() || null,
+      notes: aNotes.value.trim() || null
+    });
+
+    // 2) (opcional) Notificar conductor / sistema
+    // await api(API_DRV_NOTIFY,'POST',{ reservation_id: assignResId, vehicle_id, driver_name: aDriver.value.trim()||null, notes: aNotes.value.trim()||null });
+
+    closeAssignModal();
+    await loadReservations();
+  }catch(e){
+    assignErr.textContent = e.message || 'Error saving assignment.';
+  }finally{
+    assignBtnSave.disabled = false;
+  }
+});
 
 /* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
