@@ -1097,12 +1097,14 @@ function renderDrivers(){
       </tr>`;
   }).join('') || '<tr><td colspan="7">No drivers.</td></tr>';
 }
-async function loadDrivers(){
+
+  async function loadDrivers(){
+  if (!drvRows) drvRows = document.getElementById('drvRows'); // <- evita TDZ
   drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
 
   try{
-    // Asegura vehículos para poder calcular "Vehicle(s)" por driver
+    // Asegura vehículos para mostrar "Vehicle(s)" por driver
     if (!allVehicles.length || vehByDriver.size === 0){
       try{
         const dataVeh = await api(API_VEH, 'GET');
@@ -1118,10 +1120,8 @@ async function loadDrivers(){
 
     await ensureAdminToken();
 
-    // GET drivers (soporta {drivers:[...]} o [...])
+    // GET drivers (acepta {drivers:[...]} o [...])
     const j = await api(`${API_DRV}?all=1`, 'GET');
-
-    // Mini verificación: qué llegó realmente
     console.log('GET /drivers payload:', j);
 
     const raw = Array.isArray(j?.drivers) ? j.drivers
@@ -1130,7 +1130,6 @@ async function loadDrivers(){
 
     allDrivers = raw.map(normalizeDriver);
 
-    // Si tienes contadores, actualízalos
     if (typeof computeDrvStats === 'function') computeDrvStats();
 
     renderDrivers();
