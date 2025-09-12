@@ -134,9 +134,7 @@
   </tbody>
 </table>
   </div>
-</section>
-
-<!-- MODAL: VEHICLE -->
+</section<!-- MODAL: VEHICLE -->
 <div class="backdrop" id="vehBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vehModalTitle">
     <header>
@@ -247,7 +245,6 @@
     </table>
   </div>
 </section>
-
 <!-- MODAL: ASSIGN -->
 <div class="backdrop" id="assignBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
@@ -288,7 +285,7 @@
     <th style="width:20%">Name</th>
     <th style="width:20%">Email</th>
     <th style="width:14%">Phone</th>
-    <th style="width:20%">Vehicle(s)</th>   <!-- NUEVA -->
+    <th style="width:20%">Vehicle(s)</th>
     <th style="width:10%">Pay Mode</th>
     <th style="width:8%">Active</th>
     <th class="right" style="width:8%">Actions</th>
@@ -325,8 +322,6 @@
         <div class="field"><label for="dName">Name *</label><input id="dName" placeholder="John Doe" autocomplete="off"></div>
         <div class="field"><label for="dEmail">Email</label><input id="dEmail" type="email" placeholder="name@email.com" autocomplete="off"></div>
         <div class="field"><label for="dPhone">Phone</label><input id="dPhone" placeholder="801-555-0000" autocomplete="off"></div>
-
-        <!-- Valores en MINÚSCULA (coinciden con el CHECK de DB) -->
         <div class="field"><label for="dPayMode">Pay Mode *</label>
           <select id="dPayMode">
             <option value="per_ride">PER_RIDE</option>
@@ -334,7 +329,6 @@
             <option value="revenue_share">REVENUE_SHARE</option>
           </select>
         </div>
-
         <div class="field"><label for="dLicense">License # (optional)</label><input id="dLicense" placeholder="UT-XXXXXX" autocomplete="off"></div>
         <div class="field"><label for="dWorkMode">Work mode</label>
           <select id="dWorkMode"><option value="24h">24h</option><option value="custom">custom</option></select>
@@ -395,7 +389,7 @@ tabsEl.addEventListener('click', async (e)=>{
   if (t==='clients')       loadClients();
   if (t==='reservations')  loadReservations();
   if (t==='drivers') {
-    await fetchVehiclesForDrivers(); // 👈 IMPORTANTE
+    await fetchVehiclesForDrivers();
     await loadDrivers();
   }
 });
@@ -456,13 +450,8 @@ let filterKind  = 'ALL';
 let editingId   = null;
 let vehFilterDriverId = null;
 function vehShowMsg(text, ok=true){ vehMsg.textContent = text || ''; vehMsg.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
-  // --- Índice: driver_id -> [vehicles] ---
 let vehByDriver = new Map();
 
-/**
- * Reconstruye el índice vehByDriver usando allVehicles.
- * Clave: String(driver_id)  Valor: array de vehículos de ese driver
- */
 function rebuildVehIndex(){
   const map = new Map();
   (allVehicles || []).forEach(v=>{
@@ -474,20 +463,17 @@ function rebuildVehIndex(){
   vehByDriver = map;
 }
 
-  // Prefetch silencioso: trae vehículos si aún no están y reconstruye el índice
 async function fetchVehiclesForDrivers(){
-  if (allVehicles.length && vehByDriver.size) return; // ya tenemos data útil
+  if (allVehicles.length && vehByDriver.size) return;
   try{
     const data = await api(API_VEH, 'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    rebuildVehIndex(); // importa para la columna Vehicle(s)
+    rebuildVehIndex();
   }catch(e){
     console.warn('Prefetch vehicles for Drivers failed:', e);
-    // No bloquea: si falla, la columna mostrará "—"
   }
 }
-/* refs modal vehículo */
 const fPlate    = document.getElementById('fPlate');
 const fDriverId = document.getElementById('fDriverId');
 const fKind     = document.getElementById('fKind');
@@ -500,7 +486,6 @@ const vehBtnSave    = document.getElementById('vehBtnSave');
 const vehFormErr    = document.getElementById('vehFormErr');
 const vehModalTitle = document.getElementById('vehModalTitle');
 
-/* Drivers cache para selects */
 let cacheDrivers = [];
 async function ensureDriversLoaded(){
   if (cacheDrivers.length) return cacheDrivers;
@@ -515,14 +500,9 @@ async function ensureDriversLoaded(){
                     .sort((a,b)=>a.name.localeCompare(b.name));
   return cacheDrivers;
 }
-  // --- Helper para reconstruir cacheDrivers a partir de allDrivers ---
 function rebuildCacheDrivers(){
   cacheDrivers = (allDrivers || [])
-    .map(d => ({
-      id: String(d.id),
-      name: (d.name || '').trim(),
-      active: d.active !== false
-    }))
+    .map(d => ({ id: String(d.id), name: (d.name || '').trim(), active: d.active !== false }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 function fillDriversSelect(list){
@@ -550,12 +530,8 @@ function computeStats(){
 }
 
 function visibleVeh(){
-  // filtro por tipo
   let base = (filterKind==='ALL') ? allVehicles : allVehicles.filter(v=>v.kind===filterKind);
-  // filtro por driver si está activo
-  if (vehFilterDriverId) {
-    base = base.filter(v => String(v.driver_id || '') === String(vehFilterDriverId));
-  }
+  if (vehFilterDriverId) base = base.filter(v => String(v.driver_id || '') === String(vehFilterDriverId));
   return base;
 }
 function renderVehicles(){
@@ -590,7 +566,7 @@ async function loadVehicles(){
     const data = await api(API_VEH,'GET');
     const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
     allVehicles = raw.map(normalizeVehicle).sort(sortVehicles);
-    rebuildVehIndex(); // actualiza el índice para drivers
+    rebuildVehIndex();
     await ensureDriversLoaded();
     renderVehicles();
     vehShowMsg('Loaded successfully.'); setTheadTop();
@@ -651,7 +627,7 @@ vehBtnSave.addEventListener('click', async ()=>{
     else allVehicles.push(saved);
 
     allVehicles.sort(sortVehicles);
-    rebuildVehIndex();    // 👈 importante
+    rebuildVehIndex();
     renderVehicles();
     vehShowMsg(editingId?'Saved changes.':'Vehicle added.');
     closeVehModal();
@@ -660,28 +636,18 @@ vehBtnSave.addEventListener('click', async ()=>{
   }finally{
     vehBtnSave.disabled=false;
   }
-}); // <-- AQUÍ CIERRA EL BLOQUE DE vehBtnSave
-
-// =============================
-// Event listener para vehRows
-// =============================
+});
+  // listeners tabla vehículos
 vehRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); 
   if(!btn) return;
-
   const tr  = btn.closest('tr[data-id]'); 
   if(!tr) return;
-
   const id  = tr.getAttribute('data-id');
   const action = btn.getAttribute('data-action');
 
-  // EDIT
-  if (action === 'edit'){ 
-    openEditVehicle(id); 
-    return; 
-  }
+  if (action === 'edit'){ openEditVehicle(id); return; }
 
-  // DELETE
   if (action === 'delete'){
     const v = allVehicles.find(x=>x.id===id); 
     if(!v) return;
@@ -698,7 +664,6 @@ vehRows.addEventListener('click', async (ev)=>{
     return;
   }
 
-  // TOGGLE
   if (action === 'toggle'){
     const v = allVehicles.find(x=>x.id===id); 
     if(!v) return;
@@ -723,22 +688,17 @@ vehRows.addEventListener('click', async (ev)=>{
     }
   }
 });
-// ===== VEHICLE BUTTON LISTENERS =====
 document.getElementById('btnAddVehicle').addEventListener('click', openAddVehicle);
 document.getElementById('btnReloadVehicles').addEventListener('click', loadVehicles);
 document.getElementById('vehControls').addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-filter]');
   if (!b) return;
- // 👇 Limpia cualquier filtro activo por driver
   vehFilterDriverId = null;
-
-// Cambia el filtro por tipo
   filterKind = b.getAttribute('data-filter') || 'ALL';
-
-// Renderiza nuevamente
   renderVehicles();
   setTheadTop();
 });  
+
 /* =================== CLIENTS =================== */
 const cliMsg  = document.getElementById('cliMsg');
 const cliRows = document.getElementById('cliRows');
@@ -897,58 +857,12 @@ document.getElementById('btnReloadRes').addEventListener('click', loadReservatio
 document.getElementById('btnAddDriver').addEventListener('click', openAddDriver);
 document.getElementById('btnReloadDrivers').addEventListener('click', loadDrivers);
 
-/* ---------- ASSIGN MODAL ---------- */
-const assignBackdrop  = document.getElementById('assignBackdrop');
-const assignBtnClose  = document.getElementById('assignBtnClose');
-const assignBtnSave   = document.getElementById('assignBtnSave');
-const assignErr       = document.getElementById('assignErr');
-const aVehicle        = document.getElementById('aVehicle');
-const aDriver         = document.getElementById('aDriver');
-const aNotes          = document.getElementById('aNotes');
-let assignReservationId = null;
-let assignVehicles = [];
-async function ensureVehiclesLoadedForAssign() {
-  try {
-    if (Array.isArray(allVehicles) && allVehicles.length > 0) {
-      assignVehicles = allVehicles.map(v => ({ id:String(v.id), plate:(v.plate||'').trim(), kind:((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV', driver_name:(v.driver_name||'').trim() }));
-    } else {
-      const data = await api(API_VEH, 'GET');
-      const raw  = Array.isArray(data.vehicles) ? data.vehicles : [];
-      assignVehicles = raw.map(v => ({ id:String(v.id), plate:(v.plate||'').trim(), kind:((v.kind||'SUV').toUpperCase()==='VAN')?'VAN':'SUV', driver_name:(v.driver_name||'').trim() }));
-    }
-    aVehicle.innerHTML = assignVehicles.map(v => `<option value="${v.id}">${escapeHtml(v.plate)} — ${v.kind} — ${escapeHtml(v.driver_name || 'No driver')}</option>`).join('');
-    if (assignVehicles.length > 0) aVehicle.value = assignVehicles[0].id;
-  } catch (e) { assignErr.textContent = 'Error loading vehicles: ' + (e.message || e); }
-}
-function openAssignModal(reservationId) {
-  assignReservationId = String(reservationId);
-  assignErr.textContent=''; aDriver.value=''; aNotes.value='';
-  ensureVehiclesLoadedForAssign().then(()=>{ assignBackdrop.classList.add('open'); aVehicle.focus(); });
-}
-function closeAssignModal() { assignBackdrop.classList.remove('open'); assignReservationId = null; }
-assignBtnClose.addEventListener('click', closeAssignModal);
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAssignModal(); });
-assignBtnSave.addEventListener('click', async ()=>{
-  assignErr.textContent = '';
-  const vehicle_id = aVehicle.value;
-  if (!vehicle_id) { assignErr.textContent = 'Please select a valid vehicle.'; return; }
-  const driver_name = aDriver.value.trim() || null;
-  const notes       = aNotes.value.trim()  || null;
-  assignBtnSave.disabled = true;
-  try{
-    await patchReservation(assignReservationId, { status:'ASSIGNED', vehicle_id, driver_name, notes });
-    closeAssignModal(); await loadReservations();
-  }catch(e){ assignErr.textContent = e.message || 'Error assigning.'; }
-  finally{ assignBtnSave.disabled = false; }
-});
-
 /* =================== DRIVERS =================== */
 const drvMsg   = document.getElementById('drvMsg');
 const drvRows  = document.getElementById('drvRows');
 let allDrivers = [];
 function drvShowMsg(t, ok=true){ drvMsg.textContent=t||''; drvMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 function normalizeDriver(d){
-  // guardamos SIEMPRE en minúscula para cumplir el CHECK (per_ride|hourly|revenue_share)
   const raw = String(d.pay_mode || 'per_ride').toLowerCase();
   const pay_mode = ['per_ride','hourly','revenue_share'].includes(raw) ? raw : 'per_ride';
   return {
@@ -961,9 +875,7 @@ function normalizeDriver(d){
     work_mode:(d.work_mode||'24h').toLowerCase(),
     active:d.active!==false
   };
-} // 👈 Cierra normalizeDriver AQUÍ
-
-// 👇 Esta va FUERA de normalizeDriver
+}
 function vehiclesLabelForDriver(driverId){
   const list = vehByDriver.get(String(driverId)) || [];
   if (!list.length) return '—';
@@ -977,14 +889,13 @@ function vehiclesLabelForDriver(driverId){
 function renderDrivers(){
   drvRows.innerHTML = allDrivers.map(d=>{
     const on = !!d.active;
-    const vehText = vehiclesLabelForDriver(d.id); // 👈 aquí usamos el índice
-
+    const vehText = vehiclesLabelForDriver(d.id);
     return `
       <tr data-id="${d.id}">
         <td>${escapeHtml(d.name)}</td>
         <td>${escapeHtml(d.email)}</td>
         <td>${escapeHtml(d.phone)}</td>
-        <td>${escapeHtml(vehText)}</td>                   <!-- 👈 NUEVA COLUMNA -->
+        <td>${escapeHtml(vehText)}</td>
         <td><span class="badge">${escapeHtml((d.pay_mode||'').toUpperCase())}</span></td>
         <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
         <td class="right actions">
@@ -996,33 +907,26 @@ function renderDrivers(){
           </div>
         </td>
       </tr>`;
-  }).join('') || '<tr><td colspan="7">No drivers.</td></tr>';  // 👈 7 columnas
+  }).join('') || '<tr><td colspan="7">No drivers.</td></tr>';
 }
-  async function loadDrivers(){
+async function loadDrivers(){
   drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
-
   try{
-    // 1) Asegura que haya vehículos cargados e índice disponible para poder mostrar "Vehicle(s)"
     if (!allVehicles.length || vehByDriver.size === 0){
       try{
         const dataVeh = await api(API_VEH, 'GET');
         const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
         allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
-        rebuildVehIndex(); // <-- importantísimo
+        rebuildVehIndex();
       }catch(e){
-        // No bloquees la carga de drivers si falla vehículos; solo mostrará "-" en Vehicle(s)
         console.warn('No se pudieron cargar vehículos antes de drivers:', e);
       }
     }
-
-    // 2) Ahora sí, carga los drivers
     await ensureAdminToken();
     const j = await api(API_DRV, 'GET');
     const raw = Array.isArray(j.drivers) ? j.drivers : [];
     allDrivers = raw.map(normalizeDriver);
-
-    // 3) Render con la columna "Vehicle(s)" usando vehByDriver
     renderDrivers();
     drvShowMsg('Loaded successfully.');
     setTheadTop();
@@ -1082,7 +986,6 @@ drvBtnSave.addEventListener('click', async ()=>{
     phone:dPhone.value.trim()||null,
     license_number:dLicense.value.trim()||null,
     work_mode:(dWork.value||'24h').toLowerCase(),
-    // 👇 se envía en minúscula (cumple constraint)
     pay_mode:(dPayMode.value||'per_ride').toLowerCase(),
     active:!!dActive.checked
   };
@@ -1096,7 +999,6 @@ drvBtnSave.addEventListener('click', async ()=>{
   }catch(e){ drvFormErr.textContent = e.message || 'Error saving.'; }
   finally{ drvBtnSave.disabled=false; }
 });
-/* ------- eventos tabla drivers ------- */
 drvRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr  = btn.closest('tr[data-id]'); if(!tr) return;
@@ -1120,55 +1022,49 @@ drvRows.addEventListener('click', async (ev)=>{
     return;
   }
 
-if (a === 'toggle'){
-  const d = allDrivers.find(x=>x.id===id); if(!d) return;
-  const next = !d.active; btn.disabled = true;
+  if (a === 'toggle'){
+    const d = allDrivers.find(x=>x.id===id); if(!d) return;
+    const next = !d.active; btn.disabled = true;
 
-  try{
-    await api(API_DRV,'POST',{
-      id:d.id, name:d.name,
-      email:d.email||null, phone:d.phone||null,
-      license_number:d.license_number||null,
-      work_mode:d.work_mode||'24h',
-      pay_mode:(d.pay_mode||'per_ride'),
-      active:next
-    });
+    try{
+      await api(API_DRV,'POST',{
+        id:d.id, name:d.name,
+        email:d.email||null, phone:d.phone||null,
+        license_number:d.license_number||null,
+        work_mode:d.work_mode||'24h',
+        pay_mode:(d.pay_mode||'per_ride'),
+        active:next
+      });
 
-    // 1) Actualiza estado local del driver
-    d.active = next;
+      d.active = next;
 
-    // 2) Rehacer cacheDrivers desde allDrivers (evita helper extra)
-    cacheDrivers = allDrivers
-      .map(z => ({ id:String(z.id), name:(z.name||'').trim(), active:z.active!==false }))
-      .sort((a,b)=>a.name.localeCompare(b.name));
+      cacheDrivers = allDrivers
+        .map(z => ({ id:String(z.id), name:(z.name||'').trim(), active:z.active!==false }))
+        .sort((a,b)=>a.name.localeCompare(b.name));
 
-    // 3) Re-pinta tabla Drivers
-    renderDrivers();
-    drvShowMsg('Updated.');
+      renderDrivers();
+      drvShowMsg('Updated.');
 
-    // 4) 🔄 Refresca Vehicles + índice (para columna Vehicle(s) y selects)
-    const dataVeh = await api(API_VEH, 'GET');
-    const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-    allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
-    rebuildVehIndex();
+      const dataVeh = await api(API_VEH, 'GET');
+      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+      allVehicles = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+      rebuildVehIndex();
 
-    // 5) Si estás viendo Vehicles, re-pinta
-    if (!views.vehicles.hidden) renderVehicles();
+      if (!views.vehicles.hidden) renderVehicles();
 
-  } catch(e){
-    drvShowMsg('Error updating: ' + (e.message||e), false);
-  } finally {
-    btn.disabled = false;
+    } catch(e){
+      drvShowMsg('Error updating: ' + (e.message||e), false);
+    } finally {
+      btn.disabled = false;
+    }
+    return;
   }
-  return;
-}
   if (a==='notify'){ alert('Notificaciones: próximo paso 😉'); }
 });
-/* =================== BOOT =================== */
 window.addEventListener('DOMContentLoaded', async ()=>{
   setTheadTop();
   await ensureAdminToken();
-  await loadVehicles();   // tab inicial
+  await loadVehicles();
 });
 </script>
 </body>
