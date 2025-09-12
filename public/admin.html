@@ -298,67 +298,49 @@
     }).join('');
   }
 
-  /**
-   * Abre el modal de asignación para una reserva.
-   * @param {string|number} resId
-   */
-  async function openAssignModal(resId){
-    currentAssignResId = String(resId);
-    assignErr.textContent = '';
+ async function openAssignModal(resId){
+  currentAssignResId = String(resId);
+  assignErr.textContent = '';
 
+  try{
+    // Asegura vehículos cargados
+    if (!allVehicles.length){
+      const dataVeh = await api(API_VEH, 'GET');
+      const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
+      allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
+      rebuildVehIndex();
+    }
+    fillAssignVehicles();
+
+    // 🔹 Intentar obtener la reserva por ID para preseleccionar vehicle_id
+    // (si tu API no soporta GET ?id=..., no pasa nada: se ignora el error)
     try{
-      // Asegura vehículos cargados
-      if (!allVehicles.length){
-        const dataVeh = await api(API_VEH, 'GET');
-        const rawVeh  = Array.isArray(dataVeh.vehicles) ? dataVeh.vehicles : [];
-        allVehicles   = rawVeh.map(normalizeVehicle).sort(sortVehicles);
-        rebuildVehIndex();
+      const res = await api(`${API_RES}?id=${encodeURIComponent(resId)}`, 'GET');
+      // Soporta tanto { ... } como [ { ... } ]
+      const r = (Array.isArray(res) ? res[0] : res) || {};
+      if (r && r.vehicle_id){
+        aVehicle.value = String(r.vehicle_id);
+        // Si por alguna razón el option no existe (dataset viejo), forzamos a la primera opción válida
+        if (!aVehicle.value){
+          const first = aVehicle.querySelector('option[value]');
+          if (first) aVehicle.value = first.value;
+        }
       }
-      fillAssignVehicles();
     }catch(e){
-      console.warn('No se pudieron cargar vehículos para Assign:', e);
-      aVehicle.innerHTML = '<option value="" disabled selected>(error loading vehicles)</option>';
+      // Silencioso: si el endpoint no soporta GET por id, el modal sigue funcionando.
+      console.warn('No se pudo leer la reserva por ID (para preseleccionar):', e);
     }
 
-    assignBackdrop.classList.add('open');
-    // Recalcular sticky al abrir
-    requestAnimationFrame(() => setTheadTop && setTheadTop());
-    setTimeout(()=>aVehicle.focus(), 20);
+  }catch(e){
+    console.warn('No se pudieron cargar vehículos para Assign:', e);
+    aVehicle.innerHTML = '<option value="" disabled selected>(error loading vehicles)</option>';
   }
 
-  // Guardar asignación
-  assignBtnSave.addEventListener('click', async ()=>{
-    assignErr.textContent = '';
-    if (!currentAssignResId){ assignErr.textContent = 'No reservation selected.'; return; }
-
-    const vehicle_id  = aVehicle.value || null;
-    const driver_name = aDriver.value.trim() || null;
-    const notes       = aNotes.value.trim() || null;
-
-    if (!vehicle_id){
-      assignErr.textContent = 'Select a vehicle.';
-      return;
-    }
-
-    assignBtnSave.disabled = true;
-    try{
-      // PATCH a la reserva con la asignación básica
-      await patchReservation(currentAssignResId, {
-        vehicle_id,
-        driver_name,
-        notes,
-        status: 'ASSIGNED'
-      });
-
-      closeAssignModal();
-      await loadReservations();
-      resShowMsg('Reservation assigned.');
-    }catch(e){
-      assignErr.textContent = e.message || 'Error saving assignment.';
-    }finally{
-      assignBtnSave.disabled = false;
-    }
-  });
+  assignBackdrop.classList.add('open');
+  // Ajusta el sticky si es necesario y enfoca el select
+  if (typeof setTheadTop === 'function') requestAnimationFrame(() => setTheadTop());
+  setTimeout(()=>aVehicle.focus(), 20);
+}
 </script>
 <!-- MODAL: ASSIGN -->
 <div class="backdrop" id="assignBackdrop">
