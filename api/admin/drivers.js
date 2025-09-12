@@ -6,14 +6,13 @@ export const config = { runtime: "nodejs" };
 
 /* ---------- Normaliza body ---------- */
 function norm(body = {}) {
-  // normalizar pay_mode a minúsculas válidas según el CHECK de la tabla
+  // normalizar pay_mode
   const rawPay = (body.pay_mode ?? "per_ride").toString().trim().toLowerCase();
   const payMap = {
     "per_ride": "per_ride",
     "per-ride": "per_ride",
     "hourly": "hourly",
-    // legado: si llega per_load desde UI viejas, lo mapeamos a revenue_share
-    "per_load": "revenue_share",
+    "per_load": "revenue_share", // legado
     "revenue_share": "revenue_share",
   };
   const pay_mode = payMap[rawPay] ?? "per_ride";
@@ -48,12 +47,14 @@ async function handler(req, res) {
           license_number,
           work_mode,
           active,
-          created_at
+          created_at,
+          updated_at
         FROM drivers
         ORDER BY created_at DESC
         LIMIT 500
       `);
-      return res.json({ ok: true, drivers: rows });
+      // devolvemos array directo (frontend ya sabe manejarlo)
+      return res.json(rows);
     }
 
     // ===== POST: create / update =====
@@ -61,18 +62,15 @@ async function handler(req, res) {
       const b = norm(req.body || {});
 
       if (!b.name) {
-        return res.status(400).json({ ok: false, error: "Missing name" });
+        return res.status(400).json({ error: "Missing name" });
       }
       const validPay = ["per_ride", "hourly", "revenue_share"];
       if (!validPay.includes(b.pay_mode)) {
-        return res.status(400).json({
-          ok: false,
-          error: "Invalid pay_mode (use: per_ride | hourly | revenue_share)",
-        });
+        return res.status(400).json({ error: "Invalid pay_mode" });
       }
       const validWork = ["24h", "custom"];
       if (!validWork.includes(b.work_mode)) {
-        return res.status(400).json({ ok: false, error: "Invalid work_mode" });
+        return res.status(400).json({ error: "Invalid work_mode" });
       }
 
       // ===== UPDATE por id =====
@@ -88,39 +86,39 @@ async function handler(req, res) {
                   active = $8,
                   updated_at = now()
             WHERE id::text = $1
-        RETURNING id::text AS id, name, email, phone, pay_mode, license_number, work_mode, active, created_at`,
+        RETURNING id::text AS id, name, email, phone, pay_mode, license_number, work_mode, active, created_at, updated_at`,
           [b.id, b.name, b.email, b.phone, b.pay_mode, b.license_number, b.work_mode, b.active]
         );
         if (!rows.length) {
-          return res.status(404).json({ ok: false, error: "Driver not found" });
+          return res.status(404).json({ error: "Driver not found" });
         }
-        return res.json({ ok: true, driver: rows[0] });
+        return res.json(rows[0]);
       }
 
       // ===== INSERT =====
       const { rows } = await pool.query(
         `INSERT INTO drivers (name, email, phone, pay_mode, license_number, work_mode, active)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id::text AS id, name, email, phone, pay_mode, license_number, work_mode, active, created_at`,
+      RETURNING id::text AS id, name, email, phone, pay_mode, license_number, work_mode, active, created_at, updated_at`,
         [b.name, b.email, b.phone, b.pay_mode, b.license_number, b.work_mode, b.active]
       );
-      return res.json({ ok: true, driver: rows[0] });
+      return res.json(rows[0]);
     }
 
     // ===== DELETE: by id =====
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
-      if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
+      if (!id) return res.status(400).json({ error: "Missing id" });
       const { rowCount } = await pool.query(`DELETE FROM drivers WHERE id::text = $1`, [id]);
-      if (!rowCount) return res.status(404).json({ ok: false, error: "Driver not found" });
+      if (!rowCount) return res.status(404).json({ error: "Driver not found" });
       return res.json({ ok: true });
     }
 
     res.setHeader("Allow", "GET,POST,DELETE");
-    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
+    return res.status(405).json({ error: "Method Not Allowed" });
   } catch (e) {
     console.error("[/api/admin/drivers] error:", e);
-    return res.status(500).json({ ok: false, error: e.message || "Internal error" });
+    return res.status(500).json({ error: e.message || "Internal error" });
   }
 }
 
