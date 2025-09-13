@@ -1085,8 +1085,6 @@ if (chkShowArchived){
   });
 }
 /* =================== DRIVERS =================== */
-let drvMsg;   // se asigna cuando el DOM está listo
-let drvRows;  // se asigna cuando el DOM está listo
 let allDrivers = [];
 const drvStat = {
   total:    document.getElementById('drvTotal'),
@@ -1161,7 +1159,7 @@ function renderDrivers(){
 }
 
   async function loadDrivers(){
-  if (!drvRows) drvRows = document.getElementById('drvRows'); // <- evita TDZ
+
   drvRows.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
   drvShowMsg('');
 
@@ -1331,11 +1329,6 @@ if (drvRows) drvRows.addEventListener('click', async (ev)=>{
 window.addEventListener('DOMContentLoaded', async ()=>{
   // 1) Cálculo inicial del sticky
   setTheadTop();
-
-  // 2) Inicializa referencias que se usan en Drivers (evita TDZ)
-  drvMsg  = document.getElementById('drvMsg');
-  drvRows = document.getElementById('drvRows');
-
   // 3) Token + primer render de Vehicles
   await ensureAdminToken();
   await loadVehicles();
