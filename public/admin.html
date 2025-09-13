@@ -78,6 +78,64 @@
     .btn{ height:30px; line-height:28px; padding:0 8px; font-size:12px }
   }
   section[hidden]{ display:none !important }
+  /* Drivers Table ajustes */
+#view-drivers table {
+  table-layout: fixed;  /* fuerza anchos consistentes */
+}
+
+#view-drivers th, 
+#view-drivers td {
+  font-size: 13px;         /* un poco más compacto */
+  white-space: nowrap;     /* evita que se corte en varias líneas */
+  overflow: hidden;
+  text-overflow: ellipsis; /* pone "..." si el texto es muy largo */
+}
+
+/* Columna Name más ancha */
+#view-drivers th:nth-child(1),
+#view-drivers td:nth-child(1) {
+  width: 18%;
+}
+
+/* Email */
+#view-drivers th:nth-child(2),
+#view-drivers td:nth-child(2) {
+  width: 20%;
+}
+
+/* Phone */
+#view-drivers th:nth-child(3),
+#view-drivers td:nth-child(3) {
+  width: 14%;
+  text-align: center;
+}
+
+/* Vehicle(s) */
+#view-drivers th:nth-child(4),
+#view-drivers td:nth-child(4) {
+  width: 20%;
+}
+
+/* Pay Mode */
+#view-drivers th:nth-child(5),
+#view-drivers td:nth-child(5) {
+  width: 10%;
+  text-align: center;
+}
+
+/* Active */
+#view-drivers th:nth-child(6),
+#view-drivers td:nth-child(6) {
+  width: 8%;
+  text-align: center;
+}
+
+/* Actions */
+#view-drivers th:nth-child(7),
+#view-drivers td:nth-child(7) {
+  width: 10%;
+  text-align: center;
+}
 </style>
 </head>
 <body>
