@@ -53,7 +53,7 @@ async function handler(req, res) {
         ORDER BY created_at DESC
         LIMIT 500
       `);
-      // devolvemos array directo (frontend ya sabe manejarlo)
+      // devolvemos array directo
       return res.json(rows);
     }
 
@@ -109,7 +109,10 @@ async function handler(req, res) {
     if (req.method === "DELETE") {
       const id = (req.query.id || "").toString();
       if (!id) return res.status(400).json({ error: "Missing id" });
-      const { rowCount } = await pool.query(`DELETE FROM drivers WHERE id::text = $1`, [id]);
+      const { rowCount } = await pool.query(
+        `DELETE FROM drivers WHERE id::text = $1`,
+        [id]
+      );
       if (!rowCount) return res.status(404).json({ error: "Driver not found" });
       return res.json({ ok: true });
     }
