@@ -37,7 +37,7 @@ async function handler(req, res) {
   try {
     // ===== GET: list =====
     if (req.method === "GET") {
-      const rows = await query(`
+      const { rows } = await query(`
         SELECT
           id::text AS id,
           name,
@@ -53,7 +53,7 @@ async function handler(req, res) {
         ORDER BY created_at DESC
         LIMIT 500
       `);
-      // devolvemos array directo
+      // devolvemos array directo (frontend lo espera así)
       return res.json(rows);
     }
 
