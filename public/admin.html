@@ -79,72 +79,50 @@
   }
   section[hidden]{ display:none !important }
 
-/* Drivers Table ajustes */
-#view-drivers table {
-  table-layout: fixed;
-}
+/* ===== DRIVERS TABLE — LAYOUT FINAL ===== */
+#view-drivers table{ table-layout: fixed; }
 
-#view-drivers th, 
-#view-drivers td {
-  font-size: 13px;
+/* Sólo las 6 primeras columnas usan ellipsis; la de acciones puede crecer y hacer wrap */
+#view-drivers td:not(:nth-child(7)),
+#view-drivers th:not(:nth-child(7)){
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
 }
 
-/* Name */
-#view-drivers th:nth-child(1),
-#view-drivers td:nth-child(1) {
-  width: 17%;
-}
+/* Anchos que suman ~100% y evitan solapes */
+#view-drivers th:nth-child(1), #view-drivers td:nth-child(1){ width:18%; } /* Name   */
+#view-drivers th:nth-child(2), #view-drivers td:nth-child(2){ width:20%; } /* Email  */
+#view-drivers th:nth-child(3), #view-drivers td:nth-child(3){ width:13%; text-align:center; } /* Phone */
+#view-drivers th:nth-child(4), #view-drivers td:nth-child(4){ width:21%; } /* Vehicle(s) */
+#view-drivers th:nth-child(5), #view-drivers td:nth-child(5){ width:10%; text-align:center; } /* Pay */
+#view-drivers th:nth-child(6), #view-drivers td:nth-child(6){ width:8%;  text-align:center; } /* Active */
+#view-drivers th:nth-child(7), #view-drivers td:nth-child(7){ width:10%; } /* Actions */
 
-/* Email */
-#view-drivers th:nth-child(2),
-#view-drivers td:nth-child(2) {
-  width: 18%;
-}
-
-/* Phone */
-#view-drivers th:nth-child(3),
-#view-drivers td:nth-child(3) {
-  width: 12%;
-  text-align: center;
-}
-
-/* Vehicle(s) */
-#view-drivers th:nth-child(4),
-#view-drivers td:nth-child(4) {
-  width: 20%;
-}
-
-/* Pay Mode */
-#view-drivers th:nth-child(5),
-#view-drivers td:nth-child(5) {
-  width: 10%;
-  text-align: center;
-}
-
-/* Active */
-#view-drivers th:nth-child(6),
-#view-drivers td:nth-child(6) {
-  width: 8%;
-  text-align: center;
-}
-
-/* Actions */
-#view-drivers th:nth-child(7),
-#view-drivers td:nth-child(7) {
-  width: 10%;
-  text-align: center;
-}
-  /* Drivers Table ajustes extra */
-#view-drivers td:nth-child(7){ overflow: visible; }
+/* Badges no se cortan */
 #view-drivers td:nth-child(5) .badge,
-#view-drivers td:nth-child(6) .badge {
-  display: inline-block;
-  white-space: nowrap;
+#view-drivers td:nth-child(6) .badge{
+  display:inline-block;
+  white-space:nowrap;
 }
-#view-drivers .btns{ gap:6px; }
+
+/* Columna de acciones: que no se corte y permita varias líneas de botones */
+#view-drivers td:nth-child(7){
+  white-space: normal;
+  overflow: visible;
+}
+#view-drivers td:nth-child(7) .btns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:flex-end;
+}
+#view-drivers td:nth-child(7) .btn{
+  height:28px;
+  line-height:26px;
+  padding:0 8px;
+}
 </style>
 </head>
 <body>
