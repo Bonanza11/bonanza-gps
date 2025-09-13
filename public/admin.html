@@ -1264,7 +1264,6 @@ drvBtnSave.addEventListener('click', async ()=>{
   }catch(e){ drvFormErr.textContent = e.message || 'Error saving.'; }
   finally{ drvBtnSave.disabled=false; }
 });
-if (!drvRows) drvRows = document.getElementById('drvRows');
 if (drvRows) drvRows.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('button[data-action]'); if(!btn) return;
   const tr  = btn.closest('tr[data-id]'); if(!tr) return;
