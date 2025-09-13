@@ -1216,28 +1216,19 @@ if (drvRows) drvRows.addEventListener('click', async (ev)=>{
 
   if (a==='edit'){ openEditDriver(id); return; }
 
-  if (a === 'delete') {
-    const d = allDrivers.find(x => x.id === id); if (!d) return;
-    if (!confirm(`Archive driver "${d.name}"? You can restore later.`)) return;
-    try {
-      await api(API_DRV, 'POST', {
-        id: d.id,
-        name: d.name,
-        email: d.email || null,
-        phone: d.phone || null,
-        license_number: d.license_number || null,
-        work_mode: d.work_mode || '24h',
-        pay_mode: (d.pay_mode || 'per_ride'),
-        active: false
-      });
-      d.active = false;
-      renderDrivers();
-      drvShowMsg('Archived (set to OFF).');
-    } catch (e) {
-      drvShowMsg('Error archiving: ' + (e.message || e), false);
-    }
-    return;
+ if (a === 'delete') {
+  const d = allDrivers.find(x => x.id === id); if (!d) return;
+  if (!confirm(`⚠️ Permanently delete driver "${d.name}"? This cannot be undone.`)) return;
+  try {
+    await api(`${API_DRV}?id=${encodeURIComponent(id)}`, 'DELETE');
+    allDrivers = allDrivers.filter(x => x.id !== id);
+    renderDrivers();
+    drvShowMsg('Driver permanently deleted.');
+  } catch (e) {
+    drvShowMsg('Error deleting: ' + (e.message || e), false);
   }
+  return;
+}
 
   if (a === 'toggle'){
     const d = allDrivers.find(x=>x.id===id); if(!d) return;
