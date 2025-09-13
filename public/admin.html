@@ -162,18 +162,26 @@
 
     <div id="vehMsg" class="msg"></div>
     <div id="stickySpacerVehicles"></div>
-    <table role="grid" aria-label="Vehicles">
-  <thead>
+    <colgroup>
+  <col style="width:18%">
+  <col style="width:20%">
+  <col style="width:13%">
+  <col style="width:21%">
+  <col style="width:10%">
+  <col style="width:8%">
+  <col style="width:10%">
+</colgroup>
+<thead>
   <tr>
-      <th style="width:120px">Plate</th>
-      <th>Driver</th>
-      <th style="width:90px">Type</th>
-      <th style="width:80px">Year</th>
-      <th>Model</th>
-      <th style="width:110px">Active</th>
-      <th class="right" style="width:220px">Actions</th>
-    </tr>
-  </thead>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Phone</th>
+    <th>Vehicle(s)</th>
+    <th>Pay Mode</th>
+    <th>Active</th>
+    <th class="right">Actions</th>
+  </tr>
+</thead>
   <tbody id="vehRows">
     <tr><td colspan="7">Loading…</td></tr>
   </tbody>
@@ -750,7 +758,7 @@ function renderVehicles(){
         <td>${v.year ?? ''}</td>
         <td>${escapeHtml(v.model || '')}</td>
         <td><span class="badge ${on?'on':'off'}">${on?'ACTIVE':'OFF'}</span></td>
-        <td class="right actions">
+        <td class="right actions actions-cell">
           <div class="btns">
             <button class="btn btn-edit" data-action="edit">Edit</button>
            <button class="btn btn-danger" data-action="delete">Archive</button>
