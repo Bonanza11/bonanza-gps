@@ -539,11 +539,6 @@ const API_DRV   = '/api/admin/drivers';
 const API_DRV_ASSIGN = '/api/drivers/assignments';
 const API_DRV_NOTIFY = '/api/drivers/notify';
 document.getElementById('apiVehInfo').textContent = API_VEH;
-  // Refs usadas por render/loads (evita TDZ)
-const drvRows = document.getElementById('drvRows');
-const drvMsg  = document.getElementById('drvMsg');
-const cliRows = document.getElementById('cliRows');
-const resRows = document.getElementById('resRows');
 
 /* =================== STICKY TOP =================== */
 function setTheadTop(){
@@ -1005,7 +1000,7 @@ cliBtnSave.addEventListener('click', async ()=>{
 });
 
 /* =================== RESERVATIONS =================== */
-const resMsg  = document.getElementById('resMsg');
+
 const resRows = document.getElementById('resRows');
 function resShowMsg(t, ok=true){ resMsg.textContent=t||''; resMsg.style.color = ok?'var(--muted)':'var(--bad)'; }
 function badgeStatus(s){
