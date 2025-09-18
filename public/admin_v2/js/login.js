@@ -1,31 +1,55 @@
-(() => {
-  const $ = (sel) => document.querySelector(sel);
-  const adminKeyInput = $('#adminKey');
-  const msg = $('#msg');
+// Lee/guarda clave en localStorage y valida con /api/ping?key=...
 
-  $('#btnLogin').addEventListener('click', async () => {
-    const key = adminKeyInput.value.trim();
-    if (!key) {
-      msg.style.display = 'block';
-      msg.textContent = 'Ingresa una clave';
-      return;
+const $ = (sel) => document.querySelector(sel);
+const adminKeyInput = $('#adminKey');
+const form = $('#loginForm');
+const btn = $('#submitBtn');
+const msg = $('#msg');
+const toggle = $('#togglePw');
+
+// Si ya había una key guardada, la mostramos para comodidad
+const saved = localStorage.getItem('adminKey');
+if (saved) adminKeyInput.value = saved;
+
+toggle?.addEventListener('change', () => {
+  adminKeyInput.type = toggle.checked ? 'text' : 'password';
+  adminKeyInput.focus();
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const key = adminKeyInput.value.trim();
+  if (!key) return;
+
+  msg.textContent = 'Verificando clave...';
+  msg.className = 'msg';
+  btn.disabled = true;
+
+  try {
+    // Valida con tu endpoint de salud que revisa ADMIN_KEY
+    const url = `/api/ping?key=${encodeURIComponent(key)}`;
+    const res = await fetch(url);
+    let ok = false;
+
+    if (res.ok) {
+      // /api/ping devuelve { ok: true, db: true } si pasa
+      const data = await res.json().catch(() => ({}));
+      ok = !!data?.ok;
     }
-    // Guardamos y probamos con /api/ping?key=
-    try {
-      const r = await fetch(`/api/ping?key=${encodeURIComponent(key)}`);
-      if (!r.ok) throw new Error('Clave inválida');
-      const js = await r.json();
-      if (!js.ok) throw new Error('Clave inválida');
+
+    if (ok) {
       localStorage.setItem('adminKey', key);
-      location.href = './index.html';
-    } catch (e) {
-      msg.style.display = 'block';
-      msg.textContent = 'Clave inválida o API caída';
+      msg.textContent = 'Acceso concedido. Entrando...';
+      msg.className = 'msg ok';
+      // Redirige al panel principal
+      window.location.href = '/admin_v2/index.html';
+    } else {
+      throw new Error('Clave inválida');
     }
-  });
-
-  // Enter para enviar
-  adminKeyInput.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter') $('#btnLogin').click();
-  });
-})();
+  } catch (err) {
+    msg.textContent = 'Clave inválida o servidor no disponible.';
+    msg.className = 'msg error';
+  } finally {
+    btn.disabled = false;
+  }
+});
