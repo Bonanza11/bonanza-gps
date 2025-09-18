@@ -1,80 +1,116 @@
-/* ===========================================================
-   Bonanza Transportation - HQ Login JS
-   Archivo: public/admin_v2/js/login.js
-   - Valida conectividad / clave de admin contra /api/ping
-   - Guarda token/clave local y redirige a /admin_v2/index.html
-   =========================================================== */
-
-(function () {
-  const $ = (q) => document.querySelector(q);
-  const form = $('#hqLoginForm');
-  const msg  = $('#hqMsg');
-  const pass = $('#hqPass');
-  const remember = $('#hqRemember');
-  const toggleBtn = $('#togglePass');
-
-  // Prefill desde localStorage (si lo quisieras)
-  try {
-    const savedUser = localStorage.getItem('HQ_USER') || '';
-    if (savedUser) $('#hqUser').value = savedUser;
-
-    const savedRemember = localStorage.getItem('HQ_REMEMBER') === '1';
-    remember.checked = savedRemember;
-  } catch (_) {}
-
-  // Mostrar/Ocultar password
-  toggleBtn?.addEventListener('click', () => {
-    const show = pass.type === 'password';
-    pass.type = show ? 'text' : 'password';
-    toggleBtn.textContent = show ? 'hide' : 'show';
-  });
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    msg.textContent = '';
-
-    // En esta versión el formulario es “cosmético”; la autorización real
-    // se hace con la ADMIN_KEY (guardada de una sesión anterior o pedida luego).
-    // Si quieres validar user/pass de verdad, aquí llamarías a /api/auth/login.
-    const username = $('#hqUser').value.trim();
-    const password = $('#hqPass').value; // no se usa aún
-
-    // Persistir preferencia de "remember me"
-    try {
-      localStorage.setItem('HQ_USER', username);
-      localStorage.setItem('HQ_REMEMBER', remember.checked ? '1' : '0');
-    } catch (_) {}
-
-    // 1) Obtener/confirmar ADMIN_KEY
-    let key = null;
-    try { key = localStorage.getItem('ADMIN_KEY') || ''; } catch (_) {}
-
-    if (!key) {
-      key = prompt('Enter Admin Key (x-admin-key):') || '';
+<!-- ===========================================================
+     Bonanza Transportation - HQ Login
+     Archivo: public/admin_v2/login.html
+     =========================================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bonanza HQ – Sign in</title>
+  <link rel="icon" href="/images/bonanza-logo.PNG"><!-- ojo: .PNG en mayúsculas -->
+  <link rel="stylesheet" href="/admin_v2/css/admin.css">
+  <style>
+    /* Estilos específicos del login (el resto vive en admin.css) */
+    .hq-login-wrap{
+      margin:0; height:100vh; display:flex; justify-content:center; align-items:center;
+      background:linear-gradient(160deg,#0b1220,#0f172a 40%,#0b1220);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial; color:#e5e7eb;
+      padding:16px;
     }
-    if (!key) {
-      msg.textContent = 'Missing Admin Key.';
-      return;
+    .hq-card{
+      display:flex; flex-wrap:wrap; gap:0;
+      max-width:980px; width:95%;
+      border-radius:14px; overflow:hidden;
+      background:rgba(17,24,39,.95); border:1px solid #1f2937;
+      box-shadow:0 18px 46px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
     }
+    .hq-left, .hq-right{ flex:1 1 50%; padding:28px 32px; }
+    .hq-left{ background:#0b1220; display:flex; flex-direction:column; justify-content:center; }
+    .hq-brand{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+    .hq-brand img{ width:72px; height:72px; object-fit:contain; border-radius:8px; background:#0f172a; }
+    .hq-title{ font-size:22px; font-weight:800; margin:0; letter-spacing:.2px; }
+    .hq-sub{ color:#9fb3c8; margin:4px 0 18px; font-size:14px; }
+    .hq-bullets{ list-style:none; padding:0; margin:0 0 18px; color:#e5e7eb; }
+    .hq-bullets li{ margin:8px 0; font-size:14px; display:flex; align-items:center; gap:8px; }
+    .hq-bullets li::before{ content:"•"; color:#22c55e; }
+    .hq-support{ margin-top:8px; font-size:14px; color:#22c55e; }
 
-    // 2) Verificar contra /api/ping
-    try {
-      const url = `/api/ping?key=${encodeURIComponent(key)}`;
-      const r = await fetch(url);
-      // Si el endpoint devuelve JSON {ok:true, db:true}
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data?.ok) {
-        msg.textContent = 'Invalid Admin Key or API error.';
-        return;
-      }
-    } catch (err) {
-      console.error(err);
-      msg.textContent = 'server_error';
-      return;
+    .hq-right h2{ margin:0 0 18px; font-size:18px; }
+    .hq-label{ display:block; margin-bottom:6px; font-size:13px; color:#cbd5e1; }
+    .hq-input{
+      width:100%; padding:12px; border-radius:10px; border:1px solid #1f2937;
+      background:#0f172a; color:#e5e7eb; margin-bottom:12px; outline:none;
     }
+    .hq-input:focus{ border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.25); }
+    .hq-row{ display:flex; align-items:center; gap:10px; margin:8px 0 14px; color:#cbd5e1; font-size:14px; }
+    .hq-btn{
+      width:100%; padding:12px; border:none; border-radius:10px;
+      background:linear-gradient(135deg,#f59e0b,#f97316); color:white; font-weight:700; cursor:pointer;
+      transition:transform .15s, filter .15s;
+    }
+    .hq-btn:hover{ transform:translateY(-1px); filter:saturate(110%); }
+    .hq-error{ margin-top:10px; color:#f87171; font-size:14px; }
+    .hq-notice{ margin-top:12px; font-size:12px; color:#fca5a5; text-align:center; }
 
-    // 3) Guardar y redirigir al panel
-    try { localStorage.setItem('ADMIN_KEY', key); } catch (_) {}
-    location.href = '/admin_v2/index.html';
-  });
-})();
+    @media (max-width: 860px){
+      .hq-left{ flex:1 1 100%; }
+      .hq-right{ flex:1 1 100%; border-top:1px solid #1f2937; }
+    }
+  </style>
+</head>
+<body class="hq-login-wrap">
+  <div class="hq-card">
+    <!-- Panel izquierdo -->
+    <section class="hq-left">
+      <div class="hq-brand">
+        <img src="/images/bonanza-logo.PNG" alt="Bonanza Logo">
+        <div>
+          <h1 class="hq-title">Bonanza Transportation</h1>
+          <div class="hq-sub">Headquarters — Internal Access</div>
+        </div>
+      </div>
+      <ul class="hq-bullets">
+        <li>Real-time fleet & reservations</li>
+        <li>Drivers & seasonal rules</li>
+        <li>Stripe-secured dashboards</li>
+      </ul>
+      <div class="hq-support">
+        Support: (786) 683-5128 — bonanzatransportation1@outlook.com
+      </div>
+    </section>
+
+    <!-- Panel derecho -->
+    <section class="hq-right">
+      <h2>Sign in to HQ</h2>
+      <form id="hqLoginForm" autocomplete="on">
+        <label for="hqUser" class="hq-label">Username</label>
+        <input id="hqUser" name="username" class="hq-input" placeholder="Enter username" value="" />
+
+        <label for="hqPass" class="hq-label">Password</label>
+        <div style="position:relative">
+          <input id="hqPass" name="password" type="password" class="hq-input" placeholder="••••••••" />
+          <button type="button" id="togglePass"
+                  style="position:absolute; right:10px; top:8px; background:#0b1220; border:1px solid #223047; padding:6px 8px; border-radius:8px; color:#cbd5e1; cursor:pointer;">
+            show
+          </button>
+        </div>
+
+        <div class="hq-row">
+          <label class="hq-row" style="cursor:pointer">
+            <input type="checkbox" id="hqRemember"> Remember me
+          </label>
+        </div>
+
+        <button type="submit" class="hq-btn">Sign In</button>
+        <div id="hqMsg" class="hq-error"></div>
+        <div class="hq-notice">
+          Notice: Only authorized staff may access this system. Activity is monitored and logged.
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script src="/admin_v2/js/login.js" defer></script>
+</body>
+</html>
