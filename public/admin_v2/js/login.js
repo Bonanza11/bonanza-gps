@@ -1,55 +1,80 @@
-// Lee/guarda clave en localStorage y valida con /api/ping?key=...
+/* ===========================================================
+   Bonanza Transportation - HQ Login JS
+   Archivo: public/admin_v2/js/login.js
+   - Valida conectividad / clave de admin contra /api/ping
+   - Guarda token/clave local y redirige a /admin_v2/index.html
+   =========================================================== */
 
-const $ = (sel) => document.querySelector(sel);
-const adminKeyInput = $('#adminKey');
-const form = $('#loginForm');
-const btn = $('#submitBtn');
-const msg = $('#msg');
-const toggle = $('#togglePw');
+(function () {
+  const $ = (q) => document.querySelector(q);
+  const form = $('#hqLoginForm');
+  const msg  = $('#hqMsg');
+  const pass = $('#hqPass');
+  const remember = $('#hqRemember');
+  const toggleBtn = $('#togglePass');
 
-// Si ya había una key guardada, la mostramos para comodidad
-const saved = localStorage.getItem('adminKey');
-if (saved) adminKeyInput.value = saved;
-
-toggle?.addEventListener('change', () => {
-  adminKeyInput.type = toggle.checked ? 'text' : 'password';
-  adminKeyInput.focus();
-});
-
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const key = adminKeyInput.value.trim();
-  if (!key) return;
-
-  msg.textContent = 'Verificando clave...';
-  msg.className = 'msg';
-  btn.disabled = true;
-
+  // Prefill desde localStorage (si lo quisieras)
   try {
-    // Valida con tu endpoint de salud que revisa ADMIN_KEY
-    const url = `/api/ping?key=${encodeURIComponent(key)}`;
-    const res = await fetch(url);
-    let ok = false;
+    const savedUser = localStorage.getItem('HQ_USER') || '';
+    if (savedUser) $('#hqUser').value = savedUser;
 
-    if (res.ok) {
-      // /api/ping devuelve { ok: true, db: true } si pasa
-      const data = await res.json().catch(() => ({}));
-      ok = !!data?.ok;
+    const savedRemember = localStorage.getItem('HQ_REMEMBER') === '1';
+    remember.checked = savedRemember;
+  } catch (_) {}
+
+  // Mostrar/Ocultar password
+  toggleBtn?.addEventListener('click', () => {
+    const show = pass.type === 'password';
+    pass.type = show ? 'text' : 'password';
+    toggleBtn.textContent = show ? 'hide' : 'show';
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.textContent = '';
+
+    // En esta versión el formulario es “cosmético”; la autorización real
+    // se hace con la ADMIN_KEY (guardada de una sesión anterior o pedida luego).
+    // Si quieres validar user/pass de verdad, aquí llamarías a /api/auth/login.
+    const username = $('#hqUser').value.trim();
+    const password = $('#hqPass').value; // no se usa aún
+
+    // Persistir preferencia de "remember me"
+    try {
+      localStorage.setItem('HQ_USER', username);
+      localStorage.setItem('HQ_REMEMBER', remember.checked ? '1' : '0');
+    } catch (_) {}
+
+    // 1) Obtener/confirmar ADMIN_KEY
+    let key = null;
+    try { key = localStorage.getItem('ADMIN_KEY') || ''; } catch (_) {}
+
+    if (!key) {
+      key = prompt('Enter Admin Key (x-admin-key):') || '';
+    }
+    if (!key) {
+      msg.textContent = 'Missing Admin Key.';
+      return;
     }
 
-    if (ok) {
-      localStorage.setItem('adminKey', key);
-      msg.textContent = 'Acceso concedido. Entrando...';
-      msg.className = 'msg ok';
-      // Redirige al panel principal
-      window.location.href = '/admin_v2/index.html';
-    } else {
-      throw new Error('Clave inválida');
+    // 2) Verificar contra /api/ping
+    try {
+      const url = `/api/ping?key=${encodeURIComponent(key)}`;
+      const r = await fetch(url);
+      // Si el endpoint devuelve JSON {ok:true, db:true}
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data?.ok) {
+        msg.textContent = 'Invalid Admin Key or API error.';
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      msg.textContent = 'server_error';
+      return;
     }
-  } catch (err) {
-    msg.textContent = 'Clave inválida o servidor no disponible.';
-    msg.className = 'msg error';
-  } finally {
-    btn.disabled = false;
-  }
-});
+
+    // 3) Guardar y redirigir al panel
+    try { localStorage.setItem('ADMIN_KEY', key); } catch (_) {}
+    location.href = '/admin_v2/index.html';
+  });
+})();
