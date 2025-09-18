@@ -1,230 +1,80 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <!-- ===========================================================
-       Bonanza Transportation — HQ Login
-       Archivo: public/admin_v2/login.html
-       =========================================================== -->
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bonanza HQ – Sign in</title>
-  <link rel="icon" href="/images/bonanza-logo.png">
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial;
-      background: radial-gradient(circle at top left, #0b1220, #0f172a 60%, #0b1220);
-      color: #e5e7eb;
+/* ===========================================================
+   Bonanza Transportation - HQ Login JS
+   Archivo: public/admin_v2/js/login.js
+   - Valida conectividad / clave de admin contra /api/ping
+   - Guarda token/clave local y redirige a /admin_v2/index.html
+   =========================================================== */
+
+(function () {
+  const $ = (q) => document.querySelector(q);
+  const form = $('#hqLoginForm');
+  const msg  = $('#hqMsg');
+  const pass = $('#hqPass');
+  const remember = $('#hqRemember');
+  const toggleBtn = $('#togglePass');
+
+  // Prefill desde localStorage (si lo quisieras)
+  try {
+    const savedUser = localStorage.getItem('HQ_USER') || '';
+    if (savedUser) $('#hqUser').value = savedUser;
+
+    const savedRemember = localStorage.getItem('HQ_REMEMBER') === '1';
+    remember.checked = savedRemember;
+  } catch (_) {}
+
+  // Mostrar/Ocultar password
+  toggleBtn?.addEventListener('click', () => {
+    const show = pass.type === 'password';
+    pass.type = show ? 'text' : 'password';
+    toggleBtn.textContent = show ? 'hide' : 'show';
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.textContent = '';
+
+    // En esta versión el formulario es “cosmético”; la autorización real
+    // se hace con la ADMIN_KEY (guardada de una sesión anterior o pedida luego).
+    // Si quieres validar user/pass de verdad, aquí llamarías a /api/auth/login.
+    const username = $('#hqUser').value.trim();
+    const password = $('#hqPass').value; // no se usa aún
+
+    // Persistir preferencia de "remember me"
+    try {
+      localStorage.setItem('HQ_USER', username);
+      localStorage.setItem('HQ_REMEMBER', remember.checked ? '1' : '0');
+    } catch (_) {}
+
+    // 1) Obtener/confirmar ADMIN_KEY
+    let key = null;
+    try { key = localStorage.getItem('ADMIN_KEY') || ''; } catch (_) {}
+
+    if (!key) {
+      key = prompt('Enter Admin Key (x-admin-key):') || '';
+    }
+    if (!key) {
+      msg.textContent = 'Missing Admin Key.';
+      return;
     }
 
-    .login-container {
-      display: flex;
-      flex-wrap: wrap;
-      max-width: 900px;
-      width: 95%;
-      border-radius: 16px;
-      overflow: hidden;
-      background: rgba(17,24,39,0.95);
-      border: 1px solid #1f2937;
-      box-shadow: 0 10px 30px rgba(0,0,0,.6);
-    }
-
-    .login-left, .login-right {
-      flex: 1 1 50%;
-      padding: 32px;
-    }
-
-    .login-left {
-      background: #0b1220;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .login-left img {
-      width: 100px;
-      margin-bottom: 16px;
-    }
-
-    .login-left h1 {
-      font-size: 22px;
-      margin: 0;
-      font-weight: 700;
-    }
-
-    .login-left p {
-      margin: 4px 0 18px;
-      color: #94a3b8;
-    }
-
-    .login-left ul {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 16px;
-    }
-
-    .login-left li {
-      margin: 8px 0;
-      color: #e5e7eb;
-      font-size: 14px;
-    }
-
-    .login-left .support {
-      margin-top: 16px;
-      font-size: 14px;
-      color: #22c55e;
-    }
-
-    .login-right h2 {
-      margin: 0 0 18px;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: #cbd5e1;
-    }
-
-    .input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #1f2937;
-      background: #0f172a;
-      color: #e5e7eb;
-      margin-bottom: 14px;
-      outline: none;
-      font-size: 14px;
-    }
-
-    .input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,.25);
-    }
-
-    .checkbox {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
-      font-size: 14px;
-      color: #cbd5e1;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #f59e0b, #f97316);
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform .15s;
-    }
-
-    .btn:hover { transform: translateY(-1px); }
-
-    .error {
-      margin-top: 10px;
-      color: #f87171;
-      font-size: 14px;
-    }
-
-    .notice {
-      margin-top: 16px;
-      font-size: 12px;
-      color: #fca5a5;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <!-- Left panel -->
-    <div class="login-left">
-      <img src="/images/bonanza-logo.png" alt="Bonanza Logo">
-      <h1>Bonanza Transportation</h1>
-      <p>Headquarters — Internal Access</p>
-      <ul>
-        <li>• Real-time fleet & reservations</li>
-        <li>• Drivers & seasonal rules</li>
-        <li>• Stripe-secured dashboards</li>
-      </ul>
-      <div class="support">
-        Support: (786) 683-5128 — bonanzatransportation1@outlook.com
-      </div>
-    </div>
-
-    <!-- Right panel -->
-    <div class="login-right">
-      <h2>Sign in to HQ</h2>
-      <form id="loginForm">
-        <label for="username">Username</label>
-        <input id="username" name="username" class="input" placeholder="Enter username" required>
-
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" class="input" placeholder="••••••••" required>
-
-        <div class="checkbox">
-          <input type="checkbox" id="remember" />
-          <label for="remember">Remember me</label>
-        </div>
-
-        <button type="submit" class="btn">Sign In</button>
-
-        <div id="msg" class="error"></div>
-
-        <div class="notice">
-          Notice: Only authorized staff may access this system. Activity is monitored and logged.
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    const form = document.getElementById('loginForm');
-    const msg = document.getElementById('msg');
-    const userEl = document.getElementById('username');
-    const passEl = document.getElementById('password');
-    const rememberEl = document.getElementById('remember');
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      msg.textContent = "";
-
-      const username = userEl.value.trim();
-      const password = passEl.value;
-      const remember = rememberEl.checked;
-
-      try {
-        const r = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json' },
-          body: JSON.stringify({ username, password, remember })
-        });
-        const j = await r.json();
-
-        if (!r.ok || !j.ok) {
-          msg.textContent = (j && j.error) || 'Login failed';
-          return;
-        }
-
-        // Guardamos el token
-        localStorage.setItem('bonanza_admin_jwt', j.token);
-        // Redirigir al panel principal
-        location.href = '/admin_v2/index.html';
-      } catch (err) {
-        msg.textContent = 'Server error';
+    // 2) Verificar contra /api/ping
+    try {
+      const url = `/api/ping?key=${encodeURIComponent(key)}`;
+      const r = await fetch(url);
+      // Si el endpoint devuelve JSON {ok:true, db:true}
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data?.ok) {
+        msg.textContent = 'Invalid Admin Key or API error.';
+        return;
       }
-    });
-  </script>
-</body>
-</html>
+    } catch (err) {
+      console.error(err);
+      msg.textContent = 'server_error';
+      return;
+    }
+
+    // 3) Guardar y redirigir al panel
+    try { localStorage.setItem('ADMIN_KEY', key); } catch (_) {}
+    location.href = '/admin_v2/index.html';
+  });
+})();
