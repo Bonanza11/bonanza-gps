@@ -1,78 +1,105 @@
 // /api/admin/blocks.js
-import { pool } from "../_db.js";
+import { neon } from '@neondatabase/serverless';
+import { requireAuth } from '../_lib/guard.js';
 
-function okKey(req){
-  const hdr = req.headers["x-admin-key"] || req.headers["X-Admin-Key"];
-  const env = process.env.ADMIN_KEY || "supersecreto123";
-  return hdr && String(hdr) === String(env);
-}
+// Aceptamos solo estos tipos
+const KINDS = new Set(['block', 'slc_exception']);
 
-function norm(b={}){
-  const kind = String(b.kind||'block').toLowerCase();
+function norm(body = {}) {
+  const kindRaw = String(body.kind || 'block').toLowerCase();
+  const kind = KINDS.has(kindRaw) ? kindRaw : 'block';
+
+  const starts_on = body.starts_on ? String(body.starts_on).slice(0, 10) : null; // YYYY-MM-DD
+  const ends_on   = body.ends_on   ? String(body.ends_on).slice(0, 10)   : null;
+
   return {
-    id: b.id ? String(b.id) : null,
-    kind: (kind==='slc_exception' ? 'slc_exception' : 'block'),
-    starts_on: b.starts_on ? String(b.starts_on) : null,
-    ends_on: b.ends_on ? String(b.ends_on) : null,
-    note: (b.note||'').trim() || null,
-    active: !!b.active
+    id: body.id ? String(body.id) : null,
+    kind,
+    starts_on,
+    ends_on,
+    note: (body.note || '').trim() || null,
+    active: Boolean(body.active),
   };
 }
 
-export default async function handler(req,res){
-  try{
-    if(!okKey(req)) return res.status(401).json({ok:false, error:'Unauthorized'});
+function validISO(dateStr) {
+  // formato YYYY-MM-DD
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateStr || '');
+}
 
-    if (req.method === 'GET'){
-      const { rows } = await pool.query(
-        `select id::text, lower(kind) as kind, starts_on, ends_on, note, active, created_at
-           from blocks
-          order by starts_on desc, id desc
-          limit 500`
-      );
-      return res.json({ ok:true, blocks: rows });
+async function handler(req, res) {
+  try {
+    const sql = neon(process.env.DATABASE_URL);
+
+    if (req.method === 'GET') {
+      const rows = await sql`
+        SELECT id::text,
+               lower(kind) AS kind,
+               starts_on,
+               ends_on,
+               note,
+               active,
+               created_at
+          FROM blocks
+         ORDER BY starts_on DESC, id DESC
+         LIMIT 500;
+      `;
+      return res.status(200).json({ ok: true, blocks: rows });
     }
 
-    if (req.method === 'POST'){
-      const b = norm(req.body||{});
+    if (req.method === 'POST') {
+      const b = norm(req.body || {});
       if (!b.starts_on || !b.ends_on)
-        return res.status(400).json({ ok:false, error:'Missing dates' });
+        return res.status(400).json({ ok:false, error:'missing_dates' });
 
-      // update
-      if (b.id){
-        const { rows } = await pool.query(
-          `update blocks
-              set kind=$2, starts_on=$3, ends_on=$4, note=$5, active=$6
-            where id::text=$1
-          returning id::text, lower(kind) as kind, starts_on, ends_on, note, active, created_at`,
-          [b.id, b.kind, b.starts_on, b.ends_on, b.note, b.active]
-        );
-        if(!rows.length) return res.status(404).json({ ok:false, error:'Not found' });
-        return res.json({ ok:true, block: rows[0] });
+      if (!validISO(b.starts_on) || !validISO(b.ends_on))
+        return res.status(400).json({ ok:false, error:'invalid_date_format', hint:'YYYY-MM-DD' });
+
+      if (b.starts_on > b.ends_on)
+        return res.status(400).json({ ok:false, error:'starts_after_ends' });
+
+      // UPDATE
+      if (b.id) {
+        const rows = await sql`
+          UPDATE blocks
+             SET kind      = ${b.kind},
+                 starts_on = ${b.starts_on},
+                 ends_on   = ${b.ends_on},
+                 note      = ${b.note},
+                 active    = ${b.active},
+                 updated_at= now()
+           WHERE id::text  = ${b.id}
+       RETURNING id::text, lower(kind) AS kind, starts_on, ends_on, note, active, created_at;
+        `;
+        if (!rows.length) return res.status(404).json({ ok:false, error:'not_found' });
+        return res.status(200).json({ ok:true, block: rows[0] });
       }
 
-      // insert
-      const { rows } = await pool.query(
-        `insert into blocks (kind, starts_on, ends_on, note, active)
-         values ($1,$2,$3,$4,$5)
-         returning id::text, lower(kind) as kind, starts_on, ends_on, note, active, created_at`,
-        [b.kind, b.starts_on, b.ends_on, b.note, b.active]
-      );
-      return res.json({ ok:true, block: rows[0] });
+      // INSERT
+      const rows = await sql`
+        INSERT INTO blocks (kind, starts_on, ends_on, note, active)
+        VALUES (${b.kind}, ${b.starts_on}, ${b.ends_on}, ${b.note}, ${b.active})
+        RETURNING id::text, lower(kind) AS kind, starts_on, ends_on, note, active, created_at;
+      `;
+      return res.status(201).json({ ok:true, block: rows[0] });
     }
 
-    if (req.method === 'DELETE'){
-      const id = (req.query.id||'').toString();
-      if(!id) return res.status(400).json({ ok:false, error:'Missing id' });
-      const r = await pool.query(`delete from blocks where id::text=$1`, [id]);
-      if (!r.rowCount) return res.status(404).json({ ok:false, error:'Not found' });
-      return res.json({ ok:true });
+    if (req.method === 'DELETE') {
+      const id = (req.query.id || '').toString();
+      if (!id) return res.status(400).json({ ok:false, error:'missing_id' });
+
+      const r = await sql`DELETE FROM blocks WHERE id::text = ${id};`;
+      if (!r.count) return res.status(404).json({ ok:false, error:'not_found' });
+      return res.status(200).json({ ok:true });
     }
 
-    res.setHeader('Allow','GET,POST,DELETE');
-    return res.status(405).json({ ok:false, error:'Method Not Allowed' });
-  }catch(e){
+    res.setHeader('Allow', 'GET, POST, DELETE');
+    return res.status(405).json({ ok:false, error:'method_not_allowed' });
+  } catch (e) {
     console.error('[/api/admin/blocks] error:', e);
-    return res.status(500).json({ ok:false, error:e.message||'Internal error' });
+    return res.status(500).json({ ok:false, error:'server_error' });
   }
 }
+
+// 👇 Solo OWNER / ADMIN pueden gestionar bloqueos
+export default requireAuth(['OWNER','ADMIN'])(handler);
