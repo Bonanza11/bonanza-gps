@@ -1,25 +1,23 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- ===========================================================
+       Bonanza Transportation — HQ Login
+       Archivo: public/admin_v2/login.html
+       =========================================================== -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bonanza HQ – Sign in</title>
   <link rel="icon" href="/images/bonanza-logo.png">
-  <link rel="stylesheet" href="/admin_v2/css/admin.css">
   <style>
-    /* ===========================================================
-       Bonanza Transportation - HQ Login
-       Archivo: admin_v2/login.html
-       =========================================================== */
-
     body {
       margin: 0;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: linear-gradient(160deg,#0b1220,#0f172a 40%,#0b1220);
       font-family: system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial;
+      background: radial-gradient(circle at top left, #0b1220, #0f172a 60%, #0b1220);
       color: #e5e7eb;
     }
 
@@ -28,7 +26,7 @@
       flex-wrap: wrap;
       max-width: 900px;
       width: 95%;
-      border-radius: 14px;
+      border-radius: 16px;
       overflow: hidden;
       background: rgba(17,24,39,0.95);
       border: 1px solid #1f2937;
@@ -48,13 +46,14 @@
     }
 
     .login-left img {
-      width: 80px;
+      width: 100px;
       margin-bottom: 16px;
     }
 
     .login-left h1 {
       font-size: 22px;
       margin: 0;
+      font-weight: 700;
     }
 
     .login-left p {
@@ -83,6 +82,7 @@
     .login-right h2 {
       margin: 0 0 18px;
       font-size: 18px;
+      font-weight: 600;
     }
 
     label {
@@ -101,6 +101,7 @@
       color: #e5e7eb;
       margin-bottom: 14px;
       outline: none;
+      font-size: 14px;
     }
 
     .input:focus {
@@ -191,9 +192,38 @@
   <script>
     const form = document.getElementById('loginForm');
     const msg = document.getElementById('msg');
-    form.addEventListener('submit', e => {
+    const userEl = document.getElementById('username');
+    const passEl = document.getElementById('password');
+    const rememberEl = document.getElementById('remember');
+
+    form.addEventListener('submit', async e => {
       e.preventDefault();
-      msg.textContent = "server_error"; // aquí luego conectamos API
+      msg.textContent = "";
+
+      const username = userEl.value.trim();
+      const password = passEl.value;
+      const remember = rememberEl.checked;
+
+      try {
+        const r = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ username, password, remember })
+        });
+        const j = await r.json();
+
+        if (!r.ok || !j.ok) {
+          msg.textContent = (j && j.error) || 'Login failed';
+          return;
+        }
+
+        // Guardamos el token
+        localStorage.setItem('bonanza_admin_jwt', j.token);
+        // Redirigir al panel principal
+        location.href = '/admin_v2/index.html';
+      } catch (err) {
+        msg.textContent = 'Server error';
+      }
     });
   </script>
 </body>
