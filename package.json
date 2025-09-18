@@ -1,26 +1,10 @@
 {
-  "name": "bonanza-gps",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": "20.x"
-  },
-  "scripts": {
-    "dev": "vercel dev",
-    "start": "node server.js",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "test": "echo \"No tests yet\""
-  },
-  "dependencies": {
-    "@neondatabase/serverless": "^0.10.4",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3",
-    "stripe": "^13.6.0"
-  },
-  "devDependencies": {
-    "eslint": "^9.0.0",
-    "prettier": "^3.0.0"
-  }
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/success", "destination": "/success.html" },
+    { "source": "/cancel", "destination": "/cancel.html" },
+    { "source": "/reschedule", "destination": "/reschedule.html" },
+    { "source": "/reschedule-success", "destination": "/reschedule-success.html" },
+    { "source": "/admin", "destination": "/admin_v2/index.html" }
+  ]
 }
