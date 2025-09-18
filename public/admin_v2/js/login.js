@@ -1,80 +1,104 @@
-/* ===========================================================
-   Bonanza Transportation - HQ Login JS
-   Archivo: public/admin_v2/js/login.js
-   - Valida conectividad / clave de admin contra /api/ping
-   - Guarda token/clave local y redirige a /admin_v2/index.html
-   =========================================================== */
+// ===========================================================
+// Bonanza Transportation - HQ Login Logic
+// Archivo: public/admin_v2/js/login.js
+// ===========================================================
 
-(function () {
-  const $ = (q) => document.querySelector(q);
-  const form = $('#hqLoginForm');
-  const msg  = $('#hqMsg');
-  const pass = $('#hqPass');
-  const remember = $('#hqRemember');
-  const toggleBtn = $('#togglePass');
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const say = (t) => { $("#hqMsg").textContent = t || ""; };
+  const LS_TOKEN = "bonanza_jwt";
+  const LS_USER  = "bonanza_user";
+  const LS_REM   = "bonanza_remember";
 
-  // Prefill desde localStorage (si lo quisieras)
+  // Marca de entorno (solo UI)
   try {
-    const savedUser = localStorage.getItem('HQ_USER') || '';
-    if (savedUser) $('#hqUser').value = savedUser;
+    const pill = $("#envPill");
+    const host = location.host;
+    pill.textContent = /localhost|127\.0\.0\.1/.test(host) ? "local" :
+                       /\.vercel\.app$/.test(host) ? "prod" : host;
+  } catch {}
 
-    const savedRemember = localStorage.getItem('HQ_REMEMBER') === '1';
-    remember.checked = savedRemember;
-  } catch (_) {}
+  // Prefill remember me
+  try {
+    const remembered = localStorage.getItem(LS_REM);
+    if (remembered) {
+      const u = localStorage.getItem(LS_USER) || "";
+      $("#hqUser").value = u;
+      $("#hqRemember").checked = true;
+    }
+  } catch {}
 
-  // Mostrar/Ocultar password
-  toggleBtn?.addEventListener('click', () => {
-    const show = pass.type === 'password';
-    pass.type = show ? 'text' : 'password';
-    toggleBtn.textContent = show ? 'hide' : 'show';
+  // Show / hide password
+  $("#togglePass").addEventListener("click", () => {
+    const i = $("#hqPass");
+    const show = i.type === "password";
+    i.type = show ? "text" : "password";
+    $("#togglePass").textContent = show ? "hide" : "show";
+    $("#togglePass").setAttribute("aria-pressed", String(show));
   });
 
-  form?.addEventListener('submit', async (e) => {
+  // Si ya hay JWT válido, opcional: redirige directo al panel
+  (async () => {
+    const t = localStorage.getItem(LS_TOKEN);
+    if (!t) return;
+    // Ping rápido contra un endpoint protegido (reservations GET)
+    try {
+      const r = await fetch("/api/reservations", {
+        headers: { Authorization: `Bearer ${t}` }
+      });
+      if (r.ok) {
+        // token sirve → al panel
+        location.href = "/admin_v2/index.html";
+      }
+    } catch {}
+  })();
+
+  // Submit
+  $("#hqLoginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg.textContent = '';
+    say("");
+    const btn = $("#btnSign");
+    btn.disabled = true;
 
-    // En esta versión el formulario es “cosmético”; la autorización real
-    // se hace con la ADMIN_KEY (guardada de una sesión anterior o pedida luego).
-    // Si quieres validar user/pass de verdad, aquí llamarías a /api/auth/login.
-    const username = $('#hqUser').value.trim();
-    const password = $('#hqPass').value; // no se usa aún
+    const username = $("#hqUser").value.trim();
+    const password = $("#hqPass").value;
 
-    // Persistir preferencia de "remember me"
+    // UX: recordar usuario si se marca
     try {
-      localStorage.setItem('HQ_USER', username);
-      localStorage.setItem('HQ_REMEMBER', remember.checked ? '1' : '0');
-    } catch (_) {}
+      if ($("#hqRemember").checked) {
+        localStorage.setItem(LS_REM, "1");
+        localStorage.setItem(LS_USER, username);
+      } else {
+        localStorage.removeItem(LS_REM);
+        localStorage.removeItem(LS_USER);
+      }
+    } catch {}
 
-    // 1) Obtener/confirmar ADMIN_KEY
-    let key = null;
-    try { key = localStorage.getItem('ADMIN_KEY') || ''; } catch (_) {}
-
-    if (!key) {
-      key = prompt('Enter Admin Key (x-admin-key):') || '';
-    }
-    if (!key) {
-      msg.textContent = 'Missing Admin Key.';
-      return;
-    }
-
-    // 2) Verificar contra /api/ping
     try {
-      const url = `/api/ping?key=${encodeURIComponent(key)}`;
-      const r = await fetch(url);
-      // Si el endpoint devuelve JSON {ok:true, db:true}
+      const r = await fetch("/api/admin/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data?.ok) {
-        msg.textContent = 'Invalid Admin Key or API error.';
+      if (!r.ok || !data?.token) {
+        const msg = data?.error || "Invalid credentials";
+        say(msg);
+        btn.disabled = false;
         return;
       }
-    } catch (err) {
-      console.error(err);
-      msg.textContent = 'server_error';
-      return;
-    }
 
-    // 3) Guardar y redirigir al panel
-    try { localStorage.setItem('ADMIN_KEY', key); } catch (_) {}
-    location.href = '/admin_v2/index.html';
+      // Guardar JWT y pasar al panel
+      localStorage.setItem(LS_TOKEN, data.token);
+      // (opcional) guarda roles o user id si lo devuelves
+      if (data.user?.username) localStorage.setItem(LS_USER, data.user.username);
+
+      location.href = "/admin_v2/index.html";
+    } catch (err) {
+      console.error("[login] error", err);
+      say("server_error");
+      btn.disabled = false;
+    }
   });
 })();
