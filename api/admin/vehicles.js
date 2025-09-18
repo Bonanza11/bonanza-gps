@@ -1,158 +1,137 @@
 // /api/admin/vehicles.js
-import { pool, query } from "../_db.js";
-import { requireAuth } from "../_lib/guard.js";
+import { neon } from '@neondatabase/serverless';
+import { requireAuth } from '../_lib/guard.js';
 
-/** Forzamos runtime Node (pg no funciona en Edge) */
-export const config = { runtime: "nodejs" };
+// Forzar Node runtime si tu proyecto lo requiere (Neon funciona bien en Edge,
+// pero si tienes otras deps de Node, déjalo así)
+export const config = { runtime: 'nodejs' };
 
-/* ---------- Normalización ---------- */
+/* -------- Normalización & Validación -------- */
 function norm(body = {}) {
-  const v = {
-    id:
-      body.id !== undefined && body.id !== null && String(body.id).trim() !== ""
-        ? String(body.id)
-        : null,
-    plate: (body.plate ?? "").toString().trim(),
-    driver_name: (body.driver_name ?? "").toString().trim(),
-    kind: (body.kind ?? "").toString().trim().toUpperCase(),
-    year:
-      body.year != null && String(body.year).trim() !== ""
-        ? Number.parseInt(body.year, 10)
-        : null,
-    model: ((body.model ?? "").toString().trim() || null),
-    // si viene, debe ser boolean; si no, queda undefined para no pisar en updates
-    active: typeof body.active === "boolean" ? body.active : undefined,
-  };
-  if (v.kind !== "SUV" && v.kind !== "VAN") v.kind = "SUV";
-  return v;
+  const id = body.id != null && String(body.id).trim() !== '' ? String(body.id) : null;
+  const plate = String(body.plate ?? '').trim();
+  const driver_name = String(body.driver_name ?? '').trim();
+  const kindIn = String(body.kind ?? '').trim().toUpperCase();
+  const kind = (kindIn === 'SUV' || kindIn === 'VAN') ? kindIn : 'SUV';
+  const year = body.year != null && String(body.year).trim() !== '' ? Number.parseInt(body.year, 10) : null;
+  const model = (String(body.model ?? '').trim() || null);
+  const active = (typeof body.active === 'boolean') ? body.active : undefined; // para no pisar en update
+  return { id, plate, driver_name, kind, year, model, active };
 }
 
+function requireFields(v) {
+  if (!v.plate || !v.driver_name || !v.year) return false;
+  if (!Number.isInteger(v.year) || v.year < 1990 || v.year > 2099) return false;
+  return true;
+}
+
+/* ------------------ Handler ------------------ */
 async function handler(req, res) {
   try {
-    /* ---------- GET: lista ---------- */
-    if (req.method === "GET") {
-      const rows = await query(
-        `select id::text as id, plate, driver_name,
-                upper(kind) as kind, year, model, active
-           from vehicles
-          order by upper(kind), upper(plate)`
-      );
-      return res.json({ ok: true, vehicles: rows });
+    const sql = neon(process.env.DATABASE_URL);
+
+    // ===== GET: lista =====
+    if (req.method === 'GET') {
+      const rows = await sql`
+        SELECT id::text AS id, plate, driver_name,
+               UPPER(kind) AS kind, year, model, active
+          FROM vehicles
+         ORDER BY UPPER(kind), UPPER(plate);
+      `;
+      return res.status(200).json({ ok: true, vehicles: rows });
     }
 
-    /* ---------- POST: toggle / update / insert ---------- */
-    if (req.method === "POST") {
-      const b = norm(req.body || {});
+    // ===== POST: toggle / update / insert (upsert por plate) =====
+    if (req.method === 'POST') {
+      const body = req.body || {};
+      const v = norm(body);
 
-      // 1) SOLO toggle: exactamente { id, active }
-      const keys = Object.keys(req.body || {});
-      const onlyToggle =
-        b.id &&
-        typeof b.active === "boolean" &&
-        keys.length === 2 &&
-        keys.includes("id") &&
-        keys.includes("active");
+      // 1) Toggle {id, active} estrictamente
+      const keys = Object.keys(body);
+      const isToggle = v.id && typeof v.active === 'boolean' &&
+                       keys.length === 2 && keys.includes('id') && keys.includes('active');
 
-      if (onlyToggle) {
-        const { rows } = await pool.query(
-          `update vehicles
-              set active = $2
-            where id::text = $1
-        returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [b.id, b.active]
-        );
-        if (!rows.length) {
-          return res.status(404).json({ ok: false, error: "Vehicle not found" });
-        }
-        return res.json({ ok: true, vehicle: rows[0] });
+      if (isToggle) {
+        const rows = await sql`
+          UPDATE vehicles
+             SET active = ${v.active}, updated_at = now()
+           WHERE id::text = ${v.id}
+       RETURNING id::text AS id, plate, driver_name, UPPER(kind) AS kind, year, model, active;
+        `;
+        if (!rows.length) return res.status(404).json({ ok:false, error:'not_found' });
+        return res.status(200).json({ ok:true, vehicle: rows[0] });
       }
 
       // 2) Update por id (edición completa)
-      if (b.id) {
-        if (!b.plate || !b.driver_name || !b.year) {
-          return res.status(400).json({ ok: false, error: "Missing fields" });
-        }
+      if (v.id) {
+        if (!requireFields(v)) return res.status(400).json({ ok:false, error:'missing_or_invalid_fields' });
 
-        const { rows } = await pool.query(
-          `update vehicles
-              set plate = $2,
-                  driver_name = $3,
-                  kind = $4,
-                  year = $5,
-                  model = $6,
-                  active = coalesce($7, active)
-            where id::text = $1
-        returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [b.id, b.plate, b.driver_name, b.kind, b.year, b.model, b.active]
-        );
-        if (!rows.length) {
-          return res.status(404).json({ ok: false, error: "Vehicle not found" });
-        }
-        return res.json({ ok: true, vehicle: rows[0] });
+        const rows = await sql`
+          UPDATE vehicles
+             SET plate = ${v.plate},
+                 driver_name = ${v.driver_name},
+                 kind = ${v.kind},
+                 year = ${v.year},
+                 model = ${v.model},
+                 active = COALESCE(${v.active}, active),
+                 updated_at = now()
+           WHERE id::text = ${v.id}
+       RETURNING id::text AS id, plate, driver_name, UPPER(kind) AS kind, year, model, active;
+        `;
+        if (!rows.length) return res.status(404).json({ ok:false, error:'not_found' });
+        return res.status(200).json({ ok:true, vehicle: rows[0] });
       }
 
-      // 3) Insert / upsert por placa (case-insensitive)
-      if (!b.plate || !b.driver_name || !b.year) {
-        return res.status(400).json({ ok: false, error: "Missing fields" });
-      }
+      // 3) Insert / Upsert por placa (case-insensitive)
+      if (!requireFields(v)) return res.status(400).json({ ok:false, error:'missing_or_invalid_fields' });
 
-      // ¿existe ya por plate (insensible a mayúsculas)?
-      const found = await query(
-        `select id
-           from vehicles
-          where upper(plate) = upper($1)
-          limit 1`,
-        [b.plate]
-      );
+      // ¿existe por plate?
+      const existing = await sql`
+        SELECT id FROM vehicles WHERE UPPER(plate) = UPPER(${v.plate}) LIMIT 1;
+      `;
 
-      if (found.length) {
-        const id = found[0].id;
-        const { rows } = await pool.query(
-          `update vehicles
-              set driver_name = $2,
-                  kind = $3,
-                  year = $4,
-                  model = $5,
-                  active = coalesce($6, active)
-            where id = $1
-        returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [id, b.driver_name, b.kind, b.year, b.model, b.active ?? true]
-        );
-        return res.json({ ok: true, vehicle: rows[0] });
+      if (existing.length) {
+        const id = existing[0].id;
+        const rows = await sql`
+          UPDATE vehicles
+             SET driver_name = ${v.driver_name},
+                 kind = ${v.kind},
+                 year = ${v.year},
+                 model = ${v.model},
+                 active = COALESCE(${v.active}, active, true),
+                 updated_at = now()
+           WHERE id = ${id}
+       RETURNING id::text AS id, plate, driver_name, UPPER(kind) AS kind, year, model, active;
+        `;
+        return res.status(200).json({ ok:true, vehicle: rows[0] });
       } else {
-        const { rows } = await pool.query(
-          `insert into vehicles (plate, driver_name, kind, year, model, active)
-               values ($1,$2,$3,$4,$5,$6)
-        returning id::text as id, plate, driver_name, upper(kind) as kind, year, model, active`,
-          [b.plate, b.driver_name, b.kind, b.year, b.model, b.active ?? true]
-        );
-        return res.json({ ok: true, vehicle: rows[0] });
+        const rows = await sql`
+          INSERT INTO vehicles (plate, driver_name, kind, year, model, active)
+          VALUES (${v.plate}, ${v.driver_name}, ${v.kind}, ${v.year}, ${v.model}, ${v.active ?? true})
+       RETURNING id::text AS id, plate, driver_name, UPPER(kind) AS kind, year, model, active;
+        `;
+        return res.status(201).json({ ok:true, vehicle: rows[0] });
       }
     }
 
-    /* ---------- DELETE ---------- */
-    if (req.method === "DELETE") {
-      const id = (req.query.id || "").toString();
-      if (!id) {
-        return res.status(400).json({ ok: false, error: "Missing id" });
-      }
+    // ===== DELETE por id =====
+    if (req.method === 'DELETE') {
+      const id = String(req.query.id ?? '');
+      if (!id) return res.status(400).json({ ok:false, error:'missing_id' });
 
-      const r = await pool.query(`delete from vehicles where id::text = $1`, [id]);
-      if (!r.rowCount) {
-        return res.status(404).json({ ok: false, error: "Vehicle not found" });
-      }
-      return res.json({ ok: true });
+      // Neon no da rowCount; usamos RETURNING
+      const rows = await sql`DELETE FROM vehicles WHERE id::text = ${id} RETURNING id;`;
+      if (!rows.length) return res.status(404).json({ ok:false, error:'not_found' });
+      return res.status(200).json({ ok:true });
     }
 
-    res.setHeader("Allow", "GET,POST,DELETE");
-    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
+    res.setHeader('Allow', 'GET,POST,DELETE');
+    return res.status(405).json({ ok:false, error:'method_not_allowed' });
   } catch (e) {
-    console.error("[/api/admin/vehicles] error:", e);
-    return res
-      .status(500)
-      .json({ ok: false, error: e?.message || "Internal error" });
+    console.error('[/api/admin/vehicles] error:', e);
+    return res.status(500).json({ ok:false, error:'server_error' });
   }
 }
 
-// Protegido: OWNER/ADMIN/DISPATCHER (x-admin-key o Bearer JWT)
-export default requireAuth(["OWNER", "ADMIN", "DISPATCHER"])(handler);
+// OWNER / ADMIN / DISPATCHER
+export default requireAuth(['OWNER','ADMIN','DISPATCHER'])(handler);
