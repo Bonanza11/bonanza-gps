@@ -1,225 +1,178 @@
-/* ===== Helpers ===== */
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+/* ===========================================================
+   Bonanza Transportation - HQ Admin v2 JS
+   Archivo: public/admin_v2/js/main.js
+   - Centraliza las llamadas API con x-admin-key
+   - Maneja tabs, logout y recargas de datos
+   =========================================================== */
 
-const adminKey = localStorage.getItem('adminKey') || '';
-if (!adminKey) location.href = './login.html';
+const STORAGE_KEY = 'ADMIN_KEY'; // donde guardamos la clave de HQ
+const $ = (q) => document.querySelector(q);
 
-function hdr() {
-  return { 'Content-Type':'application/json', 'x-admin-key': adminKey };
-}
-async function apiGet(url) {
-  const r = await fetch(url, { headers: hdr() });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function apiSend(url, method, body) {
-  const r = await fetch(url, { method, headers: hdr(), body: JSON.stringify(body) });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-function fmtDateTime(s) {
-  if (!s) return '';
-  const d = new Date(s);
-  return d.toLocaleString();
+// ========== Helpers ==========
+function getAdminKey() {
+  let k = null;
+  try { k = localStorage.getItem(STORAGE_KEY) || ''; } catch (_) {}
+  if (!k) {
+    k = prompt('Ingresa tu Admin Key (HQ):') || '';
+    if (k) localStorage.setItem(STORAGE_KEY, k);
+  }
+  return k.trim();
 }
 
-/* ===== Tabs ===== */
-const tabBtns = $$('.tabs button');
-const tabs = {
-  reservations: $('#tab-reservations'),
-  vehicles:     $('#tab-vehicles'),
-  clients:      $('#tab-clients'),
-  drivers:      $('#tab-drivers'),
-};
-tabBtns.forEach(b => b.addEventListener('click', () => {
-  tabBtns.forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  Object.values(tabs).forEach(el => el.classList.remove('active'));
-  tabs[b.dataset.tab].classList.add('active');
-}));
+async function api(path, opts = {}) {
+  const key = getAdminKey();
+  const headers = new Headers(opts.headers || {});
+  headers.set('x-admin-key', key);
+  headers.set('Content-Type', headers.get('Content-Type') || 'application/json');
 
-/* ===== Top actions ===== */
-$('#btnLogout').addEventListener('click', () => {
-  localStorage.removeItem('adminKey');
-  location.href = './login.html';
-});
+  const res = await fetch(path, { ...opts, headers });
+  let data = null;
+  try { data = await res.json(); } catch {}
 
-/* ===== RESERVATIONS ===== */
-const tblRes = $('#tblReservations tbody');
+  if (!res.ok) {
+    const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
+    console.error(`[API ERROR] ${path}`, { status: res.status, data });
+    throw new Error(msg);
+  }
+  return data;
+}
 
-async function loadReservations() {
-  tblRes.innerHTML = '<tr><td colspan="8">Cargando…</td></tr>';
-  const rows = await apiGet('/api/reservations'); // ← devuelve array
-  tblRes.innerHTML = '';
-  for (const r of rows) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.id}</td>
-      <td>${fmtDateTime(r.pickup_time)}</td>
-      <td>${r.customer_name || ''}<br><span class="muted">${r.email||''} ${r.phone? ' · '+r.phone:''}</span></td>
-      <td>${r.pickup_location} → ${r.dropoff_location}</td>
-      <td>${r.vehicle_label || ''}</td>
-      <td>${r.status}</td>
-      <td>${r.driver_name || ''}</td>
-      <td>${fmtDateTime(r.updated_at)}</td>
-    `;
-    tblRes.appendChild(tr);
+function showToast(msg, ok = false) {
+  let t = $('#toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.position = 'fixed';
+    t.style.bottom = '16px';
+    t.style.right = '16px';
+    t.style.background = ok ? '#15803d' : '#991b1b';
+    t.style.color = 'white';
+    t.style.padding = '10px 14px';
+    t.style.borderRadius = '8px';
+    t.style.fontSize = '14px';
+    t.style.zIndex = '9999';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._h);
+  t._h = setTimeout(() => (t.style.display = 'none'), 3000);
+}
+
+// ========== UI inicial ==========
+function setEnvBadge() {
+  const el = $('#envBadge');
+  if (!el) return;
+  const host = location.hostname;
+  if (host.includes('vercel.app')) {
+    el.textContent = 'PROD';
+  } else {
+    el.textContent = 'LOCAL';
   }
 }
-$('#btnRefetchReservations').addEventListener('click', loadReservations);
+setEnvBadge();
 
-$('#btnAssign').addEventListener('click', async () => {
-  const id = Number($('#resId').value);
-  const driverId = ($('#resDriverId').value || '').trim() || null; // null => desasignar
-  if (!id) return alert('ID requerido');
-  const res = await apiSend('/api/reservations', 'PATCH', { id, driver_id: driverId });
-  alert(`Reserva ${res.id} → ${res.status}`);
-  loadReservations();
-});
-
-/* ===== VEHICLES ===== */
-const tblVeh = $('#tblVehicles tbody');
-
-async function loadVehicles() {
-  tblVeh.innerHTML = '<tr><td colspan="8">Cargando…</td></tr>';
-  const js = await apiGet('/api/admin/vehicles');
-  const rows = js.vehicles || [];
-  tblVeh.innerHTML = '';
-  for (const v of rows) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${v.id}</td>
-      <td>${v.plate}</td>
-      <td>${v.driver_name || ''}</td>
-      <td>${v.kind}</td>
-      <td>${v.year || ''}</td>
-      <td>${v.model || ''}</td>
-      <td>${v.active ? '✅' : '—'}</td>
-      <td>
-        <button class="secondary" data-act="toggle" data-id="${v.id}" data-active="${v.active ? 0 : 1}">
-          ${v.active ? 'Desactivar' : 'Activar'}
-        </button>
-      </td>
-    `;
-    tblVeh.appendChild(tr);
-  }
-}
-tblVeh.addEventListener('click', async (ev) => {
-  const b = ev.target.closest('button[data-act="toggle"]');
-  if (!b) return;
-  const id = b.dataset.id;
-  const active = b.dataset.active === '1';
-  const js = await apiSend('/api/admin/vehicles', 'POST', { id, active });
-  alert(`Vehículo ${js.vehicle.plate} → ${js.vehicle.active ? 'Activo' : 'Inactivo'}`);
-  loadVehicles();
-});
-$('#btnRefetchVehicles').addEventListener('click', loadVehicles);
-
-$('#btnVehicleUpsert').addEventListener('click', async () => {
-  const body = {
-    plate: $('#vPlate').value.trim(),
-    driver_name: $('#vDriver').value.trim(),
-    kind: $('#vKind').value.trim(),
-    year: Number($('#vYear').value) || null,
-    model: $('#vModel').value.trim() || null,
-  };
-  if (!body.plate || !body.driver_name || !body.year) return alert('Placa, Driver y Año son requeridos.');
-  const js = await apiSend('/api/admin/vehicles', 'POST', body);
-  alert(`OK: ${js.vehicle.plate}`);
-  loadVehicles();
-});
-
-/* ===== CLIENTS ===== */
-const tblCli = $('#tblClients tbody');
-
-async function loadClients() {
-  tblCli.innerHTML = '<tr><td colspan="6">Cargando…</td></tr>';
-  const js = await apiGet('/api/admin/clients');
-  const rows = js.clients || [];
-  tblCli.innerHTML = '';
-  for (const c of rows) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${c.id}</td>
-      <td>${c.name}</td>
-      <td>${c.email || ''}</td>
-      <td>${c.phone || ''}</td>
-      <td>${c.internal_rating || ''}</td>
-      <td><button class="danger" data-del="${c.id}">Eliminar</button></td>
-    `;
-    tblCli.appendChild(tr);
-  }
-}
-$('#btnRefetchClients').addEventListener('click', loadClients);
-tblCli.addEventListener('click', async (ev) => {
-  const b = ev.target.closest('button[data-del]');
-  if (!b) return;
-  if (!confirm('¿Eliminar cliente?')) return;
-  const id = b.dataset.del;
-  const r = await fetch(`/api/admin/clients?id=${encodeURIComponent(id)}`, {
-    method:'DELETE', headers: hdr()
+// Tabs
+document.querySelectorAll('.tabs button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tabs button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab').forEach((s) => s.classList.remove('active'));
+    $(`#tab-${btn.dataset.tab}`).classList.add('active');
   });
-  if (!r.ok) return alert('Error eliminando');
-  loadClients();
 });
 
-$('#btnClientUpsert').addEventListener('click', async () => {
-  const body = {
-    name: $('#cName').value.trim(),
-    email: $('#cEmail').value.trim(),
-    phone: $('#cPhone').value.trim()
-  };
-  if (!body.name) return alert('Nombre es requerido');
-  const js = await apiSend('/api/admin/clients', 'POST', body);
-  alert(`OK: ${js.client?.name || 'creado'}`);
-  loadClients();
+// Logout
+$('#btnLogout')?.addEventListener('click', () => {
+  localStorage.removeItem(STORAGE_KEY);
+  showToast('Sesión cerrada', true);
+  setTimeout(() => (location.href = '/admin_v2/login.html'), 600);
 });
 
-/* ===== DRIVERS ===== */
-const tblDrv = $('#tblDrivers tbody');
-
-async function loadDrivers() {
-  tblDrv.innerHTML = '<tr><td colspan="7">Cargando…</td></tr>';
-  const rows = await apiGet('/api/drivers'); // GET devuelve array
-  tblDrv.innerHTML = '';
-  for (const d of rows) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${d.id}</td>
-      <td>${d.name}</td>
-      <td>${d.email || ''}</td>
-      <td>${d.phone || ''}</td>
-      <td>${d.pay_mode}</td>
-      <td>${[d.hourly_rate, d.per_ride_rate, d.revenue_share].map(x => x ?? '—').join(' / ')}</td>
-      <td>${d.notify_email ? '📧' : ''} ${d.notify_sms ? '📱' : ''}</td>
-    `;
-    tblDrv.appendChild(tr);
-  }
+// ========== API Calls (ejemplos) ==========
+async function fetchReservations() {
+  const rows = await api('/api/reservations');
+  const tbody = $('#tblReservations tbody');
+  tbody.innerHTML = rows
+    .map(
+      (r) => `
+      <tr>
+        <td>${r.id}</td>
+        <td>${new Date(r.pickup_time).toLocaleString()}</td>
+        <td>${r.customer_name || ''}</td>
+        <td>${r.pickup_location || ''} → ${r.dropoff_location || ''}</td>
+        <td>${r.vehicle_label || ''}</td>
+        <td>${r.status || ''}</td>
+        <td>${r.driver_name || ''}</td>
+        <td>${r.updated_at ? new Date(r.updated_at).toLocaleString() : ''}</td>
+      </tr>`
+    )
+    .join('');
 }
-$('#btnRefetchDrivers').addEventListener('click', loadDrivers);
 
-$('#btnDriverCreate').addEventListener('click', async () => {
-  const body = {
-    name: $('#dName').value.trim(),
-    email: $('#dEmail').value.trim() || null,
-    phone: $('#dPhone').value.trim() || null
-  };
-  if (!body.name) return alert('Nombre requerido');
-  const js = await apiSend('/api/drivers', 'POST', body);
-  alert(`Driver creado: ${js?.name || '(sin nombre?)'}`);
-  loadDrivers();
-});
+async function fetchVehicles() {
+  const res = await api('/api/admin/vehicles');
+  const vehicles = res.vehicles || res || [];
+  const tbody = $('#tblVehicles tbody');
+  tbody.innerHTML = vehicles
+    .map(
+      (v) => `
+      <tr>
+        <td>${v.id}</td>
+        <td>${v.plate}</td>
+        <td>${v.driver_name || ''}</td>
+        <td>${v.kind}</td>
+        <td>${v.year || ''}</td>
+        <td>${v.model || ''}</td>
+        <td>${v.active ? '✓' : '—'}</td>
+      </tr>`
+    )
+    .join('');
+}
 
-/* ===== Boot ===== */
+async function fetchClients() {
+  const res = await api('/api/admin/clients');
+  const clients = res.clients || res || [];
+  const tbody = $('#tblClients tbody');
+  tbody.innerHTML = clients
+    .map(
+      (c) => `
+      <tr>
+        <td>${c.id}</td>
+        <td>${c.name}</td>
+        <td>${c.email}</td>
+        <td>${c.phone}</td>
+        <td>${c.internal_rating || ''}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+async function fetchDrivers() {
+  const rows = await api('/api/drivers');
+  const tbody = $('#tblDrivers tbody');
+  tbody.innerHTML = rows
+    .map(
+      (d) => `
+      <tr>
+        <td>${d.id}</td>
+        <td>${d.name}</td>
+        <td>${d.email}</td>
+        <td>${d.phone}</td>
+        <td>${d.pay_mode || ''}</td>
+        <td>${d.hourly_rate || d.per_ride_rate || d.revenue_share || ''}</td>
+        <td>${d.notify_email ? 'email ' : ''}${d.notify_sms ? 'sms' : ''}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+// ========== Inicialización ==========
 (async function boot() {
   try {
-    await loadReservations();
-    await loadVehicles();
-    await loadClients();
-    await loadDrivers();
+    await Promise.all([fetchReservations(), fetchVehicles(), fetchClients(), fetchDrivers()]);
+    showToast('Datos cargados', true);
   } catch (e) {
-    alert('Error cargando datos. Verifica tu Admin Key o la API.');
-    console.error(e);
+    alert('Error cargando datos. Verifica tu Admin Key o la API.\n' + e.message);
   }
 })();
