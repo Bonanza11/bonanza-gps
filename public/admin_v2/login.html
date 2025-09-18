@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bonanza Admin • Login</title>
+  <link rel="stylesheet" href="./css/admin.css">
+</head>
+<body class="centered">
+  <div class="card">
+    <h1>Bonanza Admin</h1>
+    <p class="muted">Ingresa tu Admin Key para acceder.</p>
+
+    <label for="adminKey">Admin Key</label>
+    <input id="adminKey" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+    <button id="btnLogin">Entrar</button>
+    <p id="msg" class="error" style="display:none;"></p>
+
+    <p class="tiny muted">La clave se guarda localmente (localStorage) y se envía en <code>x-admin-key</code> a la API.</p>
+  </div>
+
+  <script src="./js/login.js"></script>
+</body>
+</html>
