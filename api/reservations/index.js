@@ -3,8 +3,11 @@
 import { query } from "../_db.js";
 import { requireAuth } from "../_lib/guard.js";
 
-// 👇 Opcional si usas pg nativo (evita que Vercel intente correr en Edge)
 export const config = { runtime: "nodejs" };
+
+// helpers
+const strOrNull = v => (v === undefined || v === null) ? null : String(v).trim() || null;
+const isISO = (s) => typeof s === "string" && !Number.isNaN(Date.parse(s));
 
 async function handler(req, res) {
   try {
@@ -20,7 +23,7 @@ async function handler(req, res) {
            r.dropoff_location,
            r.pickup_time,
            r.vehicle_type,
-           lower(r.status) AS status,                 -- 👈 normaliza a minúsculas
+           lower(r.status) AS status,
            r.vehicle_id,
            r.driver_name,
            r.notes,
@@ -32,18 +35,16 @@ async function handler(req, res) {
              ELSE v.plate::text || ' — ' || v.kind::text || ' — ' || COALESCE(v.driver_name,'')::text
            END AS vehicle_label
          FROM reservations r
-         LEFT JOIN vehicles v ON v.id::text = r.vehicle_id::text
+         LEFT JOIN vehicles v ON v.id = r.vehicle_id         -- 👈 preferimos join directo si ambos son UUID
          LEFT JOIN drivers  d ON d.id = r.driver_id
          ORDER BY r.pickup_time DESC`
       );
-      // 👇 devuelve array directo (lo que espera admin.html)
       return res.json(rows || []);
     }
 
     // ---------- POST ----------
-    // Crea la reserva (driver_name / notes opcionales)
     if (req.method === "POST") {
-      const {
+      let {
         customer_name,
         email,
         phone,
@@ -55,8 +56,21 @@ async function handler(req, res) {
         notes = null
       } = req.body || {};
 
+      // sanitiza
+      customer_name    = (customer_name || "").toString().trim();
+      pickup_location  = (pickup_location || "").toString().trim();
+      dropoff_location = (dropoff_location || "").toString().trim();
+      vehicle_type     = (vehicle_type || "SUV").toString().trim().toUpperCase();
+      email            = strOrNull(email);
+      phone            = strOrNull(phone);
+      driver_name      = strOrNull(driver_name);
+      notes            = strOrNull(notes);
+
       if (!customer_name || !pickup_location || !dropoff_location || !pickup_time) {
         return res.status(400).json({ ok: false, error: "missing_fields" });
+      }
+      if (!isISO(pickup_time)) {
+        return res.status(400).json({ ok:false, error:"invalid_pickup_time_iso" });
       }
 
       const { rows } = await query(
@@ -68,8 +82,8 @@ async function handler(req, res) {
          RETURNING *`,
         [
           customer_name,
-          email || null,
-          phone || null,
+          email,
+          phone,
           pickup_location,
           dropoff_location,
           pickup_time,
@@ -83,12 +97,12 @@ async function handler(req, res) {
     }
 
     // ---------- PATCH ----------
-    // Asigna / desasigna driver
-    // Si viene driver_id NULL -> desasigna -> PENDING
-    // Si viene driver_id NO NULL -> asigna -> ASSIGNED + assigned_at=now()
+    // driver_id = null  -> desasigna (status=PENDING, assigned_at=NULL)
+    // driver_id != null -> asigna   (status=ASSIGNED, assigned_at=now())
     if (req.method === "PATCH") {
-      const { id, driver_id = null, driver_name = undefined } = req.body || {};
+      let { id, driver_id = null, driver_name = undefined } = req.body || {};
       if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
+      if (driver_name !== undefined) driver_name = strOrNull(driver_name);
 
       const { rows } = await query(
         `UPDATE reservations
@@ -102,7 +116,8 @@ async function handler(req, res) {
         [id, driver_id, driver_name]
       );
 
-      return res.json(rows?.[0] ?? null);
+      if (!rows?.[0]) return res.status(404).json({ ok:false, error:"not_found" });
+      return res.json(rows[0]);
     }
 
     // ---------- Método no permitido ----------
@@ -119,5 +134,4 @@ async function handler(req, res) {
   }
 }
 
-// 👇 Protegemos con requireAuth
 export default requireAuth(["OWNER","ADMIN","DISPATCHER"])(handler);
