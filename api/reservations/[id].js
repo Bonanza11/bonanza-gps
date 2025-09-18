@@ -21,6 +21,13 @@ const allowedNext = {
   CANCELED:    new Set([]),
 };
 
+// Valida (rápido) UUID v4-ish si llega como string (opcional)
+function looksLikeUUID(v) {
+  if (v === null) return true;            // permitir desasignación
+  if (typeof v !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
 async function handler(req, res) {
   if (req.method !== "PATCH") {
     res.setHeader("Allow", "PATCH");
@@ -31,12 +38,23 @@ async function handler(req, res) {
     const { id } = req.query || {};
     if (!id) return res.status(400).json({ ok: false, error: "missing_id" });
 
-    const {
-      status,            // 'assigned' | 'in_progress' | 'done' | 'canceled'
-      vehicle_id = undefined,  // uuid o null (si quisieras desasignar vehículo)
+    let {
+      status,                  // 'assigned' | 'in_progress' | 'done' | 'canceled'
+      vehicle_id = undefined,  // uuid o null (para desasignar)
       driver_name = undefined, // string o null
       notes = undefined        // string o null
     } = req.body || {};
+
+    // Sanitizar strings si vienen
+    if (typeof driver_name === "string") driver_name = driver_name.trim() || null;
+    if (typeof notes === "string")       notes       = notes.trim() || null;
+
+    // Validar vehicle_id si se pasó (string/null/undefined)
+    if (vehicle_id !== undefined) {
+      if (vehicle_id !== null && !looksLikeUUID(vehicle_id)) {
+        return res.status(400).json({ ok:false, error:"invalid_vehicle_id" });
+      }
+    }
 
     // 1) Traer estado actual para validar transición
     const cur = await query(`select status from reservations where id = $1`, [id]);
@@ -52,7 +70,7 @@ async function handler(req, res) {
     if (next && !allowedNext[current]?.has(next)) {
       return res.status(409).json({
         ok: false,
-        error: `invalid_transition`,
+        error: "invalid_transition",
         detail: `${current} -> ${next} not allowed`
       });
     }
@@ -62,7 +80,6 @@ async function handler(req, res) {
     const vals = [];
     let i = 1;
 
-    // Campos libres que pueden venir
     if (vehicle_id !== undefined) { sets.push(`vehicle_id = $${i++}`); vals.push(vehicle_id); }
     if (driver_name !== undefined){ sets.push(`driver_name = $${i++}`); vals.push(driver_name); }
     if (notes !== undefined)      { sets.push(`notes = $${i++}`);       vals.push(notes); }
@@ -75,27 +92,29 @@ async function handler(req, res) {
       if (next === "ASSIGNED")    sets.push(`assigned_at = now()`);
       if (next === "IN_PROGRESS") sets.push(`started_at  = now()`);
       if (next === "DONE")        sets.push(`done_at     = now()`);
-      // Si cancelas podrías querer limpiar started/done; por ahora no tocamos.
+      // Si "CANCELED", no tocamos timestamps previos.
     }
 
     // Siempre tocar updated_at
     sets.push(`updated_at = now()`);
 
-    // Si no vino nada para actualizar
     if (sets.length === 1) {
       return res.status(400).json({ ok: false, error: "nothing_to_update" });
     }
 
-    const sql = `UPDATE reservations
-                   SET ${sets.join(", ")}
-                 WHERE id = $${i}
-                 RETURNING *`;
+    const sql = `
+      UPDATE reservations
+         SET ${sets.join(", ")}
+       WHERE id = $${i}
+   RETURNING id, status, vehicle_id, driver_name, notes,
+             pickup_time, assigned_at, started_at, done_at, updated_at
+    `;
     vals.push(id);
 
     const { rows } = await query(sql, vals);
     if (!rows?.[0]) return res.status(404).json({ ok: false, error: "not_found" });
 
-    return res.json(rows[0]);
+    return res.json({ ok: true, reservation: rows[0] });
   } catch (e) {
     console.error("[/api/reservations/[id]]", e);
     return res.status(500).json({ ok: false, error: "server_error", detail: String(e?.message || e) });
