@@ -1,62 +1,79 @@
-// /api/login.js
+// ===========================================================
+// Bonanza Transportation - Simple Admin Login (ENV-based)
+// Archivo: /api/login.js
+// ===========================================================
+export const config = { runtime: "nodejs" };
+
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecreto123";
 
 /**
- * Dónde definimos usuarios:
- * Opción A) ADMIN_USERS como JSON, ej:
- *   ADMIN_USERS=[{"username":"Dinastia","password":"superscreto123","roles":["OWNER","ADMIN","DISPATCHER"]}]
- *
- * Opción B) Variables simples:
- *   ADMIN_USER=Dinastia
- *   ADMIN_PASS=superscreto123
- *   ADMIN_ROLES=OWNER,ADMIN,DISPATCHER
+ * Opciones de usuarios:
+ * A) ADMIN_USERS (JSON array):
+ *    [{"id":"<uuid|slug>","username":"Dinastia","password":"supersecreto123","roles":["OWNER","ADMIN","DISPATCHER"]}]
+ * B) Variables simples:
+ *    ADMIN_USER=Dinastia
+ *    ADMIN_PASS=supersecreto123
+ *    ADMIN_ROLES=OWNER,ADMIN,DISPATCHER
+ *    ADMIN_ID=<uuid|slug opcional>  (si no pones, usamos el username como sub)
  */
 function loadUsers() {
   try {
     if (process.env.ADMIN_USERS) {
       const arr = JSON.parse(process.env.ADMIN_USERS);
-      if (Array.isArray(arr)) return arr.map(u => ({
-        username: String(u.username || "").trim(),
-        password: String(u.password || ""),
-        roles: Array.isArray(u.roles) ? u.roles : ["OWNER","ADMIN","DISPATCHER"]
-      }));
+      if (Array.isArray(arr)) {
+        return arr
+          .map(u => ({
+            id: (u.id ?? u.user_id ?? u.username ?? "").toString().trim(),
+            username: (u.username ?? "").toString().trim(),
+            password: (u.password ?? "").toString(),
+            roles: Array.isArray(u.roles) ? u.roles : ["OWNER","ADMIN","DISPATCHER"]
+          }))
+          .filter(u => u.username && u.password);
+      }
     }
   } catch (e) {
     console.error("[/api/login] ADMIN_USERS JSON parse error:", e);
   }
 
-  // fallback simple
-  const u = (process.env.ADMIN_USER || "").trim();
-  const p = process.env.ADMIN_PASS || "";
-  const r = (process.env.ADMIN_ROLES || "OWNER,ADMIN,DISPATCHER")
-              .split(",").map(s => s.trim()).filter(Boolean);
-  return u && p ? [{ username: u, password: p, roles: r }] : [];
+  const username = (process.env.ADMIN_USER || "").trim();
+  const password = process.env.ADMIN_PASS || "";
+  const roles = (process.env.ADMIN_ROLES || "OWNER,ADMIN,DISPATCHER")
+    .split(",").map(s => s.trim()).filter(Boolean);
+  const id = (process.env.ADMIN_ID || username || "").trim();
+
+  return (username && password) ? [{ id, username, password, roles }] : [];
 }
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({ ok: false, error: "method_not_allowed" });
+    return res.status(405).json({ ok:false, error:"method_not_allowed" });
   }
 
   try {
     const { username, password, remember = false } = req.body || {};
     if (!username || !password) {
-      return res.status(400).json({ ok: false, error: "missing_credentials" });
+      return res.status(400).json({ ok:false, error:"missing_credentials" });
     }
 
     const users = loadUsers();
-    const user = users.find(u => u.username.toLowerCase() === String(username).toLowerCase());
+    const user = users.find(
+      u => u.username.toLowerCase() === String(username).toLowerCase()
+    );
+    // comparación simple (al ser ENV, no hay hash)
     if (!user || user.password !== password) {
-      return res.status(401).json({ ok: false, error: "invalid_credentials" });
+      return res.status(401).json({ ok:false, error:"invalid_credentials" });
     }
 
-    // Token 1 día (o 7 días si remember)
+    // sub = id si lo tienes; si no, caemos al username (compatible con tu guard)
+    const sub = user.id || user.username;
+    const roles = user.roles ?? ["ADMIN"];
+
     const expiresIn = remember ? "7d" : "1d";
     const token = jwt.sign(
-      { sub: user.username, roles: user.roles },
+      { sub, roles, typ: "access", iss: "bonanza-hq", aud: "bonanza-admin" },
       JWT_SECRET,
       { expiresIn }
     );
@@ -64,11 +81,11 @@ export default async function handler(req, res) {
     return res.json({
       ok: true,
       token,
-      user: { username: user.username, roles: user.roles },
+      user: { id: sub, username: user.username, roles },
       expiresIn
     });
   } catch (e) {
     console.error("[/api/login] error:", e);
-    return res.status(500).json({ ok: false, error: "server_error" });
+    return res.status(500).json({ ok:false, error:"server_error" });
   }
 }
