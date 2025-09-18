@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bonanza Admin v2</title>
+  <link rel="stylesheet" href="./css/admin.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Bonanza Admin v2</div>
+    <div class="actions">
+      <span id="envBadge" class="badge">PROD</span>
+      <button id="btnLogout" class="link">Salir</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="reservations" class="active">Reservas</button>
+    <button data-tab="vehicles">Vehículos</button>
+    <button data-tab="clients">Clientes</button>
+    <button data-tab="drivers">Drivers</button>
+  </nav>
+
+  <main>
+    <!-- RESERVATIONS -->
+    <section id="tab-reservations" class="tab active">
+      <div class="toolbar">
+        <button id="btnRefetchReservations">Refrescar</button>
+        <div class="spacer"></div>
+        <label class="inline">ID:
+          <input id="resId" type="number" min="1" placeholder="id" />
+        </label>
+        <label class="inline">Driver ID:
+          <input id="resDriverId" type="text" placeholder="uuid o vacío" />
+        </label>
+        <button id="btnAssign">Asignar/Desasignar</button>
+      </div>
+
+      <div class="tableWrap">
+        <table id="tblReservations">
+          <thead>
+          <tr>
+            <th>ID</th><th>Pickup</th><th>Cliente</th><th>Desde → Hasta</th>
+            <th>Vehículo</th><th>Status</th><th>Driver</th><th>Actualizado</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- VEHICLES -->
+    <section id="tab-vehicles" class="tab">
+      <div class="toolbar">
+        <button id="btnRefetchVehicles">Refrescar</button>
+        <div class="spacer"></div>
+        <label class="inline">Placa
+          <input id="vPlate" type="text">
+        </label>
+        <label class="inline">Driver
+          <input id="vDriver" type="text">
+        </label>
+        <label class="inline">Kind
+          <select id="vKind"><option>SUV</option><option>VAN</option></select>
+        </label>
+        <label class="inline">Año
+          <input id="vYear" type="number" min="1990" max="2100">
+        </label>
+        <label class="inline">Modelo
+          <input id="vModel" type="text">
+        </label>
+        <button id="btnVehicleUpsert">Crear/Actualizar</button>
+      </div>
+
+      <div class="tableWrap">
+        <table id="tblVehicles">
+          <thead>
+          <tr>
+            <th>ID</th><th>Placa</th><th>Driver</th><th>Tipo</th><th>Año</th>
+            <th>Modelo</th><th>Activo</th><th>Acciones</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CLIENTS -->
+    <section id="tab-clients" class="tab">
+      <div class="toolbar">
+        <button id="btnRefetchClients">Refrescar</button>
+        <div class="spacer"></div>
+        <label class="inline">Nombre <input id="cName" type="text"></label>
+        <label class="inline">Email <input id="cEmail" type="email"></label>
+        <label class="inline">Phone <input id="cPhone" type="text"></label>
+        <button id="btnClientUpsert">Crear/Actualizar</button>
+      </div>
+
+      <div class="tableWrap">
+        <table id="tblClients">
+          <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rating</th><th>Acciones</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DRIVERS -->
+    <section id="tab-drivers" class="tab">
+      <div class="toolbar">
+        <button id="btnRefetchDrivers">Refrescar</button>
+        <div class="spacer"></div>
+        <label class="inline">Nombre <input id="dName" type="text"></label>
+        <label class="inline">Email <input id="dEmail" type="email"></label>
+        <label class="inline">Phone <input id="dPhone" type="text"></label>
+        <button id="btnDriverCreate">Crear</button>
+      </div>
+
+      <div class="tableWrap">
+        <table id="tblDrivers">
+          <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th>
+            <th>Pay Mode</th><th>Rates</th><th>Notifs</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="./js/main.js"></script>
+</body>
+</html>
