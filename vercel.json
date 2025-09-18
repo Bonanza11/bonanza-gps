@@ -5,6 +5,10 @@
     { "source": "/cancel", "destination": "/cancel.html" },
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/reschedule", "destination": "/reschedule.html" },
-    { "source": "/reschedule-success", "destination": "/reschedule-success.html" }
+    { "source": "/reschedule-success", "destination": "/reschedule-success.html" },
+    { "source": "/admin_v2", "destination": "/admin_v2/index.html" },
+
+    // 👇 Todo lo que empiece con /api lo dejamos pasar al backend tal cual
+    { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
