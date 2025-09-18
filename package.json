@@ -6,11 +6,21 @@
   "engines": {
     "node": "20.x"
   },
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "node server.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "echo \"No tests yet\""
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
-    "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.3",
     "stripe": "^13.6.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
   }
 }
