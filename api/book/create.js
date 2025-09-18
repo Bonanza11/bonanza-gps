@@ -16,7 +16,6 @@ function atLeast24hAhead(dateStr, timeStr){
 
 /* ===== Util ===== */
 function localDateTimeToUtcIso(dateStr, timeStr, zone = TZ){
-  // dateStr = 'YYYY-MM-DD', timeStr = 'HH:mm' en hora local (Denver)
   const dtLocal = DateTime.fromISO(`${dateStr}T${timeStr}:00`, { zone });
   if (!dtLocal.isValid) return null;
   return dtLocal.toUTC().toISO();
@@ -54,7 +53,7 @@ export default async function handler(req, res){
       stripePaymentIntent = null
     } = req.body || {};
 
-    // ===== Validaciones actuales (las mantenemos) =====
+    // ===== Validaciones base =====
     if (!confirmationNumber || !fullname || !email || !pickup || !dropoff || !date || !time || quotedTotal == null){
       return res.status(400).json({ ok:false, error:"Missing required fields" });
     }
@@ -62,10 +61,15 @@ export default async function handler(req, res){
       return res.status(400).json({ ok:false, error:"Pickup must be at least 24h ahead" });
     }
 
+    const quoted = Number(quotedTotal);
+    const dist   = distanceMiles == null ? null : Number(distanceMiles);
+    if (Number.isNaN(quoted)) return res.status(400).json({ ok:false, error:"quotedTotal must be a number" });
+    if (dist !== null && Number.isNaN(dist)) return res.status(400).json({ ok:false, error:"distanceMiles must be a number" });
+
     const sql = neon(process.env.DATABASE_URL);
 
     // =========================
-    // 1) Insert en bookings (lo tuyo, intacto)
+    // 1) Insert en bookings
     // =========================
     const bookingRows = await sql`
       insert into bookings (
@@ -84,7 +88,7 @@ export default async function handler(req, res){
         ${fullname}, ${phone}, ${email},
         ${pickup}, ${dropoff},
         ${date}, ${time},
-        ${vehicleType}, ${distanceMiles}, ${quotedTotal},
+        ${vehicleType}, ${dist}, ${quoted},
         ${flightNumber}, ${flightOriginCity},
         ${tailNumber}, ${privateFlightOriginCity},
         ${specialInstructions},
@@ -105,13 +109,22 @@ export default async function handler(req, res){
     if (!clientRow && phone){
       clientRow = (await sql`select * from clients where phone = ${phone} limit 1;`)[0];
     }
+
     if (!clientRow){
-    // después
-clientRow = (await sql`
-  insert into clients (name, phone, email, rating)
-  values (${name}, ${phone || null}, ${email || null}, 'good')
-  returning *;
-`)[0];
+      clientRow = (await sql`
+        insert into clients (name, phone, email, internal_rating)
+        values (${fullname}, ${phone || null}, ${email || null}, 'good')
+        returning *;
+      `)[0];
+    } else {
+      // actualiza nombre/teléfono si cambian (sin romper rating/notes)
+      clientRow = (await sql`
+        update clients
+           set name=${fullname},
+               phone=${phone || clientRow.phone}
+         where id=${clientRow.id}
+         returning *;
+      `)[0];
     }
 
     // =========================
@@ -122,7 +135,6 @@ clientRow = (await sql`
       return res.status(400).json({ ok:false, error:"Invalid pickup date/time" });
     }
 
-    // Mapear vehicleType => Vehicle preference
     const vehiclePref = (vehicleType || "suv").toUpperCase() === "VAN" ? "Van" : "SUV";
 
     const appt = (await sql`
@@ -136,7 +148,7 @@ clientRow = (await sql`
         ${clientRow.id},
         ${pickup}, ${dropoff},
         ${pickupUtcIso},
-        ${flightNumber || null}, ${distanceMiles || null}, ${quotedTotal || null}, ${vehiclePref},
+        ${flightNumber || null}, ${dist}, ${quoted}, ${vehiclePref},
         'pending', 'website',
         ${JSON.stringify({
           booking_id: booking.id,
@@ -157,8 +169,8 @@ clientRow = (await sql`
     if (assigned?.driver_id){
       await sql`
         update appointments
-        set driver_id = ${assigned.driver_id}, status = 'assigned'
-        where id = ${appt.id};
+           set driver_id = ${assigned.driver_id}, status = 'assigned'
+         where id = ${appt.id};
       `;
       await sql`
         insert into assignment_logs (appointment_id, assigned_driver_id, rule_trace)
@@ -188,7 +200,7 @@ clientRow = (await sql`
     });
 
   }catch(err){
-    console.error(err);
+    console.error("book/create error:", err);
     return res.status(500).json({ ok:false, error: String(err?.message || err) });
   }
 }
@@ -196,11 +208,11 @@ clientRow = (await sql`
 /* ====== Motor de asignación mínima ====== */
 async function autoAssign(sql, appt){
   // 1) Candidatos activos
-  const drivers = await sql`select * from drivers where status = 'active';`;
+  const drivers = await sql`select * from drivers where active = true;`;
 
-  // 2) Hora local a partir de pickup_time (que viene en UTC)
+  // 2) Hora local a partir de pickup_time (UTC → TZ)
   const pickupLocal = DateTime.fromISO(appt.pickup_time, { zone: "utc" }).setZone(TZ);
-  const weekdayLuxon = pickupLocal.weekday % 7; // Luxon: 1..7 → 0..6
+  const weekdayLuxon = pickupLocal.weekday % 7; // Luxon 1..7 → 0..6
 
   // 3) Filtrar por 24h o por turno
   const candidates = [];
@@ -211,8 +223,8 @@ async function autoAssign(sql, appt){
     }
     const shifts = await sql`
       select * from driver_shifts
-      where driver_id = ${d.id}
-        and (weekday = ${weekdayLuxon} or date_on = ${pickupLocal.toISODate()});
+       where driver_id = ${d.id}
+         and (weekday = ${weekdayLuxon} or date_on = ${pickupLocal.toISODate()});
     `;
     const within = shifts.some(s => {
       const start = DateTime.fromISO(`${pickupLocal.toISODate()}T${s.start_time}`, { zone: s.timezone || TZ });
@@ -232,10 +244,10 @@ async function autoAssign(sql, appt){
   for (const d of candidates){
     const row = (await sql`
       select count(*)::int as c
-      from appointments
-      where driver_id = ${d.id}
-        and status in ('pending','assigned','in_progress')
-        and date(pickup_time at time zone 'utc' at time zone ${TZ}) = ${day};
+        from appointments
+       where driver_id = ${d.id}
+         and status in ('pending','assigned','in_progress')
+         and date(pickup_time at time zone 'utc' at time zone ${TZ}) = ${day};
     `)[0];
     loads.push({ d, c: row?.c || 0 });
   }
