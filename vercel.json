@@ -1,11 +1,14 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/success", "destination": "/success.html" },
-    { "source": "/cancel", "destination": "/cancel.html" },
-    { "source": "/reschedule", "destination": "/reschedule.html" },
-    { "source": "/reschedule-success", "destination": "/reschedule-success.html" },
-    { "source": "/admin", "destination": "/admin_v2/index.html" },
+    { "source": "/", "destination": "/app/index.html" },
+
+    { "source": "/success", "destination": "/app/success.html" },
+    { "source": "/cancel",  "destination": "/app/cancel.html" },
+
+    { "source": "/reschedule",           "destination": "/reschedule.html" },
+    { "source": "/reschedule-success",   "destination": "/reschedule-success.html" },
+
+    { "source": "/admin",  "destination": "/admin_v2/index.html" },
     { "source": "/admin/", "destination": "/admin_v2/index.html" }
   ],
   "redirects": [
