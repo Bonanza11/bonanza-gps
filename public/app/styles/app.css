@@ -1,0 +1,292 @@
+/* =========================================================
+   Archivo: app.css
+   Ubicación sugerida: /public/app/styles/app.css
+   Descripción:
+   Hoja de estilos principal de Bonanza Transportation.
+   Es la extracción 1:1 del <style> que tenías en tu index,
+   para dejar el HTML limpio. No cambia clases ni selectores.
+   Contiene: variables, layout, inputs, botones, mapa,
+   resumen (Trip Summary), selector e imagen de vehículo,
+   términos, acordeón de equipaje, modal, “jet faux 3D”,
+   Meet & Greet (SLC) y notas de precio.
+   ========================================================= */
+
+:root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#000;color:var(--copper);font-family:Arial,sans-serif}
+
+/* Header / Logo */
+header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
+.logo-wrap{ position:relative }
+.logo{
+  width:180px;height:180px;border-radius:50%;border:2px solid var(--copper);
+  object-fit:cover;display:block;position:relative;
+  box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
+  filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
+}
+.logo-wrap::after{content:"";position:absolute;inset:-8px;border-radius:50%;box-shadow:0 0 22px 10px rgba(192,139,92,.35);pointer-events:none;}
+
+/* Layout */
+main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
+label{display:block;margin:12px 0 6px;font-weight:700}
+
+/* Inputs: oscuros en todos (incl. autofill) */
+input,select{
+  display:block;width:100%;height:44px;padding:10px 12px;
+  background:#1a1a1a;color:var(--copper);border:1px solid #444;border-radius:8px;
+  outline:none;
+}
+/* Campos inválidos (falta completar) */
+.invalid{
+  border-color: var(--err) !important;
+  box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
+}
+input:focus,select:focus{border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18)}
+::placeholder{color:#cba686;opacity:.65}
+
+/* Fuerza oscuro también cuando el navegador autocompleta */
+input:-webkit-autofill,
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color: var(--copper);
+  transition: background-color 50000s ease-in-out 0s;
+  box-shadow: 0 0 0 1000px #1a1a1a inset;
+  border:1px solid #444;
+}
+
+/* Botones */
+button{
+  width:100%;padding:14px 16px;margin-top:18px;background:var(--copper);color:#000;
+  font-weight:700;font-size:18px;border:0;border-radius:10px;cursor:pointer;
+}
+button:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* Mapa */
+#map{height:380px;margin-top:10px;border-radius:12px;overflow:hidden}
+
+/* Trip Summary */
+#info{
+  display:none;margin-top:18px;border-radius:16px;padding:18px;
+  background:linear-gradient(180deg,#121212,#0b0b0b);
+  border:1px solid rgba(192,139,92,.28);box-shadow:0 18px 40px rgba(0,0,0,.55);
+  color:#e9d5c1;font-size:.95em;
+}
+.info-title{font-weight:800;margin:0 0 4px;font-size:1.05rem}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 12px;}
+.kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:12px;}
+.kpi .label{font-size:.75rem;opacity:.8;margin-bottom:6px}
+.kpi .value{font-size:1.35rem;font-weight:800;color:#f0d1ad}
+.kpi .unit{font-size:.9rem;opacity:.7;margin-left:4px}
+.kpi .value.price{color:#ffddae}
+.breakdown{margin:6px 0 12px;}
+.breakdown .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;}
+.breakdown .row.total{font-weight:800;color:#ffddae;font-size:1.05rem}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0}
+
+/* Date/Time */
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:520px){.input-row{grid-template-columns:1fr;}}
+#date,#time{
+  height:56px;font-size:17px;border-radius:12px;background:#1f1f1f;color:#fff;
+  border:2px solid var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18);
+}
+#date:focus,#time:focus{outline:none;border-color:#ffd9a1;box-shadow:0 0 0 4px rgba(255,217,161,.22);}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator{
+  filter:invert(80%) sepia(20%) saturate(180%) hue-rotate(340deg) brightness(110%);
+  opacity:.95;cursor:pointer;
+}
+.helper{font-size:.85rem;opacity:.95;margin-top:6px;color:#ffddae;}
+
+/* Vehicle visual */
+.turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
+.turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
+.turntable .platform{
+  width:220px;height:22px;border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
+  margin-top:6px;
+}
+.vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
+
+/* Vehicle selector */
+.veh-toggle{display:flex;gap:8px;margin:10px 0}
+.veh-btn{
+  flex:1 1 0;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);
+  color:var(--copper);padding:12px;border-radius:10px;cursor:pointer;font-weight:700
+}
+.veh-btn.active{
+  background:var(--copper);color:#000;border-color:var(--copper);
+  box-shadow:0 0 0 3px rgba(168,116,79,.25)
+}
+
+/* Terms compact box */
+.terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
+.terms-summary{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+}
+.terms-summary .chev{
+  width:10px;height:10px;border-right:2px solid var(--copper);
+  border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto;
+}
+.terms-box.open .terms-summary .chev{transform:rotate(45deg)}
+
+/* Switch (único) */
+.accept-pill{
+  min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
+  display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
+}
+.accept-dot{
+  width:14px;height:14px;border-radius:50%;background:#333;transition:.2s;
+  border:1px solid #555;
+}
+.accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
+.accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
+.accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
+
+/* Read-more (2 líneas + degradado) */
+.terms-body{margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
+.terms-content.clamped{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;position:relative;
+}
+.terms-content.clamped::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:2.2em;
+  background:linear-gradient(180deg, rgba(14,14,14,0), rgba(14,14,14,1));
+  pointer-events:none;
+}
+.readmore-btn{
+  display:inline-block;margin-top:8px;padding:6px 10px;border:1px solid rgba(168,116,79,.55);
+  border-radius:8px;background:#1a1a1a;color:#ffddae;font-weight:700;font-size:.85rem;cursor:pointer;
+}
+
+/* ---- Admin ghost button in Terms ---- */
+#termsBox { position: relative; }
+.ghost-admin {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 120px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(0,0,0,.18);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+  text-indent: -9999px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background .2s ease-in-out, transform .08s ease-in;
+}
+.ghost-admin:hover { background: rgba(0,0,0,.32); }
+.ghost-admin:active { transform: scale(.98); }
+
+/* Hints */
+.hint{font-size:.85rem;margin-top:6px}
+.hint.warn{color:var(--warn)}
+.hint.err{color:var(--err)}
+.hint.ok{color:var(--ok)}
+
+/* === Luggage Accordion === */
+.luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
+.luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
+.luggage-title{font-weight:700}
+.luggage-chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto}
+.luggage-accordion.open .luggage-chev{transform:rotate(45deg)}
+.luggage-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
+.luggage-accordion.open .luggage-body{display:block}
+.lug-section h4{margin:6px 0 4px;color:#ffddae}
+.lug-note{opacity:.9;margin:2px 0 8px}
+.lug-list{margin:0 0 10px 18px}
+
+/* ===== Modal ===== */
+.modal-backdrop{position:fixed;inset:0;display:none;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:16px;z-index:9999}
+.modal-backdrop.open{display:flex}
+.modal{max-width:860px;width:100%;max-height:86vh;background:#0e0e0e;border:1px solid rgba(168,116,79,.45);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(168,116,79,.28);background:#101010}
+.modal-title{font-weight:800;color:#ffddae}
+.modal-body{padding:14px 16px 18px;overflow:auto;color:#e9d5c1;line-height:1.6}
+.close-btn{background:#1a1a1a;border:1px solid rgba(168,116,79,.45);color:#ffddae;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+
+/* Jet Faux 3D (placeholder sin video) */
+.jet-showcase {
+  margin: 16px 0 6px;
+  background: #0b0b0b;
+  border: 1px solid rgba(168,116,79,.35);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.55);
+}
+.jet-faux3d {
+  position: relative;
+  border: 1px solid rgba(168,116,79,.28);
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 85%, rgba(0,0,0,.7), rgba(0,0,0,0) 60%);
+}
+.jet-faux3d .jet {
+  width: 88%;
+  max-width: 780px;
+  display: block;
+  margin: 20px auto 12px;
+  transform-style: preserve-3d;
+  animation: jetYaw 9s linear infinite;
+}
+@keyframes jetYaw {
+  0%   {transform: perspective(800px) rotateY(-12deg) translateY(0);}
+  50%  {transform: perspective(800px) rotateY(12deg)  translateY(-2px);}
+  100% {transform: perspective(800px) rotateY(-12deg) translateY(0);}
+}
+.jet-caption {
+  font-weight: 700;
+  color: #ffddae;
+  text-align: center;
+  margin-top: 6px;
+  letter-spacing: .2px;
+  opacity: .95;
+}
+
+/* ---- Total & note styling ---- */
+.breakdown .row { display:flex; justify-content:space-between; align-items:center; }
+.breakdown .row.total { font-weight:800; color:#ffddae; font-size:1.05rem; }
+
+/* Nota de impuestos y propina */
+.tax-note {
+  font-size: 13px;
+  color: #c9a97c;
+  font-style: italic;
+  text-align: right;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .jet-faux3d .jet {animation: none;}
+}
+
+/* === Meet & Greet card (SLC only) === */
+.mg-card {
+  display: none;
+  margin: 16px 0;
+  border-radius: 14px;
+  border: 1px solid rgba(168,116,79,.45);
+  background: linear-gradient(180deg,#121212,#0b0b0b);
+  box-shadow: 0 12px 24px rgba(0,0,0,.35);
+  padding: 16px;
+  animation: mgFadeIn .25s ease;
+}
+.mg-card h3 { margin: 0 0 4px; color: #ffddae; font-size: 1.1rem; }
+.mg-card p  { margin: 0 0 12px; font-size: .9rem; opacity: .85; }
+.mg-options { display: flex; gap: 8px; margin-bottom: 8px; }
+.mg-btn {
+  flex: 1 1 0;
+  background: #1a1a1a;
+  border: 1px solid rgba(168,116,79,.55);
+  color: var(--copper);
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+  user-select: none;
+}
+.mg-btn.active { background: var(--copper); color: #000; border-color: var(--copper); }
+.mg-note { font-size: .8rem; color: #aa8b72; }
+@keyframes mgFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
