@@ -1,29 +1,11 @@
-/*
-=============================================================
- Archivo: vercel.json
- Ubicación: raíz del proyecto
- Descripción:
- - Define cómo Vercel sirve las páginas de Bonanza Transportation.
- - La página principal ahora vive en /public/app/index.html,
-   por eso la raíz "/" se reescribe a /app/index.html.
- - success.html y cancel.html se asumieron movidos a /app/.
- - reschedule.html y reschedule-success.html permanecen en la raíz
-   porque son páginas separadas de reprogramación.
- - Admin se sirve desde /public/admin_v2/index.html.
-=============================================================
-*/
-
 {
   "rewrites": [
     { "source": "/", "destination": "/app/index.html" },
-
     { "source": "/success", "destination": "/app/success.html" },
-    { "source": "/cancel",  "destination": "/app/cancel.html" },
-
-    { "source": "/reschedule",           "destination": "/reschedule.html" },
-    { "source": "/reschedule-success",   "destination": "/reschedule-success.html" },
-
-    { "source": "/admin",  "destination": "/admin_v2/index.html" },
+    { "source": "/cancel", "destination": "/app/cancel.html" },
+    { "source": "/reschedule", "destination": "/reschedule.html" },
+    { "source": "/reschedule-success", "destination": "/reschedule-success.html" },
+    { "source": "/admin", "destination": "/admin_v2/index.html" },
     { "source": "/admin/", "destination": "/admin_v2/index.html" }
   ],
   "redirects": [
