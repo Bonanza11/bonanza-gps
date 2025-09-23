@@ -1,0 +1,70 @@
+<!--
+reschedule.html — Bonanza Transportation
+----------------------------------------
+Página independiente para reprogramar (Reschedule) una reserva existente.
+- No carga mapas ni lógica de booking/pago.
+- Solo muestra la reserva (vía ?cn=...), permite elegir nueva fecha/hora
+  (mínimo 24 h) y envía la solicitud al backend.
+
+Requiere:
+  - /public/app/styles/app.css
+  - /public/app/scripts/reschedule.js
+Backend esperado:
+  - GET  /api/book/get?cn=...
+  - POST /api/book/reschedule  { cn, newDate, newTime }
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reschedule — Bonanza Transportation</title>
+
+  <!-- CSS global -->
+  <link rel="stylesheet" href="/app/styles/app.css" />
+</head>
+<body>
+  <main style="max-width:760px;width:92vw;margin:24px auto 40px;padding:0 16px">
+    <h1 style="color:#ffddae;margin:0 0 12px;">Reschedule</h1>
+
+    <!-- Código de reserva / estado -->
+    <label for="cn">Reservation Code (CN)</label>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input id="cn" type="text" placeholder="BZ-20240101-ABCD" required style="flex:1 1 auto;" />
+      <button type="button" id="btnLoadCN" class="veh-btn" style="width:auto; padding:10px 14px;">
+        Load Reservation
+      </button>
+    </div>
+
+    <!-- Info de la reserva -->
+    <div id="rescheduleOutput" class="hint" style="margin-top:12px;"></div>
+
+    <!-- Nuevo Date/Time -->
+    <div class="input-row" style="margin-top:14px;">
+      <div>
+        <label for="newDate">New Date:</label>
+        <input id="newDate" type="date" />
+      </div>
+      <div>
+        <label for="newTime">New Time:</label>
+        <input id="newTime" type="time" step="900" />
+      </div>
+    </div>
+    <div id="newWhenHelp" class="helper" style="margin-top:6px;"></div>
+
+    <!-- Enviar -->
+    <form id="rescheduleForm" style="margin-top:12px;">
+      <button type="submit" class="veh-btn" style="width:100%;padding:14px 16px;">
+        Submit Reschedule
+      </button>
+    </form>
+
+    <div style="margin-top:16px">
+      <a href="/app/index.html" style="color:#ffddae;text-decoration:underline;">← Back to Booking</a>
+    </div>
+  </main>
+
+  <!-- JS de reschedule (único script de esta página) -->
+  <script defer src="/app/scripts/reschedule.js"></script>
+</body>
+</html>
