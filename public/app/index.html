@@ -1,10 +1,11 @@
 <!--
 index.html — Bonanza Transportation (APP/Booking)
--------------------------------------------------
-Página principal de reserva (booking) ya separada del index original.
-- Sin estilos embebidos: usa /app/styles/app.css
-- Sin JS embebido: usa /app/scripts/{core,maps,booking,stripe}.js
-- SIN la sección de Reschedule (está en /app/reschedule.html)
+────────────────────────────────────────────────
+Página principal de reservas (booking) ya separada del index original.
+
+✔ Sin estilos embebidos → usa /app/styles/app.css
+✔ Sin JS embebido → usa /app/scripts/{core,maps,booking,stripe}.js
+✔ SIN la sección de Reschedule → está en /app/reschedule.html
 
 Dependencias:
   CSS:
@@ -15,9 +16,10 @@ Dependencias:
     /app/scripts/booking.js
     /app/scripts/stripe.js
   JS terceros:
-    https://maps.googleapis.com/maps/api/js?...&libraries=places&callback=initMap (async)
+    https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap (async)
     https://js.stripe.com/v3
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,10 +256,9 @@ Dependencias:
         <button id="closeTerms" class="close-btn">Close</button>
       </div>
       <div class="modal-body" style="line-height:1.6">
-        <!-- (Aquí puedes mantener el mismo texto largo de términos que ya tenías) -->
+        <!-- (Puedes mantener aquí el texto completo de términos que ya tenías) -->
         <h3 style="margin:0 0 8px;color:#ffddae">Terms and Conditions</h3>
         <div style="opacity:.85;margin-bottom:8px">Bonanza Transportation — Last updated: 2024</div>
-        <!-- … contenido de términos idéntico al original … -->
       </div>
     </div>
   </div>
