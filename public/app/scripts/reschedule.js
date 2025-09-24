@@ -1,156 +1,160 @@
-/**
- * reschedule.js — Bonanza Transportation (Reschedule-only)
- * --------------------------------------------------------
- * Maneja la pantalla de reprogramación:
- *  - Lee el CN de la URL (?cn=...)
- *  - Carga detalles de la reserva existente (GET /api/book/get)
- *  - Enforce mínimo 24h para la nueva fecha/hora
- *  - Envía POST /api/book/reschedule { cn, newDate, newTime }
- *  - Muestra resultado y mensajes de error
- *
- * Este archivo NO depende de Maps ni Stripe.
- * Solo necesita existir reschedule.html y app.css.
- */
+// Reschedule controller
+const $ = (s) => document.querySelector(s);
+const $all = (s) => Array.from(document.querySelectorAll(s));
 
-/* ===== Helpers mínimos ===== */
-const byId = (id) => document.getElementById(id);
+let state = {
+  booking: null,
+  vehicleType: "suv",
+  meetGreet: "none",
+  miles: 0,
+  quoteCents: 0,
+  diffCents: 0,
+};
 
-function earliestAllowedDt(){               // +24h, redondeado a 15'
-  const d = new Date(Date.now() + 24*60*60*1000);
-  const m = d.getMinutes();
-  const add = 15 - (m % 15 || 15);
-  d.setMinutes(m + add, 0, 0);
-  return d;
-}
-function toLocalISODate(dt){
-  const off = dt.getTimezoneOffset()*60000;
-  return new Date(dt.getTime()-off).toISOString().slice(0,10);
-}
-function pad(n){ return String(n).padStart(2,'0'); }
-function hhmm(dt){ return `${pad(dt.getHours())}:${pad(dt.getMinutes())}`; }
-function onlyHHMM(v){ const m=String(v).match(/^(\d{2}:\d{2})/); return m?m[1]:v; }
-function isAtLeast24hAhead(dateStr, timeStr){
-  if(!dateStr || !timeStr) return false;
-  const d = new Date(`${dateStr}T${timeStr}:00`);
-  return (d.getTime() - Date.now()) >= 24*60*60*1000;
-}
-function getQueryCN(){
-  const u = new URL(location.href);
-  return (u.searchParams.get('cn') || '').trim();
+function fmt(cents){ return `$${(cents/100).toFixed(2)}`; }
+
+async function fetchJSON(url, opts){
+  const r = await fetch(url, { headers:{ "Content-Type":"application/json" }, ...opts });
+  const t = await r.text();
+  try { return { status:r.status, json: JSON.parse(t) }; }
+  catch { return { status:r.status, json:{ ok:false, error:t } }; }
 }
 
-/* ===== Pinta ayuda debajo de fecha/hora ===== */
-function updateNewWhenHelp(){
-  const d = byId('newDate')?.value || '';
-  const t = byId('newTime')?.value || '';
-  const help = byId('newWhenHelp');
-  if (!help) return;
-  if (!d || !t) { help.textContent = ''; return; }
-  const ok = isAtLeast24hAhead(d,t);
-  help.textContent = ok ? `Selected: ${d} ${t} (✓ min 24h)` : `Must be at least 24h in advance`;
-  help.className = 'helper';
-}
-
-/* ===== Inicializa min 24h ===== */
-function initMin24h(){
-  const d = byId('newDate');
-  const t = byId('newTime');
-  if (!d || !t) return;
-
-  const minDt = earliestAllowedDt();
-  d.min = toLocalISODate(minDt);
-
-  if (!d.value) d.value = toLocalISODate(minDt);
-  if (!t.value) t.value = hhmm(minDt);
-
-  d.addEventListener('change', updateNewWhenHelp);
-  t.addEventListener('change', updateNewWhenHelp);
-  updateNewWhenHelp();
-}
-
-/* ===== Cargar reserva por CN ===== */
-async function loadByCN(cn){
-  const out = byId('rescheduleOutput');
-  if (!out) return;
-
-  if (!cn){ out.textContent = 'Enter your reservation code (CN).'; return; }
-
-  out.textContent = 'Looking up reservation...';
-  try{
-    const resp = await fetch(`/api/book/get?cn=${encodeURIComponent(cn)}`);
-    const data = await resp.json();
-    if (!resp.ok || !data?.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
-
-    const b = data.booking;
-    out.textContent =
-      `CN ${b.confirmation_number} — status: ${b.status}
-Current: ${b.date_iso} ${onlyHHMM(b.time_hhmm)} — Total: $${Number(b.quoted_total||0).toFixed(2)}`;
-
-  }catch(e){
-    out.textContent = '❌ Error: ' + (e?.message || e);
+$("#load").addEventListener("click", async () => {
+  const cn = $("#cn").value.trim();
+  $("#status").textContent = "Loading…";
+  const { status, json } = await fetchJSON(`/api/book/get?cn=${encodeURIComponent(cn)}`);
+  if (status !== 200 || !json.ok) {
+    $("#status").textContent = `Error: ${json.error || status}`;
+    $("#form").classList.add("is-hidden");
+    return;
   }
-}
+  state.booking = json.booking;
 
-/* ===== Submit reschedule ===== */
-function wireSubmit(){
-  const form = byId('rescheduleForm');
-  const out  = byId('rescheduleOutput');
-  form?.addEventListener('submit', async (e)=>{
-    e.preventDefault();
+  // Prefill UI
+  $("#pickup").value = state.booking.pickup || "";
+  $("#dropoff").value = state.booking.dropoff || "";
+  $("#date").value = state.booking.date_iso || "";
+  $("#time").value = state.booking.time_hhmm || "";
+  state.vehicleType = (state.booking.vehicle_type || "suv");
+  state.meetGreet = state.booking.mg_choice || "none";
+  $("#origTotal").textContent = fmt(Math.round(Number(state.booking.quoted_total || 0)*100) || 0);
 
-    const cn = (byId('cn')?.value || '').trim();
-    const newDate = (byId('newDate')?.value || '').trim();
-    const newTime = (byId('newTime')?.value || '').trim();
-
-    if (!cn || !newDate || !newTime){
-      alert('Complete CN, new date and new time.');
-      return;
-    }
-    if (!isAtLeast24hAhead(newDate,newTime)){
-      alert('Please choose a Date & Time at least 24 hours in advance.');
-      return;
-    }
-
-    out.textContent = 'Submitting reschedule...';
-    try{
-      const resp = await fetch('/api/book/reschedule', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ cn, newDate, newTime })
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data?.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
-
-      const b = data.booking;
-      out.textContent =
-        `✅ Rescheduled to ${b.date_iso} ${onlyHHMM(b.time_hhmm)}.`;
-
-    }catch(err){
-      out.textContent = '❌ Error: ' + (err?.message || err);
-    }
+  // toggle veh buttons
+  $all(".veh-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.type === state.vehicleType);
+    b.onclick = ()=> {
+      state.vehicleType = b.dataset.type;
+      $all(".veh-btn").forEach(x=>x.classList.toggle("active", x===b));
+    };
   });
-}
 
-/* ===== Botón Load ===== */
-function wireLoadBtn(){
-  const btn = byId('btnLoadCN');
-  btn?.addEventListener('click', ()=>{
-    const cn = (byId('cn')?.value || '').trim();
-    if (!cn) { alert('Enter your reservation code'); return; }
-    loadByCN(cn);
+  // mg buttons
+  $all(".mg-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.choice === state.meetGreet);
+    b.onclick = ()=>{
+      state.meetGreet = b.dataset.choice;
+      $all(".mg-btn").forEach(x=>x.classList.toggle("active", x===b));
+    };
   });
-}
 
-/* ===== On Load ===== */
-document.addEventListener('DOMContentLoaded', ()=>{
-  initMin24h();
-  wireLoadBtn();
-  wireSubmit();
+  $("#form").classList.remove("is-hidden");
+  $("#summary").classList.add("is-hidden");
+  $("#status").textContent = "";
+});
 
-  // Prefill con ?cn=...
-  const qcn = getQueryCN();
-  if (qcn){
-    byId('cn').value = qcn;
-    loadByCN(qcn);
+$("#recalc").addEventListener("click", async () => {
+  const pickup = $("#pickup").value.trim();
+  const dropoff = $("#dropoff").value.trim();
+  if (!pickup || !dropoff) { $("#status").textContent = "Pickup and dropoff are required."; return; }
+
+  // Usa tu función de maps para distancia (en millas)
+  // Si no la tienes, sustituye por tu cálculo.
+  let miles = 0;
+  try {
+    miles = await window.getDistanceMiles(pickup, dropoff); // <- de maps.js
+  } catch(e){
+    console.warn(e);
   }
+  if (!miles || !Number.isFinite(miles)) { $("#status").textContent = "Could not compute distance."; return; }
+  state.miles = miles;
+
+  // Pide quote al backend
+  const { status, json } = await fetchJSON("/api/book/quote", {
+    method:"POST",
+    body: JSON.stringify({
+      pickup, dropoff,
+      distance_miles: miles,
+      vehicleType: state.vehicleType,
+      meetGreet: state.meetGreet,
+    })
+  });
+  if (status !== 200 || !json.ok) { $("#status").textContent = `Quote error: ${json.error||status}`; return; }
+
+  state.quoteCents = json.quote.total_cents;
+  const originalCents = Math.round(Number(state.booking.quoted_total || 0)*100) || 0;
+
+  $("#newQuote").textContent = fmt(state.quoteCents);
+  $("#origTotal").textContent = fmt(originalCents);
+
+  // diferencia a pagar (si es mayor)
+  state.diffCents = Math.max(0, state.quoteCents - originalCents);
+  $("#diff").textContent = fmt(state.diffCents);
+
+  // nota
+  const note = $("#note");
+  if (state.diffCents > 0) {
+    note.textContent = "The new route is more expensive. You’ll be asked to pay the difference.";
+  } else {
+    note.textContent = "The new route is cheaper or equal. Your original total applies (no refunds).";
+  }
+
+  $("#summary").classList.remove("is-hidden");
+});
+
+// Submit (pagar diferencia si aplica y luego guardar)
+$("#payOrSave").addEventListener("click", async () => {
+  const cn = $("#cn").value.trim();
+  const newDate = $("#date").value;
+  const newTime = $("#time").value;
+  const pickup = $("#pickup").value.trim();
+  const dropoff = $("#dropoff").value.trim();
+
+  let stripePaymentIntentId = null;
+
+  // 1) si hay diferencia, crea checkout en Stripe
+  if (state.diffCents > 0) {
+    const { status, json } = await fetchJSON("/api/create-checkout-session-diff", {
+      method:"POST",
+      body: JSON.stringify({
+        cn,
+        diffAmount: state.diffCents,              // en centavos
+        customerEmail: state.booking.email || "",
+        metadata: { reason:"reschedule_diff", cn },
+        description: `Reschedule difference for ${cn}`
+      })
+    });
+    if (status !== 200 || !json.ok) { $("#status").textContent = `Stripe error: ${json.error||status}`; return; }
+
+    // redirige a Stripe Checkout
+    window.location.href = json.url;  // tu endpoint debe devolver {url}
+    return; // regresará por success_url en tu app
+  }
+
+  // 2) si NO hay diferencia → guarda directamente
+  const save = await fetchJSON("/api/book/reschedule", {
+    method:"POST",
+    body: JSON.stringify({
+      cn,
+      pickup, dropoff,
+      vehicleType: state.vehicleType,
+      meetGreet: state.meetGreet,
+      distance_miles: state.miles,
+      newDate, newTime,
+      diffCents: state.diffCents,
+      stripePaymentIntentId // null
+    })
+  });
+  if (save.status !== 200 || !save.json.ok) { $("#status").textContent = `Save error: ${save.json.error||save.status}`; return; }
+  $("#status").textContent = "Reschedule completed.";
 });
