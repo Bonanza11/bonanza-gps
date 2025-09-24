@@ -6,25 +6,41 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.status(200).end();
+
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+
+  // Solo JSON en las respuestas
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
 
   // ===== Solo GET =====
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
+    res.status(405).json({ ok: false, error: "Method not allowed" });
+    return;
   }
 
-  // Normaliza y valida el confirmation number (alfa-num y guiones)
+  // ===== Validación de ENV =====
+  const DB_URL = process.env.DATABASE_URL;
+  if (!DB_URL) {
+    res.status(500).json({ ok: false, error: "Missing DATABASE_URL env var" });
+    return;
+  }
+
+  // ===== Validación de query =====
   const raw = String(req.query.cn || "").trim();
   const cn = raw.toUpperCase();
   if (!/^[A-Z0-9-]{4,40}$/.test(cn)) {
-    return res.status(400).json({ ok: false, error: "Invalid 'cn' format" });
+    res.status(400).json({ ok: false, error: "Invalid 'cn' format" });
+    return;
   }
 
   try {
-    const sql = neon(process.env.DATABASE_URL);
+    const sql = neon(DB_URL);
 
-    // Case-insensitive (compara upper(col) con CN normalizado)
+    // Case-insensitive (comparando upper(confirmation_number))
     const rows = await sql`
       select id, confirmation_number, status, full_name, phone, email,
              pickup, dropoff, date_iso, time_hhmm, vehicle_type,
@@ -40,16 +56,19 @@ export default async function handler(req, res) {
     `;
 
     if (!rows.length) {
-      // conserva semántica de 404
       res.setHeader("Cache-Control", "no-store");
-      return res.status(404).json({ ok: false, error: "Not found" });
+      res.status(404).json({ ok: false, error: "Not found" });
+      return;
     }
 
-    // cache ligera para lecturas (ajústalo si no te conviene)
+    // Cache ligera (ajústala si prefieres no cachear)
     res.setHeader("Cache-Control", "private, max-age=30");
-    return res.status(200).json({ ok: true, booking: rows[0] });
+    res.status(200).json({ ok: true, booking: rows[0] });
   } catch (err) {
     console.error("book/get error:", err);
-    return res.status(500).json({ ok: false, error: String(err?.message || err) });
+    res.status(500).json({
+      ok: false,
+      error: String(err?.message || err)
+    });
   }
 }
