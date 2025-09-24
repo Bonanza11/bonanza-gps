@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/app/styles/app.css"/>
 
   <style>
+    /* ——— Shell de esta página (respeta tema negro/cobre) ——— */
     body { background:#000; color:#eee; margin:0; }
     header {
       display:flex; align-items:center; gap:14px;
@@ -55,6 +56,41 @@
     .status { margin:8px 0; min-height:20px; color:#ffbfa0; }
     .hidden { display:none; }
     .divider { height:1px; background:rgba(184,115,51,.35); margin:18px 0; }
+
+    /* ——— Modal elegante negro/cobre ——— */
+    .modal-backdrop{
+      position:fixed; inset:0; display:none;
+      background:rgba(0,0,0,.74);
+      align-items:center; justify-content:center; padding:16px; z-index:9999;
+    }
+    .modal-backdrop.open{ display:flex }
+    .modal{
+      max-width:520px; width:100%;
+      background:#0e0e0e;
+      border:1px solid rgba(168,116,79,.45);
+      border-radius:12px;
+      box-shadow:0 18px 48px rgba(0,0,0,.7);
+      overflow:hidden; display:flex; flex-direction:column
+    }
+    .modal-header{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 14px;
+      border-bottom:1px solid rgba(168,116,79,.28);
+      background:#101010
+    }
+    .modal-title{ font-weight:800; color:#ffddae; margin:0; font-size:1.05rem; }
+    .modal-body{ padding:14px 16px 18px; color:#e9d5c1; line-height:1.6 }
+    .modal-actions{
+      display:flex; gap:10px; justify-content:flex-end;
+      padding:12px 14px; border-top:1px solid rgba(168,116,79,.28); background:#0f0f0f;
+    }
+    .m-btn{
+      border:none; border-radius:10px; padding:10px 14px; cursor:pointer;
+      font-weight:700;
+    }
+    .m-btn.primary{ background:#b87333; color:#111; }
+    .m-btn.ghost{ background:#1a1a1a; color:#ffddae; border:1px solid rgba(168,116,79,.45) }
+    .m-btn:focus-visible{ outline:2px solid rgba(255,221,174,.25) }
   </style>
 </head>
 <body>
@@ -126,6 +162,24 @@
     </div>
   </main>
 
+  <!-- MODAL -->
+  <div class="modal-backdrop" id="limitModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-labelledby="limitTitle" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="limitTitle" class="modal-title">Reschedule Limit Reached</h2>
+        <button id="mCloseX" class="m-btn ghost" aria-label="Close">Close</button>
+      </div>
+      <div class="modal-body" id="limitBody">
+        You have already rescheduled this reservation <strong>twice</strong>.
+        For further changes, please contact Bonanza Transportation Concierge.
+      </div>
+      <div class="modal-actions">
+        <a class="m-btn ghost" href="mailto:bonanzatransportation1@outlook.com">Email Concierge</a>
+        <button id="mClose" class="m-btn primary">Understood</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Google Maps JS con tu API Key -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places"></script>
 
@@ -138,6 +192,28 @@
     let mgChoice = 'none';
     let lastQuote = 0;
 
+    /* ===== Modal helpers ===== */
+    const modal = $('limitModal');
+    const btnClose = $('mClose');
+    const btnCloseX = $('mCloseX');
+
+    function openModal() {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      btnClose.focus();
+      document.addEventListener('keydown', trapEsc);
+    }
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', trapEsc);
+    }
+    function trapEsc(e){ if(e.key === 'Escape') closeModal(); }
+    modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+    btnClose.addEventListener('click', closeModal);
+    btnCloseX.addEventListener('click', closeModal);
+
+    /* ===== UI ===== */
     function activatePills(bar, attr, value){
       [...bar.querySelectorAll('.pill')].forEach(p=>{
         p.classList.toggle('active', p.getAttribute(attr) === value);
@@ -175,7 +251,7 @@
       return j.quote.total_cents;
     }
 
-    // carga CN
+    // Cargar reserva por CN
     $('load').onclick = async ()=>{
       const cn = $('cn').value.trim();
       $('status').textContent = '';
@@ -200,15 +276,20 @@
         $('origTotal').textContent = money(booking.quoted_total || 0);
         $('summary').classList.add('hidden');
 
-        $('submit').disabled = used >= 2;
-        if (used >= 2) $('submit').title = 'This reservation has already been rescheduled twice.';
+        // Si ya alcanzó el límite, mostramos modal y deshabilitamos “Submit”
+        if (used >= 2) {
+          openModal();
+          $('submit').disabled = true;
+        } else {
+          $('submit').disabled = false;
+        }
       }catch(e){
         $('status').textContent = 'Error: ' + (e.message || e);
         $('form').classList.add('hidden');
       }
     };
 
-    // toggles
+    // Toggles
     document.getElementById('vehBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       vehicleType = el.getAttribute('data-type');
@@ -220,7 +301,7 @@
       activatePills(ev.currentTarget,'data-mg',mgChoice);
     });
 
-    // recalcular
+    // Recalcular
     $('recalc').onclick = async ()=>{
       $('status').textContent = '';
       try{
@@ -248,7 +329,7 @@
       }
     };
 
-    // resetear
+    // Reset
     $('reset').onclick = ()=>{
       if(!booking) return;
       $('pickup').value = booking.pickup || '';
@@ -263,18 +344,17 @@
       $('status').textContent = '';
     };
 
-    // submit
+    // Submit
     $('submit').onclick = async ()=>{
       if(!booking) return;
       const used = Number(booking.reschedule_count || 0);
-      if (used >= 2) {
-        $('status').textContent = 'Limit reached: no more reschedules for this reservation.';
-        return;
-      }
+      if (used >= 2) { openModal(); return; } // bloqueo con modal
+
       try{
         const d = $('date').value; const t = $('time').value;
         const orig = booking.quoted_total || 0;
         const diff = Math.max(0, lastQuote - orig);
+
         if(diff > 0){
           const r = await fetch('/api/create-checkout-session-diff',{
             method:'POST',
@@ -289,17 +369,14 @@
           });
           const j = await r.json();
           if(!j.ok) throw new Error(j.error || 'stripe_failed');
-          location.href = j.url;
+          location.href = j.url; // Stripe Checkout
           return;
         }
+
         const r2 = await fetch('/api/book/reschedule',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            cn: booking.confirmation_number,
-            newDate: d,
-            newTime: t
-          })
+          body: JSON.stringify({ cn: booking.confirmation_number, newDate: d, newTime: t })
         });
         const j2 = await r2.json();
         if(!j2.ok) throw new Error(j2.error || 'reschedule_failed');
