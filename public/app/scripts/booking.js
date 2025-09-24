@@ -1,48 +1,40 @@
 /* =========================================================
    Archivo: /public/app/scripts/booking.js
    Propósito:
-     - Pricing/UI del flujo de booking (sin lógica de Google Maps).
-     - Calcula total: base + recargo distancia (opcional) + after-hours (25%)
-       + Meet & Greet + multiplicador por vehículo.
-     - Toggle de Términos & Condiciones.
-     - Acordeón de equipaje.
-     - Expone helpers que puede usar maps.js (no acopla al mapa).
-
-   Cómo encaja con el resto:
-     - maps.js debe encargarse de la ruta con Google Maps y luego llamar a:
+     - Pricing/UI del flujo de booking (sin lógica de ruta).
+     - Total = base + surcharge + after-hours (25%) + Meet&Greet,
+       con multiplicador por vehículo.
+     - Toggle de Términos, acordeón de equipaje, recálculo “en vivo”.
+     - Reglas de Aeropuertos/JSX/FBO según texto del Pick-up.
+   Cómo se integra:
+     - maps.js calcula la ruta y luego llama:
          BNZ.renderQuote(leg, { surcharge })
-       donde:
-         * leg es el “route leg” de Google (con distance y duration)
-         * surcharge es opcional (recargo por distancia/condado). Si no lo pasas, se asume 0.
-     - stripe.js lee BNZ.__lastQuotedTotal para crear el Checkout.
-     - Este archivo no usa APIs externas ni hace fetch.
-
-   Cambios clave:
-     - AFTER_HOURS_PCT = 0.25  (antes 0.20).
-     - Función BNZ.isAfterHours(dateStr, timeStr) con fallback 06:00–23:00.
-     - Re-cálculo al cambiar vehículo o Meet & Greet sin perder el resumen.
-
-   Dependencias en el DOM (IDs ya presentes en tu index.html):
-     - Botones vehículo: .veh-btn[data-type="suv|van"]
-     - Card Meet&Greet: #meetGreetCard con .mg-btn[data-choice]
-     - Botón Calcular: #calculate
-     - Botón Pay: #pay
-     - Campos: #date, #time
-     - Contenedor resumen: #info
-     - Toggle términos: #acceptPill
-
+       (leg = route leg de Google, con distance/duration)
+     - Si usas Autocomplete, en place_changed puedes hacer:
+         BNZ.onPickupPlaceChanged(place)
    ========================================================= */
 
 window.BNZ = window.BNZ || {};
 
 /* ------------------ Config & Constantes ------------------ */
 
-// Horario operativo (fallback). Si core.js define otros, se respetan allí.
-BNZ.OPERATING_START = BNZ.OPERATING_START || "06:00";
-BNZ.OPERATING_END   = BNZ.OPERATING_END   || "23:00";
+// Horario operativo (aplica para BNZ.isAfterHours)
+// ⏰ De 7:00 AM a 10:30 PM
+BNZ.OPERATING_START = "07:00";   // 7 AM
+BNZ.OPERATING_END   = "22:30";   // 10:30 PM
 
-// 👇 After-hours al 25%
+// After-hours = 25%
 BNZ.AFTER_HOURS_PCT = 0.25;
+
+/* Palabras clave para detectar tipo de origen */
+const COMMERCIAL_KEYS = [
+  "slc airport", "salt lake city international", "slc terminal", "w terminal dr"
+];
+const JSX_KEYS = ["jsx"];
+const FBO_KEYS = [
+  "atlantic aviation", "signature", "signature flight", "million air", "tac air",
+  "salt lake jet center", "skypark", "south valley regional", "kslc fbo"
+];
 
 /* ------------------ Pricing base & helpers ------------------ */
 
@@ -70,7 +62,6 @@ function getVehicleFromUI(){
 BNZ.mgChoice = BNZ.mgChoice || "none";
 BNZ.getMGFee = ()=> BNZ.mgChoice === "none" ? 0 : 50;
 
-// Wire de botones M&G
 (function wireMeetGreet(){
   const card = document.getElementById('meetGreetCard');
   if(!card) return;
@@ -93,15 +84,14 @@ BNZ.getMGFee = ()=> BNZ.mgChoice === "none" ? 0 : 50;
 BNZ.isAfterHours = (dateStr, timeStr)=>{
   if(!dateStr || !timeStr) return false;
   const d = new Date(`${dateStr}T${timeStr}:00`);
-  const [sh,sm] = (BNZ.OPERATING_START || "06:00").split(':').map(Number);
-  const [eh,em] = (BNZ.OPERATING_END   || "23:00").split(':').map(Number);
+  const [sh,sm] = BNZ.OPERATING_START.split(':').map(Number);
+  const [eh,em] = BNZ.OPERATING_END.split(':').map(Number);
   const start = new Date(d); start.setHours(sh, sm, 0, 0);
   const end   = new Date(d); end.setHours(eh, em, 0, 0);
   return (d < start) || (d > end);
 };
 
 /* ------------------ Render del resumen ------------------ */
-/* maps.js debe llamar a BNZ.renderQuote(leg, { surcharge }) tras calcular la ruta. */
 
 BNZ.__lastBase = null;
 BNZ.__lastSurcharge = 0;
@@ -131,7 +121,7 @@ BNZ.renderQuote = function(leg, opts={}){
   const finalTotal = BNZ.applyVehicleMultiplier(basePrice + surcharge + ahFee + mgFee, vehicle);
   const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
 
-  // Guardamos “cache” para recálculo
+  // Cache
   BNZ.__lastBase = basePrice;
   BNZ.__lastSurcharge = surcharge;
   BNZ.__lastAhFee = ahFee;
@@ -159,7 +149,6 @@ BNZ.renderQuote = function(leg, opts={}){
         <div class="value price">$${finalTotal.toFixed(2)}</div>
       </div>
     </div>
-
     ${hasExtra ? `
       <div class="divider"></div>
       <div class="breakdown">
@@ -181,7 +170,7 @@ BNZ.renderQuote = function(leg, opts={}){
   syncButtons();
 };
 
-// Recalcular solo por cambio de vehículo/M&G manteniendo cache
+// Recalcular por cambio de vehículo/M&G manteniendo cache
 BNZ.recalcFromCache = function(){
   const el = document.getElementById('info');
   if (!el || BNZ.__lastBase == null) return;
@@ -201,6 +190,8 @@ BNZ.recalcFromCache = function(){
 
   BNZ.__lastQuotedTotal = finalTotal;
   BNZ.__lastVehicle = vehicle;
+
+  applyAirportUiFromPickup();
 };
 
 /* ------------------ Vehicle toggle (UI) ------------------ */
@@ -259,20 +250,84 @@ document.querySelectorAll(".luggage-accordion").forEach(acc=>{
 });
 
 /* ------------------ Botón Calculate ------------------ */
-/* Dispara un evento para que maps.js calcule la ruta (si lo estás escuchando).
-   Si no usas evento, puedes hacer que maps.js asigne BNZ.routeAndQuote y llamarla aquí. */
-
 calcBtn?.addEventListener('click', ()=>{
   if(!isAccepted()){
     alert("Please accept Terms & Conditions first.");
     return;
   }
-  // Lanza evento global que maps.js puede escuchar para iniciar el cálculo de ruta.
   document.dispatchEvent(new CustomEvent('bnz:calculate'));
 });
 
-/* ------------------ Init del módulo ------------------ */
+/* ------------------ Detección Aeropuerto/JSX/FBO ------------------ */
+
+function detectPickupType(text){
+  const t = (text || "").toLowerCase();
+
+  const has = (arr)=> arr.some(k=> t.includes(k));
+  const isCommercial = has(COMMERCIAL_KEYS);
+  const isJsx = has(JSX_KEYS);
+  const isFbo = has(FBO_KEYS);
+
+  let type = "NONE";
+  if (isJsx) type = "JSX";
+  else if (isFbo) type = "FBO";
+  else if (isCommercial) type = "COMMERCIAL";
+
+  const isSLC = t.includes("slc") || t.includes("salt lake city");
+  return { type, isSLC };
+}
+
+function applyAirportUi(result){
+  const flightBox = document.getElementById("flightContainer");
+  const privateBox = document.getElementById("privateFlightContainer");
+  const jsxBox = document.getElementById("jsxContainer");
+  const mgCard = document.getElementById("meetGreetCard");
+
+  const vehicle = BNZ.selectedVehicle || getVehicleFromUI();
+  const showMG = (result.type === "COMMERCIAL") && result.isSLC && vehicle === "suv";
+
+  if (flightBox)  flightBox.style.display  = (result.type === "COMMERCIAL") ? "block" : "none";
+  if (jsxBox)     jsxBox.style.display     = (result.type === "JSX")        ? "block" : "none";
+  if (privateBox) privateBox.style.display = (result.type === "FBO")        ? "block" : "none";
+
+  if (mgCard) {
+    mgCard.style.display = showMG ? "block" : "none";
+    if (!showMG) {
+      BNZ.mgChoice = "none";
+      const active = mgCard.querySelector(".mg-btn.active");
+      if (active) active.classList.remove("active");
+      const noneBtn = mgCard.querySelector('.mg-btn[data-choice="none"]');
+      if (noneBtn) noneBtn.classList.add("active");
+      BNZ.recalcFromCache?.();
+    }
+  }
+}
+
+function applyAirportUiFromPickup(){
+  const pickupInput = document.getElementById("pickup");
+  if (!pickupInput) return;
+  const res = detectPickupType(pickupInput.value || "");
+  applyAirportUi(res);
+}
+
+(function watchPickupField(){
+  const pickup = document.getElementById("pickup");
+  if (!pickup) return;
+  ["input","change","blur"].forEach(ev=>{
+    pickup.addEventListener(ev, applyAirportUiFromPickup);
+  });
+})();
+
+BNZ.onPickupPlaceChanged = function(place){
+  const text =
+    (place && (place.formatted_address || place.name)) ||
+    document.getElementById("pickup")?.value || "";
+  const res = detectPickupType(text);
+  applyAirportUi(res);
+};
+
+/* ------------------ Init ------------------ */
 (function initBooking(){
-  // Arranca el estado de botones en función del switch de T&C
   syncButtons();
+  applyAirportUiFromPickup();
 })();
