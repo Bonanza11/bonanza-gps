@@ -1,8 +1,12 @@
 {
-  "name": "bonanza-transportation",
+  "name": "bonanza-gps",
   "version": "1.0.0",
   "description": "Bonanza Transportation web application with booking, payments, and reschedule features.",
+  "type": "module",
   "main": "index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "lint": "eslint . --ext .js",
     "format": "prettier --write .",
@@ -14,13 +18,18 @@
     "transportation",
     "stripe",
     "booking",
-    "vercel"
+    "vercel",
+    "neon",
+    "postgres"
   ],
   "author": "Luis Guerrero",
   "license": "MIT",
   "dependencies": {
-    "@neondatabase/serverless": "^0.9.0",
-    "stripe": "^16.0.0"
+    "@neondatabase/serverless": "^0.10.4",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "stripe": "^13.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
