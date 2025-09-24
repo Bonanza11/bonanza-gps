@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3) Ventana de 24h del pickup actual
+    // 3) Ventana de 24 h sobre el pickup actual
     const currentDt = new Date(`${bk.date_iso}T${bk.time_hhmm}:00`);
     if (currentDt.getTime() - Date.now() < 24*60*60*1000) {
       return res.status(409).json({ ok:false, error:"Cannot reschedule within 24h of current pickup" });
