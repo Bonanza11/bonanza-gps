@@ -1,268 +1,278 @@
-/*
-booking.js — Bonanza Transportation (Booking Logic)
-──────────────────────────────────────────────────
-Rol de este archivo:
-- Calcula el precio (tabla oficial + after-hours + Meet & Greet + tipo de vehículo).
-- Controla el toggle de Términos & Condiciones (habilita "Calculate" y "PAY NOW").
-- Maneja el acordeón de Luggage.
-- Conecta el botón "Calculate Price" con Google Directions para medir millas.
-- Muestra el resumen (distancia, duración, precio) en #info.
-- Deja el total en window.__lastQuotedTotal para que stripe.js lo use.
+/* =========================================================
+   Archivo: /public/app/scripts/booking.js
+   Propósito:
+     - Pricing/UI del flujo de booking (sin lógica de Google Maps).
+     - Calcula total: base + recargo distancia (opcional) + after-hours (25%)
+       + Meet & Greet + multiplicador por vehículo.
+     - Toggle de Términos & Condiciones.
+     - Acordeón de equipaje.
+     - Expone helpers que puede usar maps.js (no acopla al mapa).
 
-Requisitos / Dependencias:
-- maps.js ya carga Google Maps JS API (con "places") y expone window.google.
-- HTML con ids: fullname, phone, email, pickup, dropoff, date, time, meetGreetCard, calculate, pay, info.
-- Botones de vehículo .veh-btn con data-type="suv" | "van".
-- Botones de Meet & Greet .mg-btn con data-choice (tsa_exit, baggage_claim, none).
-- Stripe.js en otra ruta (stripe.js) leerá window.__lastQuotedTotal.
+   Cómo encaja con el resto:
+     - maps.js debe encargarse de la ruta con Google Maps y luego llamar a:
+         BNZ.renderQuote(leg, { surcharge })
+       donde:
+         * leg es el “route leg” de Google (con distance y duration)
+         * surcharge es opcional (recargo por distancia/condado). Si no lo pasas, se asume 0.
+     - stripe.js lee BNZ.__lastQuotedTotal para crear el Checkout.
+     - Este archivo no usa APIs externas ni hace fetch.
 
-Notas:
-- Si aún no aceptan Términos, los botones siguen deshabilitados.
-- Si la API de Maps no está lista, mostramos alerta al calcular.
-*/
+   Cambios clave:
+     - AFTER_HOURS_PCT = 0.25  (antes 0.20).
+     - Función BNZ.isAfterHours(dateStr, timeStr) con fallback 06:00–23:00.
+     - Re-cálculo al cambiar vehículo o Meet & Greet sin perder el resumen.
+
+   Dependencias en el DOM (IDs ya presentes en tu index.html):
+     - Botones vehículo: .veh-btn[data-type="suv|van"]
+     - Card Meet&Greet: #meetGreetCard con .mg-btn[data-choice]
+     - Botón Calcular: #calculate
+     - Botón Pay: #pay
+     - Campos: #date, #time
+     - Contenedor resumen: #info
+     - Toggle términos: #acceptPill
+
+   ========================================================= */
 
 window.BNZ = window.BNZ || {};
 
-/* =========================
-   Config / Constantes
-========================= */
-BNZ.OPERATING_START = "06:00";
-BNZ.OPERATING_END   = "23:00";
-BNZ.AFTER_HOURS_PCT = 0.20;  // 20%
+/* ------------------ Config & Constantes ------------------ */
 
-/* =========================
-   Pricing oficial
-========================= */
-BNZ.calculateBase = (mi) => {
-  if (mi <= 10) return 120;
-  if (mi <= 35) return 190;
-  if (mi <= 39) return 210;
-  if (mi <= 48) return 230;
-  if (mi <= 55) return 250;
+// Horario operativo (fallback). Si core.js define otros, se respetan allí.
+BNZ.OPERATING_START = BNZ.OPERATING_START || "06:00";
+BNZ.OPERATING_END   = BNZ.OPERATING_END   || "23:00";
+
+// 👇 After-hours al 25%
+BNZ.AFTER_HOURS_PCT = 0.25;
+
+/* ------------------ Pricing base & helpers ------------------ */
+
+BNZ.calculateBase = (mi)=>{
+  if (mi<=10) return 120;
+  if (mi<=35) return 190;
+  if (mi<=39) return 210;
+  if (mi<=48) return 230;
+  if (mi<=55) return 250;
   return mi * 5.4;
 };
 
-BNZ.applyVehicleMultiplier = (total, vehicle) =>
-  vehicle === "van" ? Math.round(total * 1.30) : total;
+BNZ.applyVehicleMultiplier = (total, vehicle)=>{
+  const v = vehicle || BNZ.selectedVehicle || getVehicleFromUI();
+  return v === 'van' ? Math.round(total * 1.30) : total;
+};
 
-/* =========================
-   Meet & Greet (UI + fee)
-========================= */
-BNZ.mgChoice = "none";
-BNZ.getMGFee = () => (BNZ.mgChoice === "none" ? 0 : 50);
+function getVehicleFromUI(){
+  const active = document.querySelector('.veh-btn.active');
+  return active?.dataset?.type || 'suv';
+}
 
-(function wireMeetGreet() {
-  const card = document.getElementById("meetGreetCard");
-  const btns = document.querySelectorAll(".mg-btn");
-  if (!card || !btns.length) return;
+/* ------------------ Meet & Greet ------------------ */
 
-  const activate = (choice) => {
-    BNZ.mgChoice = choice;
-    btns.forEach(b => {
-      const on = b.dataset.choice === choice;
-      b.classList.toggle("active", on);
-      b.setAttribute("aria-pressed", String(on));
-    });
-  };
+BNZ.mgChoice = BNZ.mgChoice || "none";
+BNZ.getMGFee = ()=> BNZ.mgChoice === "none" ? 0 : 50;
 
-  btns.forEach(b => b.addEventListener("click", () => activate(b.dataset.choice)));
-  activate("none"); // default
-})();
-
-/* =========================
-   Selector de vehículo
-========================= */
-BNZ.vehicle = "suv"; // default
-
-(function wireVehicle() {
-  const btns = document.querySelectorAll(".veh-btn");
-  const carImg = document.querySelector(".turntable .car");
-  const caption = document.querySelector(".turntable .vehicle-caption");
-  const SUV_IMG = "/images/suburban.png";
-  const VAN_IMG = "/images/van-sprinter.png";
-
-  btns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      btns.forEach(x => x.classList.remove("active"));
-      btn.classList.add("active");
-      BNZ.vehicle = btn.dataset.type || "suv";
-
-      // Actualiza visual
-      if (BNZ.vehicle === "suv") {
-        if (carImg) carImg.src = SUV_IMG;
-        if (caption) caption.textContent = "SUV — Max 5 passengers, 5 suitcases";
-      } else {
-        if (carImg) carImg.src = VAN_IMG;
-        if (caption) caption.textContent = "Van — Up to 12 Passengers";
-      }
+// Wire de botones M&G
+(function wireMeetGreet(){
+  const card = document.getElementById('meetGreetCard');
+  if(!card) return;
+  const btns = card.querySelectorAll('.mg-btn');
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      BNZ.mgChoice = btn.dataset.choice;
+      btns.forEach(b=>{
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      BNZ.recalcFromCache?.();
     });
   });
 })();
 
-/* =========================
-   Términos (toggle)
-========================= */
-(function wireTermsToggle() {
-  const pill = document.getElementById("acceptPill");
-  const calc = document.getElementById("calculate");
-  const pay  = document.getElementById("pay");
+/* ------------------ After-hours ------------------ */
 
-  if (!pill) return;
-
-  const sync = () => {
-    const on = pill.classList.contains("on");
-    if (calc) calc.disabled = !on;
-    if (pay)  pay.disabled  = !on || !window.__lastQuotedTotal;
-    if (pay)  pay.style.display = "block"; // visible siempre, pero deshabilitado si no aplica
-    if (pay)  pay.style.opacity  = pay.disabled ? 0.5 : 1;
-  };
-
-  pill.addEventListener("click", () => { pill.classList.toggle("on"); sync(); });
-  pill.addEventListener("keydown", (e) => {
-    if (e.key === " " || e.key === "Enter") { e.preventDefault(); pill.classList.toggle("on"); sync(); }
-  });
-
-  sync();
-})();
-
-/* =========================
-   Luggage accordion
-========================= */
-(function wireLuggageAccordion() {
-  document.querySelectorAll(".luggage-accordion").forEach(acc => {
-    const sum = acc.querySelector(".luggage-summary");
-    sum?.addEventListener("click", () => acc.classList.toggle("open"));
-  });
-})();
-
-/* =========================
-   Helpers: fecha/hora
-========================= */
-function isAfterHours(dateStr, timeStr) {
-  if (!dateStr || !timeStr) return false;
+BNZ.isAfterHours = (dateStr, timeStr)=>{
+  if(!dateStr || !timeStr) return false;
   const d = new Date(`${dateStr}T${timeStr}:00`);
-  const [sh, sm] = BNZ.OPERATING_START.split(":").map(Number);
-  const [eh, em] = BNZ.OPERATING_END.split(":").map(Number);
+  const [sh,sm] = (BNZ.OPERATING_START || "06:00").split(':').map(Number);
+  const [eh,em] = (BNZ.OPERATING_END   || "23:00").split(':').map(Number);
   const start = new Date(d); start.setHours(sh, sm, 0, 0);
   const end   = new Date(d); end.setHours(eh, em, 0, 0);
   return (d < start) || (d > end);
-}
+};
 
-function isAtLeast24hAhead(dateStr, timeStr) {
-  if (!dateStr || !timeStr) return false;
-  const sel = new Date(`${dateStr}T${timeStr}:00`);
-  return sel.getTime() - Date.now() >= 24 * 60 * 60 * 1000;
-}
+/* ------------------ Render del resumen ------------------ */
+/* maps.js debe llamar a BNZ.renderQuote(leg, { surcharge }) tras calcular la ruta. */
 
-/* =========================
-   Render del resumen
-========================= */
-function renderSummary(leg, base, afterHoursFee, mgFee, vehicle) {
-  const miles = leg.distance.value / 1609.34; // metros → millas
-  const total = BNZ.applyVehicleMultiplier(base + afterHoursFee + mgFee, vehicle);
+BNZ.__lastBase = null;
+BNZ.__lastSurcharge = 0;
+BNZ.__lastAhFee = 0;
+BNZ.__lastDistanceMiles = 0;
+BNZ.__lastDurationText = '';
+BNZ.__lastVehicle = 'suv';
+BNZ.__lastQuotedTotal = 0;
 
-  const info = document.getElementById("info");
-  if (!info) return;
+BNZ.renderQuote = function(leg, opts={}){
+  if(!leg || !leg.distance || !leg.duration){
+    alert("Route not ready. Please select valid addresses and try again.");
+    return;
+  }
 
-  info.style.display = "block";
-  info.innerHTML = `
+  const miles = leg.distance.value / 1609.34;
+  const basePrice = BNZ.calculateBase(miles);
+  const surcharge = Number(opts.surcharge || 0);
+
+  const dateStr = document.getElementById('date')?.value || '';
+  const timeStr = document.getElementById('time')?.value || '';
+  const afterHours = BNZ.isAfterHours(dateStr, timeStr);
+  const ahFee = afterHours ? (basePrice + surcharge) * BNZ.AFTER_HOURS_PCT : 0;
+  const mgFee = BNZ.getMGFee();
+  const vehicle = BNZ.selectedVehicle || getVehicleFromUI();
+
+  const finalTotal = BNZ.applyVehicleMultiplier(basePrice + surcharge + ahFee + mgFee, vehicle);
+  const hasExtra = (surcharge > 0) || (ahFee > 0) || (mgFee > 0);
+
+  // Guardamos “cache” para recálculo
+  BNZ.__lastBase = basePrice;
+  BNZ.__lastSurcharge = surcharge;
+  BNZ.__lastAhFee = ahFee;
+  BNZ.__lastDistanceMiles = miles;
+  BNZ.__lastDurationText = leg.duration.text || '';
+  BNZ.__lastVehicle = vehicle;
+  BNZ.__lastQuotedTotal = finalTotal;
+
+  const el = document.getElementById('info');
+  if(!el) return;
+  el.style.display = "block";
+  el.innerHTML = `
     <h3 class="info-title">Trip Summary</h3>
     <div class="kpis">
-      <div class="kpi"><div class="label">Distance</div><div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div></div>
-      <div class="kpi"><div class="label">Duration</div><div class="value">${leg.duration.text}</div></div>
-      <div class="kpi"><div class="label">Price</div><div class="value price">$${total.toFixed(2)}</div></div>
+      <div class="kpi">
+        <div class="label">Distance</div>
+        <div class="value">${miles.toFixed(1)}<span class="unit">mi</span></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Duration</div>
+        <div class="value">${leg.duration.text}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Price</div>
+        <div class="value price">$${finalTotal.toFixed(2)}</div>
+      </div>
     </div>
-    <div class="divider"></div>
-    <div class="breakdown">
-      <div class="row"><span>Base</span><span>$${base.toFixed(2)}</span></div>
-      ${afterHoursFee > 0 ? `<div class="row"><span>After-Hours (20%)</span><span>$${afterHoursFee.toFixed(2)}</span></div>` : ""}
-      ${mgFee > 0 ? `<div class="row"><span>Meet & Greet (SLC)</span><span>$${mgFee.toFixed(2)}</span></div>` : ""}
-      <div class="row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
-    </div>
-    <div class="tax-note">Taxes & gratuity included</div>
+
+    ${hasExtra ? `
+      <div class="divider"></div>
+      <div class="breakdown">
+        ${surcharge > 0 ? `<div class="row"><span>Distance Surcharge</span><span>$${surcharge.toFixed(2)}</span></div>` : ''}
+        ${ahFee > 0 ? `<div class="row"><span>After-Hours Fee (${Math.round(BNZ.AFTER_HOURS_PCT*100)}%)</span><span>$${ahFee.toFixed(2)}</span></div>` : ''}
+        ${mgFee > 0 ? `<div class="row"><span>Meet & Greet (SLC)</span><span>$${mgFee.toFixed(2)}</span></div>` : ''}
+        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
+        <div class="tax-note">Taxes & gratuity included</div>
+      </div>
+    ` : `
+      <div class="breakdown">
+        <div class="row total"><span>Total</span><span>$${finalTotal.toFixed(2)}</span></div>
+        <div class="tax-note">Taxes & gratuity included</div>
+      </div>
+    `}
   `;
 
-  // Dejar valores globales para Stripe
-  window.__lastQuotedTotal   = total;
-  window.__lastDistanceMiles = miles;
-  window.__vehicleType       = vehicle;
-
   // Habilitar PAY si los términos están aceptados
-  const pay  = document.getElementById("pay");
-  const pill = document.getElementById("acceptPill");
-  const accepted = pill && pill.classList.contains("on");
-  if (pay) {
-    pay.disabled = !accepted;
-    pay.style.display = "block";
-    pay.style.opacity = accepted ? 1 : 0.5;
+  syncButtons();
+};
+
+// Recalcular solo por cambio de vehículo/M&G manteniendo cache
+BNZ.recalcFromCache = function(){
+  const el = document.getElementById('info');
+  if (!el || BNZ.__lastBase == null) return;
+
+  const base = BNZ.__lastBase;
+  const surcharge = BNZ.__lastSurcharge || 0;
+  const ahFee = BNZ.__lastAhFee || 0;
+  const mgFee = BNZ.getMGFee();
+  const vehicle = BNZ.selectedVehicle || getVehicleFromUI();
+
+  const finalTotal = BNZ.applyVehicleMultiplier(base + surcharge + ahFee + mgFee, vehicle);
+
+  const priceEl = el.querySelector('.kpi .value.price');
+  const totalEl = el.querySelector('.row.total span:last-child');
+  if (priceEl) priceEl.textContent = `$${finalTotal.toFixed(2)}`;
+  if (totalEl) totalEl.textContent = `$${finalTotal.toFixed(2)}`;
+
+  BNZ.__lastQuotedTotal = finalTotal;
+  BNZ.__lastVehicle = vehicle;
+};
+
+/* ------------------ Vehicle toggle (UI) ------------------ */
+(function wireVehicleToggle(){
+  const btns = document.querySelectorAll('.veh-btn');
+  if(!btns.length) return;
+
+  btns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.veh-btn').forEach(b=> b.classList.remove('active'));
+      btn.classList.add('active');
+      BNZ.selectedVehicle = btn.dataset.type || 'suv';
+      BNZ.recalcFromCache?.();
+    });
+  });
+})();
+
+/* ------------------ Términos & botones ------------------ */
+
+const acceptPill = document.getElementById('acceptPill');
+const calcBtn = document.getElementById('calculate');
+const payBtn  = document.getElementById('pay');
+
+function isAccepted(){ return acceptPill?.classList.contains('on'); }
+function setAcceptedState(on){
+  if(!acceptPill) return;
+  acceptPill.classList.toggle('on', on);
+  acceptPill.setAttribute('aria-checked', on ? 'true' : 'false');
+  syncButtons();
+}
+function syncButtons(){
+  const accepted = isAccepted();
+  if(calcBtn) calcBtn.disabled = !accepted;
+
+  const readyPay = !!BNZ.__lastQuotedTotal && accepted;
+  if(payBtn){
+    payBtn.disabled = !readyPay;
+    payBtn.style.display = 'block';
+    payBtn.style.opacity = readyPay ? 1 : .5;
+    payBtn.style.cursor = readyPay ? 'pointer' : 'not-allowed';
   }
 }
 
-/* =========================
-   Cálculo de ruta + precio
-========================= */
-(function wireCalculate() {
-  const calcBtn = document.getElementById("calculate");
-  if (!calcBtn) return;
+acceptPill?.addEventListener('click', ()=> setAcceptedState(!isAccepted()));
+acceptPill?.addEventListener('keydown', (e)=>{
+  if(e.key===' '||e.key==='Enter'){
+    e.preventDefault();
+    setAcceptedState(!isAccepted());
+  }
+});
 
-  calcBtn.addEventListener("click", async () => {
-    const pill = document.getElementById("acceptPill");
-    if (!pill || !pill.classList.contains("on")) {
-      alert("Please accept Terms & Conditions first.");
-      return;
-    }
+/* ------------------ Luggage accordion ------------------ */
+document.querySelectorAll(".luggage-accordion").forEach(acc=>{
+  const sum = acc.querySelector(".luggage-summary");
+  sum?.addEventListener("click",()=> acc.classList.toggle("open"));
+});
 
-    const pickup  = document.getElementById("pickup")?.value.trim();
-    const dropoff = document.getElementById("dropoff")?.value.trim();
-    const dateStr = document.getElementById("date")?.value.trim();
-    const timeStr = document.getElementById("time")?.value.trim();
+/* ------------------ Botón Calculate ------------------ */
+/* Dispara un evento para que maps.js calcule la ruta (si lo estás escuchando).
+   Si no usas evento, puedes hacer que maps.js asigne BNZ.routeAndQuote y llamarla aquí. */
 
-    // Validaciones mínimas
-    if (!pickup)  return alert("Pick-up Address is required.");
-    if (!dropoff) return alert("Drop-off Address is required.");
-    if (!dateStr || !timeStr) return alert("Please select Date & Time.");
-    if (!isAtLeast24hAhead(dateStr, timeStr))
-      return alert("Please choose a Date & Time at least 24 hours in advance.");
+calcBtn?.addEventListener('click', ()=>{
+  if(!isAccepted()){
+    alert("Please accept Terms & Conditions first.");
+    return;
+  }
+  // Lanza evento global que maps.js puede escuchar para iniciar el cálculo de ruta.
+  document.dispatchEvent(new CustomEvent('bnz:calculate'));
+});
 
-    // Google disponible
-    if (!(window.google && google.maps && google.maps.DirectionsService)) {
-      alert("Google Maps is not loaded yet. Please try again in a moment.");
-      return;
-    }
-
-    try {
-      const directionsService  = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer();
-      const mapEl = document.getElementById("map");
-      if (mapEl) {
-        const map = new google.maps.Map(mapEl, { center: { lat: 40.76, lng: -111.89 }, zoom: 10 });
-        directionsRenderer.setMap(map);
-      }
-
-      const req = {
-        origin: pickup,            // aceptamos string (no hace falta place_id)
-        destination: dropoff,
-        travelMode: google.maps.TravelMode.DRIVING,
-      };
-
-      const route = await new Promise((resolve, reject) => {
-        directionsService.route(req, (result, status) => {
-          if (status === "OK" && result?.routes?.[0]) return resolve(result);
-          reject(new Error(status || "ROUTE_ERROR"));
-        });
-      });
-
-      directionsRenderer.setDirections(route);
-      const leg = route.routes[0].legs[0];
-      const miles = leg.distance.value / 1609.34;
-
-      const base = BNZ.calculateBase(miles);
-      const ah   = isAfterHours(dateStr, timeStr) ? base * BNZ.AFTER_HOURS_PCT : 0;
-      const mg   = BNZ.getMGFee();
-      renderSummary(leg, base, ah, mg, BNZ.vehicle);
-    } catch (err) {
-      console.error(err);
-      alert("Could not calculate the route. Please verify the addresses.");
-    }
-  });
+/* ------------------ Init del módulo ------------------ */
+(function initBooking(){
+  // Arranca el estado de botones en función del switch de T&C
+  syncButtons();
 })();
