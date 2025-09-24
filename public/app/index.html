@@ -4,7 +4,7 @@ index.html — Bonanza Transportation (APP/Booking)
 Página principal de reservas (booking) ya separada del index original.
 
 ✔ Sin estilos embebidos → usa /app/styles/app.css
-✔ Sin JS embebido → usa /app/scripts/{core,maps,booking,stripe}.js
+✔ Sin JS embebido → usa /app/scripts/{core,validators,maps,booking,stripe}.js
 ✔ SIN la sección de Reschedule → está en /app/reschedule.html
 
 Dependencias:
@@ -12,6 +12,7 @@ Dependencias:
     /app/styles/app.css
   JS propios (defer, en este orden):
     /app/scripts/core.js
+    /app/scripts/validators.js   ← (NUEVO) email/teléfono con .valid/.invalid
     /app/scripts/maps.js
     /app/scripts/booking.js
     /app/scripts/stripe.js
@@ -265,6 +266,7 @@ Dependencias:
 
   <!-- JS propios (orden recomendado) -->
   <script defer src="/app/scripts/core.js"></script>
+  <script defer src="/app/scripts/validators.js"></script>  <!-- <<< NUEVO -->
   <script defer src="/app/scripts/maps.js"></script>
   <script defer src="/app/scripts/booking.js"></script>
   <script defer src="/app/scripts/stripe.js"></script>
