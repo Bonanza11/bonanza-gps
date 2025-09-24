@@ -1,7 +1,7 @@
 // /api/book/quote.js
 import { neon } from "@neondatabase/serverless";
 
-export const config = { runtime: "nodejs18.x" }; // o 20.x según tu proyecto
+export const config = { runtime: "nodejs" }; // ✅ corregido para Vercel
 
 // EJEMPLO de función de tarificación.
 // Ajusta tu lógica real: base, por milla, M&G, vehículo, extras, etc.
