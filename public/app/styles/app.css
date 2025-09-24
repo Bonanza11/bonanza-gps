@@ -1,14 +1,9 @@
 /* =========================================================
-   Archivo: app.css
-   Ubicación sugerida: /public/app/styles/app.css
+   Archivo: /public/app/styles/app.css
    Descripción:
-   Hoja de estilos principal de Bonanza Transportation.
-   Es la extracción 1:1 del <style> que tenías en tu index,
-   para dejar el HTML limpio. No cambia clases ni selectores.
-   Contiene: variables, layout, inputs, botones, mapa,
-   resumen (Trip Summary), selector e imagen de vehículo,
-   términos, acordeón de equipaje, modal, “jet faux 3D”,
-   Meet & Greet (SLC) y notas de precio.
+   - Hoja de estilos principal.
+   - Incluye estados .invalid (rojo) y .valid (verde) para
+     email/teléfono con “glow” visual al validar.
    ========================================================= */
 
 :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
@@ -31,19 +26,24 @@ header{display:flex;justify-content:center;align-items:center;padding:20px 16px}
 main{max-width:760px;width:92vw;margin:0 auto 40px;padding:0 16px}
 label{display:block;margin:12px 0 6px;font-weight:700}
 
-/* Inputs: oscuros en todos (incl. autofill) */
+/* Inputs */
 input,select{
   display:block;width:100%;height:44px;padding:10px 12px;
   background:#1a1a1a;color:var(--copper);border:1px solid #444;border-radius:8px;
   outline:none;
 }
-/* Campos inválidos (falta completar) */
+input:focus,select:focus{border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18)}
+::placeholder{color:#cba686;opacity:.65}
+
+/* Estados de validación */
 .invalid{
   border-color: var(--err) !important;
   box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
 }
-input:focus,select:focus{border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.18)}
-::placeholder{color:#cba686;opacity:.65}
+.valid{
+  border-color: var(--ok) !important;
+  box-shadow: 0 0 0 3px rgba(23,201,100,.25) !important;
+}
 
 /* Fuerza oscuro también cuando el navegador autocompleta */
 input:-webkit-autofill,
@@ -130,7 +130,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{
 }
 .terms-box.open .terms-summary .chev{transform:rotate(45deg)}
 
-/* Switch (único) */
+/* Switch */
 .accept-pill{
   min-width:28px;height:20px;border-radius:999px;border:1px solid #666;
   display:flex;align-items:center;padding:0 2px;position:relative;background:#1a1a1a;
@@ -143,7 +143,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{
 .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
 .accept-label{font-size:.85rem;opacity:.9;margin-left:8px}
 
-/* Read-more (2 líneas + degradado) */
+/* Read-more */
 .terms-body{margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
 .terms-content.clamped{
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
@@ -159,20 +159,13 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   border-radius:8px;background:#1a1a1a;color:#ffddae;font-weight:700;font-size:.85rem;cursor:pointer;
 }
 
-/* ---- Admin ghost button in Terms ---- */
+/* Admin ghost button */
 #termsBox { position: relative; }
 .ghost-admin {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 120px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(0,0,0,.18);
+  position: absolute; right: 12px; bottom: 12px; width: 120px; height: 28px;
+  border-radius: 8px; background: rgba(0,0,0,.18);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
-  text-indent: -9999px;
-  overflow: hidden;
-  cursor: pointer;
+  text-indent: -9999px; overflow: hidden; cursor: pointer;
   transition: background .2s ease-in-out, transform .08s ease-in;
 }
 .ghost-admin:hover { background: rgba(0,0,0,.32); }
@@ -184,7 +177,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{
 .hint.err{color:var(--err)}
 .hint.ok{color:var(--ok)}
 
-/* === Luggage Accordion === */
+/* Luggage Accordion */
 .luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
 .luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
 .luggage-title{font-weight:700}
@@ -196,7 +189,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{
 .lug-note{opacity:.9;margin:2px 0 8px}
 .lug-list{margin:0 0 10px 18px}
 
-/* ===== Modal ===== */
+/* Modal */
 .modal-backdrop{position:fixed;inset:0;display:none;background:rgba(0,0,0,.74);align-items:center;justify-content:center;padding:16px;z-index:9999}
 .modal-backdrop.open{display:flex}
 .modal{max-width:860px;width:100%;max-height:86vh;background:#0e0e0e;border:1px solid rgba(168,116,79,.45);border-radius:12px;box-shadow:0 18px 48px rgba(0,0,0,.7);overflow:hidden;display:flex;flex-direction:column}
@@ -205,88 +198,47 @@ input[type="time"]::-webkit-calendar-picker-indicator{
 .modal-body{padding:14px 16px 18px;overflow:auto;color:#e9d5c1;line-height:1.6}
 .close-btn{background:#1a1a1a;border:1px solid rgba(168,116,79,.45);color:#ffddae;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
 
-/* Jet Faux 3D (placeholder sin video) */
+/* Jet Faux 3D */
 .jet-showcase {
-  margin: 16px 0 6px;
-  background: #0b0b0b;
-  border: 1px solid rgba(168,116,79,.35);
-  border-radius: 14px;
-  padding: 10px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.55);
+  margin: 16px 0 6px; background: #0b0b0b; border: 1px solid rgba(168,116,79,.35);
+  border-radius: 14px; padding: 10px; box-shadow: 0 18px 40px rgba(0,0,0,.55);
 }
 .jet-faux3d {
-  position: relative;
-  border: 1px solid rgba(168,116,79,.28);
-  border-radius: 12px;
-  overflow: hidden;
+  position: relative; border: 1px solid rgba(168,116,79,.28);
+  border-radius: 12px; overflow: hidden;
   background: radial-gradient(ellipse at 50% 85%, rgba(0,0,0,.7), rgba(0,0,0,0) 60%);
 }
-.jet-faux3d .jet {
-  width: 88%;
-  max-width: 780px;
-  display: block;
-  margin: 20px auto 12px;
-  transform-style: preserve-3d;
-  animation: jetYaw 9s linear infinite;
-}
+.jet-faux3d .jet { width: 88%; max-width: 780px; display: block; margin: 20px auto 12px;
+  transform-style: preserve-3d; animation: jetYaw 9s linear infinite; }
 @keyframes jetYaw {
-  0%   {transform: perspective(800px) rotateY(-12deg) translateY(0);}
-  50%  {transform: perspective(800px) rotateY(12deg)  translateY(-2px);}
-  100% {transform: perspective(800px) rotateY(-12deg) translateY(0);}
+  0%{transform:perspective(800px) rotateY(-12deg) translateY(0)}
+  50%{transform:perspective(800px) rotateY(12deg) translateY(-2px)}
+  100%{transform:perspective(800px) rotateY(-12deg) translateY(0)}
 }
-.jet-caption {
-  font-weight: 700;
-  color: #ffddae;
-  text-align: center;
-  margin-top: 6px;
-  letter-spacing: .2px;
-  opacity: .95;
-}
+.jet-caption { font-weight:700; color:#ffddae; text-align:center; margin-top:6px; letter-spacing:.2px; opacity:.95; }
 
-/* ---- Total & note styling ---- */
+/* Total & note styling */
 .breakdown .row { display:flex; justify-content:space-between; align-items:center; }
 .breakdown .row.total { font-weight:800; color:#ffddae; font-size:1.05rem; }
 
 /* Nota de impuestos y propina */
-.tax-note {
-  font-size: 13px;
-  color: #c9a97c;
-  font-style: italic;
-  text-align: right;
-  margin-top: 4px;
-  opacity: 0.85;
-}
+.tax-note { font-size:13px; color:#c9a97c; font-style:italic; text-align:right; margin-top:4px; opacity:.85; }
 
 @media (prefers-reduced-motion: reduce){
   .jet-faux3d .jet {animation: none;}
 }
 
-/* === Meet & Greet card (SLC only) === */
+/* Meet & Greet card */
 .mg-card {
-  display: none;
-  margin: 16px 0;
-  border-radius: 14px;
-  border: 1px solid rgba(168,116,79,.45);
-  background: linear-gradient(180deg,#121212,#0b0b0b);
-  box-shadow: 0 12px 24px rgba(0,0,0,.35);
-  padding: 16px;
-  animation: mgFadeIn .25s ease;
+  display:none; margin:16px 0; border-radius:14px; border:1px solid rgba(168,116,79,.45);
+  background:linear-gradient(180deg,#121212,#0b0b0b); box-shadow:0 12px 24px rgba(0,0,0,.35);
+  padding:16px; animation:mgFadeIn .25s ease;
 }
-.mg-card h3 { margin: 0 0 4px; color: #ffddae; font-size: 1.1rem; }
-.mg-card p  { margin: 0 0 12px; font-size: .9rem; opacity: .85; }
-.mg-options { display: flex; gap: 8px; margin-bottom: 8px; }
-.mg-btn {
-  flex: 1 1 0;
-  background: #1a1a1a;
-  border: 1px solid rgba(168,116,79,.55);
-  color: var(--copper);
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  text-align: center;
-  user-select: none;
-}
-.mg-btn.active { background: var(--copper); color: #000; border-color: var(--copper); }
-.mg-note { font-size: .8rem; color: #aa8b72; }
+.mg-card h3 { margin:0 0 4px; color:#ffddae; font-size:1.1rem; }
+.mg-card p  { margin:0 0 12px; font-size:.9rem; opacity:.85; }
+.mg-options { display:flex; gap:8px; margin-bottom:8px; }
+.mg-btn { flex:1 1 0; background:#1a1a1a; border:1px solid rgba(168,116,79,.55);
+  color:var(--copper); padding:10px; border-radius:8px; cursor:pointer; font-weight:700; text-align:center; user-select:none; }
+.mg-btn.active { background:var(--copper); color:#000; border-color:var(--copper); }
+.mg-note { font-size:.8rem; color:#aa8b72; }
 @keyframes mgFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
