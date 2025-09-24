@@ -8,97 +8,79 @@
   <link rel="stylesheet" href="/app/styles/app.css"/>
 
   <style>
-    /* ——— Shell de esta página (respeta tema negro/cobre) ——— */
+    /* ——— Estilo coherente negro/cobre ——— */
+    :root{
+      --copper:#b87333;
+      --copper-2:#ffddae;
+      --ink:#111; --paper:#000; --panel:#0e0e0e; --line:#444;
+    }
     body { background:#000; color:#eee; margin:0; }
-    header {
-      display:flex; align-items:center; gap:14px;
-      padding:14px 20px; background:#111;
+    header{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      padding:16px 20px; background:#111;
       border-bottom:1px solid rgba(184,115,51,.4);
     }
-    .logo { height:44px; display:block; border-radius:6px; }
-    .brand { color:#ffddae; font-weight:700; letter-spacing:.4px; }
-    .subbrand { color:#cfa47f; font-size:.9rem; opacity:.9 }
+    .brand { color:var(--copper-2); font-weight:800; letter-spacing:.5px; font-size:1.05rem; }
+    .subbrand { color:#cfa47f; font-size:.9rem; opacity:.9; }
     .container { max-width:920px; margin:28px auto; padding:0 16px; }
-    .card {
+    .card{
       background: rgba(0,0,0,.85);
-      border:1px solid #b87333; border-radius:12px;
+      border:1px solid var(--copper); border-radius:12px;
       padding:22px; box-shadow:0 6px 28px rgba(0,0,0,.7);
     }
-    h1 { margin:0 0 12px; text-align:center; color:#b87333; font-size:1.7rem; }
-    h2 { margin:18px 0 8px; font-size:1.05rem; color:#ffddae; font-weight:600; }
-    label { display:block; color:#ccc; font-size:.92rem; margin-bottom:6px; }
-    input {
+    h1{ margin:0 0 12px; text-align:center; color:var(--copper); font-size:1.7rem; }
+    h2{ margin:18px 0 8px; font-size:1.05rem; color:var(--copper-2); font-weight:700; }
+    label{ display:block; color:#ccc; font-size:.92rem; margin-bottom:6px; }
+    input, select{
       width:100%; padding:10px 12px; border-radius:8px;
       border:1px solid #444; background:#1b1b1b; color:#eee;
     }
-    .row { display:flex; gap:10px; }
-    .row > * { flex:1; }
-    .btn {
+    .row{ display:flex; gap:10px; }
+    .row > *{ flex:1; }
+    .btn{
       border:none; border-radius:10px; padding:11px 14px; cursor:pointer;
-      background:#b87333; color:#111; font-weight:700; transition:.2s;
+      background:var(--copper); color:#111; font-weight:800; transition:.2s;
     }
-    .btn:hover { filter:brightness(1.05); }
-    .btn:disabled { opacity:.55; cursor:not-allowed; }
-    .ghost {
-      background:#2a2a2a; color:#eee; font-weight:600; border:1px solid #444;
-    }
-    .pillbar { display:flex; gap:10px; flex-wrap:wrap; }
-    .pillbar .pill {
+    .btn:hover{ filter:brightness(1.05); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .ghost{ background:#2a2a2a; color:#eee; border:1px solid #444; font-weight:700; }
+    .pillbar{ display:flex; gap:10px; flex-wrap:wrap; }
+    .pillbar .pill{
       flex:1; min-width:180px; text-align:center; padding:10px; border-radius:10px;
       background:#2b2b2b; color:#eee; border:1px solid #444; cursor:pointer;
     }
-    .pillbar .pill.active { background:#b87333; color:#111; border-color:#b87333; font-weight:700; }
-    .summary { border-top:1px solid #b87333; margin-top:16px; padding-top:14px; }
-    .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-    .grid .k { color:#cfa47f; display:block; font-size:.9rem; }
-    .grid .v { color:#ffddae; font-weight:700; font-size:1.05rem; }
-    .muted { color:#aaa; font-size:.9rem; margin:6px 0 0; }
-    .status { margin:8px 0; min-height:20px; color:#ffbfa0; }
-    .hidden { display:none; }
-    .divider { height:1px; background:rgba(184,115,51,.35); margin:18px 0; }
+    .pillbar .pill.active{ background:var(--copper); color:#111; border-color:var(--copper); font-weight:800; }
+    .summary{ border-top:1px solid var(--copper); margin-top:16px; padding-top:14px; }
+    .grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    .grid .k{ color:#cfa47f; display:block; font-size:.9rem; }
+    .grid .v{ color:var(--copper-2); font-weight:800; font-size:1.05rem; }
+    .muted{ color:#aaa; font-size:.9rem; margin:6px 0 0; }
+    .status{ margin:8px 0; min-height:22px; color:#ffbfa0; font-weight:600; }
+    .hidden{ display:none; }
+    .divider{ height:1px; background:rgba(184,115,51,.35); margin:18px 0; }
 
-    /* ——— Modal elegante negro/cobre ——— */
-    .modal-backdrop{
-      position:fixed; inset:0; display:none;
-      background:rgba(0,0,0,.74);
-      align-items:center; justify-content:center; padding:16px; z-index:9999;
-    }
+    /* Modal límite 2 reschedules */
+    .modal-backdrop{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.74);
+      align-items:center; justify-content:center; padding:16px; z-index:9999;}
     .modal-backdrop.open{ display:flex }
-    .modal{
-      max-width:520px; width:100%;
-      background:#0e0e0e;
-      border:1px solid rgba(168,116,79,.45);
-      border-radius:12px;
-      box-shadow:0 18px 48px rgba(0,0,0,.7);
-      overflow:hidden; display:flex; flex-direction:column
-    }
-    .modal-header{
-      display:flex; justify-content:space-between; align-items:center;
-      padding:12px 14px;
-      border-bottom:1px solid rgba(168,116,79,.28);
-      background:#101010
-    }
-    .modal-title{ font-weight:800; color:#ffddae; margin:0; font-size:1.05rem; }
+    .modal{ max-width:520px; width:100%; background:#0e0e0e; border:1px solid rgba(168,116,79,.45);
+      border-radius:12px; box-shadow:0 18px 48px rgba(0,0,0,.7); overflow:hidden;}
+    .modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 14px;
+      border-bottom:1px solid rgba(168,116,79,.28); background:#101010}
+    .modal-title{ font-weight:800; color:var(--copper-2); margin:0; font-size:1.05rem; }
     .modal-body{ padding:14px 16px 18px; color:#e9d5c1; line-height:1.6 }
-    .modal-actions{
-      display:flex; gap:10px; justify-content:flex-end;
-      padding:12px 14px; border-top:1px solid rgba(168,116,79,.28); background:#0f0f0f;
-    }
-    .m-btn{
-      border:none; border-radius:10px; padding:10px 14px; cursor:pointer;
-      font-weight:700;
-    }
-    .m-btn.primary{ background:#b87333; color:#111; }
-    .m-btn.ghost{ background:#1a1a1a; color:#ffddae; border:1px solid rgba(168,116,79,.45) }
-    .m-btn:focus-visible{ outline:2px solid rgba(255,221,174,.25) }
+    .modal-actions{ display:flex; gap:10px; justify-content:flex-end; padding:12px 14px;
+      border-top:1px solid rgba(168,116,79,.28); background:#0f0f0f; }
+    .m-btn{ border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:800; }
+    .m-btn.primary{ background:var(--copper); color:#111; }
+    .m-btn.ghost{ background:#1a1a1a; color:var(--copper-2); border:1px solid rgba(168,116,79,.45) }
   </style>
 </head>
 <body>
   <header>
-    <img src="/images/bonanza-logo.PNG" alt="Bonanza Transportation" class="logo" />
     <div>
       <div class="brand">Bonanza Transportation</div>
-      <div class="subbrand">Private • Reliable • Park City & SLC</div>
+      <div class="subbrand">Private • Reliable • Park City &amp; SLC</div>
     </div>
   </header>
 
@@ -112,6 +94,15 @@
         <input id="cn" placeholder="BZ-2025MMDD-XXXX" autocomplete="off"/>
         <button id="load" class="btn" style="flex:0 0 160px;">Load</button>
       </div>
+
+      <!-- últimos CN usados -->
+      <div class="row" style="margin-top:10px;">
+        <select id="recent" title="Recent reservations">
+          <option value="">Recent reservations…</option>
+        </select>
+        <button id="useRecent" class="ghost">Use</button>
+      </div>
+
       <div id="status" class="status"></div>
 
       <!-- FORM -->
@@ -130,11 +121,11 @@
           <div class="pill" data-type="van">Van (up to 12)</div>
         </div>
 
-        <h2>Meet & Greet (SLC)</h2>
+        <h2>Meet &amp; Greet (SLC)</h2>
         <div id="mgBar" class="pillbar">
           <div class="pill" data-mg="tsa_exit">TSA Exit (+$50)</div>
           <div class="pill" data-mg="baggage_claim">Baggage Claim (+$50)</div>
-          <div class="pill" data-mg="none">No Meet & Greet</div>
+          <div class="pill" data-mg="none">No Meet &amp; Greet</div>
         </div>
 
         <h2>Pickup Time</h2>
@@ -162,14 +153,14 @@
     </div>
   </main>
 
-  <!-- MODAL -->
+  <!-- MODAL límite -->
   <div class="modal-backdrop" id="limitModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-labelledby="limitTitle" aria-modal="true">
       <div class="modal-header">
         <h2 id="limitTitle" class="modal-title">Reschedule Limit Reached</h2>
         <button id="mCloseX" class="m-btn ghost" aria-label="Close">Close</button>
       </div>
-      <div class="modal-body" id="limitBody">
+      <div class="modal-body">
         You have already rescheduled this reservation <strong>twice</strong>.
         For further changes, please contact Bonanza Transportation Concierge.
       </div>
@@ -180,7 +171,7 @@
     </div>
   </div>
 
-  <!-- Google Maps JS con tu API Key -->
+  <!-- Google Maps (tu clave está aquí porque tú lo pediste) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places"></script>
 
   <script>
@@ -192,28 +183,35 @@
     let mgChoice = 'none';
     let lastQuote = 0;
 
-    /* ===== Modal helpers ===== */
+    /* ===== Modal ===== */
     const modal = $('limitModal');
-    const btnClose = $('mClose');
-    const btnCloseX = $('mCloseX');
+    const closeModal = () => { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); };
+    $('mClose').onclick = closeModal; $('mCloseX').onclick = closeModal;
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    const openModal = () => { modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); };
 
-    function openModal() {
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-      btnClose.focus();
-      document.addEventListener('keydown', trapEsc);
+    /* ===== Recent CNs (local) ===== */
+    function loadRecent(){
+      const sel = $('recent');
+      sel.innerHTML = '<option value="">Recent reservations…</option>';
+      const list = JSON.parse(localStorage.getItem('recentCNs')||'[]');
+      list.forEach(cn => {
+        const opt = document.createElement('option'); opt.value = cn; opt.textContent = cn;
+        sel.appendChild(opt);
+      });
     }
-    function closeModal() {
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
-      document.removeEventListener('keydown', trapEsc);
+    function saveRecent(cn){
+      let list = JSON.parse(localStorage.getItem('recentCNs')||'[]');
+      list = [cn, ...list.filter(x=>x!==cn)].slice(0,5);
+      localStorage.setItem('recentCNs', JSON.stringify(list));
+      loadRecent();
     }
-    function trapEsc(e){ if(e.key === 'Escape') closeModal(); }
-    modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
-    btnClose.addEventListener('click', closeModal);
-    btnCloseX.addEventListener('click', closeModal);
+    $('useRecent').onclick = () => {
+      const v = $('recent').value; if(v){ $('cn').value = v; $('load').click(); }
+    };
+    loadRecent();
 
-    /* ===== UI ===== */
+    /* ===== Helpers ===== */
     function activatePills(bar, attr, value){
       [...bar.querySelectorAll('.pill')].forEach(p=>{
         p.classList.toggle('active', p.getAttribute(attr) === value);
@@ -223,44 +221,45 @@
     async function estimateMiles(pick, drop){
       return new Promise((resolve,reject)=>{
         const svc = new google.maps.DistanceMatrixService();
-        svc.getDistanceMatrix({
-          origins:[pick], destinations:[drop], travelMode:'DRIVING'
-        }, (res, status)=>{
-          if(status !== 'OK'){ reject(status); return; }
-          const row = res.rows?.[0]?.elements?.[0];
-          if(!row || row.status !== 'OK') { reject('NO_ROUTE'); return; }
-          resolve(row.distance.value / 1609.344);
-        });
+        svc.getDistanceMatrix({ origins:[pick], destinations:[drop], travelMode:'DRIVING' },
+          (res, status)=>{
+            if(status !== 'OK'){ reject(status); return; }
+            const row = res.rows?.[0]?.elements?.[0];
+            if(!row || row.status !== 'OK') { reject('NO_ROUTE'); return; }
+            resolve(row.distance.value / 1609.344);
+          });
       });
     }
 
     async function fetchQuote(miles){
       const r = await fetch('/api/book/quote',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           pickup: $('pickup').value.trim(),
           dropoff: $('dropoff').value.trim(),
           distance_miles: miles,
-          vehicleType,
-          meetGreet: mgChoice
+          vehicleType, meetGreet: mgChoice
         })
       });
-      const j = await r.json();
-      if(!j.ok) throw new Error(j.error || 'quote_failed');
+      const j = await r.json().catch(()=>({ok:false,error:'invalid_json'}));
+      if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
       return j.quote.total_cents;
     }
 
-    // Cargar reserva por CN
-    $('load').onclick = async ()=>{
+    /* ===== Cargar por CN ===== */
+    async function loadByCN(){
       const cn = $('cn').value.trim();
-      $('status').textContent = '';
+      $('status').textContent = 'Loading…';
+      $('load').disabled = true;
+
       try{
         const r = await fetch('/api/book/get?cn='+encodeURIComponent(cn));
-        const j = await r.json();
-        if(!r.ok || !j.ok){ throw new Error(j.error || 'Not found'); }
+        const j = await r.json().catch(()=>({ok:false,error:'invalid_json'}));
+        if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
 
         booking = j.booking;
+        saveRecent(booking.confirmation_number);
+
         const used = Number(booking.reschedule_count || 0);
         $('status').textContent = `Reservation loaded: ${booking.confirmation_number} — Reschedules used: ${used}/2`;
 
@@ -269,39 +268,37 @@
         $('dropoff').value = booking.dropoff || '';
         vehicleType = booking.vehicle_type || 'suv';
         mgChoice = booking.mg_choice || 'none';
-        activatePills(document.getElementById('vehBar'),'data-type',vehicleType);
-        activatePills(document.getElementById('mgBar'),'data-mg',mgChoice);
+        activatePills($('vehBar'),'data-type',vehicleType);
+        activatePills($('mgBar'),'data-mg',mgChoice);
         $('date').value = booking.date_iso || '';
         $('time').value = (booking.time_hhmm || '00:00');
         $('origTotal').textContent = money(booking.quoted_total || 0);
         $('summary').classList.add('hidden');
 
-        // Si ya alcanzó el límite, mostramos modal y deshabilitamos “Submit”
-        if (used >= 2) {
-          openModal();
-          $('submit').disabled = true;
-        } else {
-          $('submit').disabled = false;
-        }
+        $('submit').disabled = used >= 2;
+        if (used >= 2) openModal();
       }catch(e){
         $('status').textContent = 'Error: ' + (e.message || e);
         $('form').classList.add('hidden');
+      }finally{
+        $('load').disabled = false;
       }
-    };
+    }
+    $('load').onclick = loadByCN;
+    $('cn').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); loadByCN(); } });
 
-    // Toggles
-    document.getElementById('vehBar').addEventListener('click', (ev)=>{
+    /* ===== Interacciones ===== */
+    $('vehBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       vehicleType = el.getAttribute('data-type');
       activatePills(ev.currentTarget,'data-type',vehicleType);
     });
-    document.getElementById('mgBar').addEventListener('click', (ev)=>{
+    $('mgBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       mgChoice = el.getAttribute('data-mg');
       activatePills(ev.currentTarget,'data-mg',mgChoice);
     });
 
-    // Recalcular
     $('recalc').onclick = async ()=>{
       $('status').textContent = '';
       try{
@@ -329,7 +326,6 @@
       }
     };
 
-    // Reset
     $('reset').onclick = ()=>{
       if(!booking) return;
       $('pickup').value = booking.pickup || '';
@@ -338,17 +334,16 @@
       $('time').value = booking.time_hhmm || '00:00';
       vehicleType = booking.vehicle_type || 'suv';
       mgChoice = booking.mg_choice || 'none';
-      activatePills(document.getElementById('vehBar'),'data-type',vehicleType);
-      activatePills(document.getElementById('mgBar'),'data-mg',mgChoice);
+      activatePills($('vehBar'),'data-type',vehicleType);
+      activatePills($('mgBar'),'data-mg',mgChoice);
       $('summary').classList.add('hidden');
       $('status').textContent = '';
     };
 
-    // Submit
     $('submit').onclick = async ()=>{
       if(!booking) return;
       const used = Number(booking.reschedule_count || 0);
-      if (used >= 2) { openModal(); return; } // bloqueo con modal
+      if (used >= 2) { openModal(); return; }
 
       try{
         const d = $('date').value; const t = $('time').value;
@@ -357,8 +352,7 @@
 
         if(diff > 0){
           const r = await fetch('/api/create-checkout-session-diff',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
+            method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({
               cn: booking.confirmation_number,
               diffAmount: diff,
@@ -369,13 +363,12 @@
           });
           const j = await r.json();
           if(!j.ok) throw new Error(j.error || 'stripe_failed');
-          location.href = j.url; // Stripe Checkout
+          location.href = j.url;
           return;
         }
 
         const r2 = await fetch('/api/book/reschedule',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ cn: booking.confirmation_number, newDate: d, newTime: t })
         });
         const j2 = await r2.json();
