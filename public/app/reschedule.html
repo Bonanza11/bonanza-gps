@@ -2,73 +2,179 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Reschedule — Bonanza</title>
-  <link rel="stylesheet" href="/app/styles/app.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reschedule — Bonanza Transportation</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: #eee;
+    }
+    .reschedule-container {
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .res-card {
+      background: #111;
+      color: #eee;
+      border: 1px solid #b87333; /* cobre */
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .res-card h1 {
+      color: #b87333;
+      margin-bottom: 16px;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .section {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin: 8px 0 4px;
+      color: #ccc;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #222;
+      color: #eee;
+    }
+    .input-inline {
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: #333;
+      color: #eee;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #444;
+    }
+    .primary-btn {
+      width: 100%;
+      background: #b87333;
+      color: #111;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+    .toggle-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .toggle-group button.active {
+      background: #b87333;
+      color: #111;
+    }
+    .summary {
+      margin-top: 20px;
+      padding: 16px;
+      border-top: 1px solid #b87333;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .summary-grid strong {
+      color: #b87333;
+      font-size: 1.1rem;
+    }
+    .note {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    .status-msg {
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
-  <main style="max-width:760px;margin:0 auto;padding:16px">
-    <h1>Reschedule</h1>
+  <main class="reschedule-container">
+    <div class="res-card">
+      <h1>Reschedule Reservation</h1>
 
-    <label for="cn">Reservation Code (CN)</label>
-    <div style="display:flex;gap:8px;">
-      <input id="cn" placeholder="BZ-YYYYMMDD-XXXX" style="flex:1"/>
-      <button id="load">Load</button>
+      <!-- Reservation Code -->
+      <label for="cn">Reservation Code (CN)</label>
+      <div class="input-inline">
+        <input id="cn" placeholder="BZ-20250908-XXXX"/>
+        <button id="load">Load</button>
+      </div>
+      <p id="status" class="status-msg"></p>
+
+      <div id="form" class="hidden">
+        <!-- Pickup / Dropoff -->
+        <div class="section">
+          <h2>Trip Details</h2>
+          <label>Pickup Location</label>
+          <input id="pickup" placeholder="Enter pickup address"/>
+          <label>Dropoff Location</label>
+          <input id="dropoff" placeholder="Enter dropoff address"/>
+        </div>
+
+        <!-- Vehicle -->
+        <div class="section">
+          <h2>Vehicle</h2>
+          <div class="toggle-group" id="vehicle">
+            <button data-type="suv">SUV (1–5)</button>
+            <button data-type="van">Van (up to 12)</button>
+          </div>
+        </div>
+
+        <!-- Meet & Greet -->
+        <div class="section">
+          <h2>Meet & Greet (SLC)</h2>
+          <div class="toggle-group" id="mg">
+            <button data-choice="tsa_exit">TSA Exit (+$50)</button>
+            <button data-choice="baggage_claim">Baggage Claim (+$50)</button>
+            <button data-choice="none">No Meet & Greet</button>
+          </div>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="section">
+          <h2>Pickup Time</h2>
+          <div class="input-inline">
+            <input id="date" type="date"/>
+            <input id="time" type="time"/>
+          </div>
+        </div>
+
+        <!-- Recalculate -->
+        <button id="recalc" class="primary-btn">Recalculate Price</button>
+
+        <!-- Summary -->
+        <div id="summary" class="summary hidden">
+          <h2>Summary</h2>
+          <div class="summary-grid">
+            <div><span>Original Total</span><strong id="origTotal">$0.00</strong></div>
+            <div><span>New Quote</span><strong id="newQuote">$0.00</strong></div>
+            <div><span>Difference</span><strong id="diff">$0.00</strong></div>
+          </div>
+          <p id="note" class="note"></p>
+          <button id="payOrSave" class="primary-btn">Submit Reschedule</button>
+        </div>
+      </div>
     </div>
-    <div id="status" class="hint" style="margin-top:8px;"></div>
-
-    <div id="form" class="is-hidden">
-      <div class="divider" style="margin:16px 0"></div>
-
-      <label>Pickup</label>
-      <input id="pickup" placeholder="Pickup address"/>
-
-      <label style="margin-top:12px">Dropoff</label>
-      <input id="dropoff" placeholder="Dropoff address"/>
-
-      <div class="veh-toggle" style="margin-top:12px">
-        <button class="veh-btn active" data-type="suv">SUV (1–5)</button>
-        <button class="veh-btn" data-type="van">Van (up to 12)</button>
-      </div>
-
-      <div class="mg-card" id="mg" style="display:block;margin-top:10px">
-        <h3>Meet & Greet (SLC)</h3>
-        <div class="mg-options">
-          <div class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</div>
-          <div class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</div>
-          <div class="mg-btn active" data-choice="none">No Meet & Greet</div>
-        </div>
-      </div>
-
-      <div class="input-row" style="margin-top:12px">
-        <div>
-          <label>Date</label>
-          <input id="date" type="date"/>
-        </div>
-        <div>
-          <label>Time</label>
-          <input id="time" type="time" step="900"/>
-        </div>
-      </div>
-
-      <button id="recalc" style="margin-top:14px">Recalculate Price</button>
-
-      <div id="summary" class="is-hidden">
-        <div class="divider" style="margin:16px 0"></div>
-        <div class="kpis">
-          <div class="kpi"><div class="label">Original Total</div><div class="value price" id="origTotal">$0.00</div></div>
-          <div class="kpi"><div class="label">New Quote</div><div class="value price" id="newQuote">$0.00</div></div>
-          <div class="kpi"><div class="label">Difference</div><div class="value price" id="diff">$0.00</div></div>
-        </div>
-        <div id="note" class="hint"></div>
-        <button id="payOrSave">Submit Reschedule</button>
-      </div>
-    </div>
-
-    <div style="margin-top:12px"><a href="/app/index.html">← Back to booking</a></div>
   </main>
 
-  <script defer src="/app/scripts/maps.js"></script>
-  <script defer src="/app/scripts/reschedule.js"></script>
+  <script src="/app/scripts/reschedule.js"></script>
 </body>
 </html>
