@@ -4,148 +4,139 @@ import { DateTime } from "luxon";
 
 const TZ = "America/Denver";
 
-// ===== Helpers =====
-function isISODate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ""); }
-function isTime(s)    { return /^\d{2}:\d{2}$/.test(s || ""); }
-
-function atLeast24hAhead(dateStr, timeStr){
-  if (!isISODate(dateStr) || !isTime(timeStr)) return false;
-  const d = DateTime.fromISO(`${dateStr}T${timeStr}`, { zone: TZ });
-  if (!d.isValid) return false;
-  return d.diffNow("hours").hours >= 24;
-}
-
+// helpers
+const isISODate = s => /^\d{4}-\d{2}-\d{2}$/.test(s||"");
+const isTime    = s => /^\d{2}:\d{2}$/.test(s||"");
+const plus24h   = (d) => (d.getTime() - Date.now()) >= 24*60*60*1000;
 function localToUtcIso(dateStr, timeStr, zone = TZ){
-  const dt = DateTime.fromISO(`${dateStr}T${timeStr}`, { zone });
+  const dt = DateTime.fromISO(`${dateStr}T${timeStr}:00`, { zone });
   return dt.isValid ? dt.toUTC().toISO() : null;
 }
 
-export default async function handler(req, res) {
-  // ===== CORS =====
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+export default async function handler(req, res){
+  // CORS
+  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers","Content-Type, Authorization");
   if (req.method === "OPTIONS") return res.status(200).end();
-
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
+    res.setHeader("Allow","POST");
     return res.status(405).json({ ok:false, error:"Method not allowed" });
   }
 
-  const { cn, newDate, newTime } = req.body || {};
+  const {
+    cn,
+    // nuevos campos editables
+    pickup,
+    dropoff,
+    vehicleType,           // "suv" | "van"
+    meetGreet = "none",    // "none" | "tsa_exit" | "baggage_claim"
+    distance_miles,        // calculado en front con Google
+    // fecha/hora
+    newDate,
+    newTime,
+    // control de cobro
+    diffCents = 0,
+    stripePaymentIntentId  // si hubo diferencia > 0, viene validado por front
+  } = req.body || {};
 
-  // 1) Validación de payload
+  // validación básica
   if (!cn || !isISODate(newDate) || !isTime(newTime)) {
-    return res.status(400).json({ ok:false, error:"Missing or invalid fields (cn, newDate, newTime)" });
+    return res.status(400).json({ ok:false, error:"Missing/invalid cn/newDate/newTime" });
   }
-  if (!atLeast24hAhead(newDate, newTime)) {
-    return res.status(400).json({ ok:false, error:"New pickup must be at least 24h ahead" });
-  }
+  const newDT = new Date(`${newDate}T${newTime}:00`);
+  if (!plus24h(newDT)) return res.status(400).json({ ok:false, error:"New pickup must be ≥24h ahead" });
 
-  try {
+  try{
     const sql = neon(process.env.DATABASE_URL);
 
-    // 2) Buscar booking (case-insensitive por si acaso)
+    // 1) carga booking
     const rows = await sql`
-      SELECT id, confirmation_number, status, date_iso, time_hhmm, quoted_total,
-             reschedule_count, created_at, updated_at
-        FROM bookings
-       WHERE UPPER(confirmation_number) = ${String(cn).trim().toUpperCase()}
-       LIMIT 1
+      select id, confirmation_number, status, full_name, email,
+             pickup, dropoff, date_iso, time_hhmm, vehicle_type, mg_choice,
+             quoted_total, reschedule_count, stripe_payment_intent
+        from bookings
+       where upper(confirmation_number) = ${String(cn).toUpperCase()}
+       limit 1
     `;
-    if (!rows.length) {
-      return res.status(404).json({ ok:false, error:"Booking not found" });
-    }
+    if (!rows.length) return res.status(404).json({ ok:false, error:"Booking not found" });
     const bk = rows[0];
 
-    // 3) Ventana de 24h para el pickup ACTUAL (no se permite si faltan < 24h)
-    const currentLocal = DateTime.fromISO(`${bk.date_iso}T${bk.time_hhmm}`, { zone: TZ });
-    if (!currentLocal.isValid) {
-      return res.status(500).json({ ok:false, error:"Stored booking date/time invalid" });
-    }
-    if (currentLocal.diffNow("hours").hours < 24) {
+    // 2) reglas
+    const currentDT = new Date(`${bk.date_iso}T${bk.time_hhmm}:00`);
+    if (!plus24h(currentDT)) {
       return res.status(409).json({ ok:false, error:"Cannot reschedule within 24h of current pickup" });
     }
-
-    // 4) No-op
-    if (bk.date_iso === newDate && bk.time_hhmm === newTime) {
-      return res.status(409).json({ ok:false, error:"New date/time equals current booking" });
+    if ((bk.reschedule_count || 0) >= 2) {
+      return res.status(409).json({ ok:false, error:"Reached reschedule limit (2)" });
     }
 
-    // 5) Límite de reprogramaciones (máx 2)
-    const count = Number(bk.reschedule_count || 0);
-    if (count >= 2) {
-      return res.status(409).json({ ok:false, error:"Maximum number of reschedules reached" });
+    // 3) si hay diferencia a cobrar, debe venir comprobante (ya pagado)
+    const needsDiff = Number(diffCents) > 0;
+    if (needsDiff && !stripePaymentIntentId) {
+      return res.status(402).json({ ok:false, error:"payment_required" });
     }
 
-    // 6) Actualizar booking (fecha/hora y contador)
+    // 4) actualizar booking (incluye campos editables)
     const upd = await sql`
-      UPDATE bookings
-         SET date_iso = ${newDate},
-             time_hhmm = ${newTime},
-             reschedule_count = ${count + 1},
-             updated_at = NOW()
-       WHERE id = ${bk.id}
-       RETURNING id, confirmation_number, status, date_iso, time_hhmm, quoted_total, reschedule_count, updated_at
+      update bookings
+         set pickup        = ${pickup || bk.pickup},
+             dropoff       = ${dropoff || bk.dropoff},
+             vehicle_type  = ${vehicleType || bk.vehicle_type},
+             mg_choice     = ${meetGreet || bk.mg_choice},
+             date_iso      = ${newDate},
+             time_hhmm     = ${newTime},
+             reschedule_count = coalesce(reschedule_count,0) + 1,
+             quoted_total  = greatest(quoted_total, ${bk.quoted_total}), -- no bajar total aquí
+             updated_at    = now()
+       where id = ${bk.id}
+       returning id, confirmation_number, pickup, dropoff, vehicle_type, mg_choice,
+                 date_iso, time_hhmm, quoted_total, reschedule_count
     `;
-    const updatedBooking = upd[0];
+    const updated = upd[0];
 
-    // 7) Actualizar appointment enlazado (si existe)
+    // 5) appointment (si existe): set pending, liberar driver, actualizar hora
     const newPickupUtc = localToUtcIso(newDate, newTime, TZ);
-    let appointmentUpdated = null;
-
+    let appt = null;
     if (newPickupUtc) {
       const appts = await sql`
-        SELECT id, driver_id, status
-          FROM appointments
-         WHERE (meta->>'booking_id')::int = ${bk.id}
-         ORDER BY id DESC
-         LIMIT 1
+        select id, driver_id, status
+          from appointments
+         where (meta->>'booking_id')::int = ${bk.id}
+         order by id desc
+         limit 1
       `;
       if (appts.length) {
-        const appt = appts[0];
-        const newStatus = "pending"; // volvemos a pool y liberamos driver si lo tenía
-        const updAppt = await sql`
-          UPDATE appointments
-             SET pickup_time = ${newPickupUtc},
-                 status = ${newStatus},
-                 driver_id = NULL,
-                 updated_at = NOW()
-           WHERE id = ${appt.id}
-           RETURNING id, pickup_time, status, driver_id
+        const a = appts[0];
+        const x = await sql`
+          update appointments
+             set pickup_time = ${newPickupUtc},
+                 status = 'pending',
+                 driver_id = null,
+                 updated_at = now()
+           where id = ${a.id}
+        returning id, pickup_time, status, driver_id
         `;
-        appointmentUpdated = updAppt[0] || null;
+        appt = x[0];
 
         await sql`
-          INSERT INTO assignment_logs (appointment_id, rule_trace)
-          VALUES (${appt.id}, ${JSON.stringify({
-            action: "reschedule",
-            from: `${bk.date_iso} ${bk.time_hhmm}`,
-            to: `${newDate} ${newTime}`,
-            tz: TZ
-          })}::jsonb)
+          insert into assignment_logs (appointment_id, rule_trace)
+               values (${a.id}, ${JSON.stringify({
+                 action:"reschedule",
+                 from:`${bk.date_iso} ${bk.time_hhmm}`,
+                 to:`${newDate} ${newTime}`,
+                 pickup: pickup || bk.pickup,
+                 dropoff: dropoff || bk.dropoff,
+                 vehicle: vehicleType || bk.vehicle_type,
+                 mg: meetGreet || bk.mg_choice
+               })}::jsonb)
         `;
       }
     }
 
-    // 8) Facturación por diferencia (placeholder: hoy siempre 0)
-    //    Aquí luego podremos calcular diff real (recotizar ruta, after-hours, etc.)
-    const billing = {
-      extra_due: 0,      // en USD
-      currency: "usd",
-      reason: "reschedule_no_price_change",
-      can_pay_diff: false // cuando implementemos, esto se pondrá en true si extra_due > 0
-    };
-
-    return res.status(200).json({
-      ok: true,
-      booking: updatedBooking,
-      appointment: appointmentUpdated,
-      billing
-    });
-
-  } catch (err) {
-    console.error("book/reschedule error:", err);
-    return res.status(500).json({ ok:false, error:String(err?.message || err) });
+    return res.status(200).json({ ok:true, booking: updated, appointment: appt });
+  } catch (e) {
+    console.error("book/reschedule error:", e);
+    return res.status(500).json({ ok:false, error:String(e?.message || e) });
   }
 }
