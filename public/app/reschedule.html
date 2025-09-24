@@ -1,70 +1,74 @@
-<!--
-reschedule.html — Bonanza Transportation
-----------------------------------------
-Página independiente para reprogramar (Reschedule) una reserva existente.
-- No carga mapas ni lógica de booking/pago.
-- Solo muestra la reserva (vía ?cn=...), permite elegir nueva fecha/hora
-  (mínimo 24 h) y envía la solicitud al backend.
-
-Requiere:
-  - /public/app/styles/app.css
-  - /public/app/scripts/reschedule.js
-Backend esperado:
-  - GET  /api/book/get?cn=...
-  - POST /api/book/reschedule  { cn, newDate, newTime }
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reschedule — Bonanza Transportation</title>
-
-  <!-- CSS global -->
-  <link rel="stylesheet" href="/app/styles/app.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Reschedule — Bonanza</title>
+  <link rel="stylesheet" href="/app/styles/app.css"/>
 </head>
 <body>
-  <main style="max-width:760px;width:92vw;margin:24px auto 40px;padding:0 16px">
-    <h1 style="color:#ffddae;margin:0 0 12px;">Reschedule</h1>
+  <main style="max-width:760px;margin:0 auto;padding:16px">
+    <h1>Reschedule</h1>
 
-    <!-- Código de reserva / estado -->
     <label for="cn">Reservation Code (CN)</label>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <input id="cn" type="text" placeholder="BZ-20240101-ABCD" required style="flex:1 1 auto;" />
-      <button type="button" id="btnLoadCN" class="veh-btn" style="width:auto; padding:10px 14px;">
-        Load Reservation
-      </button>
+    <div style="display:flex;gap:8px;">
+      <input id="cn" placeholder="BZ-YYYYMMDD-XXXX" style="flex:1"/>
+      <button id="load">Load</button>
     </div>
+    <div id="status" class="hint" style="margin-top:8px;"></div>
 
-    <!-- Info de la reserva -->
-    <div id="rescheduleOutput" class="hint" style="margin-top:12px;"></div>
+    <div id="form" class="is-hidden">
+      <div class="divider" style="margin:16px 0"></div>
 
-    <!-- Nuevo Date/Time -->
-    <div class="input-row" style="margin-top:14px;">
-      <div>
-        <label for="newDate">New Date:</label>
-        <input id="newDate" type="date" />
+      <label>Pickup</label>
+      <input id="pickup" placeholder="Pickup address"/>
+
+      <label style="margin-top:12px">Dropoff</label>
+      <input id="dropoff" placeholder="Dropoff address"/>
+
+      <div class="veh-toggle" style="margin-top:12px">
+        <button class="veh-btn active" data-type="suv">SUV (1–5)</button>
+        <button class="veh-btn" data-type="van">Van (up to 12)</button>
       </div>
-      <div>
-        <label for="newTime">New Time:</label>
-        <input id="newTime" type="time" step="900" />
+
+      <div class="mg-card" id="mg" style="display:block;margin-top:10px">
+        <h3>Meet & Greet (SLC)</h3>
+        <div class="mg-options">
+          <div class="mg-btn" data-choice="tsa_exit">TSA Exit (+$50)</div>
+          <div class="mg-btn" data-choice="baggage_claim">Baggage Claim (+$50)</div>
+          <div class="mg-btn active" data-choice="none">No Meet & Greet</div>
+        </div>
+      </div>
+
+      <div class="input-row" style="margin-top:12px">
+        <div>
+          <label>Date</label>
+          <input id="date" type="date"/>
+        </div>
+        <div>
+          <label>Time</label>
+          <input id="time" type="time" step="900"/>
+        </div>
+      </div>
+
+      <button id="recalc" style="margin-top:14px">Recalculate Price</button>
+
+      <div id="summary" class="is-hidden">
+        <div class="divider" style="margin:16px 0"></div>
+        <div class="kpis">
+          <div class="kpi"><div class="label">Original Total</div><div class="value price" id="origTotal">$0.00</div></div>
+          <div class="kpi"><div class="label">New Quote</div><div class="value price" id="newQuote">$0.00</div></div>
+          <div class="kpi"><div class="label">Difference</div><div class="value price" id="diff">$0.00</div></div>
+        </div>
+        <div id="note" class="hint"></div>
+        <button id="payOrSave">Submit Reschedule</button>
       </div>
     </div>
-    <div id="newWhenHelp" class="helper" style="margin-top:6px;"></div>
 
-    <!-- Enviar -->
-    <form id="rescheduleForm" style="margin-top:12px;">
-      <button type="submit" class="veh-btn" style="width:100%;padding:14px 16px;">
-        Submit Reschedule
-      </button>
-    </form>
-
-    <div style="margin-top:16px">
-      <a href="/app/index.html" style="color:#ffddae;text-decoration:underline;">← Back to Booking</a>
-    </div>
+    <div style="margin-top:12px"><a href="/app/index.html">← Back to booking</a></div>
   </main>
 
-  <!-- JS de reschedule (único script de esta página) -->
+  <script defer src="/app/scripts/maps.js"></script>
   <script defer src="/app/scripts/reschedule.js"></script>
 </body>
 </html>
