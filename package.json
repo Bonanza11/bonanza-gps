@@ -4,8 +4,6 @@
   "description": "Bonanza Transportation web application with booking, payments, and reschedule features.",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js",
     "lint": "eslint . --ext .js",
     "format": "prettier --write .",
     "build": "echo 'No build step required' && exit 0",
@@ -21,6 +19,7 @@
   "author": "Luis Guerrero",
   "license": "MIT",
   "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
     "stripe": "^16.0.0"
   },
   "devDependencies": {
