@@ -2,15 +2,15 @@
   "name": "bonanza-gps",
   "version": "1.0.0",
   "description": "Bonanza Transportation web application with booking, payments, and reschedule features.",
+  "private": true,
   "type": "module",
-  "main": "index.js",
   "engines": {
     "node": "20.x"
   },
   "scripts": {
     "lint": "eslint . --ext .js",
     "format": "prettier --write .",
-    "build": "echo 'No build step required' && exit 0",
+    "build": "echo \"No build step required\" && exit 0",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [
@@ -32,8 +32,8 @@
     "stripe": "^13.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
     "eslint": "^9.0.0",
+    "nodemon": "^3.1.0",
     "prettier": "^3.2.0"
   },
   "eslintConfig": {
@@ -52,8 +52,14 @@
     },
     "rules": {
       "no-unused-vars": "warn",
-      "semi": ["error", "always"],
-      "quotes": ["error", "double"]
+      "semi": [
+        "error",
+        "always"
+      ],
+      "quotes": [
+        "error",
+        "double"
+      ]
     }
   },
   "prettier": {
