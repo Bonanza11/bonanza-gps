@@ -1,6 +1,12 @@
+
+/public/admin/js
+/main.js
+
+
+
 /* ===========================================================
    Bonanza Transportation - HQ Admin v2 JS
-   Archivo: public/admin_v2/js/main.js
+   Archivo: public/admin/js/main.js
    - Auth: JWT (Authorization) y/o x-admin-key
    - Health check, tabs, acciones CRUD básicas
    - Manejo robusto de errores y reintentos
