@@ -5,157 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reschedule — Bonanza Transportation</title>
 
+  <!-- CSS global -->
   <link rel="stylesheet" href="/app/styles/app.css"/>
-
-  <style>
-    :root{
-      --copper:#b27b52; --copper-2:#c89366; --panel:#111; --panel-2:#151515;
-      --text:#f2e7d6; --muted:#d0a67f; --ok:#84ffa1; --warn:#ffd873; --err:#ff8585;
-      --ring:0 0 0 3px rgba(178,123,82,.24);
-      /* micro-ajuste vertical del botón Load (px) */
-      --load-nudge: 2px;
-    }
-
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:
-        radial-gradient(1200px 800px at 110% -10%, rgba(178,123,82,.08), transparent 60%),
-        radial-gradient(900px 600px at -10% 110%, rgba(178,123,82,.06), transparent 55%),
-        #000;
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-      -webkit-font-smoothing: antialiased;
-    }
-    .container{ max-width:1120px; margin:0 auto; padding:28px 16px 60px; }
-
-    .card{
-      position:relative; background:linear-gradient(180deg, var(--panel), var(--panel-2));
-      border:1px solid rgba(192,139,92,.32); border-radius:18px; padding:18px;
-      box-shadow:0 20px 60px rgba(0,0,0,.55); overflow:hidden;
-    }
-    .card--with-badge{ padding-top:96px }
-    .brand-badge{
-      position:absolute; top:14px; right:16px;
-      width:76px; height:76px; border-radius:50%;
-      border:2px solid var(--copper);
-      background:#000 url("/images/bonanza-logo.PNG") center/cover no-repeat;
-      box-shadow:0 0 14px rgba(178,123,82,.4);
-    }
-    @media (max-width:760px){ .brand-badge{width:62px;height:62px} .card--with-badge{padding-top:82px} }
-    @media (max-width:480px){ .brand-badge{width:56px;height:56px} .card--with-badge{padding-top:74px} }
-
-    h1{
-      margin:0 86px 14px 0;
-      font-size:1.52rem; color:#ffe6c6; text-align:center; letter-spacing:.2px; text-shadow:0 1px 0 #000;
-    }
-    h2{ margin:14px 0 8px; font-size:1.06rem; color:#ffddb3 }
-
-    .bar-actions{ display:flex; gap:10px; align-items:center; margin:0 0 10px }
-    .btn-inline{
-      width:auto; display:inline-flex; align-items:center; gap:8px; padding:8px 12px; margin:0;
-      font-size:.95rem; font-weight:700; border-radius:10px; border:1px solid #544338; background:#1a1a1a;
-      color:#ffdeb3 !important; text-decoration:none !important; box-shadow:none; cursor:pointer;
-      transition:filter .15s, transform .05s;
-    }
-    .btn-inline:hover{ filter:brightness(1.06) } .btn-inline:active{ transform:translateY(1px) }
-    .btn-back::before{ content:"←"; font-weight:900; margin-right:2px }
-
-    /* Top: CN + Load */
-    .toprow{ display:flex; gap:10px; align-items:flex-end; margin-bottom:10px; padding-right:96px }
-    .toprow .box{ flex:1; }
-    label{ display:block; margin:6px 0 6px; font-weight:700; color:#ffdcb0; font-size:.96rem }
-    input{
-      height:44px; width:100%; color:var(--text);
-      background:#0d0d0d; border:1px solid rgba(255,255,255,.10);
-      border-radius:10px; padding:0 12px; font-size:15px; outline:none;
-      transition:border .15s, box-shadow .15s, background .15s;
-    }
-    input::placeholder{ color:#ecd0b1; opacity:.9 }
-    input:focus{ border-color:var(--copper); box-shadow:var(--ring); background:#101010 }
-
-    /* LOAD: misma altura + anclado abajo + pequeño nudge */
-    #load{
-      width:auto !important; min-width:120px;
-      height:44px; padding:0 14px; margin-top:0 !important;
-      display:inline-flex; align-items:center; justify-content:center;
-      align-self:flex-end;
-      translate: 0 var(--load-nudge);
-      font-size:.95rem; border-radius:10px; border:1px solid #544338;
-      background:#242221; color:#ffdeb3; box-shadow:none; cursor:pointer;
-      transition:filter .15s, transform .05s;
-    }
-    #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
-
-    /* Botones generales */
-    .btn{
-      appearance:none; -webkit-appearance:none; user-select:none; cursor:pointer;
-      min-height:42px; padding:10px 14px; border-radius:10px; font-weight:700; font-size:15px;
-      color:#111; background:linear-gradient(180deg, var(--copper-2), var(--copper));
-      border:1px solid rgba(0,0,0,.4); box-shadow:0 6px 18px rgba(168,116,79,.35);
-      transition:transform .05s ease, box-shadow .2s ease, filter .15s ease;
-    }
-    .btn:hover{ filter:saturate(1.08) brightness(1.03) }
-    .btn:active{ transform:translateY(1px) }
-    .btn:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
-    .ghost{ background:#141414; color:#ffedd2; border:1px solid rgba(168,116,79,.35); box-shadow:none; }
-    .stack{ display:flex; gap:8px; }
-
-    /* Panel Original */
-    .orig{ background:linear-gradient(180deg,#0b0b0b 0%,#0c0c0c 100%); border:1px solid rgba(168,116,79,.42); border-radius:12px; padding:12px; }
-    .orig .head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding-bottom:8px; border-bottom:1px solid rgba(168,116,79,.22) }
-    .orig .label{ color:#d1a77f; font-size:.9rem; } .orig .value{ color:#ffdfb8; font-weight:800; word-break:break-word }
-    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-    @media (max-width:640px){ .grid2,.grid3{ grid-template-columns:1fr; } }
-
-    #map{ height:320px; margin:8px 0 2px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.06) }
-    .pillbar{ display:flex; gap:8px; }
-    .pill{
-      flex:1 1 0; text-align:center; padding:9px 10px; border-radius:10px;
-      background:#151515; color:var(--muted); border:1px solid rgba(168,116,79,.45);
-      cursor:pointer; font-weight:700; font-size:.95rem; transition:filter .2s, background .2s, color .2s, box-shadow .2s
-    }
-    .pill:hover{ filter:brightness(1.06) }
-    .pill.active{ background:var(--copper); color:#111; border-color:var(--copper); box-shadow:var(--ring) }
-    .pill[aria-disabled="true"]{ opacity:.5; cursor:not-allowed; filter:grayscale(.3) }
-
-    .status{ min-height:18px; margin:6px 0; font-size:.92rem; color:#ffd19a }
-    .muted{ color:#cfa980; font-size:.9rem; margin-top:6px; }
-
-    .summaryBox{ margin-top:10px; background:#0f0f0f; border:1px solid rgba(168,116,79,.28); border-radius:12px; padding:12px; }
-    .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:10px 0; }
-
-    .toast{
-      position:fixed; left:50%; top:18px; transform:translateX(-50%);
-      background:#121212; color:#ffedd2; border:1px solid rgba(168,116,79,.35);
-      border-radius:12px; padding:10px 14px; box-shadow:0 14px 40px rgba(0,0,0,.55);
-      z-index:9999; display:flex; align-items:center; gap:10px; min-width:260px;
-    }
-    .toast.ok{ border-color:rgba(132,255,161,.35) } .toast.err{ border-color:rgba(255,133,133,.35) } .toast.warn{ border-color:rgba(255,216,115,.35) }
-    .hidden{ display:none !important; }
-    .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0) }
-
-    @media (max-width:520px){
-      .toprow{ gap:8px; padding-right:64px }
-      #map{ height:280px }
-      /* en móviles bajamos 1px extra si hace falta */
-      :root{ --load-nudge: 1px; }
-      #load{ min-width:106px; font-size:.9rem }
-    }
-  </style>
 </head>
 <body>
   <main class="container">
     <div class="card card--with-badge">
       <div class="brand-badge" aria-hidden="true"></div>
 
+      <!-- Acción superior -->
       <div class="bar-actions">
         <button id="backBtn" type="button" class="btn-inline btn-back">Back to Booking</button>
       </div>
 
-      <h1>Reschedule Reservation</h1>
+      <h1 class="page-title">Reschedule Reservation</h1>
 
+      <!-- Top: CN + Load -->
       <div class="toprow">
         <div class="box">
           <label for="cn">Reservation Code (CN)</label>
@@ -167,6 +32,7 @@
       <div id="status" class="status"></div>
 
       <div class="grid-main">
+        <!-- ORIGINAL TRIP -->
         <section id="original" class="orig hidden" aria-live="polite">
           <div class="head">
             <div>
@@ -216,12 +82,14 @@
           </div>
         </section>
 
+        <!-- NUEVO VIAJE -->
         <section id="form" class="hidden">
-          <h2>Trip Details</h2>
+          <h2 class="section-title">Trip Details</h2>
 
           <label for="pickup">Pickup Location</label>
           <input id="pickup" placeholder="e.g. SLC Airport / Address"/>
 
+          <!-- Campos de vuelo -->
           <div id="flightFields" class="hidden">
             <div class="stack">
               <div style="flex:1">
@@ -239,20 +107,20 @@
           <input id="dropoff" placeholder="e.g. Montage Deer Valley"/>
           <div id="map" aria-label="Route map"></div>
 
-          <h2>Vehicle</h2>
+          <h2 class="section-title">Vehicle</h2>
           <div id="vehBar" class="pillbar">
             <div class="pill" data-type="suv">SUV (1–5)</div>
             <div class="pill" data-type="van">Van (up to 12)</div>
           </div>
 
-          <h2>Meet &amp; Greet (SLC)</h2>
+          <h2 class="section-title">Meet &amp; Greet (SLC)</h2>
           <div id="mgBar" class="pillbar" aria-live="polite">
             <div class="pill" data-mg="tsa_exit">TSA Exit (+$50)</div>
             <div class="pill" data-mg="baggage_claim">Baggage Claim (+$50)</div>
             <div class="pill" data-mg="none">No Meet & Greet</div>
           </div>
 
-          <h2>Pickup Time</h2>
+          <h2 class="section-title">Pickup Time</h2>
           <div class="stack">
             <input id="date" type="date" aria-label="Pickup date"/>
             <input id="time" type="time" step="900" aria-label="Pickup time"/>
@@ -288,272 +156,7 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script>
-    const $ = id => document.getElementById(id);
-    const money = c => '$' + ((+c||0)/100).toFixed(2);
-    const toast = (msg, type='ok')=>{
-      const t=$('toast'); if(!t) return;
-      t.className = 'toast ' + type; t.textContent = msg; t.classList.remove('hidden');
-      clearTimeout(t._h); t._h=setTimeout(()=>t.classList.add('hidden'), 3000);
-    };
-    const setBusy = (el, busy=true)=>{ if(!el) return; el.disabled = !!busy; el.dataset.busy = busy?'1':''; };
-    const debounce=(fn,ms=250)=>{ let h; return (...a)=>{ clearTimeout(h); h=setTimeout(()=>fn(...a),ms); }; };
-
-    (function(){
-      const backTargets = ['/book','/booking','/reservations','/'];
-      const btn = $('backBtn');
-      if(btn){
-        btn.addEventListener('click', ()=>{
-          try{
-            const ref = document.referrer || '';
-            const sameOrigin = ref && new URL(ref, location.href).origin === location.origin;
-            if(sameOrigin){ location.href = ref; return; }
-          }catch(_){}
-          for(const p of backTargets){ location.href = p; return; }
-        });
-      }
-    })();
-
-    let booking=null, vehicleType='suv', mgChoice='none', lastQuote=0, lastMiles=0;
-    let mapsLoaded=false;
-
-    function applyMinDate24h(){
-      const d = new Date(); d.setDate(d.getDate()+1);
-      const min = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      $('date')?.setAttribute('min', min);
-    }
-    const isSLCText = txt => /(salt lake city|slc)/i.test((txt||'').toLowerCase());
-
-    function ensureGoogleLoaded(){
-      return new Promise((resolve, reject)=>{
-        if (window.google && google.maps){ mapsLoaded=true; return resolve(); }
-        if (document.getElementById('gmaps-loader')){
-          const check=()=> (window.google&&google.maps)? resolve(): setTimeout(check,80);
-          return check();
-        }
-        const s=document.createElement('script');
-        s.id='gmaps-loader';
-        s.src='https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places';
-        s.async=true; s.defer=true; s.onload=()=>resolve(); s.onerror=()=>reject(new Error('Google Maps failed'));
-        document.head.appendChild(s);
-      });
-    }
-
-    window.ResUI = {
-      map:null, ds:null, dr:null,
-      async initMapAndPlaces(){
-        const mapDiv = $('map'); if(!mapDiv) return;
-        await ensureGoogleLoaded();
-        const center={lat:40.7608,lng:-111.8910};
-        this.map=new google.maps.Map(mapDiv,{center,zoom:10,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
-        this.ds=new google.maps.DirectionsService();
-        this.dr=new google.maps.DirectionsRenderer({map:this.map,preserveViewport:false});
-
-        this.attachAC('pickup', p=>{ toggleFlightFields(); this.maybe(); if(p?.geometry?.location){ this.map.panTo(p.geometry.location); this.map.setZoom(12);} });
-        this.attachAC('dropoff', p=>{ this.maybe(); if(p?.geometry?.location){ this.map.panTo(p.geometry.location); this.map.setZoom(12);} });
-
-        const react = debounce(()=>{ toggleFlightFields(); this.maybe(); }, 350);
-        $('pickup')?.addEventListener('input', react);
-        $('dropoff')?.addEventListener('input', react);
-      },
-      attachAC(id, cb){
-        const el=$(id); if(!el) return;
-        const ac=new google.maps.places.Autocomplete(el,{fields:["place_id","geometry","name","formatted_address"],componentRestrictions:{country:["us"]}});
-        ac.addListener('place_changed',()=>cb(ac.getPlace()));
-      },
-      async draw(pick,drop){
-        if(!pick||!drop) return null;
-        await ensureGoogleLoaded();
-        const res=await this.ds.route({origin:pick,destination:drop,travelMode:google.maps.TravelMode.DRIVING});
-        this.dr.setDirections(res);
-        const leg = res.routes?.[0]?.legs?.[0]||null;
-        if(leg?.distance?.value){ lastMiles = leg.distance.value/1609.344; }
-        return leg;
-      },
-      maybe(){ const p=$('pickup').value.trim(), d=$('dropoff').value.trim(); if(p&&d) this.draw(p,d).catch(()=>{}); }
-    };
-
-    function activatePills(bar, attr, value){
-      [...bar.querySelectorAll('.pill')].forEach(p=>p.classList.toggle('active', p.getAttribute(attr)===value));
-    }
-    const mgLabel = k => k==='tsa_exit'?'TSA Exit (+$50)':k==='baggage_claim'?'Baggage Claim (+$50)':'No Meet & Greet';
-
-    function updateMeetGreetAvailability(){
-      const txt = ($('pickup').value||'');
-      const slc = isSLCText(txt);
-      const bar = $('mgBar'); if(!bar) return;
-      [...bar.querySelectorAll('.pill')].forEach(p=>{
-        const v=p.getAttribute('data-mg');
-        const disabled = !slc && v!=='none';
-        p.setAttribute('aria-disabled', disabled?'true':'false');
-      });
-      if(!slc){ mgChoice='none'; activatePills(bar,'data-mg',mgChoice); }
-    }
-    function toggleFlightFields(){
-      const isSLC = isSLCText(($('pickup').value||'')); 
-      $('flightFields')?.classList.toggle('hidden', !isSLC);
-      updateMeetGreetAvailability();
-    }
-
-    async function fetchQuote(miles){
-      const r=await fetch('/api/book/quote',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({pickup:$('pickup').value.trim(),dropoff:$('dropoff').value.trim(),distance_miles:miles,vehicleType,meetGreet:mgChoice})
-      });
-      const txt = await r.text(); let j; try{ j=JSON.parse(txt);}catch{ j={ ok:false, error:txt }; }
-      if(!r.ok||!j.ok) throw new Error(j.error||'quote_failed');
-      return j.quote.total_cents;
-    }
-
-    $('cn').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); $('load').click(); } });
-
-    $('load').addEventListener('click', async ()=>{
-      const btn=$('load'); setBusy(btn,true);
-      const cn=$('cn').value.trim();
-      $('status').textContent = 'Loading reservation…';
-      $('original').classList.add('hidden'); $('form').classList.add('hidden');
-
-      try{
-        const r=await fetch('/api/book/get?cn='+encodeURIComponent(cn));
-        const body=await r.text(); let j; try{ j=JSON.parse(body);}catch{ j={ok:false,error:body}; }
-        if(!r.ok||!j.ok) throw new Error(j.error||'Not found');
-        const b=j.booking; booking=b;
-
-        $('o_cn').textContent=b.confirmation_number;
-        $('o_status').textContent=b.status||'—';
-        $('o_name').textContent=b.full_name||'—';
-        $('o_contact').textContent=[b.email,b.phone].filter(Boolean).join(' • ')||'—';
-        $('o_pickup').textContent=b.pickup||'—';
-        $('o_dropoff').textContent=b.dropoff||'—';
-        $('o_date').textContent=b.date_iso||'—';
-        $('o_time').textContent=b.time_hhmm||'—';
-        $('o_vehicle').textContent=(b.vehicle_type||'suv').toUpperCase();
-        $('o_mg').textContent=mgLabel(b.mg_choice||'none');
-        $('o_miles').textContent=b.distance_miles?Number(b.distance_miles).toFixed(1)+' mi':'—';
-        $('o_total').textContent=money(b.quoted_total||0);
-        $('original').classList.remove('hidden');
-
-        $('pickup').value=b.pickup||''; $('dropoff').value=b.dropoff||'';
-        $('date').value=b.date_iso||''; $('time').value=b.time_hhmm||'00:00';
-        $('flightNumber').value=b.flight_number||''; $('flightOrigin').value=b.flight_origin_city||'';
-        vehicleType=b.vehicle_type||'suv'; mgChoice=b.mg_choice||'none';
-        activatePills($('vehBar'),'data-type',vehicleType);
-        activatePills($('mgBar'),'data-mg',mgChoice);
-
-        $('form').classList.remove('hidden');
-        applyMinDate24h();
-        await ResUI.initMapAndPlaces();
-        toggleFlightFields(); ResUI.maybe();
-
-        $('status').textContent='Reservation loaded: '+b.confirmation_number;
-        toast('Reservation loaded', 'ok');
-      }catch(e){
-        $('status').textContent='Error: '+(e.message||e); toast('Error loading: '+(e.message||e), 'err');
-      }finally{ setBusy(btn,false); }
-    });
-
-    $('vehBar').addEventListener('click',ev=>{
-      const el=ev.target.closest('.pill'); if(!el||el.getAttribute('aria-disabled')==='true') return;
-      vehicleType=el.getAttribute('data-type'); activatePills($('vehBar'),'data-type',vehicleType); ResUI.maybe();
-    });
-    $('mgBar').addEventListener('click',ev=>{
-      const el=ev.target.closest('.pill'); if(!el) return;
-      if(el.getAttribute('aria-disabled')==='true') return;
-      mgChoice=el.getAttribute('data-mg'); activatePills($('mgBar'),'data-mg',mgChoice);
-    });
-
-    $('recalc').addEventListener('click', async ()=>{
-      setBusy($('recalc'),true); $('status').textContent='';
-      try{
-        const pick=$('pickup').value.trim(), drop=$('dropoff').value.trim(), d=$('date').value, t=$('time').value;
-        if(!pick||!drop) throw new Error('Pickup/Dropoff required');
-        if(!d||!t) throw new Error('Date/Time required');
-
-        const min = $('date').getAttribute('min');
-        if(min && d<min) throw new Error('Pickup date must be at least 24h from now');
-
-        const leg=await ResUI.draw(pick,drop); if(!leg?.distance?.value) throw new Error('Route not found');
-        const cents=await fetchQuote(lastMiles); lastQuote=cents;
-
-        $('n_pickup').textContent=pick; $('n_dropoff').textContent=drop;
-        $('n_date').textContent=d; $('n_time').textContent=t;
-        $('n_vehicle_mg').textContent=vehicleType.toUpperCase()+' • '+mgLabel(mgChoice);
-        $('n_miles').textContent=lastMiles.toFixed(1)+' mi';
-        $('newQuote').textContent=money(cents);
-
-        const orig=booking?.quoted_total||0; const diff=Math.max(0,cents-orig);
-        $('diff').textContent=money(diff);
-        $('note').textContent= diff>0 ? 'You will be asked to pay the difference to complete the reschedule.' : 'New route is cheaper; original price is kept (no refund).';
-        $('summary').classList.remove('hidden');
-        toast('Quote recalculated', 'ok');
-      }catch(e){ $('status').textContent='Error: '+(e.message||e); toast(e.message||e,'err'); }
-      finally{ setBusy($('recalc'),false); }
-    });
-
-    $('reset').addEventListener('click', ()=>{
-      if(!booking) return;
-      $('pickup').value=booking.pickup||''; $('dropoff').value=booking.dropoff||'';
-      $('date').value=booking.date_iso||''; $('time').value=booking.time_hhmm||'00:00';
-      $('flightNumber').value=booking.flight_number||''; $('flightOrigin').value=booking.flight_origin_city||'';
-      vehicleType=booking.vehicle_type||'suv'; mgChoice=booking.mg_choice||'none';
-      activatePills($('vehBar'),'data-type',vehicleType); activatePills($('mgBar'),'data-mg',mgChoice);
-      $('summary').classList.add('hidden'); $('status').textContent='';
-      toggleFlightFields(); ResUI.maybe();
-    });
-
-    $('submit').addEventListener('click', async ()=>{
-      if(!booking) return;
-      setBusy($('submit'),true);
-      try{
-        const d=$('date').value, t=$('time').value, pick=$('pickup').value.trim(), drop=$('dropoff').value.trim();
-        if(!pick||!drop) throw new Error('Pickup/Dropoff required');
-        if(!d||!t) throw new Error('Date/Time required');
-
-        const min = $('date').getAttribute('min');
-        if(min && d<min) throw new Error('Pickup date must be at least 24h from now');
-
-        if(!lastQuote||!lastMiles){
-          const leg=await ResUI.draw(pick,drop); if(!leg?.distance?.value) throw new Error('Route not found');
-          lastQuote=await fetchQuote(lastMiles);
-        }
-        const orig=booking.quoted_total||0; const diff=Math.max(0,lastQuote-orig);
-
-        const flightVisible = !$('flightFields').classList.contains('hidden');
-        const flightNumber = flightVisible ? $('flightNumber').value.trim() : null;
-        const flightOriginCity = flightVisible ? $('flightOrigin').value.trim() : null;
-
-        if(diff>0){
-          const r=await fetch('/api/create-checkout-session-diff',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-              cn:booking.confirmation_number, diffAmount:diff, customerEmail:booking.email||'',
-              metadata:{ reason:'reschedule_diff', vehicleType, meetGreet:mgChoice, pickup_new:pick, dropoff_new:drop, date_new:d, time_new:t },
-              description:`Reschedule difference for ${booking.confirmation_number}`
-            })});
-          const txt=await r.text(); let j; try{ j=JSON.parse(txt);}catch{ j={ok:false,error:txt}; }
-          if(!r.ok||!j.ok) throw new Error(j.error||'stripe_failed');
-          location.href=j.url; return;
-        }
-
-        const r2=await fetch('/api/book/reschedule',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            cn:booking.confirmation_number, newDate:d, newTime:t,
-            pickupNew:pick, dropoffNew:drop, vehicleTypeNew:vehicleType, meetGreetNew:mgChoice,
-            flightNumber:flightNumber, flightOriginCity:flightOriginCity,
-            newDistanceMiles:lastMiles, newQuoteCents:lastQuote
-          })});
-        const txt2=await r2.text(); let j2; try{ j2=JSON.parse(txt2);}catch{ j2={ok:false,error:txt2}; }
-        if(!r2.ok||!j2.ok) throw new Error(j2.error||'reschedule_failed');
-        $('status').textContent='Rescheduled successfully.'; toast('Rescheduled successfully','ok');
-      }catch(e){ $('status').textContent='Error: '+(e.message||e); toast(e.message||e,'err'); }
-      finally{ setBusy($('submit'),false); }
-    });
-
-    (function(){
-      const p = new URLSearchParams(location.search);
-      const cn = p.get('cn');
-      applyMinDate24h();
-      if (cn && $('cn')) { $('cn').value = cn; $('load').click(); }
-    })();
-  </script>
+  <!-- Script de comportamiento -->
+  <script src="/app/scripts/reschedule.js"></script>
 </body>
 </html>
