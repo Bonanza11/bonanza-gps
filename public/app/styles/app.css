@@ -74,6 +74,43 @@ input:focus,select:focus,textarea:focus{
   border-color: var(--err) !important;
   box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
 }
+/* ===== Time Combo (un solo recuadro + panel con scroll) ================== */
+.time-combo{ position:relative }
+.time-display{ cursor:pointer; padding-right:42px }  /* espacio para caret */
+
+.time-caret{
+  position:absolute; top:0; right:0; height:56px; width:42px;
+  border:0; background:transparent; cursor:pointer;
+}
+.time-caret::after{
+  content:""; display:block; margin:0 auto; width:0; height:0; border-left:6px solid transparent;
+  border-right:6px solid transparent; border-top:7px solid #ffd9a1; transform:translateY(22px);
+  opacity:.9;
+}
+
+.time-panel{
+  position:absolute; left:0; right:0; top:calc(100% + 6px);
+  max-height:220px; overflow-y:auto; z-index:20;
+  background:#0e0e0e; border:1px solid rgba(168,116,79,.45);
+  border-radius:10px; box-shadow:0 16px 36px rgba(0,0,0,.55);
+  display:none; padding:6px;
+}
+.time-panel.open{ display:block; }
+
+.time-opt{
+  padding:10px 12px; border-radius:8px; cursor:pointer;
+  color:#ffddae; line-height:1;
+}
+.time-opt:hover, .time-opt[aria-selected="true"]{
+  background:rgba(168,116,79,.18);
+}
+
+/* Mejora del foco (mismo look cobre que te gustó) */
+.time-input{
+  height:56px; font-size:17px; border-radius:12px; background:#1f1f1f; color:#fff;
+  border:2px solid var(--copper); box-shadow:0 0 0 3px rgba(168,116,79,.18);
+}
+.time-input:focus{ outline:none; border-color:#ffd9a1; box-shadow:0 0 0 4px rgba(255,217,161,.22); }
 
 /* Mensajes de ayuda/errores */
 .hint{ font-size:.85rem; margin-top:6px }
