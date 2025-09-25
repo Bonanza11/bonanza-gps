@@ -100,7 +100,7 @@
           <label for="cn">Reservation Code (CN)</label>
           <input id="cn" placeholder="BZ-2025MMDD-XXXX" autocomplete="off"/>
         </div>
-        <button id="load" style="flex:0 0 160px;">Load</button>
+        <button id="load" type="button" style="flex:0 0 160px;">Load</button>
       </div>
       <div id="status" class="status"></div>
 
@@ -201,8 +201,8 @@
           </div>
 
           <div class="row">
-            <button id="recalc">Recalculate Price</button>
-            <button id="reset" class="ghost">Reset changes</button>
+            <button id="recalc" type="button">Recalculate Price</button>
+            <button id="reset" type="button" class="ghost">Reset changes</button>
           </div>
 
           <div id="summary" class="summaryBox hidden">
@@ -221,7 +221,7 @@
               <div><span class="label">Difference</span><div class="value" id="diff">$0.00</div></div>
             </div>
             <p id="note" class="muted"></p>
-            <button id="submit" style="width:100%;">Submit Reschedule</button>
+            <button id="submit" type="button" style="width:100%;">Submit Reschedule</button>
           </div>
         </section>
       </div>
@@ -243,7 +243,7 @@
 
       initMapAndPlaces(){
         const mapDiv = $('#map');
-        if(!mapDiv){ return; } // evita "mapDiv null"
+        if(!mapDiv){ console.warn('[ResUI] map div not found'); return; }
 
         const center={lat:40.7608,lng:-111.8910};
         this.map=new google.maps.Map(mapDiv,{center,zoom:10,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
@@ -285,146 +285,15 @@
 
     async function fetchQuote(miles){
       const r=await fetch('/api/book/quote',{
-        method:'POST',headers:{'Content-Type':'application/json'},
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        cache:'no-store',
         body:JSON.stringify({pickup:$('pickup').value.trim(),dropoff:$('dropoff').value.trim(),distance_miles:miles,vehicleType,meetGreet:mgChoice})
       });
-      const j=await r.json(); if(!j.ok) throw new Error(j.error||'quote_failed'); return j.quote.total_cents;
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok || !j?.ok) throw new Error(j?.error || 'quote_failed');
+      return j.quote.total_cents;
     }
-
-    // ENTER para cargar CN
-    (function(){
-      const cnInput = $('#cn');
-      if(cnInput){
-        cnInput.addEventListener('keydown', e=>{
-          if(e.key==='Enter'){ e.preventDefault(); const btn=$('#load'); if(btn) btn.click(); }
-        });
-      }
-    })();
-
-    // Load CN
-    (function(){
-      const btn = $('#load');
-      if(!btn) return;
-      btn.onclick = async ()=>{
-        const cn=$('cn').value.trim(); $('#status').textContent=''; $('#original').classList.add('hidden'); $('#form').classList.add('hidden');
-        try{
-          const r=await fetch('/api/book/get?cn='+encodeURIComponent(cn)); const j=await r.json(); if(!r.ok||!j.ok) throw new Error(j.error||'Not found');
-          booking=j.booking;
-
-          // Original
-          $('#o_cn').textContent=booking.confirmation_number;
-          $('#o_status').textContent=booking.status||'—';
-          $('#o_name').textContent=booking.full_name||'—';
-          $('#o_contact').textContent=[booking.email,booking.phone].filter(Boolean).join(' • ')||'—';
-          $('#o_pickup').textContent=booking.pickup||'—';
-          $('#o_dropoff').textContent=booking.dropoff||'—';
-          $('#o_date').textContent=booking.date_iso||'—';
-          $('#o_time').textContent=booking.time_hhmm||'—';
-          $('#o_vehicle').textContent=(booking.vehicle_type||'suv').toUpperCase();
-          $('#o_mg').textContent=mgLabel(booking.mg_choice||'none');
-          $('#o_miles').textContent=booking.distance_miles?Number(booking.distance_miles).toFixed(1)+' mi':'—';
-          $('#o_total').textContent=money(booking.quoted_total||0);
-          $('#original').classList.remove('hidden');
-
-          // Prefill form
-          $('#pickup').value=booking.pickup||'';
-          $('#dropoff').value=booking.dropoff||'';
-          $('#date').value=booking.date_iso||'';
-          $('#time').value=booking.time_hhmm||'00:00';
-          $('#flightNumber').value=booking.flight_number||'';
-          $('#flightOrigin').value=booking.flight_origin_city||'';
-          vehicleType=booking.vehicle_type||'suv';
-          mgChoice=booking.mg_choice||'none';
-          activatePills($('#vehBar'),'data-type',vehicleType);
-          activatePills($('#mgBar'),'data-mg',mgChoice);
-          $('#form').classList.remove('hidden');
-
-          // Si el mapa ya está listo, traza; si no, lo hará initReschedule
-          if (window.google && google.maps) { ResUI.toggleFlightFields(); ResUI.maybe(); }
-          $('#status').textContent='Reservation loaded: '+booking.confirmation_number;
-        }catch(e){ $('#status').textContent='Error: '+(e.message||e); }
-      };
-    })();
-
-    // Toggles
-    (function(){
-      const vb = $('#vehBar'), mb = $('#mgBar');
-      if(vb){ vb.addEventListener('click',ev=>{ const el=ev.target.closest('.pill'); if(!el) return; vehicleType=el.getAttribute('data-type'); activatePills(vb,'data-type',vehicleType); ResUI.maybe(); }); }
-      if(mb){ mb.addEventListener('click',ev=>{ const el=ev.target.closest('.pill'); if(!el) return; mgChoice=el.getAttribute('data-mg'); activatePills(mb,'data-mg',mgChoice); }); }
-    })();
-
-    // Recalculate
-    (function(){
-      const b = $('#recalc');
-      if(!b) return;
-      b.onclick = async ()=>{
-        $('#status').textContent='';
-        try{
-          const pick=$('pickup').value.trim(), drop=$('dropoff').value.trim(), d=$('date').value, t=$('time').value;
-          if(!pick||!drop) throw new Error('Pickup/Dropoff required'); if(!d||!t) throw new Error('Date/Time required');
-          const leg=await ResUI.draw(pick,drop); if(!leg?.distance?.value) throw new Error('Route not found');
-          const cents=await fetchQuote(lastMiles); lastQuote=cents;
-
-          $('#n_pickup').textContent=pick; $('#n_dropoff').textContent=drop;
-          $('#n_date').textContent=d; $('#n_time').textContent=t;
-          $('#n_vehicle_mg').textContent=vehicleType.toUpperCase()+' • '+mgLabel(mgChoice);
-          $('#n_miles').textContent=lastMiles.toFixed(1)+' mi';
-          $('#newQuote').textContent=money(cents);
-
-          const orig=booking?.quoted_total||0; const diff=Math.max(0,cents-orig);
-          $('#diff').textContent=money(diff);
-          $('#note').textContent= diff>0 ? 'You will be asked to pay the difference to complete the reschedule.' : 'New route is cheaper; original price is kept (no refund).';
-          $('#summary').classList.remove('hidden');
-        }catch(e){ $('#status').textContent='Error: '+(e.message||e); }
-      };
-    })();
-
-    // Reset
-    (function(){
-      const b = $('#reset');
-      if(!b) return;
-      b.onclick = ()=>{
-        if(!booking) return;
-        $('#pickup').value=booking.pickup||''; $('#dropoff').value=booking.dropoff||'';
-        $('#date').value=booking.date_iso||''; $('#time').value=booking.time_hhmm||'00:00';
-        $('#flightNumber').value=booking.flight_number||''; $('#flightOrigin').value=booking.flight_origin_city||'';
-        vehicleType=booking.vehicle_type||'suv'; mgChoice=booking.mg_choice||'none';
-        activatePills($('#vehBar'),'data-type',vehicleType); activatePills($('#mgBar'),'data-mg',mgChoice);
-        $('#summary').classList.add('hidden'); $('#status').textContent='';
-        if (window.google && google.maps) { ResUI.toggleFlightFields(); ResUI.maybe(); }
-      };
-    })();
-
-    // Submit
-    (function(){
-      const b = $('#submit');
-      if(!b) return;
-      b.onclick = async ()=>{
-        if(!booking) return;
-        try{
-          const d=$('date').value, t=$('time').value, pick=$('pickup').value.trim(), drop=$('dropoff').value.trim();
-          if(!lastQuote||!lastMiles){ const leg=await ResUI.draw(pick,drop); if(!leg?.distance?.value) throw new Error('Route not found'); lastQuote=await fetchQuote(lastMiles); }
-          const orig=booking.quoted_total||0; const diff=Math.max(0,lastQuote-orig);
-
-          const flightVisible = !$('#flightFields').classList.contains('hidden');
-          if(flightVisible){
-            booking.flight_number = $('#flightNumber').value.trim();
-            booking.flight_origin_city = $('#flightOrigin').value.trim();
-          }
-
-          if(diff>0){
-            const r=await fetch('/api/create-checkout-session-diff',{method:'POST',headers:{'Content-Type':'application/json'},
-              body:JSON.stringify({cn:booking.confirmation_number,diffAmount:diff,customerEmail:booking.email||'',metadata:{reason:'reschedule_diff'},description:`Reschedule difference for ${booking.confirmation_number}`})});
-            const j=await r.json(); if(!j.ok) throw new Error(j.error||'stripe_failed'); location.href=j.url; return;
-          }
-
-          const r2=await fetch('/api/book/reschedule',{method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({cn:booking.confirmation_number,newDate:d,newTime:t,flightNumber:booking.flight_number||null,flightOriginCity:booking.flight_origin_city||null})});
-          const j2=await r2.json(); if(!j2.ok) throw new Error(j2.error||'reschedule_failed');
-          $('#status').textContent='Rescheduled successfully.';
-        }catch(e){ $('#status').textContent='Error: '+(e.message||e); }
-      };
-    })();
 
     // Callback que invoca Google Maps (se define ANTES de cargar el script)
     window.initReschedule = function () {
@@ -434,8 +303,173 @@
       }
     };
 
-    // Autorrelleno ?cn=... y carga automática
-    document.addEventListener('DOMContentLoaded', function () {
+    // Wiring dentro de DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('[Reschedule] DOM ready');
+
+      // ENTER para cargar CN
+      const cnInput = $('#cn');
+      if(cnInput){
+        cnInput.addEventListener('keydown', e=>{
+          if(e.key==='Enter'){ e.preventDefault(); const btn=$('#load'); if(btn) btn.click(); }
+        });
+      }
+
+      // Load CN
+      const loadBtn = $('#load');
+      if(loadBtn){
+        loadBtn.addEventListener('click', async () => {
+          const cn=$('cn').value.trim();
+          $('#status').textContent=''; $('#original').classList.add('hidden'); $('#form').classList.add('hidden');
+          if(!cn){ $('#status').textContent='Enter a reservation code.'; return; }
+          try{
+            const r=await fetch('/api/book/get?cn='+encodeURIComponent(cn), { cache:'no-store' });
+            const j=await r.json().catch(()=>({}));
+            if(!r.ok || !j?.ok) throw new Error(j?.error || 'Not found');
+            booking=j.booking;
+
+            // Original
+            $('#o_cn').textContent=booking.confirmation_number;
+            $('#o_status').textContent=booking.status||'—';
+            $('#o_name').textContent=booking.full_name||'—';
+            $('#o_contact').textContent=[booking.email,booking.phone].filter(Boolean).join(' • ')||'—';
+            $('#o_pickup').textContent=booking.pickup||'—';
+            $('#o_dropoff').textContent=booking.dropoff||'—';
+            $('#o_date').textContent=booking.date_iso||'—';
+            $('#o_time').textContent=booking.time_hhmm||'—';
+            $('#o_vehicle').textContent=(booking.vehicle_type||'suv').toUpperCase();
+            $('#o_mg').textContent=mgLabel(booking.mg_choice||'none');
+            $('#o_miles').textContent=booking.distance_miles?Number(booking.distance_miles).toFixed(1)+' mi':'—';
+            $('#o_total').textContent=money(booking.quoted_total||0);
+            $('#original').classList.remove('hidden');
+
+            // Prefill form
+            $('#pickup').value=booking.pickup||'';
+            $('#dropoff').value=booking.dropoff||'';
+            $('#date').value=booking.date_iso||'';
+            $('#time').value=booking.time_hhmm||'00:00';
+            $('#flightNumber').value=booking.flight_number||'';
+            $('#flightOrigin').value=booking.flight_origin_city||'';
+            vehicleType=booking.vehicle_type||'suv';
+            mgChoice=booking.mg_choice||'none';
+            activatePills($('#vehBar'),'data-type',vehicleType);
+            activatePills($('#mgBar'),'data-mg',mgChoice);
+            $('#form').classList.remove('hidden');
+
+            // Si el mapa ya está listo, traza; si no, lo hará initReschedule
+            if (window.google && google.maps) { ResUI.toggleFlightFields(); ResUI.maybe(); }
+            $('#status').textContent='Reservation loaded: '+booking.confirmation_number;
+          }catch(e){
+            console.error(e);
+            $('#status').textContent='Error: '+(e.message||e);
+          }
+        });
+      }
+
+      // Toggles
+      const vb = $('#vehBar'), mb = $('#mgBar');
+      if(vb){ vb.addEventListener('click',ev=>{ const el=ev.target.closest('.pill'); if(!el) return; vehicleType=el.getAttribute('data-type'); activatePills(vb,'data-type',vehicleType); ResUI.maybe(); }); }
+      if(mb){ mb.addEventListener('click',ev=>{ const el=ev.target.closest('.pill'); if(!el) return; mgChoice=el.getAttribute('data-mg'); activatePills(mb,'data-mg',mgChoice); }); }
+
+      // Recalculate
+      const recalcBtn = $('#recalc');
+      if(recalcBtn){
+        recalcBtn.addEventListener('click', async ()=>{
+          $('#status').textContent='';
+          try{
+            const pick=$('pickup').value.trim(), drop=$('dropoff').value.trim(), d=$('date').value, t=$('time').value;
+            if(!pick||!drop) throw new Error('Pickup/Dropoff required');
+            if(!d||!t) throw new Error('Date/Time required');
+            const leg=await ResUI.draw(pick,drop); if(!leg?.distance?.value) throw new Error('Route not found');
+            const cents=await fetchQuote(lastMiles); lastQuote=cents;
+
+            $('#n_pickup').textContent=pick; $('#n_dropoff').textContent=drop;
+            $('#n_date').textContent=d; $('#n_time').textContent=t;
+            $('#n_vehicle_mg').textContent=vehicleType.toUpperCase()+' • '+mgLabel(mgChoice);
+            $('#n_miles').textContent=lastMiles.toFixed(1)+' mi';
+            $('#newQuote').textContent=money(cents);
+
+            const orig=booking?.quoted_total||0; const diff=Math.max(0,cents-orig);
+            $('#diff').textContent=money(diff);
+            $('#note').textContent= diff>0 ? 'You will be asked to pay the difference to complete the reschedule.' : 'New route is cheaper; original price is kept (no refund).';
+            $('#summary').classList.remove('hidden');
+          }catch(e){ $('#status').textContent='Error: '+(e.message||e); }
+        });
+      }
+
+      // Reset
+      const resetBtn = $('#reset');
+      if(resetBtn){
+        resetBtn.addEventListener('click', ()=>{
+          if(!booking) return;
+          $('#pickup').value=booking.pickup||''; $('#dropoff').value=booking.dropoff||'';
+          $('#date').value=booking.date_iso||''; $('#time').value=booking.time_hhmm||'00:00';
+          $('#flightNumber').value=booking.flight_number||''; $('#flightOrigin').value=booking.flight_origin_city||'';
+          vehicleType=booking.vehicle_type||'suv'; mgChoice=booking.mg_choice||'none';
+          activatePills($('#vehBar'),'data-type',vehicleType); activatePills($('#mgBar'),'data-mg',mgChoice);
+          $('#summary').classList.add('hidden'); $('#status').textContent='';
+          if (window.google && google.maps) { ResUI.toggleFlightFields(); ResUI.maybe(); }
+        });
+      }
+
+      // Submit
+      const submitBtn = $('#submit');
+      if(submitBtn){
+        submitBtn.addEventListener('click', async ()=>{
+          if(!booking) return;
+          try{
+            const d=$('date').value, t=$('time').value, pick=$('pickup').value.trim(), drop=$('dropoff').value.trim();
+            if(!lastQuote||!lastMiles){
+              const leg=await ResUI.draw(pick,drop);
+              if(!leg?.distance?.value) throw new Error('Route not found');
+              lastQuote=await fetchQuote(lastMiles);
+            }
+            const orig=booking.quoted_total||0; const diff=Math.max(0,lastQuote-orig);
+
+            const flightVisible = !$('#flightFields').classList.contains('hidden');
+            if(flightVisible){
+              booking.flight_number = $('#flightNumber').value.trim();
+              booking.flight_origin_city = $('#flightOrigin').value.trim();
+            }
+
+            if(diff>0){
+              const r=await fetch('/api/create-checkout-session-diff',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                cache:'no-store',
+                body:JSON.stringify({
+                  cn:booking.confirmation_number,
+                  diffAmount:diff,
+                  customerEmail:booking.email||'',
+                  metadata:{reason:'reschedule_diff'},
+                  description:`Reschedule difference for ${booking.confirmation_number}`
+                })
+              });
+              const j=await r.json().catch(()=>({}));
+              if(!r.ok || !j?.ok) throw new Error(j?.error || 'stripe_failed');
+              location.href=j.url; return;
+            }
+
+            const r2=await fetch('/api/book/reschedule',{
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              cache:'no-store',
+              body:JSON.stringify({
+                cn:booking.confirmation_number,
+                newDate:d,
+                newTime:t,
+                flightNumber:booking.flight_number||null,
+                flightOriginCity:booking.flight_origin_city||null
+              })
+            });
+            const j2=await r2.json().catch(()=>({}));
+            if(!r2.ok || !j2?.ok) throw new Error(j2?.error || 'reschedule_failed');
+            $('#status').textContent='Rescheduled successfully.';
+          }catch(e){ $('#status').textContent='Error: '+(e.message||e); }
+        });
+      }
+
+      // Autorrelleno ?cn=... y carga automática
       const p = new URLSearchParams(location.search);
       const cn = p.get('cn');
       if (cn && $('#cn')) {
@@ -446,7 +480,7 @@
     });
   </script>
 
-  <!-- Google Maps JavaScript API (async + defer para evitar warnings) -->
+  <!-- Google Maps JavaScript API (async + defer) -->
   <script
     async
     defer
