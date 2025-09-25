@@ -5,7 +5,7 @@
 //   origin_lat?: number, origin_lng?: number,
 //   dest_lat?: number,   dest_lng?: number,
 //   distance_miles?: number,          // si lo envías, se usa tal cual
-//   pickup_time?: string,             // ISO local o "h:mm AM/PM" (define after-hours 25%)
+//   pickup_time?: string,             // ISO local "YYYY-MM-DDTHH:MM:SS"
 //   extras?: number                   // opcional: peajes/recargos adicionales en USD
 // }
 //
@@ -17,6 +17,7 @@ export const config = { runtime: "nodejs" };
 // ---------- helpers ----------
 const toNum = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
 const ceil2 = (n, step = 1) => Math.ceil(n / step) * step;
+const clamp2 = (n) => +Number(n).toFixed(2);
 
 // Haversine (mi)
 function haversineMiles(oLat, oLng, dLat, dLng) {
@@ -34,43 +35,27 @@ function haversineMiles(oLat, oLng, dLat, dLng) {
 // Tabla oficial de precios por milla
 function basePriceFromTable(milesRaw) {
   const m = Math.max(0, Number(milesRaw) || 0);
-  // Para tarifas por tramo usamos millas ENTERAS hacia arriba
-  const miles = Math.ceil(m);
+  const miles = Math.ceil(m); // tramos con millas enteras
   if (miles <= 10) return 120;
   if (miles <= 35) return 190;
   if (miles <= 39) return 210;
   if (miles <= 48) return 230;
   if (miles <= 55) return 250;
-  // Más de 55: $5.40 × millas (usamos millas reales con 2 decimales)
-  return +(5.40 * m).toFixed(2);
+  // Más de 55: $5.40 × millas (usa millas reales con 2 decimales)
+  return clamp2(5.40 * m);
 }
 
-// After-hours = 25% si fuera de 07:00–22:30
-// Acepta ISO (YYYY-MM-DDTHH:mm:ss) o "h:mm AM/PM"
-function isAfterHours(pickupInput) {
-  if (!pickupInput) return false;
-  const s = String(pickupInput).trim().toUpperCase();
-
-  // 1) Intentar AM/PM ("7:05 PM" o "2025-09-25 7:05 PM")
-  const m1 = s.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)$/);
-  if (m1) {
-    let h = parseInt(m1[1], 10);
-    const mm = parseInt(m1[2] ?? '0', 10);
-    const ap = m1[3];
-    if (h < 1 || h > 12 || mm < 0 || mm > 59) return false;
-    if (ap === 'AM') { if (h === 12) h = 0; } else { if (h !== 12) h += 12; }
-    const curMin = (h * 60) + mm;
-    const startMin = (7 * 60);         // 07:00
-    const endMin   = (22 * 60) + 30;   // 22:30
-    return (curMin < startMin) || (curMin > endMin);
-  }
-
-  // 2) Intentar ISO / otros (Date interpreta en TZ del servidor)
-  const d = new Date(pickupInput);
-  if (Number.isNaN(d.getTime())) return false;
+// After-hours: 25% si fuera de 07:00–22:30 (hora local del ISO entrante)
+function isAfterHours(pickupISO) {
+  if (!pickupISO) return false;
+  const d = new Date(pickupISO);
+  if (isNaN(d.getTime())) return false;
   const h = d.getHours();
   const m = d.getMinutes();
-  return (h * 60 + m) < (7 * 60) || (h * 60 + m) > (22 * 60 + 30);
+  const cur = h * 60 + m;
+  const start = 7 * 60;        // 07:00
+  const end = 22 * 60 + 30;    // 22:30
+  return cur < start || cur > end;
 }
 
 export default async function handler(req, res) {
@@ -83,8 +68,8 @@ export default async function handler(req, res) {
     const {
       origin_lat, origin_lng,
       dest_lat, dest_lng,
-      distance_miles,          // opcional: si lo mandas, se toma como verdad de cliente
-      pickup_time,             // ISO local o AM/PM; define after-hours
+      distance_miles,          // opcional: si lo mandas, se toma como verdad del cliente
+      pickup_time,             // ISO local; define after-hours (25%)
       extras = 0               // opcional: peajes/recargos externos
     } = req.body || {};
 
@@ -99,23 +84,26 @@ export default async function handler(req, res) {
         return res.status(400).json({ ok:false, error:"missing_distance_or_coordinates" });
       }
     }
+    if (!Number.isFinite(miles) || miles <= 0) {
+      return res.status(400).json({ ok:false, error:"invalid_distance" });
+    }
 
     // 2) Precio base por tabla
     const base = basePriceFromTable(miles);
 
     // 3) After-hours 25%
-    const ah = isAfterHours(pickup_time) ? +(base * 0.25).toFixed(2) : 0;
+    const ah = isAfterHours(pickup_time) ? clamp2(base * 0.25) : 0;
 
-    // 4) Extras (peajes/recargos adicionales)
-    const extraFees = Number.isFinite(Number(extras)) ? +Number(extras).toFixed(2) : 0;
+    // 4) Extras (si mandas algo distinto de número, se ignora como 0)
+    const extraFees = Number.isFinite(Number(extras)) ? clamp2(extras) : 0;
 
-    const subtotal = +(base + ah + extraFees).toFixed(2);
-    const total = ceil2(subtotal, 1); // redondeo al entero superior (ajusta step a 5 si quieres)
+    const subtotal = clamp2(base + ah + extraFees);
+    const total = ceil2(subtotal, 1); // redondeo al entero superior
 
     return res.status(200).json({
       ok: true,
       data: {
-        miles: +miles.toFixed(2),
+        miles: clamp2(miles),
         base,
         after_hours: ah,
         extras: extraFees,
