@@ -11,17 +11,17 @@
   <!-- Tema + overrides compactos -->
   <style>
     :root{
-      --copper:#a8744f; --copper-2:#c89366; --panel:#111; --panel-2:#151515;
-      --text:#ecd9c5; --muted:#cfa47f; --ok:#84ffa1; --warn:#ffd873; --err:#ff8585;
-      --ring: 0 0 0 3px rgba(168,116,79,.28);
+      --copper:#b27b52; --copper-2:#c89366; --panel:#111; --panel-2:#151515;
+      --text:#f2e7d6; --muted:#d0a67f; --ok:#84ffa1; --warn:#ffd873; --err:#ff8585;
+      --ring: 0 0 0 3px rgba(178,123,82,.24);
     }
 
     html,body{height:100%}
     body{
       margin:0;
       background:
-        radial-gradient(1200px 800px at 110% -10%, rgba(168,116,79,.08), transparent 60%),
-        radial-gradient(900px 600px at -10% 110%, rgba(168,116,79,.06), transparent 55%),
+        radial-gradient(1200px 800px at 110% -10%, rgba(178,123,82,.08), transparent 60%),
+        radial-gradient(900px 600px at -10% 110%, rgba(178,123,82,.06), transparent 55%),
         #000;
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
@@ -35,20 +35,20 @@
       box-shadow:0 20px 60px rgba(0,0,0,.55); overflow:hidden;
     }
     /* Más espacio arriba para el logo */
-    .card--with-badge{ padding-top:92px }
+    .card--with-badge{ padding-top:96px }
     .brand-badge{
-      position:absolute; top:12px; right:14px;
-      width:70px; height:70px; border-radius:50%;
+      position:absolute; top:14px; right:16px;
+      width:76px; height:76px; border-radius:50%;
       border:2px solid var(--copper);
       background:#000 url("/images/bonanza-logo.PNG") center/cover no-repeat;
-      box-shadow:0 0 12px rgba(168,116,79,.38);
+      box-shadow:0 0 14px rgba(178,123,82,.4);
     }
-    @media (max-width:760px){ .brand-badge{width:58px;height:58px} .card--with-badge{padding-top:78px} }
-    @media (max-width:480px){ .brand-badge{width:52px;height:52px} .card--with-badge{padding-top:70px} }
+    @media (max-width:760px){ .brand-badge{width:62px;height:62px} .card--with-badge{padding-top:82px} }
+    @media (max-width:480px){ .brand-badge{width:56px;height:56px} .card--with-badge{padding-top:74px} }
 
     h1{
-      margin:0 78px 14px 0;
-      font-size:1.48rem; color:#ffe2bd; text-align:center; letter-spacing:.2px; text-shadow:0 1px 0 #000;
+      margin:0 86px 14px 0;
+      font-size:1.52rem; color:#ffe6c6; text-align:center; letter-spacing:.2px; text-shadow:0 1px 0 #000;
     }
     h2{ margin:14px 0 8px; font-size:1.06rem; color:#ffddb3 }
 
@@ -72,22 +72,23 @@
     .toprow .box{ flex:1; }
     label{ display:block; margin:6px 0 6px; font-weight:700; color:#ffdcb0; font-size:.96rem }
     input{
-      height:44px; width:100%; color:#ffe3c6;
+      height:44px; width:100%; color:var(--text);
       background:#0d0d0d; border:1px solid rgba(255,255,255,.10);
       border-radius:10px; padding:0 12px; font-size:15px; outline:none;
       transition:border .15s, box-shadow .15s, background .15s;
     }
-    input::placeholder{ color:#e7c7a8; opacity:.85 }
+    input::placeholder{ color:#ecd0b1; opacity:.9 }
     input:focus{ border-color:var(--copper); box-shadow:var(--ring); background:#101010 }
 
     /* Botón LOAD: un poco más bajo para empatar con el input */
     #load{
-      width:auto !important; min-width:120px; height:36px; margin-top:6px !important; /* <-- bajito */
+      width:auto !important; min-width:120px; height:36px; margin-top:0 !important;
       font-size:.92rem; padding:8px 12px; border-radius:10px; border:1px solid #544338;
       background:#242221; color:#ffdeb3; box-shadow:none; cursor:pointer;
       transition:filter .15s, transform .05s;
+      transform: translateY(6px); /* <- baja sutilmente y mantiene alineación */
     }
-    #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
+    #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(7px) }
 
     /* Botones generales (recalc/reset/submit) */
     .btn{
@@ -141,7 +142,7 @@
     @media (max-width:520px){
       .toprow{ gap:8px; padding-right:64px }
       #map{ height:280px }
-      #load{ min-width:106px; font-size:.9rem; margin-top:6px !important }
+      #load{ min-width:106px; font-size:.9rem; transform:translateY(4px) }
     }
   </style>
 </head>
@@ -316,10 +317,7 @@
             const sameOrigin = ref && new URL(ref, location.href).origin === location.origin;
             if(sameOrigin){ location.href = ref; return; }
           }catch(_){}
-          for(const p of backTargets){
-            // Intenta cargar una ruta conocida
-            if(p){ location.href = p; return; }
-          }
+          for(const p of backTargets){ location.href = p; return; }
         });
       }
     })();
