@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reschedule — Bonanza Transportation</title>
 
-  <!-- Estilos globales de Bonanza -->
   <link rel="stylesheet" href="/app/styles/app.css"/>
 
   <style>
@@ -14,7 +13,6 @@
     .hidden{display:none !important;}
 
     .container{ max-width:1120px; margin:0 auto; padding:8px 16px 20px; }
-
     .card{
       position:relative;
       background:linear-gradient(180deg,#101010,#0b0b0b);
@@ -78,6 +76,7 @@
       <div class="brand-badge" aria-hidden="true"></div>
       <h1>Reschedule Reservation</h1>
 
+      <!-- CN -->
       <div class="toprow">
         <div>
           <label for="cn">Reservation Code (CN)</label>
@@ -88,13 +87,130 @@
       <div id="status" class="status"></div>
 
       <div class="grid-main">
-        <section id="original" class="orig hidden">…</section>
-        <section id="form" class="hidden">…</section>
+        <!-- ORIGINAL TRIP -->
+        <section id="original" class="orig hidden">
+          <div class="head">
+            <div>
+              <div class="label">Reservation</div>
+              <div class="value" id="o_cn">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="label">Status</div>
+              <div class="value" id="o_status">—</div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:8px">
+            <div>
+              <div class="label">Passenger</div>
+              <div class="value" id="o_name">—</div>
+            </div>
+            <div>
+              <div class="label">Email / Phone</div>
+              <div class="value" id="o_contact">—</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid2">
+            <div>
+              <div class="label">Pickup</div>
+              <div class="value" id="o_pickup">—</div>
+            </div>
+            <div>
+              <div class="label">Dropoff</div>
+              <div class="value" id="o_dropoff">—</div>
+            </div>
+          </div>
+
+          <div class="grid3" style="margin-top:8px">
+            <div><div class="label">Date</div><div class="value" id="o_date">—</div></div>
+            <div><div class="label">Time</div><div class="value" id="o_time">—</div></div>
+            <div><div class="label">Vehicle</div><div class="value" id="o_vehicle">—</div></div>
+          </div>
+
+          <div class="grid3" style="margin-top:8px">
+            <div><div class="label">Meet & Greet</div><div class="value" id="o_mg">—</div></div>
+            <div><div class="label">Distance</div><div class="value" id="o_miles">—</div></div>
+            <div><div class="label">Original Total</div><div class="value" id="o_total">—</div></div>
+          </div>
+        </section>
+
+        <!-- FORM / NEW -->
+        <section id="form" class="hidden">
+          <h2 style="margin:0 0 6px">Trip Details</h2>
+
+          <label for="pickup">Pickup Location</label>
+          <input id="pickup" placeholder="e.g. SLC Airport / Address"/>
+
+          <!-- Campos de vuelo (solo si pickup es SLC) -->
+          <div id="flightFields" class="hidden">
+            <div class="row">
+              <div>
+                <label for="flightNumber">Flight Number (SLC)</label>
+                <input id="flightNumber" placeholder="e.g. DL1234"/>
+              </div>
+              <div>
+                <label for="flightOrigin">Origin City</label>
+                <input id="flightOrigin" placeholder="e.g. Miami (MIA)"/>
+              </div>
+            </div>
+          </div>
+
+          <label for="dropoff" style="margin-top:6px;">Dropoff Location</label>
+          <input id="dropoff" placeholder="e.g. Montage Deer Valley"/>
+
+          <div id="map"></div>
+
+          <h2>Vehicle</h2>
+          <div id="vehBar" class="pillbar">
+            <div class="pill" data-type="suv">SUV (1–5)</div>
+            <div class="pill" data-type="van">Van (up to 12)</div>
+          </div>
+
+          <h2>Meet & Greet (SLC)</h2>
+          <div id="mgBar" class="pillbar">
+            <div class="pill" data-mg="tsa_exit">TSA Exit (+$50)</div>
+            <div class="pill" data-mg="baggage_claim">Baggage Claim (+$50)</div>
+            <div class="pill" data-mg="none">No Meet & Greet</div>
+          </div>
+
+          <h2>Pickup Time</h2>
+          <div class="row">
+            <input id="date" type="date"/>
+            <input id="time" type="time" step="900"/>
+          </div>
+
+          <div class="row">
+            <button id="recalc">Recalculate Price</button>
+            <button id="reset" class="ghost">Reset changes</button>
+          </div>
+
+          <div id="summary" class="summaryBox hidden">
+            <div class="grid2">
+              <div><span class="label">Pickup</span><div class="value" id="n_pickup">—</div></div>
+              <div><span class="label">Dropoff</span><div class="value" id="n_dropoff">—</div></div>
+            </div>
+            <div class="grid3" style="margin-top:8px">
+              <div><span class="label">Date</span><div class="value" id="n_date">—</div></div>
+              <div><span class="label">Time</span><div class="value" id="n_time">—</div></div>
+              <div><span class="label">Vehicle / M&G</span><div class="value" id="n_vehicle_mg">—</div></div>
+            </div>
+            <div class="grid3" style="margin-top:8px">
+              <div><span class="label">Distance</span><div class="value" id="n_miles">—</div></div>
+              <div><span class="label">New Quote</span><div class="value" id="newQuote">$0.00</div></div>
+              <div><span class="label">Difference</span><div class="value" id="diff">$0.00</div></div>
+            </div>
+            <p id="note" class="muted"></p>
+            <button id="submit" style="width:100%;">Submit Reschedule</button>
+          </div>
+        </section>
       </div>
     </div>
   </main>
 
-  <!-- Callback seguro -->
+  <!-- Callback SEGURO (no corre hasta que DOM exista) -->
   <script>
     window.initReschedule = function () {
       const start = () => { window.ResUI && ResUI.initMapAndPlaces && ResUI.initMapAndPlaces(); };
@@ -106,7 +222,7 @@
     };
   </script>
 
-  <!-- Google Maps con async + defer -->
+  <!-- Google Maps con async+defer -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initReschedule"></script>
 
   <!-- Lógica completa -->
@@ -126,16 +242,25 @@
 
     async function fetchQuote(miles){
       const r=await fetch('/api/book/quote',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({pickup:$('pickup').value.trim(),dropoff:$('dropoff').value.trim(),distance_miles:miles,vehicleType,meetGreet:mgChoice})});
+        body:JSON.stringify({
+          pickup:$('pickup').value.trim(),
+          dropoff:$('dropoff').value.trim(),
+          distance_miles:miles,
+          vehicleType,
+          meetGreet:mgChoice
+        })});
       const j=await r.json(); if(!j.ok) throw new Error(j.error||'quote_failed'); return j.quote.total_cents;
     }
 
+    // ===== Google Maps / Places =====
     window.ResUI = {
       map:null, ds:null, dr:null,
       initMapAndPlaces(){
         const mapDiv = $('#map'); if(!mapDiv) return;
         const center={lat:40.7608,lng:-111.8910};
-        this.map=new google.maps.Map(mapDiv,{center,zoom:10,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+        this.map=new google.maps.Map(mapDiv,{
+          center, zoom:10, mapTypeControl:false, streetViewControl:false, fullscreenControl:false
+        });
         this.ds=new google.maps.DirectionsService();
         this.dr=new google.maps.DirectionsRenderer({map:this.map,preserveViewport:false});
         this.attachAC('pickup', p=>{ this.toggleFlightFields(); this.maybe(); if(p?.geometry?.location){ this.map.panTo(p.geometry.location); this.map.setZoom(12);} });
@@ -162,14 +287,179 @@
       maybe(){ const p=$('pickup').value.trim(), d=$('dropoff').value.trim(); if(p&&d) this.draw(p,d).catch(()=>{}); }
     };
 
-    // === Eventos ===
+    // ===== Eventos UI =====
     $('#cn')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#load')?.click(); }});
-    $('#load')?.addEventListener('click', async ()=>{ /* … tu lógica completa de load CN … */ });
-    $('#vehBar')?.addEventListener('click',ev=>{ /* … tu lógica … */ });
-    $('#mgBar')?.addEventListener('click',ev=>{ /* … tu lógica … */ });
-    $('#recalc')?.addEventListener('click', async ()=>{ /* … tu lógica … */ });
-    $('#reset')?.addEventListener('click', ()=>{ /* … tu lógica … */ });
-    $('#submit')?.addEventListener('click', async ()=>{ /* … tu lógica … */ });
+
+    // Cargar CN
+    $('#load')?.addEventListener('click', async ()=>{
+      const cn=$('cn').value.trim();
+      $('#status').textContent='';
+      $('#original').classList.add('hidden');
+      $('#form').classList.add('hidden');
+
+      if(!cn){ $('#status').textContent='Enter a confirmation number.'; return; }
+
+      try{
+        const r=await fetch('/api/book/get?cn='+encodeURIComponent(cn));
+        const j=await r.json();
+        if(!r.ok||!j.ok) throw new Error(j.error||'Not found');
+        booking=j.booking;
+
+        // Original Trip
+        $('#o_cn').textContent=booking.confirmation_number;
+        $('#o_status').textContent=booking.status||'—';
+        $('#o_name').textContent=booking.full_name||'—';
+        $('#o_contact').textContent=[booking.email,booking.phone].filter(Boolean).join(' • ')||'—';
+        $('#o_pickup').textContent=booking.pickup||'—';
+        $('#o_dropoff').textContent=booking.dropoff||'—';
+        $('#o_date').textContent=booking.date_iso||'—';
+        $('#o_time').textContent=booking.time_hhmm||'—';
+        $('#o_vehicle').textContent=(booking.vehicle_type||'suv').toUpperCase();
+        $('#o_mg').textContent=mgLabel(booking.mg_choice||'none');
+        $('#o_miles').textContent=booking.distance_miles?Number(booking.distance_miles).toFixed(1)+' mi':'—';
+        $('#o_total').textContent=money(booking.quoted_total||0);
+        $('#original').classList.remove('hidden');
+
+        // Prefill form
+        $('#pickup').value=booking.pickup||'';
+        $('#dropoff').value=booking.dropoff||'';
+        $('#date').value=booking.date_iso||'';
+        $('#time').value=booking.time_hhmm||'00:00';
+        $('#flightNumber').value=booking.flight_number||'';
+        $('#flightOrigin').value=booking.flight_origin_city||'';
+        vehicleType=booking.vehicle_type||'suv';
+        mgChoice=booking.mg_choice||'none';
+        activatePills($('#vehBar'),'data-type',vehicleType);
+        activatePills($('#mgBar'),'data-mg',mgChoice);
+        $('#form').classList.remove('hidden');
+
+        ResUI.toggleFlightFields();
+        ResUI.maybe();
+
+        $('#status').textContent='Reservation loaded: '+booking.confirmation_number;
+      }catch(e){
+        $('#status').textContent='Error: '+(e.message||e);
+      }
+    });
+
+    // Toggles
+    $('#vehBar')?.addEventListener('click',ev=>{
+      const el=ev.target.closest('.pill'); if(!el) return;
+      vehicleType=el.getAttribute('data-type');
+      activatePills(ev.currentTarget,'data-type',vehicleType);
+      ResUI.maybe();
+    });
+    $('#mgBar')?.addEventListener('click',ev=>{
+      const el=ev.target.closest('.pill'); if(!el) return;
+      mgChoice=el.getAttribute('data-mg');
+      activatePills(ev.currentTarget,'data-mg',mgChoice);
+    });
+
+    // Recalculate
+    $('#recalc')?.addEventListener('click', async ()=>{
+      $('#status').textContent='';
+      try{
+        const pick=$('pickup').value.trim(), drop=$('dropoff').value.trim(), d=$('date').value, t=$('time').value;
+        if(!pick||!drop) throw new Error('Pickup/Dropoff required');
+        if(!d||!t) throw new Error('Date/Time required');
+        const leg=await ResUI.draw(pick,drop);
+        if(!leg?.distance?.value) throw new Error('Route not found');
+
+        const cents=await fetchQuote(lastMiles); lastQuote=cents;
+
+        // Summary
+        $('#n_pickup').textContent=pick;
+        $('#n_dropoff').textContent=drop;
+        $('#n_date').textContent=d;
+        $('#n_time').textContent=t;
+        $('#n_vehicle_mg').textContent=vehicleType.toUpperCase()+' • '+mgLabel(mgChoice);
+        $('#n_miles').textContent=lastMiles.toFixed(1)+' mi';
+        $('#newQuote').textContent=money(cents);
+
+        const orig=booking?.quoted_total||0;
+        const diff=Math.max(0,cents-orig);
+        $('#diff').textContent=money(diff);
+        $('#note').textContent= diff>0
+          ? 'You will be asked to pay the difference to complete the reschedule.'
+          : 'New route is cheaper; original price is kept (no refund).';
+
+        $('#summary').classList.remove('hidden');
+      }catch(e){
+        $('#status').textContent='Error: '+(e.message||e);
+      }
+    });
+
+    // Reset
+    $('#reset')?.addEventListener('click', ()=>{
+      if(!booking) return;
+      $('#pickup').value=booking.pickup||'';
+      $('#dropoff').value=booking.dropoff||'';
+      $('#date').value=booking.date_iso||'';
+      $('#time').value=booking.time_hhmm||'00:00';
+      $('#flightNumber').value=booking.flight_number||'';
+      $('#flightOrigin').value=booking.flight_origin_city||'';
+      vehicleType=booking.vehicle_type||'suv';
+      mgChoice=booking.mg_choice||'none';
+      activatePills($('#vehBar'),'data-type',vehicleType);
+      activatePills($('#mgBar'),'data-mg',mgChoice);
+      $('#summary').classList.add('hidden');
+      $('#status').textContent='';
+      ResUI.toggleFlightFields();
+      ResUI.maybe();
+    });
+
+    // Submit
+    $('#submit')?.addEventListener('click', async ()=>{
+      if(!booking) return;
+      try{
+        const d=$('date').value, t=$('time').value, pick=$('pickup').value.trim(), drop=$('dropoff').value.trim();
+        if(!lastQuote||!lastMiles){
+          const leg=await ResUI.draw(pick,drop);
+          if(!leg?.distance?.value) throw new Error('Route not found');
+          lastQuote=await fetchQuote(lastMiles);
+        }
+        const orig=booking.quoted_total||0;
+        const diff=Math.max(0,lastQuote-orig);
+
+        // Guardar campos de vuelo si están visibles
+        const flightVisible = !$('#flightFields').classList.contains('hidden');
+        const flightNumber = flightVisible ? ($('#flightNumber').value||'').trim() : null;
+        const flightOrigin = flightVisible ? ($('#flightOrigin').value||'').trim() : null;
+
+        if(diff>0){
+          const r=await fetch('/api/create-checkout-session-diff',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              cn:booking.confirmation_number,
+              diffAmount:diff,
+              customerEmail:booking.email||'',
+              metadata:{reason:'reschedule_diff'},
+              description:`Reschedule difference for ${booking.confirmation_number}`
+            })
+          });
+          const j=await r.json();
+          if(!j.ok) throw new Error(j.error||'stripe_failed');
+          location.href=j.url;
+          return;
+        }
+
+        const r2=await fetch('/api/book/reschedule',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            cn:booking.confirmation_number,
+            newDate:d,
+            newTime:t,
+            flightNumber,
+            flightOriginCity:flightOrigin
+          })
+        });
+        const j2=await r2.json();
+        if(!j2.ok) throw new Error(j2.error||'reschedule_failed');
+        $('#status').textContent='Rescheduled successfully.';
+      }catch(e){
+        $('#status').textContent='Error: '+(e.message||e);
+      }
+    });
   });
   </script>
 </body>
