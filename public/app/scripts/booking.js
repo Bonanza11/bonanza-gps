@@ -4,9 +4,11 @@
      - Pricing/UI del flujo de booking (sin lógica de ruta).
      - Total = base + extras (surcharge + M&G) + after-hours (25%),
        con multiplicador por vehículo (van = +30% redondeado).
-     - Campo HORA en un solo <select id="time"> con AM/PM (scroll).
      - Toggle de Términos, acordeón de equipaje, recálculo “en vivo”.
-     - Reglas de Aeropuertos/JSX/FBO según texto del Pick-up.
+     - Reglas Aeropuerto/JSX/FBO a partir del Pick-up.
+     - Campo HORA soporta AM/PM y 24h; normaliza a "h:mm AM/PM".
+     - FIXES: M&G clickeable + recálculo; cambio de foto SUV/Van;
+       Terms modal abre/cierra; datalist de horas (scroll).
    ========================================================= */
 
 window.BNZ = window.BNZ || {};
@@ -30,7 +32,7 @@ const FBO_KEYS = [
   "salt lake jet center", "skypark", "south valley regional", "kslc fbo"
 ];
 
-/* ======================= Helpers de hora ======================= */
+/* ======================= Helpers AM/PM ======================= */
 
 // "7:05 PM" -> {h24:19, m:5}
 function parseAmPmTo24h(str) {
@@ -63,48 +65,102 @@ function parseOperatingBound(str) {
   return t ? toMinutes(t.h24, t.m) : null;
 }
 
-/** Construye opciones de 7:00 AM a 10:45 PM cada 15 min.
- *  value = "HH:MM" 24h ; label = "h:mm AM/PM"
- */
-function buildTimeOptions() {
-  const sel = document.getElementById('time');
-  if (!sel || sel.tagName !== 'SELECT') return;
+/** Valida y normaliza a "h:mm AM/PM". */
+function validateTimeValue(raw) {
+  const s = (raw || '').trim();
+  if (!s) return { ok:false, msg:'Please enter a time.' };
 
-  // limpia todo salvo el primer option (placeholder)
-  sel.innerHTML = '<option value="">Select time…</option>';
+  // 1) Prefer AM/PM
+  const ampm = parseAmPmTo24h(s);
+  if (ampm) {
+    const mm = String(ampm.m).padStart(2,'0');
+    let h12 = ampm.h24 % 12; if (h12 === 0) h12 = 12;
+    const ap = (ampm.h24 < 12 ? 'AM' : 'PM');
+    return { ok:true, normalized:`${h12}:${mm} ${ap}`, h24:ampm.h24, m:ampm.m };
+  }
 
-  const start = parseOperatingBound(BNZ.OPERATING_START_AMPM) ?? 7*60;
-  const end   = parseOperatingBound(BNZ.OPERATING_END_AMPM) ?? (22*60+30);
-  // extendemos 15 min para incluir 10:45 PM como tope visible
-  const END_PLUS = end + 15;
+  // 2) Fallback 24h -> mostrar AM/PM
+  const t24 = parse24h(s);
+  if (t24) {
+    const mm = String(t24.m).padStart(2,'0');
+    let h12 = t24.h24 % 12; if (h12 === 0) h12 = 12;
+    const ap = (t24.h24 < 12 ? 'AM' : 'PM');
+    return { ok:true, normalized:`${h12}:${mm} ${ap}`, h24:t24.h24, m:t24.m };
+  }
 
-  for (let mins = start; mins <= END_PLUS; mins += 15) {
-    const h24 = Math.floor(mins / 60);
-    const m   = mins % 60;
+  return { ok:false, msg:'Invalid time. Use "hh:mm AM/PM" (e.g., 7:00 AM, 10:30 PM).' };
+}
 
-    // label 12h
-    let h12 = h24 % 12; if (h12 === 0) h12 = 12;
-    const ap = (h24 < 12 ? 'AM' : 'PM');
-    const label = `${h12}:${String(m).padStart(2,'0')} ${ap}`;
+/** Aplica errores/validación visual al #time */
+function applyTimeValidationUI() {
+  const input = document.getElementById('time');
+  const errEl = document.getElementById('timeError');
+  if (!input) return;
 
-    // value 24h
-    const value = `${String(h24).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-
-    const opt = document.createElement('option');
-    opt.value = value;
-    opt.textContent = label;
-    sel.appendChild(opt);
+  const { ok, normalized, msg } = validateTimeValue(input.value);
+  if (ok) {
+    input.value = normalized;
+    input.classList.remove('field-invalid','invalid');
+    input.setAttribute('aria-invalid','false');
+    if (errEl) { errEl.style.display='none'; errEl.textContent=''; }
+  } else {
+    input.classList.add('field-invalid');
+    input.classList.add('invalid');
+    input.setAttribute('aria-invalid','true');
+    if (errEl) { errEl.style.display='block'; errEl.textContent = msg || 'Invalid time.'; }
   }
 }
 
-/** Devuelve "HH:MM" (24h) desde el <select id="time"> */
+/** Devuelve "HH:MM" (24h) desde el input #time */
 BNZ.getTime24h = function() {
-  const sel = document.getElementById('time');
-  if (!sel) return null;
-  const v = (sel.value || '').trim();
-  const t24 = parse24h(v);
-  return t24 ? `${String(t24.h24).padStart(2,'0')}:${String(t24.m).padStart(2,'0')}` : null;
+  const input = document.getElementById('time');
+  if (!input) return null;
+  const v = validateTimeValue(input.value);
+  if (!v.ok) return null;
+  return `${String(v.h24).padStart(2,'0')}:${String(v.m).padStart(2,'0')}`;
 };
+
+/** Campo hora: validación + popular datalist si existe */
+(function wireTimeField(){
+  const input = document.getElementById('time');
+  if (!input) return;
+
+  // placeholder y listeners
+  if (!input.placeholder) input.placeholder = 'hh:mm AM/PM';
+  input.addEventListener('blur', applyTimeValidationUI);
+  input.addEventListener('input', ()=>{
+    if (!input.value.trim()) {
+      input.classList.remove('field-invalid','invalid');
+      input.setAttribute('aria-invalid','false');
+      const errEl = document.getElementById('timeError');
+      if (errEl) { errEl.style.display='none'; errEl.textContent=''; }
+      return;
+    }
+    const { ok } = validateTimeValue(input.value);
+    if (ok) input.classList.remove('field-invalid','invalid');
+  });
+
+  // Popular datalist con intervalos de 15 min (scroll corto)
+  const dl = document.getElementById('timeOptions');
+  if (dl) {
+    dl.innerHTML = '';
+    // desde 7:00 AM hasta 10:30 PM
+    for (let h = 7; h <= 22; h++) {
+      for (const m of [0,15,30,45]) {
+        const totalMin = h*60+m;
+        const endLimit = 22*60+30;
+        if (totalMin > endLimit) break;
+        // formateo a AM/PM
+        const mm = String(m).padStart(2,'0');
+        let h12 = h % 12; if (h12 === 0) h12 = 12;
+        const ap = (h < 12 ? 'AM' : 'PM');
+        const opt = document.createElement('option');
+        opt.value = `${h12}:${mm} ${ap}`;
+        dl.appendChild(opt);
+      }
+    }
+  }
+})();
 
 /* ------------------ Pricing base & helpers ------------------ */
 
@@ -136,8 +192,14 @@ BNZ.getMGFee = ()=> BNZ.mgChoice === "none" ? 0 : 50;
   const card = document.getElementById('meetGreetCard');
   if(!card) return;
   const btns = card.querySelectorAll('.mg-btn');
+
+  // Asegura roles/teclado y estilo clickeable
   btns.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.setAttribute('role','button');
+    btn.setAttribute('tabindex','0');
+    btn.style.pointerEvents = 'auto';
+
+    const activate = () => {
       BNZ.mgChoice = btn.dataset.choice;
       btns.forEach(b=>{
         const on = b === btn;
@@ -145,23 +207,30 @@ BNZ.getMGFee = ()=> BNZ.mgChoice === "none" ? 0 : 50;
         b.setAttribute('aria-pressed', String(on));
       });
       BNZ.recalcFromCache?.();
+    };
+
+    btn.addEventListener('click', activate);
+    btn.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' || e.key===' '){
+        e.preventDefault(); activate();
+      }
     });
   });
 })();
 
 /* ------------------ After-hours ------------------ */
 
-BNZ.isAfterHours = (dateStr, timeStrOr24h)=>{
-  if(!dateStr || !timeStrOr24h) return false;
+BNZ.isAfterHours = (dateStr, timeStr)=>{
+  if(!dateStr || !timeStr) return false;
 
-  // Acepta "HH:MM" o "h:mm AM/PM"
+  // AM/PM o 24h
   let h24, m;
-  const as24 = parse24h(timeStrOr24h);
-  if (as24) { h24 = as24.h24; m = as24.m; }
+  const ampm = parseAmPmTo24h(timeStr);
+  if (ampm) { h24 = ampm.h24; m = ampm.m; }
   else {
-    const ampm = parseAmPmTo24h(timeStrOr24h);
-    if (!ampm) return false;
-    h24 = ampm.h24; m = ampm.m;
+    const m24 = parse24h(timeStr);
+    if (!m24) return false;
+    h24 = m24.h24; m = m24.m;
   }
 
   const curMin = toMinutes(h24, m);
@@ -205,12 +274,18 @@ BNZ.renderQuote = async function(leg, opts={}){
   const surcharge = Number(opts.surcharge || 0);
   const mgFee = BNZ.getMGFee();
 
-  // Fecha/hora del formulario -> ISO
+  // Fecha/hora del formulario -> ISO (usando validador)
   const dateStr = document.getElementById('date')?.value || '';
-  const hhmm24  = BNZ.getTime24h(); // del <select id="time">
+  const timeStr = document.getElementById('time')?.value || '';
   let pickupISO = null;
-  if (dateStr && hhmm24) {
-    pickupISO = `${dateStr}T${hhmm24}:00`;
+
+  if (dateStr && timeStr) {
+    const v = validateTimeValue(timeStr);
+    if (v.ok) {
+      const hhStr = String(v.h24).padStart(2,'0');
+      const mmStr = String(v.m).padStart(2,'0');
+      pickupISO = `${dateStr}T${hhStr}:${mmStr}:00`;
+    }
   }
 
   let q;
@@ -223,8 +298,8 @@ BNZ.renderQuote = async function(leg, opts={}){
   } catch (e) {
     console.error('quote_failed', e);
     const baseFallback = BNZ.calculateBase(miles);
-    const afterHoursLocal = hhmm24 ? BNZ.isAfterHours(dateStr, hhmm24) : false;
-    const ahFeeLocal = afterHoursLocal ? (baseFallback + surcharge + mgFee) * BNZ.AFTER_HOURS_PCT : 0;
+    const afterHoursLocal = BNZ.isAfterHours(dateStr, timeStr);
+    const ahFeeLocal = afterHoursLocal ? (baseFallback + surcharge) * BNZ.AFTER_HOURS_PCT : 0;
     q = {
       miles: +miles.toFixed(2),
       base: baseFallback,
@@ -248,7 +323,6 @@ BNZ.renderQuote = async function(leg, opts={}){
   BNZ.__lastVehicle = vehicle;
   BNZ.__lastQuotedTotal = totalWithVehicle;
 
-  // UI
   const el = document.getElementById('info');
   if(!el) return;
   el.style.display = "block";
@@ -299,53 +373,54 @@ BNZ.recalcFromCache = function(){
   BNZ.__lastQuotedTotal = finalTotal;
   BNZ.__lastVehicle = vehicle;
 
-  applyAirportUiFromPickup(); // reevalúa MG según vehículo/origen
+  applyAirportUiFromPickup();
 };
 
-/* ------------------ Vehicle toggle + visual ------------------ */
+/* ------------------ Vehicle toggle ------------------ */
 (function wireVehicleToggle(){
   const btns = document.querySelectorAll('.veh-btn');
   if(!btns.length) return;
-
-  const carImg = document.querySelector('.turntable .car');
-  const caption = document.querySelector('.vehicle-caption');
-
-  function updateVehicleUI(type){
-    if (carImg) {
-      if (type === 'van') carImg.src = '/images/van.png';
-      else carImg.src = '/images/suburban.png';
-    }
-    if (caption) {
-      caption.textContent = (type === 'van')
-        ? 'Van — Up to 12 passengers'
-        : 'SUV — Max 5 passengers, 5 suitcases';
-    }
-    // Ocultar M&G si van
-    const mgCard = document.getElementById('meetGreetCard');
-    if (mgCard) {
-      mgCard.style.display = (type === 'van') ? 'none' : mgCard.style.display;
-      if (type === 'van' && BNZ.mgChoice !== 'none') {
-        BNZ.mgChoice = 'none';
-        const active = mgCard.querySelector('.mg-btn.active');
-        if (active) active.classList.remove('active');
-        const noneBtn = mgCard.querySelector('.mg-btn[data-choice="none"]');
-        if (noneBtn) noneBtn.classList.add('active');
-      }
-    }
-  }
 
   btns.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.veh-btn').forEach(b=> b.classList.remove('active'));
       btn.classList.add('active');
       BNZ.selectedVehicle = btn.dataset.type || 'suv';
-      updateVehicleUI(BNZ.selectedVehicle);
+
+      // Cambiar imagen y leyenda
+      const img = document.querySelector('.turntable .car');
+      const caption = document.querySelector('.vehicle-caption');
+      if (img && caption) {
+        if (BNZ.selectedVehicle === 'van') {
+          img.src = '/images/van-sprinter.png';
+          img.alt = 'Van';
+          caption.textContent = 'Van — Up to 12 passengers';
+        } else {
+          img.src = '/images/suburban.png';
+          img.alt = 'SUV';
+          caption.textContent = 'SUV — Max 5 passengers, 5 suitcases';
+        }
+      }
+
       BNZ.recalcFromCache?.();
+      applyAirportUiFromPickup(); // reevalúa M&G (solo SUV en SLC)
     });
   });
+})();
 
-  // init visual por si ya hay activo
-  updateVehicleUI(getVehicleFromUI());
+/* ------------------ Terms (modal) ------------------ */
+(function wireTermsModal(){
+  const openBtn = document.getElementById('openTermsModal');
+  const backdrop = document.getElementById('termsModal');
+  const closeBtn = document.getElementById('closeTerms');
+
+  const open = ()=> { if(backdrop){ backdrop.classList.add('open'); backdrop.setAttribute('aria-hidden','false'); } };
+  const close = ()=> { if(backdrop){ backdrop.classList.remove('open'); backdrop.setAttribute('aria-hidden','true'); } };
+
+  openBtn?.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  backdrop?.addEventListener('click', (e)=>{ if(e.target === backdrop) close(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); });
 })();
 
 /* ------------------ Términos & botones ------------------ */
@@ -377,23 +452,6 @@ acceptPill?.addEventListener('keydown', (e)=>{
   if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAcceptedState(!isAccepted()); }
 });
 
-/* ------------ Modal Términos (abrir/cerrar) ------------- */
-(function wireTermsModal(){
-  const openBtn = document.getElementById('openTermsModal');
-  const closeBtn = document.getElementById('closeTerms');
-  const backdrop = document.getElementById('termsModal');
-
-  if (!backdrop) return;
-
-  function open(){ backdrop.classList.add('open'); backdrop.setAttribute('aria-hidden','false'); }
-  function close(){ backdrop.classList.remove('open'); backdrop.setAttribute('aria-hidden','true'); }
-
-  openBtn?.addEventListener('click', open);
-  closeBtn?.addEventListener('click', close);
-  backdrop?.addEventListener('click', (e)=>{ if (e.target === backdrop) close(); });
-  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && backdrop.classList.contains('open')) close(); });
-})();
-
 /* ------------------ Luggage accordion ------------------ */
 document.querySelectorAll(".luggage-accordion").forEach(acc=>{
   const sum = acc.querySelector(".luggage-summary");
@@ -407,16 +465,15 @@ calcBtn?.addEventListener('click', ()=>{
     return;
   }
 
-  // Validar que el select tenga una hora
-  const sel = document.getElementById('time');
-  if (sel && !sel.value) {
-    const errEl = document.getElementById('timeError');
-    if (errEl) { errEl.style.display='block'; errEl.textContent='Please select a time.'; }
-    sel.focus();
-    return;
-  } else {
-    const errEl = document.getElementById('timeError');
-    if (errEl) { errEl.style.display='none'; errEl.textContent=''; }
+  // Validar hora
+  const timeInput = document.getElementById('time');
+  if (timeInput) {
+    const { ok } = validateTimeValue(timeInput.value);
+    if (!ok) {
+      applyTimeValidationUI();
+      timeInput.focus();
+      return;
+    }
   }
 
   document.dispatchEvent(new CustomEvent('bnz:calculate'));
@@ -480,7 +537,6 @@ BNZ.onPickupPlaceChanged = function(place){
 
 /* ------------------ Init ------------------ */
 (function initBooking(){
-  buildTimeOptions();          // llena el <select id="time">
   syncButtons();
   applyAirportUiFromPickup();
 })();
