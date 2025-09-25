@@ -8,19 +8,11 @@
   <!-- Global site CSS -->
   <link rel="stylesheet" href="/app/styles/app.css"/>
 
-  <!-- Peluche theme -->
+  <!-- Peluche theme + overrides compactos -->
   <style>
     :root{
-      --copper:#a8744f;
-      --copper-2:#c89366;
-      --ink:#0a0a0a;
-      --panel:#111;
-      --panel-2:#151515;
-      --text:#e9d5c1;
-      --muted:#c8a989;
-      --ok:#84ffa1;
-      --warn:#ffd873;
-      --err:#ff8585;
+      --copper:#a8744f; --copper-2:#c89366; --ink:#0a0a0a; --panel:#111; --panel-2:#151515;
+      --text:#e9d5c1; --muted:#c8a989; --ok:#84ffa1; --warn:#ffd873; --err:#ff8585;
       --ring: 0 0 0 3px rgba(168,116,79,.25);
     }
 
@@ -47,6 +39,8 @@
       box-shadow:0 20px 60px rgba(0,0,0,.55);
       overflow:hidden;
     }
+    /* Badge y aire para que no se sobreponga nada */
+    .card--with-badge{ padding-top:76px }
     .brand-badge{
       position:absolute; top:12px; right:14px;
       width:58px; height:58px; border-radius:50%;
@@ -54,20 +48,34 @@
       background:#000 url("/images/bonanza-logo.PNG") center/cover no-repeat;
       box-shadow:0 0 10px rgba(168,116,79,.35);
     }
+    @media (max-width:760px){ .brand-badge{width:48px;height:48px} .card--with-badge{padding-top:64px} }
+    @media (max-width:480px){ .brand-badge{width:44px;height:44px} .card--with-badge{padding-top:58px} }
 
+    /* Título */
     h1{
-      margin:0 64px 14px 0; /* deja aire al badge */
+      margin:0 64px 14px 0;
       font-size:1.45rem; color:#ffedd2; text-align:center; letter-spacing:.2px;
       text-shadow:0 1px 0 #000;
     }
     h2{ margin:14px 0 8px; font-size:1.05rem; color:#ffddb3 }
+
+    /* Barra de acciones superior (Back to GPS) */
+    .bar-actions{ display:flex; gap:10px; align-items:center; margin:0 0 10px }
+    .btn-inline{
+      width:auto; display:inline-flex; align-items:center; gap:8px; padding:8px 12px; margin:0;
+      font-size:.95rem; font-weight:700; border-radius:10px; border:1px solid #444; background:#1a1a1a;
+      color:#ffddae !important; text-decoration:none !important; box-shadow:none; cursor:pointer;
+      transition:filter .15s, transform .05s;
+    }
+    .btn-inline:hover{ filter:brightness(1.06) } .btn-inline:active{ transform:translateY(1px) }
+    .btn-back::before{ content:"←"; font-weight:900; margin-right:2px }
 
     /* Grid principal */
     .grid-main{ display:grid; grid-template-columns: 1.05fr .95fr; gap:16px; }
     @media (max-width:980px){ .grid-main{ grid-template-columns:1fr; } }
 
     /* Top row (CN + Botón) */
-    .toprow{ display:flex; gap:10px; align-items:flex-end; margin-bottom:10px }
+    .toprow{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; padding-right:84px }
     .toprow .box{ flex:1; }
     label{ display:block; margin:6px 0 6px; font-weight:700; color:#ffddb3; font-size:.95rem }
     input{
@@ -77,9 +85,10 @@
       transition:border .15s, box-shadow .15s, background .15s;
     }
     input:focus{ border-color:var(--copper); box-shadow:var(--ring); background:#0e0e0e }
+
+    /* Botón general (para Recalculate / Reset / Submit) */
     .btn{
-      appearance:none; -webkit-appearance:none;
-      user-select:none; cursor:pointer;
+      appearance:none; -webkit-appearance:none; user-select:none; cursor:pointer;
       min-height:42px; padding:10px 14px; border-radius:10px; font-weight:700; font-size:15px;
       color:#111; background:linear-gradient(180deg, var(--copper-2), var(--copper));
       border:1px solid rgba(0,0,0,.4); box-shadow:0 6px 18px rgba(168,116,79,.35);
@@ -88,32 +97,27 @@
     .btn:hover{ filter:saturate(1.08) brightness(1.03) }
     .btn:active{ transform:translateY(1px) }
     .btn:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
-
-    .ghost{
-      background:#141414; color:#ffedd2; border:1px solid rgba(168,116,79,.35);
-      box-shadow:none;
-    }
+    .ghost{ background:#141414; color:#ffedd2; border:1px solid rgba(168,116,79,.35); box-shadow:none; }
     .stack{ display:flex; gap:8px; }
 
+    /* Botón LOAD compacto (ghost) sin ocupar todo el ancho */
+    #load{
+      width:auto !important; min-width:112px; height:36px; margin-top:0 !important; font-size:.9rem; padding:8px 12px;
+      align-self:flex-start; border-radius:10px; border:1px solid #444; background:#2a2a2a; color:#ffddae;
+      box-shadow:none; cursor:pointer; transition:filter .15s, transform .05s;
+    }
+    #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
+
     /* Panel Original Trip */
-    .orig{
-      background:linear-gradient( 180deg, #0b0b0b 0%, #0c0c0c 100% );
-      border:1px solid rgba(168,116,79,.42);
-      border-radius:12px; padding:12px;
-    }
-    .orig .head{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding-bottom:8px; border-bottom:1px solid rgba(168,116,79,.22);
-    }
-    .orig .label{ color:#cfa47f; font-size:.9rem; }
-    .orig .value{ color:#ffedd2; font-weight:800; word-break:break-word }
+    .orig{ background:linear-gradient(180deg,#0b0b0b 0%,#0c0c0c 100%); border:1px solid rgba(168,116,79,.42); border-radius:12px; padding:12px; }
+    .orig .head{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding-bottom:8px; border-bottom:1px solid rgba(168,116,79,.22) }
+    .orig .label{ color:#cfa47f; font-size:.9rem; } .orig .value{ color:#ffedd2; font-weight:800; word-break:break-word }
     .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
     @media (max-width:640px){ .grid2,.grid3{ grid-template-columns:1fr; } }
 
     /* Campos del formulario */
-    #map{ height:240px; margin:8px 0 2px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.06) }
-
+    #map{ height:320px; margin:8px 0 2px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.06) }
     .pillbar{ display:flex; gap:8px; }
     .pill{
       flex:1 1 0; text-align:center; padding:9px 10px; border-radius:10px;
@@ -121,21 +125,13 @@
       cursor:pointer; font-weight:700; font-size:.95rem; transition:filter .2s, background .2s, color .2s, box-shadow .2s
     }
     .pill:hover{ filter:brightness(1.06) }
-    .pill.active{
-      background:var(--copper); color:#111; border-color:var(--copper);
-      box-shadow:var(--ring);
-    }
-    .pill[aria-disabled="true"]{
-      opacity:.5; cursor:not-allowed; filter:grayscale(.3);
-    }
+    .pill.active{ background:var(--copper); color:#111; border-color:var(--copper); box-shadow:var(--ring) }
+    .pill[aria-disabled="true"]{ opacity:.5; cursor:not-allowed; filter:grayscale(.3) }
 
     .status{ min-height:18px; margin:6px 0; font-size:.92rem; color:#ffdca1 }
     .muted{ color:#c9a97c; font-size:.9rem; margin-top:6px; }
 
-    .summaryBox{
-      margin-top:10px; background:#0f0f0f; border:1px solid rgba(168,116,79,.28);
-      border-radius:12px; padding:12px;
-    }
+    .summaryBox{ margin-top:10px; background:#0f0f0f; border:1px solid rgba(168,116,79,.28); border-radius:12px; padding:12px; }
     .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:10px 0; }
 
     /* Toasts */
@@ -145,18 +141,28 @@
       border-radius:12px; padding:10px 14px; box-shadow:0 14px 40px rgba(0,0,0,.55);
       z-index:9999; display:flex; align-items:center; gap:10px; min-width:260px;
     }
-    .toast.ok{ border-color:rgba(132,255,161,.35) }
-    .toast.err{ border-color:rgba(255,133,133,.35) }
-    .toast.warn{ border-color:rgba(255,216,115,.35) }
-
+    .toast.ok{ border-color:rgba(132,255,161,.35) } .toast.err{ border-color:rgba(255,133,133,.35) } .toast.warn{ border-color:rgba(255,216,115,.35) }
     .hidden{ display:none !important; }
     .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0) }
+
+    /* Responsive fino */
+    @media (max-width:520px){
+      .toprow{ gap:8px; padding-right:54px }
+      #map{ height:280px }
+      #load{ min-width:100px; font-size:.88rem }
+    }
   </style>
 </head>
 <body>
   <main class="container">
-    <div class="card">
+    <div class="card card--with-badge">
       <div class="brand-badge" aria-hidden="true"></div>
+
+      <!-- Acción superior -->
+      <div class="bar-actions">
+        <a href="/gps" class="btn-inline btn-back">Back to GPS</a>
+      </div>
+
       <h1>Reschedule Reservation</h1>
 
       <!-- Top: CN -->
@@ -165,7 +171,7 @@
           <label for="cn">Reservation Code (CN)</label>
           <input id="cn" placeholder="BZ-2025MMDD-XXXX" autocomplete="off" />
         </div>
-        <button id="load" class="btn" style="min-width:160px">Load</button>
+        <button id="load">Load</button>
       </div>
 
       <div id="status" class="status"></div>
@@ -564,24 +570,18 @@
             })});
           const txt=await r.text(); let j; try{ j=JSON.parse(txt);}catch{ j={ok:false,error:txt}; }
           if(!r.ok||!j.ok) throw new Error(j.error||'stripe_failed');
-          // Redirige a Stripe; el backend debe cerrar la reprogramación vía webhook
           location.href=j.url; return;
         }
 
-        // Sin diferencia -> reprograma directo, incluyendo nuevos datos del viaje
+        // Sin diferencia -> reprograma directo
         const r2=await fetch('/api/book/reschedule',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
             cn:booking.confirmation_number,
-            newDate:d,
-            newTime:t,
-            pickupNew:pick,
-            dropoffNew:drop,
-            vehicleTypeNew:vehicleType,
-            meetGreetNew:mgChoice,
-            flightNumber:flightNumber,
-            flightOriginCity:flightOriginCity,
-            newDistanceMiles:lastMiles,
-            newQuoteCents:lastQuote
+            newDate:d, newTime:t,
+            pickupNew:pick, dropoffNew:drop,
+            vehicleTypeNew:vehicleType, meetGreetNew:mgChoice,
+            flightNumber:flightNumber, flightOriginCity:flightOriginCity,
+            newDistanceMiles:lastMiles, newQuoteCents:lastQuote
           })});
         const txt2=await r2.text(); let j2; try{ j2=JSON.parse(txt2);}catch{ j2={ok:false,error:txt2}; }
         if(!r2.ok||!j2.ok) throw new Error(j2.error||'reschedule_failed');
@@ -595,10 +595,7 @@
       const p = new URLSearchParams(location.search);
       const cn = p.get('cn');
       applyMinDate24h();
-      if (cn && $('cn')) {
-        $('cn').value = cn;
-        $('load').click();
-      }
+      if (cn && $('cn')) { $('cn').value = cn; $('load').click(); }
     })();
   </script>
 </body>
