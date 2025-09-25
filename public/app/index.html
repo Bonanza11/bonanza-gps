@@ -110,21 +110,27 @@ Página principal de reservas (booking) ya separada del index original.
         <div id="dateHelp" class="helper"></div>
       </div>
       <div>
-        <label for="time">Time:</label>
-        <!-- ⬇️ Campo hora en AM/PM con ayuda y error -->
-        <input
-          id="time"
-          name="time"
-          type="text"
-          placeholder="hh:mm AM/PM"
-          inputmode="numeric"
-          autocomplete="off"
-          aria-describedby="timeHelp"
-          class="time-input"
-        />
-        <small id="timeHelp" class="hint">Ejemplos: 7:00 AM · 10:30 PM</small>
-        <span id="timeError" class="field-error" role="alert" aria-live="polite" style="display:none;"></span>
-        <!-- ⬆️ Fin bloque hora -->
+        <label for="timeHour">Time:</label>
+        <!-- Selector con scroll (AM/PM) -->
+        <div class="time-grid">
+          <select id="timeHour" class="time-input" aria-label="Hour">
+            <option value="">HH</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
+          </select>
+          <select id="timeMin" class="time-input" aria-label="Minutes">
+            <option value="">MM</option>
+            <option>00</option><option>15</option><option>30</option><option>45</option>
+          </select>
+          <select id="timeAmPm" class="time-input" aria-label="AM/PM">
+            <option value="">AM/PM</option>
+            <option>AM</option><option>PM</option>
+          </select>
+        </div>
+        <div id="timeHelp" class="helper">Examples: 7:00 AM · 10:30 PM</div>
+        <div id="timeError" class="field-error" role="alert" aria-live="polite" style="display:none;"></div>
+        <!-- Fin selector -->
       </div>
     </div>
 
@@ -269,7 +275,9 @@ Página principal de reservas (booking) ya separada del index original.
   <script defer src="/app/scripts/stripe.js"></script>
 
   <!-- Terceros -->
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"></script>
+  <!-- NOTA: usamos 'defer' (no async) y callback=initMap.
+       Así evitamos el error "initMap is not a function" -->
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"></script>
   <script src="https://js.stripe.com/v3"></script>
 </body>
 </html>
