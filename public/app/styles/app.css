@@ -147,10 +147,40 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
 .breakdown .row.total{ font-weight:800; color:#ffddae; font-size:1.05rem }
 .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:6px 0 }
 
-/* Date/Time grid */
-.input-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-@media (max-width:520px){ .input-row{ grid-template-columns:1fr; } }
+<!-- Date / Time -->
+<div class="input-row">
+  <div>
+    <label for="date">Date:</label>
+    <input id="date" type="date" />
+    <div id="dateHelp" class="helper"></div>
+  </div>
 
+  <div>
+    <label for="time">Time:</label>
+
+    <!-- Time combo (un solo recuadro con scroll interno) -->
+    <div class="time-combo" id="timeCombo">
+      <input
+        id="time"
+        type="text"
+        class="time-input time-display"
+        placeholder="hh:mm AM/PM"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        aria-controls="timePanel"
+        readonly
+      />
+      <button type="button" class="time-caret" aria-label="Open time options"></button>
+
+      <div id="timePanel" class="time-panel" role="listbox" aria-labelledby="time">
+        <!-- Las opciones se inyectan por JS -->
+      </div>
+    </div>
+
+    <div id="timeHelp" class="helper">Examples: 7:00 AM · 10:30 PM</div>
+    <div id="timeError" class="field-error" role="alert" aria-live="polite" style="display:none;"></div>
+  </div>
+</div>
 /* Vehicle */
 .turntable{ margin:10px 0 6px; display:flex; flex-direction:column; align-items:center; }
 .turntable .car{ width:260px; height:auto; filter:drop-shadow(0 12px 18px rgba(0,0,0,.6)) }
