@@ -2,9 +2,8 @@
    Archivo: /public/app/styles/app.css
    Descripción:
    - Hoja de estilos principal (Bonanza).
-   - Estados .invalid (rojo) y .valid (cobre) para inputs.
-   - Mensajes .hint, .field-error y soporte campo hora AM/PM.
-   - CTA "reschedule" con estilo de botón (gradiente cobre).
+   - Inputs con borde cobre y glow en foco.
+   - Logo sin aura tipo neón.
    ========================================================= */
 
 :root{
@@ -29,22 +28,19 @@ html,body{
 /* Header / Logo */
 header{ display:flex; justify-content:center; align-items:center; padding:20px 16px }
 .logo-wrap{ position:relative }
-/* ➜ Logo SIN aura/“neón”: línea fina + glow sutil */
 .logo{
-  width:180px; height:180px;
-  border-radius:50%;
-  border:1px solid var(--copper);     /* línea fina cobre */
-  object-fit:cover; display:block;
-  box-shadow:0 0 0 3px rgba(168,116,79,.18); /* glow sutil (no neón) */
+  width:180px; height:180px; border-radius:50%;
+  border:2px solid var(--copper);
+  object-fit:cover; display:block; position:relative;
+  box-shadow:0 0 4px rgba(192,139,92,.35),0 0 10px rgba(0,0,0,.6);
 }
-/* eliminamos la aureola externa */
-.logo-wrap::after{ content:none !important; }
+/* ❌ eliminamos halo externo de .logo-wrap::after */
 
 /* Layout */
 main{ max-width:760px; width:92vw; margin:0 auto 40px; padding:0 16px }
 label{ display:block; margin:12px 0 6px; font-weight:700 }
 
-/* ---------------- Inputs base (glow cobre unificado) ---------------- */
+/* Inputs base */
 input,select,textarea{
   display:block; width:100%; height:44px; padding:10px 12px;
   background:#1a1a1a; color:var(--copper);
@@ -53,25 +49,30 @@ input,select,textarea{
 }
 textarea{ height:auto; min-height:60px; resize:vertical; }
 
-/* Glow cobre estilo “hora” aplicado a todos los campos al enfocar */
-input:focus,select:focus,textarea:focus,
-input:focus-visible,select:focus-visible,textarea:focus-visible{
-  border-color:#ffd9a1;                             /* línea fina clara */
-  box-shadow:0 0 0 4px rgba(255,217,161,.22);       /* glow suave (no neón) */
+/* Foco cobre para TODOS los campos */
+input:focus,select:focus,textarea:focus{
+  border-color:var(--copper);
+  box-shadow:0 0 0 3px rgba(168,116,79,.22);
 }
 
+/* Placeholder */
 ::placeholder{ color:#cba686; opacity:.65 }
 
-/* Campo HORA (AM/PM) — para <select id="time"> */
+/* Campo HORA (AM/PM) */
 .time-input{
-  height:56px; font-size:17px; border-radius:12px; background:#1f1f1f; color:#fff;
-  border:1px solid #ffd9a1;              /* línea clara (afinada) */
-  box-shadow:0 0 0 4px rgba(255,217,161,.22);
+  height:56px; font-size:17px; border-radius:12px;
+  background:#1f1f1f; color:#fff;
+  border:1px solid var(--copper);
+  box-shadow:0 0 0 2px rgba(168,116,79,.18);
 }
-.time-input:focus{ outline:none; }
+.time-input:focus{
+  outline:none;
+  border-color:#ffd9a1;
+  box-shadow:0 0 0 3px rgba(255,217,161,.22);
+}
 .time-input.field-invalid{
   border-color: var(--err) !important;
-  box-shadow: 0 0 0 4px rgba(255,107,107,.25) !important;
+  box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
 }
 
 /* Mensajes de ayuda/errores */
@@ -87,7 +88,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   display:block;
 }
 
-/* Estados de validación genéricos */
+/* Estados de validación */
 .invalid{
   border-color: var(--err) !important;
   box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
@@ -102,28 +103,27 @@ input:-webkit-autofill,
 input:-webkit-autofill:focus{
   -webkit-text-fill-color: var(--copper);
   transition: background-color 50000s ease-in-out 0s;
-  box-shadow: 0 0 0 1000px #1a1a1a inset;
+  box-shadow:0 0 0 1000px #1a1a1a inset;
   border:1px solid #444;
 }
 
-/* Botones (estilo global) */
+/* Botones */
 button{
-  width:100%; padding:14px 16px; margin-top:18px; background:var(--copper); color:#000;
-  font-weight:700; font-size:18px; border:0; border-radius:10px; cursor:pointer;
+  width:100%; padding:14px 16px; margin-top:18px;
+  background:var(--copper); color:#000;
+  font-weight:700; font-size:18px;
+  border:0; border-radius:10px; cursor:pointer;
   transition: transform .08s ease, box-shadow .18s ease, opacity .12s ease;
 }
 button:hover{ box-shadow:0 10px 26px rgba(0,0,0,.35) }
 button:active{ transform:translateY(1px) }
 button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-/* Mapa */
+/* Map */
 #map{
-  width:100%;
-  height:380px;
-  margin-top:10px;
+  width:100%; height:380px; margin-top:10px;
   border:1px solid rgba(168,116,79,.35);
-  border-radius:12px;
-  overflow:hidden;
+  border-radius:12px; overflow:hidden;
 }
 @media (max-width:560px){ #map{ height:300px } }
 
@@ -131,7 +131,8 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
 #info{
   display:none; margin-top:18px; border-radius:16px; padding:18px;
   background:linear-gradient(180deg,#121212,#0b0b0b);
-  border:1px solid rgba(192,139,92,.28); box-shadow:0 18px 40px rgba(0,0,0,.55);
+  border:1px solid rgba(192,139,92,.28);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
   color:#e9d5c1; font-size:.95em;
 }
 .info-title{ font-weight:800; margin:0 0 4px; font-size:1.05rem }
@@ -150,7 +151,7 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
 .input-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 @media (max-width:520px){ .input-row{ grid-template-columns:1fr; } }
 
-/* Vehicle visual */
+/* Vehicle */
 .turntable{ margin:10px 0 6px; display:flex; flex-direction:column; align-items:center; }
 .turntable .car{ width:260px; height:auto; filter:drop-shadow(0 12px 18px rgba(0,0,0,.6)) }
 .turntable .platform{
@@ -163,21 +164,17 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
 /* Vehicle selector */
 .veh-toggle{ display:flex; gap:8px; margin:10px 0 }
 .veh-btn{
-  flex:1 1 0; background:#1a1a1a; border:1px solid rgba(168,116,79,.55);
-  color:var(--copper); padding:12px; border-radius:10px; cursor:pointer; font-weight:700;
-}
-/* foco accesible coherente */
-.veh-btn:focus-visible{
-  outline:none;
-  box-shadow:0 0 0 4px rgba(255,217,161,.22);
-  border-color:#ffd9a1;
+  flex:1 1 0; background:#1a1a1a;
+  border:1px solid rgba(168,116,79,.55);
+  color:var(--copper); padding:12px; border-radius:10px;
+  cursor:pointer; font-weight:700;
 }
 .veh-btn.active{
   background:var(--copper); color:#000; border-color:var(--copper);
   box-shadow:0 0 0 3px rgba(168,116,79,.25);
 }
 
-/* Terms compact box */
+/* Terms compact */
 .terms-box{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
 .terms-summary{ display:flex; align-items:center; gap:10px; cursor:pointer; }
 .terms-summary .chev{
@@ -186,7 +183,7 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
 }
 .terms-box.open .terms-summary .chev{ transform:rotate(45deg) }
 
-/* Switch (aceptar términos) */
+/* Switch aceptar términos */
 .accept-pill{
   min-width:28px; height:20px; border-radius:999px; border:1px solid #666;
   display:flex; align-items:center; padding:0 2px; position:relative; background:#1a1a1a;
@@ -211,12 +208,6 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
   border-radius:8px; background:#1a1a1a; color:#ffddae; font-weight:700; font-size:.85rem; cursor:pointer;
 }
 
-/* Hints */
-.hint{ font-size:.85rem; margin-top:6px }
-.hint.warn{ color:var(--warn) }
-.hint.err{ color:var(--err) }
-.hint.ok{ color:var(--ok) } /* ✔ textos “Valid …” en verde */
-
 /* Luggage Accordion */
 .luggage-accordion{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
 .luggage-summary{ display:flex; align-items:center; gap:10px; cursor:pointer }
@@ -225,35 +216,20 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
 .luggage-accordion.open .luggage-chev{ transform:rotate(45deg) }
 .luggage-body{ color:#e9d5c1; font-size:.95rem; line-height:1.55; display:none }
 .luggage-accordion.open .luggage-body{ display:block }
-.lug-section h4{ margin:6px 0 4px; color:#ffddae }
-.lug-note{ opacity:.9; margin:2px 0 8px }
-.lug-list{ margin:0 0 10px 18px }
 
 /* Modal */
 .modal-backdrop{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.74); align-items:center; justify-content:center; padding:16px; z-index:9999 }
 .modal-backdrop.open{ display:flex }
 .modal{
-  max-width:860px; width:100%; max-height:86vh; background:#0e0e0e; border:1px solid rgba(168,116,79,.45);
-  border-radius:12px; box-shadow:0 18px 48px rgba(0,0,0,.7); overflow:hidden; display:flex; flex-direction:column
+  max-width:860px; width:100%; max-height:86vh;
+  background:#0e0e0e; border:1px solid rgba(168,116,79,.45);
+  border-radius:12px; box-shadow:0 18px 48px rgba(0,0,0,.7);
+  overflow:hidden; display:flex; flex-direction:column;
 }
 .modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid rgba(168,116,79,.28); background:#101010 }
 .modal-title{ font-weight:800; color:#ffddae }
 .modal-body{ padding:14px 16px 18px; overflow:auto; color:#e9d5c1; line-height:1.6 }
 .close-btn{ background:#1a1a1a; border:1px solid rgba(168,116,79,.45); color:#ffddae; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:700 }
-
-/* Jet Faux 3D */
-.jet-showcase{
-  margin:16px 0 6px; background:#0b0b0b; border:1px solid rgba(168,116,79,.35);
-  border-radius:14px; padding:10px; box-shadow:0 18px 40px rgba(0,0,0,.55);
-}
-.jet-faux3d{ position:relative; border:1px solid rgba(168,116,79,.28); border-radius:12px; overflow:hidden; background:radial-gradient(ellipse at 50% 85%, rgba(0,0,0,.7), rgba(0,0,0,0) 60%) }
-.jet-faux3d .jet{ width:88%; max-width:780px; display:block; margin:20px auto 12px; transform-style:preserve-3d; animation:jetYaw 9s linear infinite }
-@keyframes jetYaw{
-  0%{ transform:perspective(800px) rotateY(-12deg) translateY(0) }
-  50%{ transform:perspective(800px) rotateY(12deg) translateY(-2px) }
-  100%{ transform:perspective(800px) rotateY(-12deg) translateY(0) }
-}
-.jet-caption{ font-weight:700; color:#ffddae; text-align:center; margin-top:6px; letter-spacing:.2px; opacity:.95 }
 
 /* CTA Reschedule */
 .cta-wrap{ margin:18px 0 6px; display:flex; justify-content:center; }
@@ -262,83 +238,5 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
   background:linear-gradient(180deg,#d9a97c,#a8744f 65%,#8f623f); color:#000 !important;
   font-weight:800; letter-spacing:.2px; border:1px solid rgba(168,116,79,.55);
   box-shadow:0 10px 28px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
-  text-decoration:none !important; transition:transform .08s ease, box-shadow .15s ease, filter .15s ease;
-}
-.cta-reschedule:hover{
-  transform:translateY(-1px);
-  box-shadow:0 14px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.3);
-  filter:saturate(1.05);
-}
-.cta-reschedule:active{
-  transform:translateY(0);
-  box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.2);
-}
-.cta-reschedule .arrow{
-  width:18px;height:18px; border-radius:999px; background:#000; color:#ffddae; display:grid; place-items:center;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); font-weight:900; line-height:1;
-}
-.cta-reschedule .arrow::after{ content:"→"; }
-
-/* ====== COMPONENTES PARA RESCHEDULE (no duplicados) ===================== */
-
-.app-container { max-width: 920px; margin: 28px auto; padding: 0 16px; }
-.app-card {
-  background: rgba(0, 0, 0, .85);
-  border: 1px solid var(--copper);
-  border-radius: 12px;
-  padding: 22px;
-  box-shadow: 0 6px 28px rgba(0, 0, 0, .7);
-}
-.page-title { margin: 0 0 12px; text-align: center; color: var(--copper); font-size: 1.7rem; font-weight: 800; letter-spacing: .2px; }
-
-.section-title { margin: 18px 0 8px; font-size: 1.05rem; color: #ffddae; font-weight: 700; }
-.app-label { display: block; color: #ccc; font-size: .92rem; margin-bottom: 6px; }
-
-.field-row { display: flex; gap: 10px; }
-.field-row > * { flex: 1 1 0; }
-
-/* Botón alternativo (ghost) */
-.btn-ghost { background: #2a2a2a; color: #eee; font-weight: 600; border: 1px solid #444; }
-
-/* Pillbar (Vehicle / Meet & Greet) */
-.pillbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 2px; }
-.pillbar .pill {
-  flex: 1 1 180px; text-align: center; padding: 10px; border-radius: 10px;
-  background: #2b2b2b; color: #eee; border: 1px solid #444; cursor: pointer; user-select: none; font-weight: 700;
-}
-.pillbar .pill.active {
-  background: var(--copper); color: #111; border-color: var(--copper); box-shadow: 0 0 0 3px rgba(168, 116, 79, .2);
-}
-.pillbar .pill[aria-disabled="true"]{ opacity:.5; filter:grayscale(.3); cursor:not-allowed; }
-
-/* Barra acciones arriba */
-.bar-actions{ display:flex; gap:10px; align-items:center; margin:0 0 10px }
-.btn-inline{
-  width:auto; display:inline-flex; align-items:center; gap:8px; padding:8px 12px; margin:0;
-  font-size:.95rem; font-weight:700; border-radius:10px; border:1px solid #444; background:#1a1a1a;
-  color:#ffddae !important; text-decoration:none !important; box-shadow:none; cursor:pointer;
-  transition:filter .15s, transform .05s
-}
-.btn-inline:hover{ filter:brightness(1.06) } .btn-inline:active{ transform:translateY(1px) }
-.btn-back::before{ content:"←"; font-weight:900; margin-right:2px }
-
-/* Fila CN + Load (consolidada) */
-.toprow{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; padding-right:84px }
-.toprow .box{ flex:1 1 0 }
-#cn{
-  height:52px; padding:0 16px; font-size:1.2rem; font-weight:700; letter-spacing:.5px; font-variant-numeric:tabular-nums
-}
-#cn:focus{ border-color:var(--copper); box-shadow:var(--ring) }
-#load{
-  width:auto !important; min-width:112px; height:36px; margin-top:0 !important; font-size:.9rem; padding:8px 12px;
-  align-self:flex-start; border-radius:10px; border:1px solid #444; background:#2a2a2a; color:#ffddae; box-shadow:none;
-  cursor:pointer; transition:filter .15s, transform .05s
-}
-#load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
-
-/* Responsive fino para reschedule */
-@media (max-width:520px){
-  .toprow{ gap:8px; padding-right:54px }
-  #cn{ height:50px; font-size:1.1rem }
-  #load{ min-width:100px; font-size:.88rem }
+  text-decoration:none !important;
 }
