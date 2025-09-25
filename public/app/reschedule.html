@@ -58,7 +58,7 @@
       <label for="cn">Reservation Code (CN)</label>
       <div class="row">
         <input id="cn" placeholder="BZ-2025MMDD-XXXX" autocomplete="off"/>
-        <button id="load" class="btn" style="flex:0 0 160px;">Load</button>
+        <button id="load" type="button" class="btn" style="flex:0 0 160px;">Load</button>
       </div>
       <div id="status" class="status"></div>
 
@@ -68,25 +68,25 @@
 
         <h2>Trip Details</h2>
         <label for="pickup">Pickup Location</label>
-        <input id="pickup" placeholder="e.g. SLC Airport / Address"/>
+        <input id="pickup" placeholder="e.g. SLC Airport / Address" autocomplete="street-address" autocapitalize="off" spellcheck="false"/>
 
         <label for="dropoff" style="margin-top:10px;">Dropoff Location</label>
-        <input id="dropoff" placeholder="e.g. Montage Deer Valley"/>
+        <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="street-address" autocapitalize="off" spellcheck="false"/>
 
         <!-- MAPA -->
         <div id="map"></div>
 
         <h2>Vehicle</h2>
-        <div id="vehBar" class="pillbar">
-          <div class="pill" data-type="suv">SUV (1–5)</div>
-          <div class="pill" data-type="van">Van (up to 12)</div>
+        <div id="vehBar" class="pillbar" role="group" aria-label="Vehicle selection">
+          <div class="pill" data-type="suv" aria-pressed="false">SUV (1–5)</div>
+          <div class="pill" data-type="van" aria-pressed="false">Van (up to 12)</div>
         </div>
 
         <h2>Meet & Greet (SLC)</h2>
-        <div id="mgBar" class="pillbar">
-          <div class="pill" data-mg="tsa_exit">TSA Exit (+$50)</div>
-          <div class="pill" data-mg="baggage_claim">Baggage Claim (+$50)</div>
-          <div class="pill" data-mg="none">No Meet & Greet</div>
+        <div id="mgBar" class="pillbar" role="group" aria-label="Meet & Greet selection">
+          <div class="pill" data-mg="tsa_exit" aria-pressed="false">TSA Exit (+$50)</div>
+          <div class="pill" data-mg="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</div>
+          <div class="pill" data-mg="none" aria-pressed="false">No Meet & Greet</div>
         </div>
 
         <h2>Pickup Time</h2>
@@ -102,8 +102,8 @@
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <button id="recalc" class="btn">Recalculate Price</button>
-          <button id="reset" class="btn ghost">Reset changes</button>
+          <button id="recalc" type="button" class="btn">Recalculate Price</button>
+          <button id="reset" type="button" class="btn ghost">Reset changes</button>
         </div>
 
         <section id="summary" class="summary hidden" style="margin-top:10px;">
@@ -114,7 +114,7 @@
             <div><span class="k">Difference</span><span id="diff" class="v">$0.00</span></div>
           </div>
           <p id="note" class="muted"></p>
-          <button id="submit" class="btn" style="width:100%; margin-top:8px;">Submit Reschedule</button>
+          <button id="submit" type="button" class="btn" style="width:100%; margin-top:8px;">Submit Reschedule</button>
         </section>
       </section>
     </div>
@@ -149,12 +149,13 @@
       map: null,
       directionsService: null,
       directionsRenderer: null,
-      acPickup: null,
-      acDropoff: null,
 
       initMapAndPlaces(){
         const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
-        this.map = new google.maps.Map(document.getElementById('map'), {
+        const mapEl = $('map');
+        if(!mapEl){ console.warn('Missing #map'); return; }
+
+        this.map = new google.maps.Map(mapEl, {
           center: DEFAULT_CENTER,
           zoom: 10,
           mapTypeControl: false,
@@ -170,18 +171,12 @@
           polylineOptions: { strokeOpacity: 0.95 }
         });
 
-        this.attachAutocomplete('pickup', (place) => {
-          if(place?.geometry?.location){ this.map.panTo(place.geometry.location); this.map.setZoom(12); }
-          this.maybeDrawRoute();
-        });
-        this.attachAutocomplete('dropoff', (place) => {
-          if(place?.geometry?.location){ this.map.panTo(place.geometry.location); this.map.setZoom(12); }
-          this.maybeDrawRoute();
-        });
+        this.attachAutocomplete('pickup', () => this.maybeDrawRoute());
+        this.attachAutocomplete('dropoff', () => this.maybeDrawRoute());
       },
 
       attachAutocomplete(inputId, onPlace){
-        const input = document.getElementById(inputId);
+        const input = $(inputId);
         if(!input) return null;
         const ac = new google.maps.places.Autocomplete(input, {
           fields: ["place_id","geometry","name","formatted_address"],
@@ -189,13 +184,20 @@
         });
         ac.addListener('place_changed', ()=>{
           const p = ac.getPlace();
+          if(p?.geometry?.location){
+            this.map.panTo(p.geometry.location);
+            this.map.setZoom(12);
+          }
           onPlace && onPlace(p);
+        });
+        ['input','change','blur'].forEach(ev=>{
+          input.addEventListener(ev, ()=>{ /* si escribe manual, redibuja cuando toque recalc */ });
         });
         return ac;
       },
 
       async drawRoute(pick, drop){
-        if(!pick || !drop) return;
+        if(!pick || !drop) return null;
         const req = {
           origin: pick,
           destination: drop,
@@ -204,17 +206,16 @@
         const res = await this.directionsService.route(req);
         this.directionsRenderer.setDirections(res);
 
-        // computar millas del primer leg
         const leg = res.routes?.[0]?.legs?.[0];
         if(leg?.distance?.value){
           lastMiles = leg.distance.value / 1609.344;
         }
-        return leg;
+        return leg || null;
       },
 
       maybeDrawRoute(){
-        const pick = $('pickup').value.trim();
-        const drop = $('dropoff').value.trim();
+        const pick = $('pickup')?.value?.trim();
+        const drop = $('dropoff')?.value?.trim();
         if(pick && drop) this.drawRoute(pick, drop).catch(()=>{});
       }
     };
@@ -222,7 +223,9 @@
     // ======== UI logic ========
     function activatePills(bar, attr, value){
       [...bar.querySelectorAll('.pill')].forEach(p=>{
-        p.classList.toggle('active', p.getAttribute(attr) === value);
+        const isActive = p.getAttribute(attr) === value;
+        p.classList.toggle('active', isActive);
+        p.setAttribute('aria-pressed', String(isActive));
       });
     }
 
@@ -248,7 +251,7 @@
     $('load').onclick = async ()=>{
       const cn = $('cn').value.trim();
       $('status').textContent = '';
-      $('form').classList.add('hidden');
+      $('form') && $('form').classList.add('hidden');
 
       try{
         const r = await fetch('/api/book/get?cn='+encodeURIComponent(cn));
@@ -259,7 +262,7 @@
 
         // set UI
         $('status').textContent = 'Reservation loaded: ' + booking.confirmation_number;
-        $('form').classList.remove('hidden');
+        $('form') && $('form').classList.remove('hidden');
 
         $('pickup').value = booking.pickup || '';
         $('dropoff').value = booking.dropoff || '';
@@ -268,8 +271,8 @@
 
         vehicleType = booking.vehicle_type || 'suv';
         mgChoice = booking.mg_choice || 'none';
-        activatePills(document.getElementById('vehBar'),'data-type',vehicleType);
-        activatePills(document.getElementById('mgBar'),'data-mg',mgChoice);
+        activatePills($('vehBar'),'data-type',vehicleType);
+        activatePills($('mgBar'),'data-mg',mgChoice);
 
         $('origTotal').textContent = money(booking.quoted_total || 0);
         $('summary').classList.add('hidden');
@@ -282,13 +285,13 @@
     };
 
     // toggles
-    document.getElementById('vehBar').addEventListener('click', (ev)=>{
+    $('vehBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       vehicleType = el.getAttribute('data-type');
       activatePills(ev.currentTarget,'data-type',vehicleType);
       ResUI.maybeDrawRoute();
     });
-    document.getElementById('mgBar').addEventListener('click', (ev)=>{
+    $('mgBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       mgChoice = el.getAttribute('data-mg');
       activatePills(ev.currentTarget,'data-mg',mgChoice);
@@ -305,12 +308,10 @@
         if(!pick || !drop) throw new Error('Pickup/Dropoff required');
         if(!d || !t) throw new Error('Date/Time required');
 
-        // trazar y medir millas desde Directions (más consistente que DistanceMatrix para ruta)
         const leg = await ResUI.drawRoute(pick, drop);
         if(!leg?.distance?.value) throw new Error('Route not found');
 
-        const miles = lastMiles;
-        const cents = await fetchQuote(miles);
+        const cents = await fetchQuote(lastMiles);
         lastQuote = cents;
 
         $('newQuote').textContent = money(cents);
@@ -338,8 +339,8 @@
       $('time').value = booking.time_hhmm || '00:00';
       vehicleType = booking.vehicle_type || 'suv';
       mgChoice = booking.mg_choice || 'none';
-      activatePills(document.getElementById('vehBar'),'data-type',vehicleType);
-      activatePills(document.getElementById('mgBar'),'data-mg',mgChoice);
+      activatePills($('vehBar'),'data-type',vehicleType);
+      activatePills($('mgBar'),'data-mg',mgChoice);
       $('summary').classList.add('hidden');
       $('status').textContent = '';
       ResUI.maybeDrawRoute();
@@ -353,9 +354,12 @@
         const pick = $('pickup').value.trim();
         const drop = $('dropoff').value.trim();
 
-        // recalcular por si el usuario no tocó "Recalculate Price"
+        if(!d || !t) throw new Error('Date/Time required');
+
+        // Si el usuario no tocó "Recalculate", garantizamos cálculo
         if(!lastQuote || !lastMiles){
-          await ResUI.drawRoute(pick, drop);
+          const leg = await ResUI.drawRoute(pick, drop);
+          if(!leg?.distance?.value) throw new Error('Route not found');
           lastQuote = await fetchQuote(lastMiles);
         }
 
