@@ -4,21 +4,30 @@ export const config = { runtime: "nodejs" };
 import Stripe from "stripe";
 import crypto from "crypto";
 
+// ==== ENV ====
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY;
 if (!STRIPE_KEY) {
   throw new Error("[create-checkout-session-diff] Missing STRIPE_SECRET_KEY");
 }
 const stripe = new Stripe(STRIPE_KEY, { apiVersion: "2024-06-20" });
 
-// URL base para redirecciones (fallback a Origin del request)
+// URL base para redirecciones (si no, usa Origin del request)
 const SITE_URL_ENV =
-  process.env.SITE_URL || // p.ej. https://bonanza-gps-1dr1.vercel.app
+  process.env.SITE_URL ||        // p.ej. https://bonanza-gps.vercel.app
   process.env.NEXT_PUBLIC_SITE_URL ||
   null;
 
-// Util
+// ==== Utils ====
 const isValidCN = (s) => /^[A-Z0-9-]{4,40}$/.test(String(s || "").trim().toUpperCase());
 const isInt = (n) => Number.isInteger(n);
+const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || ""));
+const ALLOWED_CURRENCIES = new Set(["usd"]);
+
+function getOrigin(req) {
+  if (SITE_URL_ENV) return SITE_URL_ENV;
+  const hdr = String(req.headers.origin || "");
+  return hdr.startsWith("http") ? hdr : null;
+}
 
 export default async function handler(req, res) {
   // ===== CORS =====
@@ -34,9 +43,9 @@ export default async function handler(req, res) {
 
   try {
     const {
-      cn,                 // Confirmation Number
-      diffAmount,         // entero en centavos (p.ej. 2599 = $25.99)
-      customerEmail,      // opcional, prellenado en checkout
+      cn,                 // Confirmation Number (obligatorio)
+      diffAmount,         // entero en centavos (>0)
+      customerEmail,      // opcional, pre-llenado en Checkout
       metadata = {},      // opcional, se mergea con { cn, type }
       description,        // opcional
       currency = "usd"    // opcional, default USD
@@ -53,10 +62,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "diffAmount must be an integer > 0 (cents)" });
     }
 
-    const origin =
-      SITE_URL_ENV ||
-      (req.headers.origin && String(req.headers.origin).startsWith("http") ? req.headers.origin : null);
+    const cur = String(currency || "usd").toLowerCase();
+    if (!ALLOWED_CURRENCIES.has(cur)) {
+      return res.status(400).json({ ok: false, error: "Unsupported currency" });
+    }
 
+    const origin = getOrigin(req);
     if (!origin) {
       return res.status(500).json({
         ok: false,
@@ -68,34 +79,36 @@ export default async function handler(req, res) {
     const cancelUrl  = `${origin}/app/reschedule.html?cn=${encodeURIComponent(cleanCN)}&status=cancel`;
 
     // Descripción por defecto
-    const lineDesc =
-      description || `Reschedule difference for ${cleanCN}`;
+    const lineDesc = description || `Reschedule difference for ${cleanCN}`;
 
-    // Metadata consolidado (evita que sobrescriban cn/type)
+    // Metadata consolidado (protegemos cn/type)
     const meta = {
       ...metadata,
       cn: cleanCN,
       type: "reschedule_diff"
     };
 
-    // Idempotency key (misma cn+amount en 2s evita sesiones duplicadas)
-    const idemKey = `resched:${cleanCN}:${amount}:${Date.now().toString().slice(0, -3)}`;
+    // Idempotency key determinística (mismo CN + amount ⇒ misma sesión si se reintenta)
+    // Si quieres que cada intento genere sesión nueva, añade un sufijo timestamp.
+    const idemRaw = `resched|${cleanCN}|${amount}|${cur}`;
+    const idempotencyKey = crypto.createHash("sha256").update(idemRaw).digest("hex");
 
     // ===== Crear Checkout Session =====
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
-        customer_email: customerEmail || undefined,
+        client_reference_id: cleanCN,
+        customer_email: isEmail(customerEmail) ? customerEmail : undefined,
         success_url: successUrl,
         cancel_url: cancelUrl,
         line_items: [
           {
             quantity: 1,
             price_data: {
-              currency,
+              currency: cur,
               unit_amount: amount,
               product_data: {
-                name: `Reschedule difference`,
+                name: "Reschedule difference",
                 description: lineDesc,
                 metadata: meta
               }
@@ -106,11 +119,11 @@ export default async function handler(req, res) {
           metadata: meta
         },
         metadata: meta,
-        // opcional: recoger dirección si lo necesitas
+        // Si necesitas dirección de facturación o impuestos:
         // billing_address_collection: "required",
         // automatic_tax: { enabled: true },
       },
-      { idempotencyKey: crypto.createHash("sha256").update(idemKey).digest("hex") }
+      { idempotencyKey }
     );
 
     res.setHeader("Cache-Control", "no-store");
