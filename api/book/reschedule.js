@@ -4,16 +4,20 @@ import { DateTime } from "luxon";
 
 const TZ = "America/Denver";
 
-// ===== Helpers =====
+// ===== Helpers (todas en zona local) =====
 function isISODate(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s || ""); }
 function isTime(s){ return /^\d{2}:\d{2}$/.test(s || ""); }
-function atLeast24hAhead(dateStr, timeStr){
+
+function atLeast24hAhead(dateStr, timeStr, zone = TZ){
   if (!isISODate(dateStr) || !isTime(timeStr)) return false;
-  const d = new Date(`${dateStr}T${timeStr}:00`);
-  return (d.getTime() - Date.now()) >= 24*60*60*1000;
+  const now = DateTime.now().setZone(zone);
+  const target = DateTime.fromISO(`${dateStr}T${timeStr}`, { zone });
+  if (!target.isValid) return false;
+  return target.diff(now, "hours").hours >= 24;
 }
+
 function localToUtcIso(dateStr, timeStr, zone = TZ){
-  const dt = DateTime.fromISO(`${dateStr}T${timeStr}:00`, { zone });
+  const dt = DateTime.fromISO(`${dateStr}T${timeStr}`, { zone });
   return dt.isValid ? dt.toUTC().toISO() : null;
 }
 
@@ -35,7 +39,7 @@ export default async function handler(req, res) {
   if (!cn || !isISODate(newDate) || !isTime(newTime)) {
     return res.status(400).json({ ok:false, error:"Missing or invalid fields (cn, newDate, newTime)" });
   }
-  if (!atLeast24hAhead(newDate, newTime)) {
+  if (!atLeast24hAhead(newDate, newTime, TZ)) {
     return res.status(400).json({ ok:false, error:"New pickup must be at least 24h ahead" });
   }
 
@@ -52,11 +56,13 @@ export default async function handler(req, res) {
        where upper(confirmation_number) = ${String(cn).toUpperCase()}
        limit 1
     `;
-    if (!rows.length) return res.status(404).json({ ok:false, error:"Booking not found" });
+    if (!rows.length) {
+      return res.status(404).json({ ok:false, error:"Booking not found" });
+    }
 
     const bk = rows[0];
 
-    // 2) Regla de máximo 2 re-agendamientos
+    // 2) Máximo 2 re-agendamientos
     const count = Number(bk.reschedule_count || 0);
     if (count >= 2) {
       return res.status(409).json({
@@ -66,10 +72,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3) Ventana de 24 h sobre el pickup actual
-    const currentDt = new Date(`${bk.date_iso}T${bk.time_hhmm}:00`);
-    if (currentDt.getTime() - Date.now() < 24*60*60*1000) {
-      return res.status(409).json({ ok:false, error:"Cannot reschedule within 24h of current pickup" });
+    // 3) Ventana de 24 h sobre el pickup actual (en zona local)
+    const nowLocal = DateTime.now().setZone(TZ);
+    const currentPickupLocal = DateTime.fromISO(`${bk.date_iso}T${bk.time_hhmm}`, { zone: TZ });
+    if (currentPickupLocal.isValid) {
+      const hoursToPickup = currentPickupLocal.diff(nowLocal, "hours").hours;
+      if (hoursToPickup < 24) {
+        return res.status(409).json({ ok:false, error:"Cannot reschedule within 24h of current pickup" });
+      }
     }
 
     // 4) Evitar no-op
