@@ -73,7 +73,7 @@ input:-webkit-autofill:focus{
   border:1px solid #444;
 }
 
-/* Botones */
+/* Botones (estilo global) */
 button{
   width:100%; padding:14px 16px; margin-top:18px; background:var(--copper); color:#000;
   font-weight:700; font-size:18px; border:0; border-radius:10px; cursor:pointer;
@@ -285,6 +285,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   font-weight:900; line-height:1;
 }
 .cta-reschedule .arrow::after{ content:"→"; }
+
 /* ===== Reschedule (card + layout) ======================================= */
 .app-container {
   max-width: 920px;
@@ -365,6 +366,10 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   border-color: var(--copper);
   box-shadow: 0 0 0 3px rgba(168, 116, 79, .2);
 }
+/* Si usas aria-disabled en las pills (p.ej. M&G fuera de SLC) */
+.pillbar .pill[aria-disabled="true"]{
+  opacity:.5; filter:grayscale(.3); cursor:not-allowed;
+}
 
 /* Mensajes y separadores */
 .status {
@@ -373,9 +378,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   color: #ffbfa0;
   font-size: .95rem;
 }
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }
 .divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(168,116,79,.35), transparent);
@@ -441,52 +444,61 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   border-radius: 8px;
   padding: 10px 12px;
 }
-/* ==== Reschedule: CN grande + Load compacto (override) =================== */
 
-/* Fila superior: input CN + botón Load */
+/* ==== Reschedule: CN grande + Load compacto (override refinado) ========= */
+
+/* Estructura de la fila (CN + Load) */
 .toprow {
-  display: flex;                /* por si viene sin display en tu CSS global */
+  display: flex;           /* por si el HTML no lo trae desde otro CSS */
   gap: 10px;
-  align-items: flex-start;      /* alinea el botón con el label del CN */
+  align-items: flex-start; /* alinea el botón con el label del CN */
+  margin-bottom: 10px;     /* coherente con tu diseño */
 }
+.toprow .box { flex: 1 1 0; }
 
-/* Input del código de reservación (CN) bien protagonista */
+/* CN protagonista (mejor legibilidad tipo código) */
 #cn {
   font-size: 1.2rem;
   font-weight: 700;
   height: 52px;
   padding: 0 16px;
-  letter-spacing: 0.5px;        /* look de “código” */
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+  /* Si quieres “look monospace” total, descomenta: */
+  /* font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; */
+}
+#cn::placeholder { opacity: .75; }
+#cn:focus {
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(168,116,79,.25);
 }
 
-/* Botón Load más pequeño y sin ocupar 100% del ancho */
-button#load, #load.btn {
-  width: auto !important;       /* anula button { width:100% } global */
-  min-width: 110px;
+/* Botón Load compacto y sin heredar width:100% del global */
+#load,
+button#load,
+.toprow > #load {
+  width: auto !important;    /* anula el global */
+  min-width: 112px;
   height: 36px;
   font-size: 0.9rem;
   padding: 8px 12px;
-  margin-top: 0;                /* anula margin-top global */
+  margin-top: 0 !important;  /* anula el global */
   align-self: flex-start;
   cursor: pointer;
+
+  /* “ghost” discreto para no competir con CTAs principales */
   border-radius: 10px;
   border: 1px solid #444;
-  background: #2a2a2a;         /* estilo ghost discreto */
+  background: #2a2a2a;
   color: #ffddae;
   box-shadow: none;
   transition: filter .15s ease, box-shadow .2s ease, transform .05s ease;
 }
-button#load:hover, #load.btn:hover {
-  filter: brightness(1.06);
-}
-button#load:active, #load.btn:active {
-  transform: translateY(1px);
-}
+#load:hover { filter: brightness(1.06); }
+#load:active { transform: translateY(1px); }
 
-/* Opcional: si quieres que el Load mantenga el gradiente cobre pero pequeño,
-   comenta el bloque de background/box-shadow de arriba y descomenta esto: */
-/*
-button#load, #load.btn {
+/* Variante opcional: gradiente cobre pero pequeño (descomentar si prefieres)
+#load, button#load, .toprow > #load {
   background: linear-gradient(180deg, #c89366, #a8744f);
   color: #111;
   border: 1px solid rgba(0,0,0,.4);
@@ -494,8 +506,9 @@ button#load, #load.btn {
 }
 */
 
-/* Responsive: que el botón no salte de línea */
-@media (max-width: 460px) {
+/* Responsive: evita saltos raros en móviles */
+@media (max-width: 520px) {
   .toprow { gap: 8px; }
-  button#load, #load.btn { min-width: 96px; font-size: 0.88rem; }
+  #cn { height: 50px; font-size: 1.1rem; }
+  #load { min-width: 100px; font-size: 0.88rem; }
 }
