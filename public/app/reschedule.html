@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reschedule — Bonanza Transportation</title>
 
-  <!-- Global site CSS -->
   <link rel="stylesheet" href="/app/styles/app.css"/>
 
-  <!-- Tema + overrides compactos -->
   <style>
     :root{
       --copper:#b27b52; --copper-2:#c89366; --panel:#111; --panel-2:#151515;
       --text:#f2e7d6; --muted:#d0a67f; --ok:#84ffa1; --warn:#ffd873; --err:#ff8585;
-      --ring: 0 0 0 3px rgba(178,123,82,.24);
+      --ring:0 0 0 3px rgba(178,123,82,.24);
+      /* micro-ajuste vertical del botón Load (px) */
+      --load-nudge: 2px;
     }
 
     html,body{height:100%}
@@ -51,7 +51,6 @@
     }
     h2{ margin:14px 0 8px; font-size:1.06rem; color:#ffddb3 }
 
-    /* Barra superior (back) */
     .bar-actions{ display:flex; gap:10px; align-items:center; margin:0 0 10px }
     .btn-inline{
       width:auto; display:inline-flex; align-items:center; gap:8px; padding:8px 12px; margin:0;
@@ -59,12 +58,8 @@
       color:#ffdeb3 !important; text-decoration:none !important; box-shadow:none; cursor:pointer;
       transition:filter .15s, transform .05s;
     }
-    .btn-inline:hover{ filter:brightness(1.06) } .btn-inline:active{ transform:translateY(0px) }
+    .btn-inline:hover{ filter:brightness(1.06) } .btn-inline:active{ transform:translateY(1px) }
     .btn-back::before{ content:"←"; font-weight:900; margin-right:2px }
-
-    /* Grid principal */
-    .grid-main{ display:grid; grid-template-columns: 1.05fr .95fr; gap:16px; }
-    @media (max-width:980px){ .grid-main{ grid-template-columns:1fr; } }
 
     /* Top: CN + Load */
     .toprow{ display:flex; gap:10px; align-items:flex-end; margin-bottom:10px; padding-right:96px }
@@ -79,18 +74,20 @@
     input::placeholder{ color:#ecd0b1; opacity:.9 }
     input:focus{ border-color:var(--copper); box-shadow:var(--ring); background:#101010 }
 
-    /* LOAD exactamente a la altura del input (44px) */
+    /* LOAD: misma altura + anclado abajo + pequeño nudge */
     #load{
       width:auto !important; min-width:120px;
       height:44px; padding:0 14px; margin-top:0 !important;
       display:inline-flex; align-items:center; justify-content:center;
+      align-self:flex-end;
+      translate: 0 var(--load-nudge);
       font-size:.95rem; border-radius:10px; border:1px solid #544338;
       background:#242221; color:#ffdeb3; box-shadow:none; cursor:pointer;
       transition:filter .15s, transform .05s;
     }
     #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
 
-    /* Botones generales (recalc/reset/submit) */
+    /* Botones generales */
     .btn{
       appearance:none; -webkit-appearance:none; user-select:none; cursor:pointer;
       min-height:42px; padding:10px 14px; border-radius:10px; font-weight:700; font-size:15px;
@@ -142,6 +139,8 @@
     @media (max-width:520px){
       .toprow{ gap:8px; padding-right:64px }
       #map{ height:280px }
+      /* en móviles bajamos 1px extra si hace falta */
+      :root{ --load-nudge: 3px; }
       #load{ min-width:106px; font-size:.9rem }
     }
   </style>
@@ -151,14 +150,12 @@
     <div class="card card--with-badge">
       <div class="brand-badge" aria-hidden="true"></div>
 
-      <!-- Acción superior -->
       <div class="bar-actions">
         <button id="backBtn" type="button" class="btn-inline btn-back">Back to Booking</button>
       </div>
 
       <h1>Reschedule Reservation</h1>
 
-      <!-- Top: CN -->
       <div class="toprow">
         <div class="box">
           <label for="cn">Reservation Code (CN)</label>
@@ -170,7 +167,6 @@
       <div id="status" class="status"></div>
 
       <div class="grid-main">
-        <!-- ORIGINAL TRIP -->
         <section id="original" class="orig hidden" aria-live="polite">
           <div class="head">
             <div>
@@ -220,14 +216,12 @@
           </div>
         </section>
 
-        <!-- NUEVO VIAJE -->
         <section id="form" class="hidden">
           <h2>Trip Details</h2>
 
           <label for="pickup">Pickup Location</label>
           <input id="pickup" placeholder="e.g. SLC Airport / Address"/>
 
-          <!-- Campos de vuelo (solo si SLC) -->
           <div id="flightFields" class="hidden">
             <div class="stack">
               <div style="flex:1">
@@ -295,7 +289,6 @@
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script>
-    // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
     const money = c => '$' + ((+c||0)/100).toFixed(2);
     const toast = (msg, type='ok')=>{
@@ -306,7 +299,6 @@
     const setBusy = (el, busy=true)=>{ if(!el) return; el.disabled = !!busy; el.dataset.busy = busy?'1':''; };
     const debounce=(fn,ms=250)=>{ let h; return (...a)=>{ clearTimeout(h); h=setTimeout(()=>fn(...a),ms); }; };
 
-    // ---------- Back inteligente ----------
     (function(){
       const backTargets = ['/book','/booking','/reservations','/'];
       const btn = $('backBtn');
@@ -322,7 +314,6 @@
       }
     })();
 
-    // ---------- Estado ----------
     let booking=null, vehicleType='suv', mgChoice='none', lastQuote=0, lastMiles=0;
     let mapsLoaded=false;
 
@@ -333,7 +324,6 @@
     }
     const isSLCText = txt => /(salt lake city|slc)/i.test((txt||'').toLowerCase());
 
-    // ---------- Google Maps lazy load ----------
     function ensureGoogleLoaded(){
       return new Promise((resolve, reject)=>{
         if (window.google && google.maps){ mapsLoaded=true; return resolve(); }
@@ -349,7 +339,6 @@
       });
     }
 
-    // ---------- Mapa + Places ----------
     window.ResUI = {
       map:null, ds:null, dr:null,
       async initMapAndPlaces(){
@@ -384,7 +373,6 @@
       maybe(){ const p=$('pickup').value.trim(), d=$('dropoff').value.trim(); if(p&&d) this.draw(p,d).catch(()=>{}); }
     };
 
-    // ---------- UI helpers ----------
     function activatePills(bar, attr, value){
       [...bar.querySelectorAll('.pill')].forEach(p=>p.classList.toggle('active', p.getAttribute(attr)===value));
     }
@@ -417,10 +405,8 @@
       return j.quote.total_cents;
     }
 
-    // Enter para cargar
     $('cn').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); $('load').click(); } });
 
-    // Load CN
     $('load').addEventListener('click', async ()=>{
       const btn=$('load'); setBusy(btn,true);
       const cn=$('cn').value.trim();
@@ -433,7 +419,6 @@
         if(!r.ok||!j.ok) throw new Error(j.error||'Not found');
         const b=j.booking; booking=b;
 
-        // Original
         $('o_cn').textContent=b.confirmation_number;
         $('o_status').textContent=b.status||'—';
         $('o_name').textContent=b.full_name||'—';
@@ -448,7 +433,6 @@
         $('o_total').textContent=money(b.quoted_total||0);
         $('original').classList.remove('hidden');
 
-        // Prefill
         $('pickup').value=b.pickup||''; $('dropoff').value=b.dropoff||'';
         $('date').value=b.date_iso||''; $('time').value=b.time_hhmm||'00:00';
         $('flightNumber').value=b.flight_number||''; $('flightOrigin').value=b.flight_origin_city||'';
@@ -456,7 +440,6 @@
         activatePills($('vehBar'),'data-type',vehicleType);
         activatePills($('mgBar'),'data-mg',mgChoice);
 
-        // Mapa & UI
         $('form').classList.remove('hidden');
         applyMinDate24h();
         await ResUI.initMapAndPlaces();
@@ -469,7 +452,6 @@
       }finally{ setBusy(btn,false); }
     });
 
-    // Toggles
     $('vehBar').addEventListener('click',ev=>{
       const el=ev.target.closest('.pill'); if(!el||el.getAttribute('aria-disabled')==='true') return;
       vehicleType=el.getAttribute('data-type'); activatePills($('vehBar'),'data-type',vehicleType); ResUI.maybe();
@@ -480,7 +462,6 @@
       mgChoice=el.getAttribute('data-mg'); activatePills($('mgBar'),'data-mg',mgChoice);
     });
 
-    // Recalculate
     $('recalc').addEventListener('click', async ()=>{
       setBusy($('recalc'),true); $('status').textContent='';
       try{
@@ -509,7 +490,6 @@
       finally{ setBusy($('recalc'),false); }
     });
 
-    // Reset
     $('reset').addEventListener('click', ()=>{
       if(!booking) return;
       $('pickup').value=booking.pickup||''; $('dropoff').value=booking.dropoff||'';
@@ -521,7 +501,6 @@
       toggleFlightFields(); ResUI.maybe();
     });
 
-    // Submit
     $('submit').addEventListener('click', async ()=>{
       if(!booking) return;
       setBusy($('submit'),true);
@@ -569,7 +548,6 @@
       finally{ setBusy($('submit'),false); }
     });
 
-    // Autorelleno ?cn=
     (function(){
       const p = new URLSearchParams(location.search);
       const cn = p.get('cn');
