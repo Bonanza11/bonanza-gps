@@ -285,3 +285,159 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   font-weight:900; line-height:1;
 }
 .cta-reschedule .arrow::after{ content:"→"; }
+/* ===== Reschedule (card + layout) ======================================= */
+.app-container {
+  max-width: 920px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
+.app-card {
+  background: rgba(0, 0, 0, .85);
+  border: 1px solid var(--copper);
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, .7);
+}
+
+.page-title {
+  margin: 0 0 12px;
+  text-align: center;
+  color: var(--copper);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+/* Subtítulos y labels */
+.section-title {
+  margin: 18px 0 8px;
+  font-size: 1.05rem;
+  color: #ffddae;
+  font-weight: 700;
+}
+.app-label {
+  display: block;
+  color: #ccc;
+  font-size: .92rem;
+  margin-bottom: 6px;
+}
+
+/* Fila de inputs */
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+.field-row > * {
+  flex: 1 1 0;
+}
+
+/* Botón alternativo (ghost) */
+.btn-ghost {
+  background: #2a2a2a;
+  color: #eee;
+  font-weight: 600;
+  border: 1px solid #444;
+}
+
+/* Pillbar (Vehicle / Meet & Greet) */
+.pillbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 6px 0 2px;
+}
+.pillbar .pill {
+  flex: 1 1 180px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+  background: #2b2b2b;
+  color: #eee;
+  border: 1px solid #444;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+}
+.pillbar .pill.active {
+  background: var(--copper);
+  color: #111;
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(168, 116, 79, .2);
+}
+
+/* Mensajes y separadores */
+.status {
+  min-height: 20px;
+  margin: 8px 0;
+  color: #ffbfa0;
+  font-size: .95rem;
+}
+.hidden {
+  display: none !important;
+}
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(168,116,79,.35), transparent);
+  margin: 18px 0;
+}
+
+/* Summary */
+.summary {
+  border-top: 1px solid var(--copper);
+  margin-top: 16px;
+  padding-top: 14px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.summary-grid .k {
+  color: #cfa47f;
+  display: block;
+  font-size: .9rem;
+}
+.summary-grid .v {
+  color: #ffddae;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+.summary-note {
+  color: #aaa;
+  font-size: .9rem;
+  margin: 6px 0 0;
+}
+
+/* Mapa (ajuste responsivo coherente con booking) */
+#map {
+  width: 100%;
+  height: 380px;
+  border: 1px solid rgba(168,116,79,.35);
+  border-radius: 12px;
+}
+@media (max-width:560px) {
+  #map { height: 300px; }
+}
+
+/* Logo header minimal (solo imagen centrada) */
+.header--logo-only {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+}
+.header--logo-only .logo {
+  width: 160px;
+  height: 160px;
+}
+
+/* Input para CN (mismo look que los tuyos) */
+.input-cn {
+  height: 44px;
+  background: #1a1a1a;
+  color: var(--copper);
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
