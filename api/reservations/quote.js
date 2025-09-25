@@ -5,7 +5,7 @@
 //   origin_lat?: number, origin_lng?: number,
 //   dest_lat?: number,   dest_lng?: number,
 //   distance_miles?: number,          // si lo envías, se usa tal cual
-//   pickup_time?: string,             // ISO local (se usa para after-hours 20%)
+//   pickup_time?: string,             // ISO local o "h:mm AM/PM" (define after-hours 25%)
 //   extras?: number                   // opcional: peajes/recargos adicionales en USD
 // }
 //
@@ -45,13 +45,32 @@ function basePriceFromTable(milesRaw) {
   return +(5.40 * m).toFixed(2);
 }
 
-// 20% after-hours si fuera de 06:00–22:00 (se asume hora local en el ISO entrante)
-function isAfterHours(pickupISO) {
-  if (!pickupISO) return false;
-  const d = new Date(pickupISO);
-  // Si el ISO no trae zona, Node lo interpreta en local del servidor; se asume que ya envías hora local.
+// After-hours = 25% si fuera de 07:00–22:30
+// Acepta ISO (YYYY-MM-DDTHH:mm:ss) o "h:mm AM/PM"
+function isAfterHours(pickupInput) {
+  if (!pickupInput) return false;
+  const s = String(pickupInput).trim().toUpperCase();
+
+  // 1) Intentar AM/PM ("7:05 PM" o "2025-09-25 7:05 PM")
+  const m1 = s.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)$/);
+  if (m1) {
+    let h = parseInt(m1[1], 10);
+    const mm = parseInt(m1[2] ?? '0', 10);
+    const ap = m1[3];
+    if (h < 1 || h > 12 || mm < 0 || mm > 59) return false;
+    if (ap === 'AM') { if (h === 12) h = 0; } else { if (h !== 12) h += 12; }
+    const curMin = (h * 60) + mm;
+    const startMin = (7 * 60);         // 07:00
+    const endMin   = (22 * 60) + 30;   // 22:30
+    return (curMin < startMin) || (curMin > endMin);
+  }
+
+  // 2) Intentar ISO / otros (Date interpreta en TZ del servidor)
+  const d = new Date(pickupInput);
+  if (Number.isNaN(d.getTime())) return false;
   const h = d.getHours();
-  return h < 6 || h >= 22;
+  const m = d.getMinutes();
+  return (h * 60 + m) < (7 * 60) || (h * 60 + m) > (22 * 60 + 30);
 }
 
 export default async function handler(req, res) {
@@ -65,7 +84,7 @@ export default async function handler(req, res) {
       origin_lat, origin_lng,
       dest_lat, dest_lng,
       distance_miles,          // opcional: si lo mandas, se toma como verdad de cliente
-      pickup_time,             // ISO local; define after-hours
+      pickup_time,             // ISO local o AM/PM; define after-hours
       extras = 0               // opcional: peajes/recargos externos
     } = req.body || {};
 
@@ -84,14 +103,14 @@ export default async function handler(req, res) {
     // 2) Precio base por tabla
     const base = basePriceFromTable(miles);
 
-   // 3) After-hours 25%
-  const ah = isAfterHours(pickup_time) ? +(base * 0.25).toFixed(2) : 0;
+    // 3) After-hours 25%
+    const ah = isAfterHours(pickup_time) ? +(base * 0.25).toFixed(2) : 0;
 
-    // 4) Extras (si mandas algo distinto de número, se ignora como 0)
+    // 4) Extras (peajes/recargos adicionales)
     const extraFees = Number.isFinite(Number(extras)) ? +Number(extras).toFixed(2) : 0;
 
     const subtotal = +(base + ah + extraFees).toFixed(2);
-    const total = ceil2(subtotal, 1); // redondeo al entero superior (si quieres a 5, usa step=5)
+    const total = ceil2(subtotal, 1); // redondeo al entero superior (ajusta step a 5 si quieres)
 
     return res.status(200).json({
       ok: true,
@@ -104,7 +123,7 @@ export default async function handler(req, res) {
         total,
         breakdown: {
           table: "0–10=$120, 11–35=$190, 36–39=$210, 40–48=$230, 49–55=$250, >55=$5.40×mi",
-          after_hours_rule: "Fuera de 06:00–22:00 aplica 20%"
+          after_hours_rule: "Fuera de 07:00–22:30 aplica 25%"
         }
       }
     });
