@@ -1,5 +1,5 @@
 
-// /api/_db.js
+// /api/db.js
 import { Pool } from "pg";
 
 const CONN_STR =
