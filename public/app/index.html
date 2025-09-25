@@ -1,21 +1,9 @@
-<!--
-index.html — Bonanza Transportation (APP/Booking)
-────────────────────────────────────────────────
-Página principal de reservas (booking) ya separada del index original.
-
-✔ Sin estilos embebidos → /app/styles/app.css
-✔ Sin JS embebido → /app/scripts/{core,validators,maps,booking,stripe}.js
-✔ SIN la sección de Reschedule → está en /app/reschedule.html
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation</title>
-
-  <!-- CSS global -->
   <link rel="stylesheet" href="/app/styles/app.css" />
 </head>
 <body>
@@ -41,7 +29,11 @@ Página principal de reservas (booking) ya separada del index original.
 
     <!-- Locations -->
     <label for="pickup">Pick-up Address:</label>
-    <input id="pickup" placeholder="e.g. SLC Airport" autocomplete="street-address" autocapitalize="off" spellcheck="false" />
+    <input id="pickup"
+           placeholder="e.g. SLC Airport"
+           autocomplete="off"
+           autocapitalize="off" spellcheck="false"
+           data-lpignore="true" />
 
     <!-- JSX extra fields (auto-UI por JS) -->
     <div id="jsxContainer" style="display:none; margin-top:10px;">
@@ -53,7 +45,11 @@ Página principal de reservas (booking) ya separada del index original.
     </div>
 
     <label for="dropoff">Drop-off Address:</label>
-    <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="street-address" autocapitalize="off" spellcheck="false" />
+    <input id="dropoff"
+           placeholder="e.g. Montage Deer Valley"
+           autocomplete="off"
+           autocapitalize="off" spellcheck="false"
+           data-lpignore="true" />
 
     <!-- Meet & Greet (SLC, SUV) -->
     <div class="mg-card" id="meetGreetCard" aria-label="Meet & Greet options">
@@ -275,8 +271,7 @@ Página principal de reservas (booking) ya separada del index original.
   <script defer src="/app/scripts/stripe.js"></script>
 
   <!-- Terceros -->
-  <!-- NOTA: usamos 'defer' (no async) y callback=initMap.
-       Así evitamos el error "initMap is not a function" -->
+  <!-- Usamos 'defer' y callback=initMap para evitar "initMap is not a function" -->
   <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"></script>
   <script src="https://js.stripe.com/v3"></script>
 </body>
