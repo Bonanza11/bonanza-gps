@@ -10,7 +10,10 @@
 
   <!-- Ajustes locales compactos (no rompen tu tema) -->
   <style>
+    :root{ --copper:#a8744f; }
     body { background:#000; color:#e9d5c1; }
+    .hidden{display:none !important;}
+
     .container{ max-width:1120px; margin:0 auto; padding:8px 16px 20px; }
 
     .card{
@@ -33,9 +36,7 @@
     }
 
     /* Layout de dos columnas para que todo quepa sin scroll en desktop */
-    .grid-main{
-      display:grid; grid-template-columns: 1fr 1fr; gap:14px;
-    }
+    .grid-main{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
     @media (max-width:980px){ .grid-main{ grid-template-columns:1fr; } }
 
     /* Bloque Original Trip más diferenciado */
@@ -101,7 +102,7 @@
           <label for="cn">Reservation Code (CN)</label>
           <input id="cn" placeholder="BZ-2025MMDD-XXXX" autocomplete="off"/>
         </div>
-        <button id="load" class="btn" style="flex:0 0 160px;">Load</button>
+        <button id="load" style="flex:0 0 160px;">Load</button>
       </div>
       <div id="status" class="status"></div>
 
@@ -202,8 +203,8 @@
           </div>
 
           <div class="row">
-            <button id="recalc" class="btn">Recalculate Price</button>
-            <button id="reset" class="btn ghost">Reset changes</button>
+            <button id="recalc">Recalculate Price</button>
+            <button id="reset" class="ghost">Reset changes</button>
           </div>
 
           <div id="summary" class="summaryBox hidden">
@@ -222,7 +223,7 @@
               <div><span class="label">Difference</span><div class="value" id="diff">$0.00</div></div>
             </div>
             <p id="note" class="muted"></p>
-            <button id="submit" class="btn" style="width:100%;">Submit Reschedule</button>
+            <button id="submit" style="width:100%;">Submit Reschedule</button>
           </div>
         </section>
       </div>
@@ -284,8 +285,13 @@
       const j=await r.json(); if(!j.ok) throw new Error(j.error||'quote_failed'); return j.quote.total_cents;
     }
 
+    // ENTER para cargar CN
+    $('#cn').addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ e.preventDefault(); $('#load').click(); }
+    });
+
     // Load CN
-    $('load').onclick = async ()=>{
+    $('#load').onclick = async ()=>{
       const cn=$('cn').value.trim(); $('#status').textContent=''; $('#original').classList.add('hidden'); $('#form').classList.add('hidden');
       try{
         const r=await fetch('/api/book/get?cn='+encodeURIComponent(cn)); const j=await r.json(); if(!r.ok||!j.ok) throw new Error(j.error||'Not found');
