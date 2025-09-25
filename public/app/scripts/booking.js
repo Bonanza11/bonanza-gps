@@ -2,17 +2,18 @@
    Archivo: /public/app/scripts/booking.js
    Propósito:
      - Pricing/UI del flujo de booking (sin lógica de ruta).
-     - Total = base + surcharge + after-hours (25%) + Meet&Greet,
-       con multiplicador por vehículo.
+     - Total = base + extras (surcharge + M&G) + after-hours (25%),
+       con multiplicador por vehículo (van = +30% redondeado).
      - Toggle de Términos, acordeón de equipaje, recálculo “en vivo”.
      - Reglas de Aeropuertos/JSX/FBO según texto del Pick-up.
+     - Campo HORA en formato AM/PM (con validación y normalización).
    ========================================================= */
 
 window.BNZ = window.BNZ || {};
 
 /* ------------------ Config & Constantes ------------------ */
 
-// Horario operativo (AM/PM)
+// Horario operativo (AM/PM) — usado por BNZ.isAfterHours
 BNZ.OPERATING_START_AMPM = "7:00 AM";
 BNZ.OPERATING_END_AMPM   = "10:30 PM";
 
@@ -29,7 +30,7 @@ const FBO_KEYS = [
   "salt lake jet center", "skypark", "south valley regional", "kslc fbo"
 ];
 
-/* ------------------ Helpers AM/PM ------------------ */
+/* ======================= Helpers AM/PM ======================= */
 
 // "7:05 PM" -> {h24:19, m:5}
 function parseAmPmTo24h(str) {
@@ -41,15 +42,103 @@ function parseAmPmTo24h(str) {
   const mm = parseInt(m[2] ?? '0', 10);
   const ap = m[3];
   if (h < 1 || h > 12 || mm < 0 || mm > 59) return null;
-  if (ap === 'AM') { if (h === 12) h = 0; }
-  else { if (h !== 12) h += 12; }
+  if (ap === 'AM') { if (h === 12) h = 0; } else { if (h !== 12) h += 12; }
   return { h24: h, m: mm };
 }
+
+// "21:30" -> {h24:21, m:30}
+function parse24h(str) {
+  if (!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const h = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  if (h < 0 || h > 23 || mm < 0 || mm > 59) return null;
+  return { h24: h, m: mm };
+}
+
 function toMinutes(h, m) { return (h * 60) + m; }
 function parseOperatingBound(str) {
   const t = parseAmPmTo24h(str);
   return t ? toMinutes(t.h24, t.m) : null;
 }
+
+/** Valida y normaliza a "h:mm AM/PM". */
+function validateTimeValue(raw) {
+  const s = (raw || '').trim();
+  if (!s) return { ok:false, msg:'Please enter a time.' };
+
+  // 1) Prefer AM/PM
+  const ampm = parseAmPmTo24h(s);
+  if (ampm) {
+    const mm = String(ampm.m).padStart(2,'0');
+    let h12 = ampm.h24 % 12; if (h12 === 0) h12 = 12;
+    const ap = (ampm.h24 < 12 ? 'AM' : 'PM');
+    return { ok:true, normalized:`${h12}:${mm} ${ap}`, h24:ampm.h24, m:ampm.m };
+  }
+
+  // 2) Fallback 24h -> lo mostramos como AM/PM
+  const t24 = parse24h(s);
+  if (t24) {
+    const mm = String(t24.m).padStart(2,'0');
+    let h12 = t24.h24 % 12; if (h12 === 0) h12 = 12;
+    const ap = (t24.h24 < 12 ? 'AM' : 'PM');
+    return { ok:true, normalized:`${h12}:${mm} ${ap}`, h24:t24.h24, m:t24.m };
+  }
+
+  return { ok:false, msg:'Invalid time. Use "hh:mm AM/PM" (e.g., 7:00 AM, 10:30 PM).' };
+}
+
+/** Pinta estado visual y mensaje de error para #time (si existe #timeError) */
+function applyTimeValidationUI() {
+  const input = document.getElementById('time');
+  const errEl = document.getElementById('timeError');
+  if (!input) return;
+
+  const { ok, normalized, msg } = validateTimeValue(input.value);
+  if (ok) {
+    input.value = normalized;
+    input.classList.remove('field-invalid','invalid');
+    input.setAttribute('aria-invalid','false');
+    if (errEl) { errEl.style.display='none'; errEl.textContent=''; }
+  } else {
+    input.classList.add('field-invalid'); // clase nueva de tu CSS
+    input.classList.add('invalid');       // compat con estilos previos
+    input.setAttribute('aria-invalid','true');
+    if (errEl) { errEl.style.display='block'; errEl.textContent = msg || 'Invalid time.'; }
+  }
+}
+
+/** Devuelve "HH:MM" (24h) desde el input #time — útil para construir ISO local */
+BNZ.getTime24h = function() {
+  const input = document.getElementById('time');
+  if (!input) return null;
+  const v = validateTimeValue(input.value);
+  if (!v.ok) return null;
+  return `${String(v.h24).padStart(2,'0')}:${String(v.m).padStart(2,'0')}`;
+};
+
+/** Eventos del campo hora */
+(function wireTimeValidation(){
+  const input = document.getElementById('time');
+  if (!input) return;
+  // Pista visual
+  if (!input.placeholder) input.placeholder = 'hh:mm AM/PM';
+  // Validación al salir
+  input.addEventListener('blur', applyTimeValidationUI);
+  // Feedback suave mientras escribe
+  input.addEventListener('input', ()=>{
+    if (!input.value.trim()) {
+      input.classList.remove('field-invalid','invalid');
+      input.setAttribute('aria-invalid','false');
+      const errEl = document.getElementById('timeError');
+      if (errEl) { errEl.style.display='none'; errEl.textContent=''; }
+      return;
+    }
+    const { ok } = validateTimeValue(input.value);
+    if (ok) input.classList.remove('field-invalid','invalid');
+  });
+})();
 
 /* ------------------ Pricing base & helpers ------------------ */
 
@@ -104,9 +193,9 @@ BNZ.isAfterHours = (dateStr, timeStr)=>{
   const ampm = parseAmPmTo24h(timeStr);
   if (ampm) { h24 = ampm.h24; m = ampm.m; }
   else {
-    const m24 = String(timeStr).match(/^(\d{1,2}):(\d{2})$/);
+    const m24 = parse24h(timeStr);
     if (!m24) return false;
-    h24 = parseInt(m24[1], 10); m = parseInt(m24[2], 10);
+    h24 = m24.h24; m = m24.m;
   }
 
   const curMin = toMinutes(h24, m);
@@ -150,21 +239,18 @@ BNZ.renderQuote = async function(leg, opts={}){
   const surcharge = Number(opts.surcharge || 0);
   const mgFee = BNZ.getMGFee();
 
-  // Fecha/hora del formulario -> ISO (soporta AM/PM)
+  // Fecha/hora del formulario -> ISO (soporta AM/PM) — usando el validador
   const dateStr = document.getElementById('date')?.value || '';
   const timeStr = document.getElementById('time')?.value || '';
   let pickupISO = null;
+
   if (dateStr && timeStr) {
-    const ampm = parseAmPmTo24h(timeStr);
-    let hh=0, mm=0;
-    if (ampm) { hh=ampm.h24; mm=ampm.m; }
-    else {
-      const m24 = String(timeStr).match(/^(\d{1,2}):(\d{2})$/);
-      if (m24) { hh=parseInt(m24[1],10); mm=parseInt(m24[2],10); }
+    const v = validateTimeValue(timeStr);
+    if (v.ok) {
+      const hhStr = String(v.h24).padStart(2,'0');
+      const mmStr = String(v.m).padStart(2,'0');
+      pickupISO = `${dateStr}T${hhStr}:${mmStr}:00`;
     }
-    const hhStr = String(hh).padStart(2,'0');
-    const mmStr = String(mm).padStart(2,'0');
-    pickupISO = `${dateStr}T${hhStr}:${mmStr}:00`;
   }
 
   let q;
@@ -235,18 +321,23 @@ BNZ.renderQuote = async function(leg, opts={}){
 BNZ.recalcFromCache = function(){
   const el = document.getElementById('info');
   if (!el || BNZ.__lastBase == null) return;
+
   const base = BNZ.__lastBase;
   const surcharge = BNZ.__lastSurcharge || 0;
   const ahFee = BNZ.__lastAhFee || 0;
   const mgFee = BNZ.getMGFee();
   const vehicle = BNZ.selectedVehicle || getVehicleFromUI();
+
   const finalTotal = BNZ.applyVehicleMultiplier(base + surcharge + ahFee + mgFee, vehicle);
+
   const priceEl = el.querySelector('.kpi .value.price');
   const totalEl = el.querySelector('.row.total span:last-child');
   if (priceEl) priceEl.textContent = `$${finalTotal.toFixed(2)}`;
   if (totalEl) totalEl.textContent = `$${finalTotal.toFixed(2)}`;
+
   BNZ.__lastQuotedTotal = finalTotal;
   BNZ.__lastVehicle = vehicle;
+
   applyAirportUiFromPickup();
 };
 
@@ -254,6 +345,7 @@ BNZ.recalcFromCache = function(){
 (function wireVehicleToggle(){
   const btns = document.querySelectorAll('.veh-btn');
   if(!btns.length) return;
+
   btns.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.veh-btn').forEach(b=> b.classList.remove('active'));
@@ -279,6 +371,7 @@ function setAcceptedState(on){
 function syncButtons(){
   const accepted = isAccepted();
   if(calcBtn) calcBtn.disabled = !accepted;
+
   const readyPay = !!BNZ.__lastQuotedTotal && accepted;
   if(payBtn){
     payBtn.disabled = !readyPay;
@@ -300,7 +393,22 @@ document.querySelectorAll(".luggage-accordion").forEach(acc=>{
 
 /* ------------------ Botón Calculate ------------------ */
 calcBtn?.addEventListener('click', ()=>{
-  if(!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
+  if(!isAccepted()){
+    alert("Please accept Terms & Conditions first.");
+    return;
+  }
+
+  // Validar hora antes de calcular (AM/PM ó 24h)
+  const timeInput = document.getElementById('time');
+  if (timeInput) {
+    const { ok } = validateTimeValue(timeInput.value);
+    if (!ok) {
+      applyTimeValidationUI();
+      timeInput.focus();
+      return; // no calcular hasta que esté válido
+    }
+  }
+
   document.dispatchEvent(new CustomEvent('bnz:calculate'));
 });
 
@@ -323,11 +431,14 @@ function applyAirportUi(result){
   const privateBox = document.getElementById("privateFlightContainer");
   const jsxBox = document.getElementById("jsxContainer");
   const mgCard = document.getElementById("meetGreetCard");
+
   const vehicle = BNZ.selectedVehicle || getVehicleFromUI();
   const showMG = (result.type === "COMMERCIAL") && result.isSLC && vehicle === "suv";
+
   if (flightBox)  flightBox.style.display  = (result.type === "COMMERCIAL") ? "block" : "none";
   if (jsxBox)     jsxBox.style.display     = (result.type === "JSX")        ? "block" : "none";
   if (privateBox) privateBox.style.display = (result.type === "FBO")        ? "block" : "none";
+
   if (mgCard) {
     mgCard.style.display = showMG ? "block" : "none";
     if (!showMG) {
@@ -358,4 +469,7 @@ BNZ.onPickupPlaceChanged = function(place){
 };
 
 /* ------------------ Init ------------------ */
-(function initBooking(){ syncButtons(); applyAirportUiFromPickup(); })();
+(function initBooking(){
+  syncButtons();
+  applyAirportUiFromPickup();
+})();
