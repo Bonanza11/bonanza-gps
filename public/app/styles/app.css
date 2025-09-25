@@ -512,3 +512,43 @@ button#load,
   #cn { height: 50px; font-size: 1.1rem; }
   #load { min-width: 100px; font-size: 0.88rem; }
 }
+/* ===== Reschedule overrides (compact) ================================== */
+:root{ --ring:0 0 0 3px rgba(168,116,79,.25) }
+
+/* Card con badge: da aire arriba para que no pise el título ni la toprow */
+.card--with-badge{ padding-top:76px }
+.brand-badge{ position:absolute; top:12px; right:14px; width:58px; height:58px }
+@media (max-width:760px){ .brand-badge{ width:48px; height:48px } .card--with-badge{ padding-top:64px } }
+@media (max-width:480px){ .brand-badge{ width:44px; height:44px } .card--with-badge{ padding-top:58px } }
+
+/* Barra de acciones arriba (Back to GPS) */
+.bar-actions{ display:flex; gap:10px; align-items:center; margin:0 0 10px }
+.btn-inline{ width:auto; display:inline-flex; align-items:center; gap:8px; padding:8px 12px; margin:0;
+  font-size:.95rem; font-weight:700; border-radius:10px; border:1px solid #444; background:#1a1a1a;
+  color:#ffddae !important; text-decoration:none !important; box-shadow:none; cursor:pointer;
+  transition:filter .15s, transform .05s }
+.btn-inline:hover{ filter:brightness(1.06) } .btn-inline:active{ transform:translateY(1px) }
+.btn-back::before{ content:"←"; font-weight:900; margin-right:2px }
+
+/* Top row (CN + Load): deja espacio por el badge y estiliza tamaño */
+.toprow{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; padding-right:84px }
+.toprow .box{ flex:1 1 0 }
+#cn{ height:52px; padding:0 16px; font-size:1.2rem; font-weight:700; letter-spacing:.5px; font-variant-numeric:tabular-nums }
+#cn:focus{ border-color:var(--copper); box-shadow:var(--ring) }
+
+/* Botón Load pequeño (anula el width:100% global) */
+#load{ width:auto !important; min-width:112px; height:36px; margin-top:0 !important; font-size:.9rem; padding:8px 12px;
+  align-self:flex-start; border-radius:10px; border:1px solid #444; background:#2a2a2a; color:#ffddae; box-shadow:none;
+  cursor:pointer; transition:filter .15s, transform .05s }
+#load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
+
+/* Mapa un poco más compacto para que todo respire */
+#map{ height:320px }
+
+/* Responsive fino */
+@media (max-width:520px){
+  .toprow{ gap:8px; padding-right:54px }
+  #cn{ height:50px; font-size:1.1rem }
+  #load{ min-width:100px; font-size:.88rem }
+  #map{ height:280px }
+}
