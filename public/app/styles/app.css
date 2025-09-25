@@ -29,39 +29,46 @@ html,body{
 /* Header / Logo */
 header{ display:flex; justify-content:center; align-items:center; padding:20px 16px }
 .logo-wrap{ position:relative }
+/* ➜ Logo SIN aura/“neón”: línea fina + glow sutil */
 .logo{
-  width:180px; height:180px; border-radius:50%; border:2px solid var(--copper);
-  object-fit:cover; display:block; position:relative;
-  box-shadow:0 0 2px rgba(192,139,92,.35) inset,0 0 8px rgba(0,0,0,.6),0 0 10px rgba(192,139,92,.45);
-  filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
+  width:180px; height:180px;
+  border-radius:50%;
+  border:1px solid var(--copper);     /* línea fina cobre */
+  object-fit:cover; display:block;
+  box-shadow:0 0 0 3px rgba(168,116,79,.18); /* glow sutil (no neón) */
 }
-.logo-wrap::after{
-  content:""; position:absolute; inset:-8px; border-radius:50%;
-  box-shadow:0 0 22px 10px rgba(192,139,92,.35); pointer-events:none;
-}
+/* eliminamos la aureola externa */
+.logo-wrap::after{ content:none !important; }
 
 /* Layout */
 main{ max-width:760px; width:92vw; margin:0 auto 40px; padding:0 16px }
 label{ display:block; margin:12px 0 6px; font-weight:700 }
 
-/* Inputs base */
+/* ---------------- Inputs base (glow cobre unificado) ---------------- */
 input,select,textarea{
   display:block; width:100%; height:44px; padding:10px 12px;
-  background:#1a1a1a; color:var(--copper); border:1px solid #444; border-radius:8px; outline:none;
+  background:#1a1a1a; color:var(--copper);
+  border:1px solid #444; border-radius:8px; outline:none;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 textarea{ height:auto; min-height:60px; resize:vertical; }
-input:focus,select:focus,textarea:focus{
-  border-color:var(--copper); box-shadow:0 0 0 3px rgba(168,116,79,.18);
+
+/* Glow cobre estilo “hora” aplicado a todos los campos al enfocar */
+input:focus,select:focus,textarea:focus,
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  border-color:#ffd9a1;                             /* línea fina clara */
+  box-shadow:0 0 0 4px rgba(255,217,161,.22);       /* glow suave (no neón) */
 }
+
 ::placeholder{ color:#cba686; opacity:.65 }
 
-/* Campo HORA (AM/PM) */
+/* Campo HORA (AM/PM) — para <select id="time"> */
 .time-input{
   height:56px; font-size:17px; border-radius:12px; background:#1f1f1f; color:#fff;
-  border:2px solid var(--copper); box-shadow:0 0 0 3px rgba(168,116,79,.18);
+  border:1px solid #ffd9a1;              /* línea clara (afinada) */
+  box-shadow:0 0 0 4px rgba(255,217,161,.22);
 }
-.time-input:focus{ outline:none; border-color:#ffd9a1; box-shadow:0 0 0 4px rgba(255,217,161,.22); }
+.time-input:focus{ outline:none; }
 .time-input.field-invalid{
   border-color: var(--err) !important;
   box-shadow: 0 0 0 4px rgba(255,107,107,.25) !important;
@@ -95,7 +102,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:focus{
   -webkit-text-fill-color: var(--copper);
   transition: background-color 50000s ease-in-out 0s;
-  box-shadow:0 0 0 1000px #1a1a1a inset;
+  box-shadow: 0 0 0 1000px #1a1a1a inset;
   border:1px solid #444;
 }
 
@@ -109,7 +116,7 @@ button:hover{ box-shadow:0 10px 26px rgba(0,0,0,.35) }
 button:active{ transform:translateY(1px) }
 button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-/* Mapa (única definición consolidada) */
+/* Mapa */
 #map{
   width:100%;
   height:380px;
@@ -159,6 +166,12 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
   flex:1 1 0; background:#1a1a1a; border:1px solid rgba(168,116,79,.55);
   color:var(--copper); padding:12px; border-radius:10px; cursor:pointer; font-weight:700;
 }
+/* foco accesible coherente */
+.veh-btn:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 4px rgba(255,217,161,.22);
+  border-color:#ffd9a1;
+}
 .veh-btn.active{
   background:var(--copper); color:#000; border-color:var(--copper);
   box-shadow:0 0 0 3px rgba(168,116,79,.25);
@@ -197,6 +210,12 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
   display:inline-block; margin-top:8px; padding:6px 10px; border:1px solid rgba(168,116,79,.55);
   border-radius:8px; background:#1a1a1a; color:#ffddae; font-weight:700; font-size:.85rem; cursor:pointer;
 }
+
+/* Hints */
+.hint{ font-size:.85rem; margin-top:6px }
+.hint.warn{ color:var(--warn) }
+.hint.err{ color:var(--err) }
+.hint.ok{ color:var(--ok) } /* ✔ textos “Valid …” en verde */
 
 /* Luggage Accordion */
 .luggage-accordion{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
@@ -316,8 +335,6 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
   cursor:pointer; transition:filter .15s, transform .05s
 }
 #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
-
-/* Mapa en reschedule usa el mismo #map consolidado */
 
 /* Responsive fino para reschedule */
 @media (max-width:520px){
