@@ -34,7 +34,6 @@
       border:1px solid rgba(192,139,92,.32); border-radius:18px; padding:18px;
       box-shadow:0 20px 60px rgba(0,0,0,.55); overflow:hidden;
     }
-    /* Más espacio arriba para el logo */
     .card--with-badge{ padding-top:96px }
     .brand-badge{
       position:absolute; top:14px; right:16px;
@@ -80,15 +79,16 @@
     input::placeholder{ color:#ecd0b1; opacity:.9 }
     input:focus{ border-color:var(--copper); box-shadow:var(--ring); background:#101010 }
 
-    /* Botón LOAD: un poco más bajo para empatar con el input */
+    /* LOAD exactamente a la altura del input (44px) */
     #load{
-      width:auto !important; min-width:120px; height:36px; margin-top:0 !important;
-      font-size:.92rem; padding:8px 12px; border-radius:10px; border:1px solid #544338;
+      width:auto !important; min-width:120px;
+      height:44px; padding:0 14px; margin-top:0 !important;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:.95rem; border-radius:10px; border:1px solid #544338;
       background:#242221; color:#ffdeb3; box-shadow:none; cursor:pointer;
       transition:filter .15s, transform .05s;
-      transform: translateY(9px); /* <- baja sutilmente y mantiene alineación */
     }
-    #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(9px) }
+    #load:hover{ filter:brightness(1.06) } #load:active{ transform:translateY(1px) }
 
     /* Botones generales (recalc/reset/submit) */
     .btn{
@@ -142,7 +142,7 @@
     @media (max-width:520px){
       .toprow{ gap:8px; padding-right:64px }
       #map{ height:280px }
-      #load{ min-width:106px; font-size:.9rem; transform:translateY(6px) }
+      #load{ min-width:106px; font-size:.9rem }
     }
   </style>
 </head>
