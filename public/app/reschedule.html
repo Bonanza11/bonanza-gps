@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reschedule — Bonanza Transportation</title>
 
-  <!-- Tu hoja global (mantiene colores/estilo Bonanza) -->
+  <!-- Estilos globales de Bonanza -->
   <link rel="stylesheet" href="/app/styles/app.css"/>
 
-  <!-- Ajustes mínimos para este view (no rompe tu tema) -->
+  <!-- Ajustes mínimos locales -->
   <style>
     body { background:#000; color:#e9d5c1; }
-    header{ display:flex; align-items:center; gap:14px; padding:14px 20px; }
-    .logo{ height:52px; width:auto; border-radius:50%; border:2px solid var(--copper);
+    header{ display:flex; align-items:center; justify-content:center; padding:16px }
+    .logo{ height:72px; width:auto; border-radius:50%; border:2px solid var(--copper);
            box-shadow:0 0 8px rgba(168,116,79,.35); }
     .container{ max-width:980px; margin:0 auto; padding:0 16px 28px; }
     .card{
@@ -20,8 +20,8 @@
       border:1px solid rgba(192,139,92,.28);
       border-radius:16px; padding:18px; box-shadow:0 18px 40px rgba(0,0,0,.55);
     }
-    h1{ margin:0 0 10px; font-size:1.5rem; color:#ffddae; text-align:center; }
-    h2{ margin:16px 0 8px; font-size:1.05rem; color:#ffddae; font-weight:700; }
+    h1{ margin:0 0 12px; font-size:1.6rem; color:#ffddae; text-align:center; }
+    h2{ margin:16px 0 10px; font-size:1.05rem; color:#ffddae; font-weight:800; }
     .row{ display:flex; gap:10px; }
     .row > *{ flex:1; }
     .status{ min-height:20px; color:#ffcc66; margin:8px 0; }
@@ -37,10 +37,14 @@
       background:var(--copper); color:#000; border-color:var(--copper);
       box-shadow:0 0 0 3px rgba(168,116,79,.25);
     }
-    .summary .grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-    .k{ color:#cfa47f; font-size:.9rem; }
-    .v{ color:#ffddae; font-weight:800; font-size:1.05rem; }
-    .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:16px 0; }
+    .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:14px 0; }
+    .k{ color:#cfa47f; font-size:.92rem; }
+    .v{ color:#ffddae; font-weight:800; }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .grid3{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; }
+    .summaryBox{
+      background:#0e0e0e; border:1px solid rgba(168,116,79,.28); border-radius:12px; padding:12px;
+    }
     .muted{ color:#c9a97c; font-size:.9rem; margin-top:6px; }
     button{ margin-top:10px; }
   </style>
@@ -58,35 +62,64 @@
       <label for="cn">Reservation Code (CN)</label>
       <div class="row">
         <input id="cn" placeholder="BZ-2025MMDD-XXXX" autocomplete="off"/>
-        <button id="load" type="button" class="btn" style="flex:0 0 160px;">Load</button>
+        <button id="load" class="btn" style="flex:0 0 160px;">Load</button>
       </div>
       <div id="status" class="status"></div>
 
-      <!-- FORM -->
+      <!-- RESUMEN ORIGINAL -->
+      <section id="original" class="hidden">
+        <div class="divider"></div>
+        <h2>Original Trip</h2>
+        <div class="summaryBox">
+          <div class="grid2">
+            <div><span class="k">CN</span><br><span id="o_cn" class="v">—</span></div>
+            <div><span class="k">Status</span><br><span id="o_status" class="v">—</span></div>
+            <div><span class="k">Passenger</span><br><span id="o_name" class="v">—</span></div>
+            <div><span class="k">Email / Phone</span><br><span id="o_contact" class="v">—</span></div>
+          </div>
+          <div class="divider"></div>
+          <div class="grid2">
+            <div><span class="k">Pickup</span><br><span id="o_pickup" class="v">—</span></div>
+            <div><span class="k">Dropoff</span><br><span id="o_dropoff" class="v">—</span></div>
+          </div>
+          <div class="grid3" style="margin-top:10px">
+            <div><span class="k">Date</span><br><span id="o_date" class="v">—</span></div>
+            <div><span class="k">Time</span><br><span id="o_time" class="v">—</span></div>
+            <div><span class="k">Vehicle</span><br><span id="o_vehicle" class="v">—</span></div>
+          </div>
+          <div class="grid3" style="margin-top:10px">
+            <div><span class="k">Meet & Greet</span><br><span id="o_mg" class="v">—</span></div>
+            <div><span class="k">Distance</span><br><span id="o_miles" class="v">—</span></div>
+            <div><span class="k">Original Total</span><br><span id="o_total" class="v">—</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FORM PARA NUEVO VIAJE -->
       <section id="form" class="hidden">
         <div class="divider"></div>
 
         <h2>Trip Details</h2>
         <label for="pickup">Pickup Location</label>
-        <input id="pickup" placeholder="e.g. SLC Airport / Address" autocomplete="street-address" autocapitalize="off" spellcheck="false"/>
+        <input id="pickup" placeholder="e.g. SLC Airport / Address"/>
 
         <label for="dropoff" style="margin-top:10px;">Dropoff Location</label>
-        <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="street-address" autocapitalize="off" spellcheck="false"/>
+        <input id="dropoff" placeholder="e.g. Montage Deer Valley"/>
 
         <!-- MAPA -->
         <div id="map"></div>
 
         <h2>Vehicle</h2>
-        <div id="vehBar" class="pillbar" role="group" aria-label="Vehicle selection">
-          <div class="pill" data-type="suv" aria-pressed="false">SUV (1–5)</div>
-          <div class="pill" data-type="van" aria-pressed="false">Van (up to 12)</div>
+        <div id="vehBar" class="pillbar">
+          <div class="pill" data-type="suv">SUV (1–5)</div>
+          <div class="pill" data-type="van">Van (up to 12)</div>
         </div>
 
         <h2>Meet & Greet (SLC)</h2>
-        <div id="mgBar" class="pillbar" role="group" aria-label="Meet & Greet selection">
-          <div class="pill" data-mg="tsa_exit" aria-pressed="false">TSA Exit (+$50)</div>
-          <div class="pill" data-mg="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</div>
-          <div class="pill" data-mg="none" aria-pressed="false">No Meet & Greet</div>
+        <div id="mgBar" class="pillbar">
+          <div class="pill" data-mg="tsa_exit">TSA Exit (+$50)</div>
+          <div class="pill" data-mg="baggage_claim">Baggage Claim (+$50)</div>
+          <div class="pill" data-mg="none">No Meet & Greet</div>
         </div>
 
         <h2>Pickup Time</h2>
@@ -102,138 +135,106 @@
         </div>
 
         <div class="row" style="margin-top:10px;">
-          <button id="recalc" type="button" class="btn">Recalculate Price</button>
-          <button id="reset" type="button" class="btn ghost">Reset changes</button>
+          <button id="recalc" class="btn">Recalculate Price</button>
+          <button id="reset" class="btn ghost">Reset changes</button>
         </div>
 
-        <section id="summary" class="summary hidden" style="margin-top:10px;">
-          <h2>Summary</h2>
-          <div class="grid">
-            <div><span class="k">Original Total</span><span id="origTotal" class="v">$0.00</span></div>
-            <div><span class="k">New Quote</span><span id="newQuote" class="v">$0.00</span></div>
-            <div><span class="k">Difference</span><span id="diff" class="v">$0.00</span></div>
+        <!-- NUEVO RESUMEN -->
+        <section id="summary" class="summaryBox hidden" style="margin-top:12px;">
+          <h2>New Trip</h2>
+          <div class="grid2">
+            <div><span class="k">Pickup</span><br><span id="n_pickup" class="v">—</span></div>
+            <div><span class="k">Dropoff</span><br><span id="n_dropoff" class="v">—</span></div>
+          </div>
+          <div class="grid3" style="margin-top:10px">
+            <div><span class="k">Date</span><br><span id="n_date" class="v">—</span></div>
+            <div><span class="k">Time</span><br><span id="n_time" class="v">—</span></div>
+            <div><span class="k">Vehicle / M&G</span><br><span id="n_vehicle_mg" class="v">—</span></div>
+          </div>
+          <div class="grid3" style="margin-top:10px">
+            <div><span class="k">Distance</span><br><span id="n_miles" class="v">—</span></div>
+            <div><span class="k">New Quote</span><br><span id="newQuote" class="v">$0.00</span></div>
+            <div><span class="k">Difference</span><br><span id="diff" class="v">$0.00</span></div>
           </div>
           <p id="note" class="muted"></p>
-          <button id="submit" type="button" class="btn" style="width:100%; margin-top:8px;">Submit Reschedule</button>
+          <button id="submit" class="btn" style="width:100%; margin-top:8px;">Submit Reschedule</button>
         </section>
       </section>
     </div>
   </main>
 
-  <!-- Google Maps + Places (con tu API key y callback) -->
+  <!-- Google Maps + Places -->
   <script>
-    // Exponemos el init para el callback del script
-    window.initReschedule = function initReschedule(){
-      ResUI.initMapAndPlaces();
-    };
+    // callback para el script de Maps
+    window.initReschedule = function initReschedule(){ ResUI.initMapAndPlaces(); };
   </script>
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initReschedule">
-  </script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initReschedule"></script>
 
   <!-- Lógica de la página -->
   <script>
-    // ======== Helpers UI ========
     const $ = (id) => document.getElementById(id);
     const money = (c) => '$' + (Math.round(c)/100).toFixed(2);
 
-    // ======== Estado ========
     let booking = null;
     let vehicleType = 'suv';
     let mgChoice = 'none';
     let lastQuote = 0;
     let lastMiles = 0;
 
-    // ======== Google Maps ========
+    // ===== Google Maps + Autocomplete + Route =====
     const ResUI = {
-      map: null,
-      directionsService: null,
-      directionsRenderer: null,
-
+      map:null, directionsService:null, directionsRenderer:null,
       initMapAndPlaces(){
         const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
-        const mapEl = $('map');
-        if(!mapEl){ console.warn('Missing #map'); return; }
-
-        this.map = new google.maps.Map(mapEl, {
-          center: DEFAULT_CENTER,
-          zoom: 10,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
+        this.map = new google.maps.Map(document.getElementById('map'), {
+          center: DEFAULT_CENTER, zoom: 10, mapTypeControl:false, streetViewControl:false, fullscreenControl:false
         });
-
         this.directionsService = new google.maps.DirectionsService();
-        this.directionsRenderer = new google.maps.DirectionsRenderer({
-          map: this.map,
-          preserveViewport: false,
-          suppressMarkers: false,
-          polylineOptions: { strokeOpacity: 0.95 }
-        });
+        this.directionsRenderer = new google.maps.DirectionsRenderer({ map:this.map, preserveViewport:false });
 
-        this.attachAutocomplete('pickup', () => this.maybeDrawRoute());
-        this.attachAutocomplete('dropoff', () => this.maybeDrawRoute());
+        this.attachAC('pickup', () => this.maybeDrawRoute());
+        this.attachAC('dropoff', () => this.maybeDrawRoute());
       },
-
-      attachAutocomplete(inputId, onPlace){
-        const input = $(inputId);
-        if(!input) return null;
-        const ac = new google.maps.places.Autocomplete(input, {
+      attachAC(id, onPlace){
+        const el = $(id); if(!el) return;
+        const ac = new google.maps.places.Autocomplete(el, {
           fields: ["place_id","geometry","name","formatted_address"],
           componentRestrictions: { country:["us"] }
         });
         ac.addListener('place_changed', ()=>{
           const p = ac.getPlace();
-          if(p?.geometry?.location){
-            this.map.panTo(p.geometry.location);
-            this.map.setZoom(12);
-          }
+          if(p?.geometry?.location){ this.map.panTo(p.geometry.location); this.map.setZoom(12); }
           onPlace && onPlace(p);
         });
-        ['input','change','blur'].forEach(ev=>{
-          input.addEventListener(ev, ()=>{ /* si escribe manual, redibuja cuando toque recalc */ });
-        });
-        return ac;
       },
-
       async drawRoute(pick, drop){
         if(!pick || !drop) return null;
-        const req = {
-          origin: pick,
-          destination: drop,
-          travelMode: google.maps.TravelMode.DRIVING
-        };
-        const res = await this.directionsService.route(req);
+        const res = await this.directionsService.route({
+          origin: pick, destination: drop, travelMode: google.maps.TravelMode.DRIVING
+        });
         this.directionsRenderer.setDirections(res);
-
-        const leg = res.routes?.[0]?.legs?.[0];
-        if(leg?.distance?.value){
-          lastMiles = leg.distance.value / 1609.344;
-        }
-        return leg || null;
+        const leg = res.routes?.[0]?.legs?.[0] || null;
+        if(leg?.distance?.value){ lastMiles = leg.distance.value / 1609.344; }
+        return leg;
       },
-
       maybeDrawRoute(){
-        const pick = $('pickup')?.value?.trim();
-        const drop = $('dropoff')?.value?.trim();
-        if(pick && drop) this.drawRoute(pick, drop).catch(()=>{});
+        const pick = $('pickup').value.trim();
+        const drop = $('dropoff').value.trim();
+        if(pick && drop){ this.drawRoute(pick, drop).catch(()=>{}); }
       }
     };
 
-    // ======== UI logic ========
+    // ===== Helpers de UI =====
     function activatePills(bar, attr, value){
       [...bar.querySelectorAll('.pill')].forEach(p=>{
-        const isActive = p.getAttribute(attr) === value;
-        p.classList.toggle('active', isActive);
-        p.setAttribute('aria-pressed', String(isActive));
+        p.classList.toggle('active', p.getAttribute(attr) === value);
       });
     }
+    const mgLabel = (k) => k==='tsa_exit' ? 'TSA Exit (+$50)' : k==='baggage_claim' ? 'Baggage Claim (+$50)' : 'No Meet & Greet';
 
-    // quote backend
     async function fetchQuote(miles){
       const r = await fetch('/api/book/quote',{
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
+        method:'POST', headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({
           pickup: $('pickup').value.trim(),
           dropoff: $('dropoff').value.trim(),
@@ -247,23 +248,34 @@
       return j.quote.total_cents;
     }
 
-    // cargar booking por CN
+    // ===== Cargar reserva =====
     $('load').onclick = async ()=>{
       const cn = $('cn').value.trim();
-      $('status').textContent = '';
-      $('form') && $('form').classList.add('hidden');
+      $('status').textContent = ''; $('original').classList.add('hidden'); $('form').classList.add('hidden');
 
       try{
         const r = await fetch('/api/book/get?cn='+encodeURIComponent(cn));
         const j = await r.json();
         if(!r.ok || !j.ok) throw new Error(j.error || 'Not found');
-
         booking = j.booking;
 
-        // set UI
-        $('status').textContent = 'Reservation loaded: ' + booking.confirmation_number;
-        $('form') && $('form').classList.remove('hidden');
+        // Pintar RESUMEN ORIGINAL
+        $('o_cn').textContent = booking.confirmation_number;
+        $('o_status').textContent = booking.status || '—';
+        $('o_name').textContent = booking.full_name || '—';
+        $('o_contact').textContent = [booking.email, booking.phone].filter(Boolean).join(' • ') || '—';
+        $('o_pickup').textContent = booking.pickup || '—';
+        $('o_dropoff').textContent = booking.dropoff || '—';
+        $('o_date').textContent = booking.date_iso || '—';
+        $('o_time').textContent = booking.time_hhmm || '—';
+        $('o_vehicle').textContent = (booking.vehicle_type || 'suv').toUpperCase();
+        $('o_mg').textContent = mgLabel(booking.mg_choice || 'none');
+        $('o_miles').textContent = booking.distance_miles ? (Number(booking.distance_miles).toFixed(1) + ' mi') : '—';
+        $('o_total').textContent = money(booking.quoted_total || 0);
 
+        $('original').classList.remove('hidden');
+
+        // Prefill formulario con valores actuales
         $('pickup').value = booking.pickup || '';
         $('dropoff').value = booking.dropoff || '';
         $('date').value = booking.date_iso || '';
@@ -271,53 +283,61 @@
 
         vehicleType = booking.vehicle_type || 'suv';
         mgChoice = booking.mg_choice || 'none';
-        activatePills($('vehBar'),'data-type',vehicleType);
-        activatePills($('mgBar'),'data-mg',mgChoice);
+        activatePills(document.getElementById('vehBar'),'data-type',vehicleType);
+        activatePills(document.getElementById('mgBar'),'data-mg',mgChoice);
 
-        $('origTotal').textContent = money(booking.quoted_total || 0);
-        $('summary').classList.add('hidden');
+        $('form').classList.remove('hidden');
 
-        // dibujar ruta inicial
+        // Dibujar la ruta inicial
         ResUI.maybeDrawRoute();
+
+        $('status').textContent = 'Reservation loaded: ' + booking.confirmation_number;
       }catch(e){
         $('status').textContent = 'Error: ' + (e.message || e);
       }
     };
 
-    // toggles
-    $('vehBar').addEventListener('click', (ev)=>{
+    // Toggles
+    document.getElementById('vehBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       vehicleType = el.getAttribute('data-type');
       activatePills(ev.currentTarget,'data-type',vehicleType);
       ResUI.maybeDrawRoute();
     });
-    $('mgBar').addEventListener('click', (ev)=>{
+    document.getElementById('mgBar').addEventListener('click', (ev)=>{
       const el = ev.target.closest('.pill'); if(!el) return;
       mgChoice = el.getAttribute('data-mg');
       activatePills(ev.currentTarget,'data-mg',mgChoice);
     });
 
-    // recalcular
+    // Recalcular y poblar "New Trip"
     $('recalc').onclick = async ()=>{
       $('status').textContent = '';
       try{
         const pick = $('pickup').value.trim();
         const drop = $('dropoff').value.trim();
         const d = $('date').value; const t = $('time').value;
-
         if(!pick || !drop) throw new Error('Pickup/Dropoff required');
         if(!d || !t) throw new Error('Date/Time required');
 
         const leg = await ResUI.drawRoute(pick, drop);
         if(!leg?.distance?.value) throw new Error('Route not found');
 
-        const cents = await fetchQuote(lastMiles);
+        const miles = lastMiles;
+        const cents = await fetchQuote(miles);
         lastQuote = cents;
 
+        // Pintar resumen nuevo
+        $('n_pickup').textContent = pick;
+        $('n_dropoff').textContent = drop;
+        $('n_date').textContent = d;
+        $('n_time').textContent = t;
+        $('n_vehicle_mg').textContent = (vehicleType.toUpperCase()) + ' • ' + mgLabel(mgChoice);
+        $('n_miles').textContent = miles.toFixed(1) + ' mi';
         $('newQuote').textContent = money(cents);
 
         const orig = booking?.quoted_total || 0;
-        const diff = Math.max(0, cents - orig);           // nunca bajamos el total
+        const diff = Math.max(0, cents - orig); // no bajamos precio
         $('diff').textContent = money(diff);
 
         $('note').textContent = diff > 0
@@ -330,7 +350,7 @@
       }
     };
 
-    // resetear
+    // Reset
     $('reset').onclick = ()=>{
       if(!booking) return;
       $('pickup').value = booking.pickup || '';
@@ -339,14 +359,14 @@
       $('time').value = booking.time_hhmm || '00:00';
       vehicleType = booking.vehicle_type || 'suv';
       mgChoice = booking.mg_choice || 'none';
-      activatePills($('vehBar'),'data-type',vehicleType);
-      activatePills($('mgBar'),'data-mg',mgChoice);
+      activatePills(document.getElementById('vehBar'),'data-type',vehicleType);
+      activatePills(document.getElementById('mgBar'),'data-mg',mgChoice);
       $('summary').classList.add('hidden');
       $('status').textContent = '';
       ResUI.maybeDrawRoute();
     };
 
-    // submit (Stripe si hay diferencia; si no, solo reprogramar)
+    // Submit (Stripe si hay diferencia)
     $('submit').onclick = async ()=>{
       if(!booking) return;
       try{
@@ -354,9 +374,7 @@
         const pick = $('pickup').value.trim();
         const drop = $('dropoff').value.trim();
 
-        if(!d || !t) throw new Error('Date/Time required');
-
-        // Si el usuario no tocó "Recalculate", garantizamos cálculo
+        // Si no calcularon, forzamos cálculo rápido
         if(!lastQuote || !lastMiles){
           const leg = await ResUI.drawRoute(pick, drop);
           if(!leg?.distance?.value) throw new Error('Route not found');
@@ -380,11 +398,11 @@
           });
           const j = await r.json();
           if(!j.ok) throw new Error(j.error || 'stripe_failed');
-          location.href = j.url; // Stripe
+          location.href = j.url; // Stripe Checkout
           return;
         }
 
-        // sin diferencia → aplicar reschedule
+        // Sin diferencia: aplicar reschedule directo
         const r2 = await fetch('/api/book/reschedule',{
           method:'POST',
           headers:{ 'Content-Type':'application/json' },
