@@ -1,37 +1,35 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 ──────────────────────────────────────────────────────────────
-Responsable de:
-- Inicializar el mapa principal de Google Maps.
+- Inicializa el mapa.
 - Autocomplete en pickup/dropoff (solo USA).
-- Detectar cambios en pickup → BNZ.onPickupPlaceChanged(place) para UI (JSX/FBO/Aeropuerto).
-- Calcular ruta (origin→destination) al evento "bnz:calculate".
-- Dibujar la ruta y pasar el primer leg a BNZ.renderQuote(leg, { surcharge }).
+- En place_changed del pickup dispara BNZ.onPickupPlaceChanged(place).
+- Calcula ruta (origin→destination) al evento "bnz:calculate".
+- Dibuja la ruta y pasa el primer leg a BNZ.renderQuote(leg, { surcharge }).
 
-Requisitos en HTML:
-- <div id="map"></div>
-- Script de Google:
-  <script async src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap"></script>
+Requiere en HTML:
+  <div id="map"></div>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap"></script>
 */
 
 (function () {
+  "use strict";
+
   const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // Salt Lake City
 
   let map, dirService, dirRenderer;
-  let acPickup = null;
-  let acDropoff = null;
+  let acPickup = null, acDropoff = null;
 
-  // Cache de textos para ruta
+  // Cache de textos para la ruta (por si el usuario teclea manualmente)
   let originText = "";
   let destinationText = "";
 
-  // --- Surcharge (si lo necesitas luego) ---
-  // Por ahora 0; si quieres reglas por condado/distancia, ajusta aquí.
+  // Si más adelante necesitas recargos por zona/distancia, ajústalo aquí:
   function computeSurcharge(miles) {
     return 0;
   }
 
-  // Helper: crea Autocomplete, centra y dispara hooks
+  // ----- Autocomplete helper -------------------------------------------------
   function attachAutocomplete(inputId, opts = {}) {
     const input = document.getElementById(inputId);
     if (!input) return null;
@@ -46,43 +44,42 @@ Requisitos en HTML:
       const place = ac.getPlace();
 
       // Centrar el mapa si hay geometry
-      if (place && place.geometry && place.geometry.location) {
-        map.panTo(place.geometry.location);
+      const loc = place?.geometry?.location || null;
+      if (loc) {
+        map.panTo(loc);
         map.setZoom(12);
       }
 
-      // Guardar textos para la ruta
-      const pretty =
-        (place && (place.formatted_address || place.name)) || input.value || "";
+      // Texto “bonito” para la ruta
+      const pretty = (place?.formatted_address || place?.name || input.value || "").trim();
 
       if (inputId === "pickup") {
         originText = pretty;
-        // Hook para Booking (aquí decide mostrar Flight/JSX/FBO/M&G)
+        // Hook para Booking (decide JSX/FBO/Aeropuerto/M&G)
         if (window.BNZ && typeof BNZ.onPickupPlaceChanged === "function") {
           BNZ.onPickupPlaceChanged(place);
         }
-      } else if (inputId === "dropoff") {
+      } else {
         destinationText = pretty;
       }
     });
 
-    // También captura cambios manuales
-    ["input", "change", "blur"].forEach((ev) => {
+    // También cachea cambios manuales
+    ["input","change","blur"].forEach(ev => {
       input.addEventListener(ev, () => {
-        const val = input.value || "";
-        if (inputId === "pickup") originText = val;
-        if (inputId === "dropoff") destinationText = val;
+        const v = (input.value || "").trim();
+        if (inputId === "pickup") originText = v;
+        else destinationText = v;
       });
     });
 
     return ac;
   }
 
+  // ----- Routing + quote -----------------------------------------------------
   async function routeAndQuote() {
-    const origin =
-      originText || document.getElementById("pickup")?.value || "";
-    const destination =
-      destinationText || document.getElementById("dropoff")?.value || "";
+    const origin = originText || document.getElementById("pickup")?.value || "";
+    const destination = destinationText || document.getElementById("dropoff")?.value || "";
 
     if (!origin || !destination) {
       alert("Please enter both Pick-up and Drop-off addresses.");
@@ -107,14 +104,14 @@ Requisitos en HTML:
         return;
       }
 
-      // Dibuja la ruta
+      // Dibuja ruta
       dirRenderer.setDirections(result);
 
-      // Surcharge opcional (ahora 0; puedes cambiar computeSurcharge)
-      const miles = leg.distance?.value ? leg.distance.value / 1609.34 : 0;
+      // Surcharge opcional
+      const miles = leg.distance?.value ? (leg.distance.value / 1609.34) : 0;
       const surcharge = computeSurcharge(miles);
 
-      // Pasar leg a Booking para renderizar y calcular totales
+      // Notifica al módulo de booking
       if (window.BNZ && typeof BNZ.renderQuote === "function") {
         BNZ.renderQuote(leg, { surcharge });
       }
@@ -124,16 +121,17 @@ Requisitos en HTML:
     }
   }
 
-  // Listener global desde booking.js → document.dispatchEvent(new CustomEvent('bnz:calculate'))
+  // Escucha del evento que dispara booking: document.dispatchEvent(new CustomEvent('bnz:calculate'))
   function wireCalculateListener() {
     document.addEventListener("bnz:calculate", routeAndQuote);
   }
 
-  // Callback global para el <script ...&callback=initMap>
+  // ----- Callback global para el loader de Google ----------------------------
+  // Debe existir antes de que Google intente llamarlo.
   window.initMap = function () {
     const mapEl = document.getElementById("map");
     if (!mapEl) {
-      console.warn("[maps] No se encontró #map");
+      console.warn("[maps] #map not found");
       return;
     }
 
@@ -151,22 +149,22 @@ Requisitos en HTML:
       title: "Bonanza Transportation",
     });
 
-    dirService = new google.maps.DirectionsService();
+    dirService  = new google.maps.DirectionsService();
     dirRenderer = new google.maps.DirectionsRenderer({
+      map,
       suppressMarkers: false,
       preserveViewport: false,
-      map,
     });
 
-    // Autocomplete en ambos campos
-    acPickup = attachAutocomplete("pickup");
+    // Autocomplete
+    acPickup  = attachAutocomplete("pickup");
     acDropoff = attachAutocomplete("dropoff");
 
-    // Si ya hay texto pre-cargado, guárdalo
-    originText = document.getElementById("pickup")?.value || originText;
-    destinationText = document.getElementById("dropoff")?.value || destinationText;
+    // Si había texto pre-cargado, respétalo
+    originText      = document.getElementById("pickup")?.value     || originText;
+    destinationText = document.getElementById("dropoff")?.value    || destinationText;
 
-    // Escuchar el “Calculate”
+    // Conectar “Calculate”
     wireCalculateListener();
   };
 })();
