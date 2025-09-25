@@ -441,3 +441,61 @@ input[type="time"]::-webkit-calendar-picker-indicator{
   border-radius: 8px;
   padding: 10px 12px;
 }
+/* ==== Reschedule: CN grande + Load compacto (override) =================== */
+
+/* Fila superior: input CN + botón Load */
+.toprow {
+  display: flex;                /* por si viene sin display en tu CSS global */
+  gap: 10px;
+  align-items: flex-start;      /* alinea el botón con el label del CN */
+}
+
+/* Input del código de reservación (CN) bien protagonista */
+#cn {
+  font-size: 1.2rem;
+  font-weight: 700;
+  height: 52px;
+  padding: 0 16px;
+  letter-spacing: 0.5px;        /* look de “código” */
+}
+
+/* Botón Load más pequeño y sin ocupar 100% del ancho */
+button#load, #load.btn {
+  width: auto !important;       /* anula button { width:100% } global */
+  min-width: 110px;
+  height: 36px;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  margin-top: 0;                /* anula margin-top global */
+  align-self: flex-start;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid #444;
+  background: #2a2a2a;         /* estilo ghost discreto */
+  color: #ffddae;
+  box-shadow: none;
+  transition: filter .15s ease, box-shadow .2s ease, transform .05s ease;
+}
+button#load:hover, #load.btn:hover {
+  filter: brightness(1.06);
+}
+button#load:active, #load.btn:active {
+  transform: translateY(1px);
+}
+
+/* Opcional: si quieres que el Load mantenga el gradiente cobre pero pequeño,
+   comenta el bloque de background/box-shadow de arriba y descomenta esto: */
+/*
+button#load, #load.btn {
+  background: linear-gradient(180deg, #c89366, #a8744f);
+  color: #111;
+  border: 1px solid rgba(0,0,0,.4);
+  box-shadow: 0 6px 18px rgba(168,116,79,.35);
+}
+*/
+
+/* Responsive: que el botón no salte de línea */
+@media (max-width: 460px) {
+  .toprow { gap: 8px; }
+  button#load, #load.btn { min-width: 96px; font-size: 0.88rem; }
+}
