@@ -111,8 +111,20 @@ Página principal de reservas (booking) ya separada del index original.
       </div>
       <div>
         <label for="time">Time:</label>
-        <input id="time" type="time" step="900" />
-        <div id="timeHelp" class="helper"></div>
+        <!-- ⬇️ Campo hora en AM/PM con ayuda y error -->
+        <input
+          id="time"
+          name="time"
+          type="text"
+          placeholder="hh:mm AM/PM"
+          inputmode="numeric"
+          autocomplete="off"
+          aria-describedby="timeHelp"
+          class="time-input"
+        />
+        <small id="timeHelp" class="hint">Ejemplos: 7:00 AM · 10:30 PM</small>
+        <span id="timeError" class="field-error" role="alert" aria-live="polite" style="display:none;"></span>
+        <!-- ⬆️ Fin bloque hora -->
       </div>
     </div>
 
