@@ -1,6 +1,6 @@
 // /api/book/quote.js
 
-export const config = { runtime: "nodejs20.x" }; // Vercel: 18.x o 20.x. Uso 20.x.
+export const config = { runtime: "nodejs" }; // ✅ Compatible con Vercel
 
 const VEHICLE_TYPES = new Set(["suv", "van"]);
 const MG_OPTIONS = new Set(["none", "tsa_exit", "baggage_claim"]);
@@ -22,7 +22,7 @@ function priceCents({ miles, vehicleType, meetGreet, extrasCents = 0 }) {
   const base_cents      = vt === "van" ? 15000 : 12000; // $150 / $120
   const per_mile_cents  = vt === "van" ? 350   : 300;   // $3.50 / $3.00
 
-  // Meet & Greet: solo SUV. Si no es SUV, no cobra M&G.
+  // Meet & Greet: solo SUV
   const mg_cents = (vt === "suv" && mg !== "none") ? 5000 : 0; // $50
 
   const extras_cents = Number.isFinite(extrasCents) ? Math.max(0, Math.round(extrasCents)) : 0;
