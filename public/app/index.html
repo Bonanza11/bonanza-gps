@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bonanza Transportation</title>
-
-  <!-- CSS global -->
   <link rel="stylesheet" href="/app/styles/app.css" />
 </head>
 <body>
@@ -31,13 +29,9 @@
 
     <!-- Locations -->
     <label for="pickup">Pick-up Address:</label>
-    <input id="pickup"
-           placeholder="e.g. SLC Airport"
-           autocomplete="off"
-           autocapitalize="off" spellcheck="false"
-           data-lpignore="true" />
+    <input id="pickup" placeholder="e.g. SLC Airport" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
 
-    <!-- JSX extra fields (auto-UI por JS) -->
+    <!-- JSX extra fields -->
     <div id="jsxContainer" style="display:none; margin-top:10px;">
       <label for="jsxFlightNumber">JSX Flight Number:</label>
       <input id="jsxFlightNumber" placeholder="e.g. XE1234" autocapitalize="characters" />
@@ -47,20 +41,16 @@
     </div>
 
     <label for="dropoff">Drop-off Address:</label>
-    <input id="dropoff"
-           placeholder="e.g. Montage Deer Valley"
-           autocomplete="off"
-           autocapitalize="off" spellcheck="false"
-           data-lpignore="true" />
+    <input id="dropoff" placeholder="e.g. Montage Deer Valley" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
 
-    <!-- Meet & Greet (SLC, SUV) -->
+    <!-- Meet & Greet -->
     <div class="mg-card" id="meetGreetCard" aria-label="Meet & Greet options">
       <h3>Meet & Greet — SLC Only</h3>
       <p>Choose where you want your driver to meet you inside the terminal.</p>
       <div class="mg-options" role="group" aria-label="Meet & Greet selection">
-        <div class="mg-btn" data-choice="tsa_exit" aria-pressed="false" role="button" tabindex="0">TSA Exit (+$50)</div>
-        <div class="mg-btn" data-choice="baggage_claim" aria-pressed="false" role="button" tabindex="0">Baggage Claim (+$50)</div>
-        <div class="mg-btn active" data-choice="none" aria-pressed="true" role="button" tabindex="0">No Meet & Greet</div>
+        <button type="button" class="mg-btn" data-choice="tsa_exit" aria-pressed="false">TSA Exit (+$50)</button>
+        <button type="button" class="mg-btn" data-choice="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</button>
+        <button type="button" class="mg-btn active" data-choice="none" aria-pressed="true">No Meet & Greet</button>
       </div>
       <div class="mg-note">
         Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.
@@ -69,11 +59,9 @@
 
     <!-- Special Instructions -->
     <label for="specialInstructions">Special Instructions:</label>
-    <textarea id="specialInstructions"
-      placeholder="Add any important details for your driver (e.g., gate code, luggage, pickup location)"
-      style="display:block;width:100%;height:60px;padding:12px 10px; background:#1a1a1a;color:#fff; border:1px solid #444;border-radius:10px;font-size:14px;"></textarea>
+    <textarea id="specialInstructions" placeholder="Add any important details for your driver (e.g., gate code, luggage, pickup location)"></textarea>
 
-    <!-- Flight (comercial) -->
+    <!-- Flight (commercial) -->
     <div id="flightContainer" style="display:none;">
       <label for="flightNumber">Flight Number:</label>
       <input id="flightNumber" placeholder="e.g. DL1234" autocapitalize="characters" />
@@ -86,7 +74,7 @@
       <div id="originHelp" class="hint" style="display:none"></div>
     </div>
 
-    <!-- Resultado del backend de vuelo -->
+    <!-- Backend flight result -->
     <div id="backendResult" class="hint" style="display:block; margin-top:6px;"></div>
 
     <!-- Private Jet (FBO) -->
@@ -109,18 +97,27 @@
       </div>
       <div>
         <label for="time">Time:</label>
-        <!-- UNA sola caja con datalist (scroll de 15 min) -->
-        <input id="time"
-               class="time-input"
-               type="text"
-               placeholder="hh:mm AM/PM"
-               list="timeOptions"
-               autocomplete="off"
-               aria-describedby="timeHelp" />
-        <datalist id="timeOptions"></datalist>
+        <!-- Time combo (un solo recuadro con scroll interno) -->
+        <div class="time-combo" id="timeCombo">
+          <input
+            id="time"
+            type="text"
+            class="time-input time-display"
+            placeholder="hh:mm AM/PM"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="timePanel"
+            readonly
+          />
+          <button type="button" class="time-caret" aria-label="Open time options"></button>
+
+          <div id="timePanel" class="time-panel" role="listbox" aria-labelledby="time">
+            <!-- Opciones se inyectan por JS -->
+          </div>
+        </div>
+
         <div id="timeHelp" class="helper">Examples: 7:00 AM · 10:30 PM</div>
         <div id="timeError" class="field-error" role="alert" aria-live="polite" style="display:none;"></div>
-        <!-- fin selector -->
       </div>
     </div>
 
@@ -207,19 +204,19 @@
       </div>
     </div>
 
-    <!-- Botones -->
+    <!-- Action buttons -->
     <button id="calculate" disabled>Calculate Price</button>
 
-    <!-- Mapa -->
+    <!-- Map -->
     <div id="map"></div>
 
     <!-- PAY NOW -->
     <button id="pay" disabled style="display:none">PAY NOW</button>
 
-    <!-- Resumen -->
+    <!-- Summary -->
     <div id="info"></div>
 
-    <!-- Reschedule (CTA estilo botón) -->
+    <!-- Reschedule CTA -->
     <div class="cta-wrap">
       <a class="cta-reschedule" href="/app/reschedule.html" aria-label="Open the reschedule page">
         Need to reschedule? <span class="arrow" aria-hidden="true"></span>
@@ -243,7 +240,7 @@
     </div>
   </main>
 
-  <!-- Modal Términos -->
+  <!-- Terms Modal -->
   <div class="modal-backdrop" id="termsModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-labelledby="termsTitle" aria-modal="true">
       <div class="modal-header">
@@ -253,19 +250,19 @@
       <div class="modal-body" style="line-height:1.6">
         <h3 style="margin:0 0 8px;color:#ffddae">Terms and Conditions</h3>
         <div style="opacity:.85;margin-bottom:8px">Bonanza Transportation — Last updated: 2024</div>
+        <p>Full terms text goes here…</p>
       </div>
     </div>
   </div>
 
-  <!-- JS propios (orden recomendado) -->
+  <!-- JS -->
   <script defer src="/app/scripts/core.js"></script>
   <script defer src="/app/scripts/validators.js"></script>
   <script defer src="/app/scripts/maps.js"></script>
   <script defer src="/app/scripts/booking.js"></script>
   <script defer src="/app/scripts/stripe.js"></script>
 
-  <!-- Terceros -->
-  <!-- Usamos 'defer' y callback=initMap para evitar "initMap is not a function" -->
+  <!-- Third-party -->
   <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"></script>
   <script src="https://js.stripe.com/v3"></script>
 </body>
