@@ -64,22 +64,42 @@
       caret-color: var(--copper-3);
     }
 
-    /* Quitamos highlight rojo nativo en inválidos (controlamos por JS) */
+    /* ===== Eliminar por completo bordes rojos nativos ===== */
     input:invalid, textarea:invalid, select:invalid{
       box-shadow:none !important;
       outline:0 !important;
       border-color: rgba(168,116,79,.45) !important;
       background: var(--field-2) !important;
     }
-    input:focus:invalid, textarea:focus:invalid, select:focus:invalid{
-      border-color: var(--copper) !important;
-      box-shadow: 0 0 0 3px rgba(168,116,79,.26) !important;
-      background: var(--field) !important;
+    /* Navegadores que implementan :user-invalid */
+    @supports selector(:user-invalid){
+      input:user-invalid, textarea:user-invalid, select:user-invalid{
+        box-shadow:none !important;
+        outline:0 !important;
+        border-color: rgba(168,116,79,.45) !important;
+        background: var(--field-2) !important;
+      }
+      input:user-invalid:focus, textarea:user-invalid:focus, select:user-invalid:focus{
+        border-color: var(--copper) !important;
+        box-shadow: 0 0 0 3px rgba(168,116,79,.26) !important;
+        background: var(--field) !important;
+      }
     }
-    :-moz-ui-invalid{box-shadow:none !important;border-color: rgba(168,116,79,.45) !important;background: var(--field-2) !important;}
+    /* Firefox */
+    :-moz-ui-invalid{
+      box-shadow:none !important;
+      outline:0 !important;
+      border-color: rgba(168,116,79,.45) !important;
+      background: var(--field-2) !important;
+    }
+    /* Chrome/Safari cuando el campo inválido está autofill */
+    input:-webkit-autofill:invalid{
+      -webkit-box-shadow:0 0 0 1000px var(--field-2) inset !important;
+      border-color: rgba(168,116,79,.45) !important;
+    }
 
-    /* Resaltado por JS cuando es inválido */
-    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important}
+    /* Cualquier clase .invalid NO cambia bordes (solo mensajes) */
+    .invalid{ box-shadow:none !important; border-color:rgba(168,116,79,.45)!important }
 
     /* Dos columnas fecha/hora */
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -336,16 +356,16 @@
       function evalPhone(){
         const v = phoneEl.value;
         const touchedOrFilled = state.phoneTouched || v.trim().length>0;
-        if(!touchedOrFilled){ hideHint(phoneHelp); phoneEl.classList.remove('invalid'); return; }
-        if(isValidUSPhone(v)){ showHint(phoneHelp, 'ok', 'Valid US phone'); phoneEl.classList.remove('invalid'); }
-        else{ showHint(phoneHelp, 'err', 'Enter a valid US number'); phoneEl.classList.add('invalid'); }
+        if(!touchedOrFilled){ hideHint(phoneHelp); return; }
+        if(isValidUSPhone(v)){ showHint(phoneHelp, 'ok', 'Valid US phone'); }
+        else{ showHint(phoneHelp, 'err', 'Enter a valid US number'); }
       }
       function evalEmail(){
         const v = emailEl.value;
         const touchedOrFilled = state.emailTouched || v.trim().length>0;
-        if(!touchedOrFilled){ hideHint(emailHelp); emailEl.classList.remove('invalid'); return; }
-        if(isValidEmail(v)){ showHint(emailHelp, 'ok', 'Valid email'); emailEl.classList.remove('invalid'); }
-        else{ showHint(emailHelp, 'err', 'Please enter a valid email (e.g., name@domain.com)'); emailEl.classList.add('invalid'); }
+        if(!touchedOrFilled){ hideHint(emailHelp); return; }
+        if(isValidEmail(v)){ showHint(emailHelp, 'ok', 'Valid email'); }
+        else{ showHint(emailHelp, 'err', 'Please enter a valid email (e.g., name@domain.com)'); }
       }
 
       phoneEl?.addEventListener('blur',  ()=>{ state.phoneTouched=true; evalPhone(); });
