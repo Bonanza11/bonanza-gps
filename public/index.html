@@ -7,9 +7,7 @@
   <link rel="icon" href="/images/bonanza-logo.png" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#b66a2c" />
-
-  <!-- Hoja principal (cache-busting para forzar actualización) -->
-  <link rel="stylesheet" href="/app/styles/app.css?v=10" />
+  <link rel="stylesheet" href="/app/styles/app.css" />
 </head>
 <body>
   <header>
@@ -137,17 +135,15 @@
   </main>
 
   <!-- ====== Scripts (ORDEN OBLIGATORIO) ====== -->
-  <script src="/app/scripts/validators.js" defer></script>
-  <script src="/app/scripts/core.js" defer></script>
-  <script src="/app/scripts/booking.js" defer></script>
-  <script src="/app/scripts/maps.js" defer></script>
-
-  <!-- Stripe -->
-  <script src="https://js.stripe.com/v3" defer></script>
+  <script src="/app/scripts/validators.js"></script>
+  <script src="/app/scripts/core.js"></script>
+  <script src="/app/scripts/booking.js"></script>
+  <script src="/app/scripts/maps.js"></script>
+  <script src="https://js.stripe.com/v3"></script>
   <script>window.STRIPE_PK="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";</script>
-  <script src="/app/scripts/stripe.js" defer></script>
+  <script src="/app/scripts/stripe.js"></script>
 
-  <!-- Visual del vehículo (pequeño helper; no choca con booking.js) -->
+  <!-- Visual del vehículo -->
   <script>
     (function vehicleVisualInline(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
@@ -181,7 +177,7 @@
     })();
   </script>
 
-  <!-- Google Maps (con Places) – maps.js expone window.initMap -->
+  <!-- Google Maps (con Places) -->
   <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
