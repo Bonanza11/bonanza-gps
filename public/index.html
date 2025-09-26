@@ -8,8 +8,8 @@
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#b66a2c" />
 
-  <!-- CSS modular -->
-  <link rel="stylesheet" href="/app/styles/app.css?v=5">
+  <!-- Estilos globales -->
+  <link rel="stylesheet" href="/app/styles/app.css">
 </head>
 <body>
   <header>
@@ -17,7 +17,7 @@
   </header>
 
   <main>
-    <!-- Customer -->
+    <!-- Datos del cliente -->
     <label for="fullname">Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
 
@@ -29,14 +29,14 @@
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
     <div id="emailHelp" class="hint"></div>
 
-    <!-- Addresses -->
+    <!-- Direcciones -->
     <label for="pickup">Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
 
     <label for="dropoff">Drop-off Address</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
 
-    <!-- Meet & Greet -->
+    <!-- Meet & Greet (SLC) -->
     <div class="mg-card" id="meetGreetCard" aria-label="Meet & Greet options">
       <h3>Meet & Greet — SLC Only</h3>
       <p>Choose where you want your driver to meet you inside the terminal.</p>
@@ -48,11 +48,11 @@
       <div class="mg-note">Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.</div>
     </div>
 
-    <!-- Notes -->
+    <!-- Notas -->
     <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <!-- Date/Time -->
+    <!-- Fecha/Hora -->
     <div class="grid2" style="margin-top:10px">
       <div>
         <label for="date">Date</label>
@@ -64,20 +64,20 @@
       </div>
     </div>
 
-    <!-- Vehicle selector -->
+    <!-- Selector de vehículo -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Vehicle visual -->
+    <!-- Visual -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Luggage accordion -->
+    <!-- Acordeón equipaje -->
     <div class="luggage-accordion" id="luggageAccordion">
       <div class="luggage-summary">
         <span class="luggage-title">Luggage Guidelines</span>
@@ -115,34 +115,67 @@
       </div>
     </div>
 
-    <!-- Terms -->
+    <!-- Términos -->
     <div class="terms-box" id="termsBox">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
           <div class="accept-dot"></div>
         </div>
-        <div class="accept-label">I accept the <a href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a></div>
+        <div class="accept-label">I accept the Terms &amp; Conditions</div>
       </div>
     </div>
 
-    <!-- Actions -->
+    <!-- Acciones -->
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <button id="pay" disabled style="display:none">PAY NOW</button>
 
-    <!-- Trip summary -->
+    <!-- Resumen del viaje -->
     <div id="info"></div>
   </main>
 
-  <!-- ===== SCRIPTS (orden obligatorio) ===== -->
+  <!-- ====== Scripts (ORDEN OBLIGATORIO) ====== -->
   <script src="/app/scripts/validators.js"></script>
   <script src="/app/scripts/core.js"></script>
   <script src="/app/scripts/booking.js"></script>
   <script src="/app/scripts/maps.js"></script>
-
   <script src="https://js.stripe.com/v3"></script>
   <script>window.STRIPE_PK="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";</script>
   <script src="/app/scripts/stripe.js"></script>
+
+  <!-- Visual vehículo -->
+  <script>
+    (function vehicleVisualInline(){
+      const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
+      window.__vehicleType=window.__vehicleType||"suv";
+      const btns=document.querySelectorAll('.veh-btn');
+      const img=document.getElementById('vehImg');
+      const cap=document.getElementById('vehCap');
+
+      function applyVisual(){
+        if(!img||!cap) return;
+        if(window.__vehicleType==='van'){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
+        else{ img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
+      }
+      function setActive(t){
+        window.__vehicleType=(t==='van')?'van':'suv';
+        btns.forEach(b=>b.classList.toggle('active', b.dataset.type===window.__vehicleType));
+        applyVisual();
+        if(typeof window.recalcFromCache==='function') window.recalcFromCache();
+      }
+      btns.forEach(b=>b.addEventListener('click',()=>setActive(b.dataset.type||'suv')));
+      if(img){ img.onerror=()=>{ img.removeAttribute('src'); img.alt=window.__vehicleType.toUpperCase();
+        img.style.width='120px'; img.style.height='80px'; img.style.background='#1a1a1a'; img.style.border='1px solid #444'; img.style.borderRadius='8px';};}
+      setActive(window.__vehicleType);
+    })();
+
+    // Acordeón equipaje
+    (function(){
+      const acc=document.getElementById('luggageAccordion');
+      const sum=acc?.querySelector('.luggage-summary');
+      sum?.addEventListener('click',()=>acc.classList.toggle('open'));
+    })();
+  </script>
 
   <!-- Google Maps (con Places) -->
   <script async
