@@ -1,15 +1,19 @@
+/* =========================================================================
+   /public/app/styles/app.css — Bonanza UI (modo oscuro, sin bordes rojos)
+   ========================================================================= */
+
 :root{
   --copper:#a8744f;         /* cobre principal */
   --copper-2:#c89366;       /* cobre claro para acentos */
-  --panel:#0e0f11;          /* fondo de paneles */
+  --panel:#0e0f11;          /* fondo panel */
   --panel-2:#101214;
   --text:#e9d5c1;           /* texto claro cálido */
   --muted:#caa784;          /* texto secundario */
   --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b;
-  --ring:0 0 0 3px rgba(168,116,79,.22); /* halo de foco cobre */
+  --ring:0 0 0 3px rgba(168,116,79,.22); /* halo cobre */
 }
 
-/* Reset básico */
+/* Reset */
 *{ box-sizing:border-box }
 html,body{
   margin:0; padding:0;
@@ -17,23 +21,18 @@ html,body{
     radial-gradient(1200px 800px at 110% -10%, rgba(168,116,79,.06), transparent 60%),
     radial-gradient(900px 600px at -10% 110%, rgba(168,116,79,.05), transparent 55%),
     #000;
-  color:var(--copper);
+  color:var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue";
   -webkit-font-smoothing: antialiased;
 }
 
 /* Header / Logo */
 header{ display:flex; justify-content:center; align-items:center; padding:20px 16px }
-.logo-wrap{ position:relative }
 .logo{
   width:180px; height:180px; border-radius:50%; border:2px solid var(--copper);
   object-fit:cover; display:block; position:relative;
   box-shadow:0 0 2px rgba(192,139,92,.35) inset, 0 0 8px rgba(0,0,0,.6), 0 0 10px rgba(192,139,92,.45);
   filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
-}
-.logo-wrap::after{
-  content:""; position:absolute; inset:-8px; border-radius:50%;
-  box-shadow:0 0 22px 10px rgba(192,139,92,.35); pointer-events:none;
 }
 
 /* Layout principal */
@@ -52,62 +51,126 @@ input, select, textarea{
 textarea{ height:60px; resize:vertical; min-height:60px }
 ::placeholder{ color:#cba686; opacity:.75 }
 
-/* Efecto de foco cobre */
+/* Foco cobre */
 input:focus, select:focus, textarea:focus{
   border-color:var(--copper);
   box-shadow: var(--ring);
   background:#14171a;
 }
 
-/* Quitar borde rojo nativo */
-input:invalid,
-textarea:invalid,
-select:invalid,
-input:user-invalid,
-textarea:user-invalid,
-select:user-invalid,
-:-moz-ui-invalid {
+/* ---------- Quitar por completo bordes rojos nativos ---------- */
+input:invalid, textarea:invalid, select:invalid{
   box-shadow:none !important;
-  border-color:rgba(168,116,79,.35) !important;
-  outline:none !important;
+  outline:0 !important;
+  border-color: rgba(168,116,79,.35) !important;
+  background:#121416 !important;
+}
+@supports selector(:user-invalid){
+  input:user-invalid, textarea:user-invalid, select:user-invalid{
+    box-shadow:none !important;
+    outline:0 !important;
+    border-color: rgba(168,116,79,.35) !important;
+    background:#121416 !important;
+  }
+}
+:-moz-ui-invalid{
+  box-shadow:none !important;
+  outline:0 !important;
+  border-color: rgba(168,116,79,.35) !important;
+  background:#121416 !important;
 }
 
-/* Clase invalid controlada por JS (sin borde rojo) */
-.invalid{
-  border-color: inherit !important;
-  box-shadow: none !important;
-}
+/* La clase .invalid NO pinta bordes (solo sirve como flag JS) */
+.invalid{ border-color:inherit !important; box-shadow:none !important }
 
-/* Autofill oscuro */
+/* Autofill oscuro (Chrome/Safari) */
 input:-webkit-autofill,
-input:-webkit-autofill:focus{
-  -webkit-text-fill-color:#ffddae;
+textarea:-webkit-autofill,
+select:-webkit-autofill{
+  -webkit-text-fill-color:#ffddae !important;
   transition: background-color 50000s ease-in-out 0s;
-  box-shadow: 0 0 0 1000px #121416 inset, var(--ring);
+  box-shadow: 0 0 0 1000px #121416 inset !important;
   border:1px solid rgba(168,116,79,.35);
+  caret-color:var(--copper);
 }
 
 /* Date / Time */
-#date, .time-input{
+#date, #time{
   height:54px; font-size:16px; border-radius:12px;
   background:#16181b; color:#ffedd2;
   border:1px solid rgba(168,116,79,.45);
 }
-#date:focus, .time-input:focus{
-  outline:none; border-color:var(--copper); box-shadow:var(--ring)
-}
+#date:focus, #time:focus{ outline:none; border-color:var(--copper); box-shadow:var(--ring) }
 
-/* SIN borde rojo en hora inválida */
-.time-input.field-invalid{
-  border-color: inherit !important;
-  box-shadow: none !important;
-}
-
-/* Hints / mensajes */
-.hint{ font-size:.85rem; margin-top:6px }
+/* Hints (mensajes debajo de inputs) */
+.hint{ display:none; font-size:.85rem; margin-top:6px }
+.hint.ok{ color:var(--ok) }
 .hint.warn{ color:var(--warn) }
 .hint.err{ color:var(--err) }
-.hint.ok{ color:var(--ok) }
+.hint.show{ display:block }
+
+/* Grid fecha/hora */
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+@media (max-width:520px){ .grid2{ grid-template-columns:1fr } }
+
+/* Selector de vehículo */
+.veh-toggle{ display:flex; gap:8px; margin:10px 0 }
+.veh-btn{
+  flex:1 1 0; background:#141619;
+  border:1px solid rgba(168,116,79,.55); color:var(--copper);
+  padding:12px; border-radius:10px; cursor:pointer; font-weight:700;
+  transition:filter .15s, box-shadow .15s, background .15s, color .15s;
+}
+.veh-btn:hover{ filter:brightness(1.05) }
+.veh-btn.active{
+  background:var(--copper); color:#000; border-color:var(--copper);
+  box-shadow: var(--ring);
+}
+
+/* Visual del vehículo */
+.turntable{ margin:10px 0 6px; display:flex; flex-direction:column; align-items:center }
+.turntable .car{ width:260px; height:auto; filter:drop-shadow(0 12px 18px rgba(0,0,0,.6)) }
+.turntable .platform{
+  width:220px; height:22px; border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.7), rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
+  margin-top:6px;
+}
+.vehicle-caption{ font-weight:700; color:#ffddae; margin-top:6px; letter-spacing:.2px }
+
+/* Meet & Greet */
+.mg-card{
+  display:none; margin:16px 0; border-radius:14px;
+  border:1px solid rgba(168,116,79,.45);
+  background:linear-gradient(180deg,#121212,#0b0b0b);
+  box-shadow:0 12px 24px rgba(0,0,0,.35); padding:16px;
+}
+.mg-card h3{ margin:0 0 4px; color:#ffddae; font-size:1.1rem }
+.mg-card p{ margin:0 0 12px; font-size:.9rem; opacity:.85 }
+.mg-options{ display:flex; gap:8px; margin-bottom:8px }
+.mg-btn{
+  flex:1 1 0; background:#1a1a1a; border:1px solid rgba(168,116,79,.55);
+  color:var(--copper); padding:10px; border-radius:8px; cursor:pointer; font-weight:700; text-align:center;
+}
+.mg-btn.active{ background:var(--copper); color:#000; border-color:var(--copper) }
+.mg-note{ font-size:.85rem; color:#aa8b72 }
+
+/* Acordeón equipaje */
+.luggage-accordion{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
+.luggage-summary{ display:flex; align-items:center; gap:10px; cursor:pointer }
+.luggage-title{ font-weight:800; color:var(--copper) }
+.luggage-chev{ width:10px; height:10px; border-right:2px solid var(--copper); border-bottom:2px solid var(--copper); transform:rotate(-45deg); transition:.2s; margin-left:auto }
+.luggage-accordion.open .luggage-chev{ transform:rotate(45deg) }
+.luggage-body{ display:none; margin-top:10px; color:#e9d5c1; font-size:.95rem; line-height:1.55 }
+.luggage-accordion.open .luggage-body{ display:block }
+
+/* Terms */
+.terms-box{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
+.terms-summary{ display:flex; align-items:center; gap:10px; cursor:pointer }
+.accept-pill{ min-width:28px; height:20px; border-radius:999px; border:1px solid #666; display:flex; align-items:center; padding:0 2px; background:#1a1a1a }
+.accept-dot{ width:14px; height:14px; border-radius:50%; background:#333; transition:.2s; border:1px solid #555 }
+.accept-pill.on{ border-color:var(--ok); background:rgba(23,201,100,.12) }
+.accept-pill.on .accept-dot{ transform:translateX(8px); background:var(--ok); border-color:var(--ok) }
+.accept-label{ font-size:.9rem; color:#ffddae }
 
 /* Botones */
 button{
@@ -122,16 +185,34 @@ button:hover{ filter:saturate(1.06) brightness(1.02) }
 button:active{ transform:translateY(1px) }
 button:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
 
-/* Hard kill final: evita cualquier borde rojo extra */
-html body input:invalid,
-html body textarea:invalid,
-html body select:invalid{
-  box-shadow:none !important;
-  border-color:rgba(168,116,79,.35) !important;
-  outline:none !important;
+/* Mapa */
+#map{
+  height:380px; margin-top:10px; border-radius:12px; overflow:hidden;
+  border:1px solid rgba(168,116,79,.25);
+  box-shadow: 0 8px 24px rgba(0,0,0,.45);
 }
-html body .invalid,
-html body .time-input.field-invalid{
-  border-color:inherit !important;
-  box-shadow:none !important;
+
+/* Resumen del viaje */
+#info{
+  display:none; margin-top:18px; border-radius:16px; padding:18px; color:var(--text);
+  background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  border:1px solid rgba(192,139,92,.28); box-shadow:0 18px 40px rgba(0,0,0,.55);
+  font-size:.95em;
+}
+.kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:10px 0 12px }
+.kpi{ background:#0f1113; border:1px solid rgba(192,139,92,.18); border-radius:12px; padding:12px }
+.kpi .label{ font-size:.75rem; opacity:.8; margin-bottom:6px }
+.kpi .value{ font-size:1.35rem; font-weight:800; color:#f0d1ad }
+.kpi .value.price{ color:#ffddae }
+.breakdown{ margin:6px 0 12px }
+.breakdown .row{ display:flex; justify-content:space-between; align-items:center; padding:6px 0 }
+.divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:6px 0 }
+.tax-note{ font-size:13px; color:#c9a97c; font-style:italic; text-align:right; margin-top:4px }
+
+/* Utilidades */
+.hidden{ display:none !important }
+
+/* Responsive */
+@media (max-width:520px){
+  #map{ height:320px }
 }
