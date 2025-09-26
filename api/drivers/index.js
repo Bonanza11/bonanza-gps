@@ -1,6 +1,6 @@
 // /api/drivers/index.js
 // GET: lista | POST: crea | PATCH: actualiza
-import { query } from '../_db.js';
+import { q } from '../_lib/db.js';
 
 export const config = { runtime: 'nodejs' };
 
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     // ---------- GET ----------
     if (req.method === 'GET') {
-      const rows = await query(
+      const { rows } = await q(
         `select
            id::text as id,
            name, email, phone, pay_mode,
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
       notify_email = !!notify_email;
       notify_sms = !!notify_sms;
 
-      const rows = await query(
+      const { rows } = await q(
         `insert into drivers
            (name, email, phone, pay_mode, hourly_rate, per_ride_rate, revenue_share, notify_email, notify_sms)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
@@ -112,7 +112,7 @@ export default async function handler(req, res) {
       if (notify_email !== undefined) notify_email = toBoolOrUndef(notify_email);
       if (notify_sms !== undefined) notify_sms = toBoolOrUndef(notify_sms);
 
-      const rows = await query(
+      const { rows } = await q(
         `update drivers set
            name          = coalesce($2,  name),
            email         = coalesce($3,  email),
