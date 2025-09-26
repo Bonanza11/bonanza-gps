@@ -1,62 +1,75 @@
-/* ================================
-   Legal / Info Pages (Terms, Privacy, etc.)
-   ================================ */
+<!doctype html>
+<html lang="en" class="legal">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terms & Conditions – Bonanza Transportation</title>
+  <link rel="icon" href="/images/bonanza-logo.png" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#b66a2c" />
 
-/* Fondo siempre oscuro */
-body.legal {
-  background:#000;
-}
+  <!-- Hoja de estilos principal con bloque legal incluido -->
+  <link rel="stylesheet" href="/app/styles/app.css?v=10" />
+</head>
+<body class="legal">
+  <header>
+    <a href="/index.html" class="back-link">← Back to Booking</a>
+  </header>
 
-/* Título principal grande y oscuro */
-body.legal h1 {
-  margin:14px 0 8px;
-  font-size:2rem;
-  line-height:1.2;
-  color:var(--copper-2);        /* cobre oscuro */
-}
+  <main>
+    <h1>Terms & Conditions</h1>
+    <hr class="divider">
 
-/* Subtítulos tipo "Definitions" */
-body.legal h3 {
-  margin:18px 0 10px;
-  font-size:1.15rem;
-  color:var(--copper);          /* un poco más oscuro que el texto */
-  letter-spacing:.3px;
-}
+    <h3>1. General Agreement</h3>
+    <p>
+      By booking transportation services with <strong>Bonanza Transportation</strong>, 
+      you agree to abide by these Terms & Conditions, including payment, cancellation, 
+      and service policies.
+    </p>
 
-/* Texto de cuerpo más claro */
-body.legal p,
-body.legal li {
-  color:#ffe8cc;                /* crema claro */
-  line-height:1.58;
-  font-size:1rem;
-}
-body.legal ul { margin:6px 0 14px 20px; }
+    <h3>2. Reservations</h3>
+    <p>
+      All reservations must be made at least <strong>24 hours in advance</strong>. 
+      Confirmation will be sent to the email provided at booking.
+    </p>
 
-/* Negritas dentro del cuerpo resaltadas */
-body.legal strong {
-  color:#ffddae;
-}
+    <h3>3. Cancellations</h3>
+    <p>
+      Cancellations must be requested at least <strong>24 hours before</strong> 
+      the scheduled pick-up time to avoid full charges. 
+    </p>
 
-/* Divider cobre sutil */
-body.legal .divider {
-  height:1px;
-  border:0;
-  margin:14px 0 18px;
-  background:linear-gradient(90deg,transparent,rgba(192,139,92,.5),transparent);
-}
+    <h3>4. Luggage & Personal Items</h3>
+    <p>
+      Clients are responsible for ensuring their luggage complies with 
+      the <a href="/index.html#luggageAccordion">Bonanza Transportation guidelines</a>. 
+      Bonanza is not liable for lost or damaged personal items.
+    </p>
 
-/* Link "Back to booking" */
-body.legal .back-link {
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:8px 10px;
-  border:1px solid rgba(168,116,79,.45);
-  border-radius:8px;
-  color:#ffddae;
-  text-decoration:none;
-  background:#0e0e0e;
-}
-body.legal .back-link:hover {
-  filter:brightness(1.06);
-}
+    <h3>5. Liability</h3>
+    <p>
+      Bonanza Transportation is not responsible for delays caused by 
+      weather, traffic, or circumstances beyond our control.
+    </p>
+
+    <h3>6. Payment</h3>
+    <p>
+      All payments are processed securely through <strong>Stripe</strong>. 
+      Prices include applicable taxes. Gratuity is optional unless otherwise stated.
+    </p>
+
+    <h3>7. Conduct</h3>
+    <p>
+      Bonanza Transportation reserves the right to refuse service 
+      to any passenger who poses a safety risk to the driver or others.
+    </p>
+
+    <hr class="divider">
+
+    <p>
+      For questions, please contact us at: 
+      <a href="mailto:info@bonanzatransportation.com">info@bonanzatransportation.com</a>
+    </p>
+  </main>
+</body>
+</html>
