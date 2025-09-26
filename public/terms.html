@@ -5,23 +5,97 @@
   <title>Terms & Conditions — Bonanza Transportation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/images/bonanza-logo.png">
-  <link rel="stylesheet" href="/app/styles/app.css">
-  <style>main{max-width:860px;margin:32px auto;padding:0 16px}</style>
+  <!-- Tu hoja global -->
+  <link rel="stylesheet" href="/app/styles/app.css?v=5">
+
+  <!-- Overrides específicos para esta página -->
+  <style>
+    :root{
+      /* tonos ya usados en tu app */
+      --copper:#a8744f;
+      --copper-2:#c08b5c;
+      --cream:#ffddae;
+      --cream-2:#ffe8cc;   /* texto de cuerpo más claro */
+      --muted:#caa784;
+    }
+    body{ background:#000; }
+    main{ max-width:860px; margin:32px auto 24px; padding:0 16px; }
+
+    /* Cabecera */
+    .back-link{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:8px 10px; border:1px solid rgba(168,116,79,.45); border-radius:8px;
+      color:var(--cream); text-decoration:none; background:#0e0e0e;
+    }
+    .back-link:hover{ filter:brightness(1.06); }
+
+    /* Título principal oscuro */
+    h1{
+      margin:14px 0 4px;
+      font-size:2rem; line-height:1.15;
+      color:var(--copper-2);              /* más oscuro */
+      text-shadow:0 0 0 transparent;
+    }
+
+    /* Subtítulo / meta */
+    .meta{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:0.98rem;
+    }
+    .meta strong{ color:var(--cream); font-weight:700; }
+
+    /* Divisor finito en cobre */
+    .divider{
+      height:1px; border:0; margin:14px 0 18px;
+      background:linear-gradient(90deg,transparent,rgba(192,139,92,.5),transparent);
+    }
+
+    /* Encabezados de sección: más oscuros */
+    h3{
+      margin:18px 0 8px;
+      color:var(--copper);                /* oscuro */
+      font-size:1.12rem;
+      letter-spacing:.2px;
+    }
+
+    /* Texto de cuerpo: más claro */
+    p, li{ color:var(--cream-2); }
+    p{ margin:8px 0 10px; line-height:1.58; }
+    ul{ margin:6px 0 14px 18px; }
+    li{ margin:6px 0; }
+
+    /* Negritas dentro del cuerpo con leve acento */
+    strong{ color:#ffe0bd; }
+
+    /* Links dentro del texto */
+    a{ color:#f0c69a; text-decoration:underline dotted rgba(168,116,79,.55); }
+    a:hover{ color:#ffd4ac; }
+
+    /* Logo */
+    .logo{ width:120px; height:120px; border-radius:50%; border:2px solid var(--copper); }
+  </style>
 </head>
 <body>
-  <header style="display:flex;justify-content:center;padding:20px 16px">
-    <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation" style="width:120px;height:120px;border-radius:50%">
-  </header>
-
   <main>
-    <p><a class="hq-link" href="/" style="text-decoration:none">&larr; Back to booking</a></p>
+    <a class="back-link" href="/index.html">← Back to booking</a>
 
-    <h1 style="color:#ffddae;margin:0 0 6px">Terms &amp; Conditions</h1>
-    <p><strong>Bonanza Transportation</strong><br>Last updated: <em>September 26, 2025</em></p>
+    <header style="display:flex;justify-content:center;padding:18px 0 6px">
+      <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation">
+    </header>
+
+    <h1>Terms & Conditions</h1>
+    <p class="meta">
+      <strong>Bonanza Transportation</strong><br>
+      Last updated: <em>September 26, 2025</em>
+    </p>
     <hr class="divider">
 
     <h3>1. Introduction & Acceptance</h3>
-    <p>By booking, hiring, or using Bonanza Transportation, you agree to these Terms &amp; Conditions. We may update them at any time; the latest version applies immediately and will be available on our website.</p>
+    <p>
+      By booking, hiring, or using Bonanza Transportation, you agree to these Terms & Conditions.
+      We may update them at any time; the latest version applies immediately and will be available on our website.
+    </p>
 
     <h3>2. Definitions</h3>
     <ul>
@@ -55,28 +129,50 @@
     </ul>
 
     <h3>6. Flight Delays</h3>
-    <p>We monitor flights and will adjust pickup time when possible. If a delay is excessive and we cannot wait, we may reschedule subject to availability.</p>
+    <p>
+      We monitor flights to adjust pickup time when possible. If a delay is excessive and we cannot wait,
+      we may reschedule subject to availability.
+    </p>
 
     <h3>7. Luggage & Belongings</h3>
-    <p>Client must inform luggage quantity/size at booking. Bonanza is not responsible for items left in the vehicle.</p>
+    <p>
+      Client must inform luggage quantity/size at booking. Bonanza is not responsible for items left in the vehicle.
+    </p>
 
     <h3>8. Client Conduct</h3>
-    <p>No smoking, alcohol, or illegal substances in vehicles. Respect toward driver and vehicle is required. Service may be denied for aggressive, unsafe, or unlawful behavior.</p>
+    <p>
+      No smoking, alcohol, or illegal substances in vehicles. Respect toward driver and vehicle is required.
+      Service may be denied for aggressive, unsafe, or unlawful behavior.
+    </p>
 
     <h3>9. Limitation of Liability</h3>
-    <p>Bonanza is not liable for delays, losses, or damages caused by events beyond our control (traffic, weather, accidents, force majeure) nor for indirect or consequential damages or lost profits.</p>
+    <p>
+      Bonanza is not liable for delays, losses, or damages caused by events beyond our control
+      (traffic, weather, accidents, force majeure) nor for indirect or consequential damages or lost profits.
+    </p>
 
     <h3>10. Insurance</h3>
-    <p>All services carry commercial insurance coverage as required by Utah state law.</p>
+    <p>
+      All services carry commercial insurance coverage as required by Utah state law.
+    </p>
 
     <h3>11. Privacy</h3>
-    <p>Personal data is handled confidentially and used only to provide the service, per our Privacy Policy.</p>
+    <p>
+      Personal data is handled confidentially and used only to provide the service, per our Privacy Policy.
+    </p>
 
     <h3>12. Governing Law</h3>
-    <p>These terms are governed by the laws of the State of Utah, USA. Any dispute will be submitted to the competent courts of Utah.</p>
+    <p>
+      These terms are governed by the laws of the State of Utah, USA. Any dispute will be submitted to the
+      competent courts of Utah.
+    </p>
 
     <h3>Contact</h3>
-    <p>Phone: (786) 683-5128<br>Email: bonanzatransportation1@outlook.com<br>Park City, Utah — USA</p>
+    <p>
+      Phone: (786) 683-5128<br>
+      Email: bonanzatransportation1@outlook.com<br>
+      Park City, Utah — USA
+    </p>
   </main>
 </body>
 </html>
