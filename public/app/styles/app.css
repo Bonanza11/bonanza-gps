@@ -105,8 +105,11 @@ button:active:not([disabled]){ transform:translateY(1px) }
 
 /* Map container */
 #map{
-  width:100%; min-height:340px; border:1px solid var(--border);
-  border-radius:12px; background:#0b1016;
+  width:100%;
+  min-height:340px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0b1016;
 }
 
 /* Info box (resumen) */
@@ -114,23 +117,9 @@ button:active:not([disabled]){ transform:translateY(1px) }
   border:1px solid var(--border); border-radius:12px; background:var(--panel);
   padding:10px 12px; min-height:120px; color:#d7e3f0;
 }
+
 /* --- Google Maps / Places hardening --- */
-
-/* Asegura que el dropdown del Autocomplete esté siempre arriba */
-.pac-container {
-  z-index: 10000 !important;
-}
-
-/* Evita que estilos globales alteren los tiles del mapa */
-#map img { 
-  max-width: none !important; 
-}
-
-/* Si usas algún reset agresivo, esto ayuda a que el mapa no colapse */
-#map {
-  width: 100%;
-  min-height: 340px;    /* ya lo tienes, perfecto */
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #0b1016;
-}
+/* Dropdown de Places por encima de todo */
+.pac-container { z-index: 10000 !important; }
+/* Evitar que resets afecten los tiles del mapa */
+#map img { max-width: none !important; }
