@@ -1,55 +1,57 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bonanza Admin</title>
   <link rel="icon" href="/images/bonanza-logo.png">
+  <!-- estilos base del panel -->
+  <link rel="stylesheet" href="/public/admin/css/admin.css">
+
   <style>
+    /* Afinaciones mínimas locales */
     :root{
-      --bg:#0b0d12; --panel:#0f131a; --text:#e5e7eb; --muted:#9ca3af;
-      --copper:#a8744f; --border:#1f2937; --ok:#22c55e; --err:#ef4444;
-      --warn:#f59e0b
+      --bg:#0b0f14; --panel:#0e141b; --text:#e7edf5; --muted:#9fb0c3;
+      --border:#1f2a36; --accent:#77c7ff; --danger:#ff6b6b; --ok:#27d17c; --warn:#facc15;
     }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
-      font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif}
-    header.topbar{display:flex;align-items:center;justify-content:space-between;
-      padding:10px 14px;border-bottom:1px solid var(--border);background:#0d1117;position:sticky;top:0;z-index:10}
+    body{background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0f141b,#0b1016)}
     .brand{font-weight:800;letter-spacing:.2px}
-    .badge{padding:3px 8px;border:1px solid var(--border);border-radius:999px;font-size:12px;margin-left:6px}
-    .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;opacity:.8}
-    .actions{display:flex;align-items:center;gap:8px}
-    .link{background:#131a23;border:1px solid var(--border);color:#cbd5e1;border-radius:8px;padding:8px 10px;cursor:pointer}
-    .tabs{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border);background:#0d1117;position:sticky;top:50px;z-index:9}
-    .tabs button{background:#121826;border:1px solid var(--border);color:#cbd5e1;border-radius:8px;padding:8px 10px;cursor:pointer}
-    .tabs button.active{background:var(--copper);border-color:var(--copper);color:#000;font-weight:700}
-    main{padding:12px}
-    .tab{display:none} .tab.active{display:block}
-    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);
-      border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px}
-    .toolbar .spacer{flex:1}
-    label.inline{display:flex;align-items:center;gap:6px;background:#0c1118;border:1px solid var(--border);
-      border-radius:8px;padding:6px 8px}
-    .toolbar input,.toolbar select{height:32px;border:0;outline:0;background:transparent;color:#e5e7eb}
-    .tableWrap{overflow:auto;border:1px solid var(--border);border-radius:12px}
-    table{width:100%;border-collapse:collapse;background:var(--panel)}
-    th,td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}
-    th{position:sticky;top:0;background:#0f1520;text-align:left}
-    .right{text-align:right}.small{font-size:12px;color:var(--muted)} .mono.id{font-family:ui-monospace,Menlo,monospace}
-    .status{font-weight:700}.status.pending{color:#fbbf24}.status.assigned{color:#22c55e}
-    .status.in_progress{color:#60a5fa}.status.done{color:#a3e635}.status.canceled{color:#ef4444}
-    .secondary{background:#0f1520;border:1px solid var(--border);color:#cbd5e1;border-radius:8px;padding:6px 8px;cursor:pointer}
-    .toast{position:fixed;right:14px;bottom:14px;background:#0d1117;border:1px solid var(--border);
-      border-left:4px solid var(--err);color:#e5e7eb;border-radius:10px;padding:10px 12px;max-width:420px;
-      box-shadow:0 10px 26px rgba(0,0,0,.35);display:none}
+    .badge{border:1px solid var(--border);padding:3px 8px;border-radius:999px;margin-right:8px;background:#0e141b}
+    .link{border:1px solid var(--border);background:#0e141b;color:var(--text);padding:6px 10px;border-radius:8px;cursor:pointer}
+    .tabs{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+    .tabs button{background:#0e141b;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
+    .tabs button.active{border-color:#2a3a4c; box-shadow:0 0 0 2px #203042 inset; color:#bfe4ff}
+    main{padding:14px}
+    .tab{display:none}
+    .tab.active{display:block}
+    .toolbar{display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--border);padding:10px;border-radius:12px;margin-bottom:10px}
+    .toolbar .inline{display:flex;align-items:center;gap:6px}
+    .toolbar input,.toolbar select{height:34px;border-radius:8px;border:1px solid var(--border);background:#0a0f14;color:var(--text);padding:6px 8px}
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    th,td{padding:10px;border-bottom:1px solid var(--border);font-size:14px}
+    th{background:#0c1219;color:#bcd0e2;text-align:left}
+    .right{text-align:right}
+    .small{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace,Menlo,monospace}
+    .status{font-weight:700}
+    .status.pending{color:var(--warn)}
+    .status.assigned{color:var(--ok)}
+    .status.in_progress{color:#60a5fa}
+    .status.done{color:#a3e635}
+    .status.canceled{color:#ff8484}
+    .btn{border:1px solid var(--border);background:#0f151b;color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
+    .btn.secondary{background:#0a0f14}
+    .toast{position:fixed;right:14px;bottom:14px;background:#0e141b;border:1px solid var(--border);border-left:4px solid var(--danger);color:#e7edf5;border-radius:10px;padding:10px 12px;max-width:420px;box-shadow:0 10px 26px rgba(0,0,0,.35);display:none}
     .toast.ok{border-left-color:var(--ok)}
   </style>
 </head>
+
 <body>
   <header class="topbar">
     <div class="brand">Bonanza Admin</div>
     <div class="actions">
-      <span id="envBadge" class="badge">ENV</span>
+      <span id="envBadge" class="badge">PROD</span>
       <span id="who" class="badge mono" title="token abreviado"></span>
       <button id="btnLogout" class="link">Salir</button>
     </div>
@@ -66,33 +68,34 @@
     <!-- ========== RESERVATIONS ========== -->
     <section id="tab-reservations" class="tab active">
       <div class="toolbar">
-        <button id="btnRefetchReservations" class="secondary">Refrescar</button>
-        <div class="spacer"></div>
+        <button id="btnRefetchReservations" class="btn">Refrescar</button>
+        <div style="flex:1"></div>
         <label class="inline">ID
           <input id="resId" type="number" min="1" placeholder="id" />
         </label>
         <label class="inline">Driver ID
           <input id="resDriverId" type="text" placeholder="uuid o vacío" />
         </label>
-        <button id="btnAssign" class="secondary">Asignar/Desasignar</button>
+        <button id="btnAssign" class="btn">Asignar/Desasignar</button>
       </div>
-      <div class="tableWrap">
-        <table id="tblReservations">
-          <thead><tr>
-            <th>ID</th><th>Pickup</th><th>Cliente</th><th>Desde → Hasta</th>
-            <th>Vehículo</th><th>Status</th><th>Driver</th><th>Actualizado</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="small">Tip: deja “Driver ID” vacío para desasignar (queda PENDING).</div>
+
+      <table id="tblReservations">
+        <thead>
+        <tr>
+          <th>ID</th><th>Pickup</th><th>Cliente</th><th>Desde → Hasta</th>
+          <th>Vehículo</th><th>Status</th><th>Driver</th><th>Actualizado</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="small" style="margin-top:6px">Tip: deja “Driver ID” vacío para <b>desasignar</b> (queda PENDING).</div>
     </section>
 
     <!-- ========== VEHICLES ========== -->
     <section id="tab-vehicles" class="tab">
       <div class="toolbar">
-        <button id="btnRefetchVehicles" class="secondary">Refrescar</button>
-        <div class="spacer"></div>
+        <button id="btnRefetchVehicles" class="btn">Refrescar</button>
+        <div style="flex:1"></div>
         <label class="inline">Placa <input id="vPlate" type="text"></label>
         <label class="inline">Driver <input id="vDriver" type="text" placeholder="opcional"></label>
         <label class="inline">Tipo
@@ -100,65 +103,70 @@
         </label>
         <label class="inline">Año <input id="vYear" type="number" min="1990" max="2100"></label>
         <label class="inline">Modelo <input id="vModel" type="text"></label>
-        <button id="btnVehicleUpsert" class="secondary">Crear/Actualizar</button>
+        <button id="btnVehicleUpsert" class="btn">Crear/Actualizar</button>
       </div>
-      <div class="tableWrap">
-        <table id="tblVehicles">
-          <thead><tr>
-            <th>ID</th><th>Placa</th><th>Driver</th><th>Tipo</th><th>Año</th>
-            <th>Modelo</th><th>Activo</th><th class="right">Acciones</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+
+      <table id="tblVehicles">
+        <thead>
+        <tr>
+          <th>ID</th><th>Placa</th><th>Driver</th><th>Tipo</th><th>Año</th>
+          <th>Modelo</th><th>Activo</th><th class="right">Acciones</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
 
     <!-- ========== CLIENTS ========== -->
     <section id="tab-clients" class="tab">
       <div class="toolbar">
-        <button id="btnRefetchClients" class="secondary">Refrescar</button>
-        <div class="spacer"></div>
+        <button id="btnRefetchClients" class="btn">Refrescar</button>
+        <div style="flex:1"></div>
         <label class="inline">Nombre <input id="cName" type="text"></label>
         <label class="inline">Email <input id="cEmail" type="email"></label>
         <label class="inline">Phone <input id="cPhone" type="text"></label>
-        <button id="btnClientUpsert" class="secondary">Crear/Actualizar</button>
+        <button id="btnClientUpsert" class="btn">Crear/Actualizar</button>
       </div>
-      <div class="tableWrap">
-        <table id="tblClients">
-          <thead><tr>
-            <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rating</th><th>Acciones</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+
+      <table id="tblClients">
+        <thead>
+        <tr>
+          <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Rating</th><th>Creado</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
 
     <!-- ========== DRIVERS ========== -->
     <section id="tab-drivers" class="tab">
       <div class="toolbar">
-        <button id="btnRefetchDrivers" class="secondary">Refrescar</button>
-        <div class="spacer"></div>
+        <button id="btnRefetchDrivers" class="btn">Refrescar</button>
+        <div style="flex:1"></div>
         <label class="inline">Nombre <input id="dName" type="text"></label>
         <label class="inline">Email <input id="dEmail" type="email"></label>
         <label class="inline">Phone <input id="dPhone" type="text"></label>
-        <button id="btnDriverCreate" class="secondary">Crear</button>
+        <button id="btnDriverCreate" class="btn">Crear</button>
       </div>
-      <div class="tableWrap">
-        <table id="tblDrivers">
-          <thead><tr>
-            <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th>
-            <th>Pay Mode</th><th>Rates</th><th>Notifs</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+
+      <table id="tblDrivers">
+        <thead>
+        <tr>
+          <th>ID</th><th>Nombre</th><th>Email</th><th>Teléfono</th>
+          <th>Pay Mode</th><th>Rates</th><th>Notifs</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
 
   <div id="toast" class="toast"></div>
 
   <script>
-    // ================== Auth helpers ==================
+    // =========================
+    // Helpers de panel (inline)
+    // =========================
     const ls = localStorage;
     const TOAST = document.getElementById('toast');
     const envBadge = document.getElementById('envBadge');
@@ -166,32 +174,25 @@
 
     function getJWT(){ return ls.getItem('bonanza_admin_jwt') || ''; }
     function getAdminKey(){ return ls.getItem('bonanza_admin_key') || ''; }
-    function tokenPreview(){
+
+    function tokenPreview() {
       const t = getJWT();
-      who.textContent = t ? ('jwt ' + t.slice(0,8) + '…') : (getAdminKey()? 'x-admin-key' : 'no-auth');
+      who.textContent = t ? ('jwt ' + t.slice(0, 8) + '…') :
+                            (getAdminKey() ? 'x-admin-key' : 'no-auth');
     }
     tokenPreview();
 
-    envBadge.textContent = location.hostname.includes('localhost') ? 'LOCAL' : 'PROD';
-
-    function showToast(msg, ok=false){
-      TOAST.textContent = msg;
-      TOAST.classList.toggle('ok', ok);
-      TOAST.style.display = 'block';
-      clearTimeout(TOAST._t);
-      TOAST._t = setTimeout(()=> TOAST.style.display='none', 3500);
-    }
-
     async function apiFetch(path, opts = {}) {
       const headers = Object.assign({ 'Content-Type':'application/json' }, opts.headers || {});
-      const jwt = getJWT(); const key = getAdminKey();
+      const jwt = getJWT();
+      const key = getAdminKey();
       if (jwt) headers['Authorization'] = 'Bearer ' + jwt;
       if (key) headers['x-admin-key'] = key;
 
       const res = await fetch(path, { ...opts, headers });
       if (res.status === 401) {
         showToast('No autorizado. Inicia sesión nuevamente.');
-        setTimeout(()=> location.href='/admin/login.html', 900);
+        setTimeout(()=>location.href='/public/admin/login.html', 900);
         throw new Error('unauthorized');
       }
       if (!res.ok) {
@@ -202,14 +203,15 @@
       return ct.includes('application/json') ? res.json() : res.text();
     }
 
-    document.getElementById('btnLogout').addEventListener('click', ()=>{
-      ls.removeItem('bonanza_admin_jwt');
-      ls.removeItem('bonanza_admin_key');
-      showToast('Sesión cerrada', true);
-      setTimeout(()=> location.href='/admin/login.html', 500);
-    });
+    function showToast(msg, ok=false){
+      TOAST.textContent = msg;
+      TOAST.classList.toggle('ok', ok);
+      TOAST.style.display = 'block';
+      clearTimeout(TOAST._t);
+      TOAST._t = setTimeout(()=> TOAST.style.display='none', 3000);
+    }
 
-    // ================== Tabs ==================
+    // Tabs
     document.querySelectorAll('.tabs button').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
@@ -219,32 +221,45 @@
       });
     });
 
-    // ================== RESERVATIONS ==================
+    // Logout
+    document.getElementById('btnLogout').addEventListener('click', ()=>{
+      ls.removeItem('bonanza_admin_jwt');
+      ls.removeItem('bonanza_admin_key');
+      showToast('Sesión cerrada', true);
+      setTimeout(()=> location.href='/public/admin/login.html', 500);
+    });
+
+    envBadge.textContent = (location.hostname.includes('localhost') ? 'LOCAL' : 'PROD');
+
+    // =========================
+    // RESERVATIONS
+    // =========================
     const $tblRes = document.querySelector('#tblReservations tbody');
     async function fetchReservations(){
       const rows = await apiFetch('/api/reservations');
-      $tblRes.innerHTML = (rows||[]).map(r=>{
+      $tblRes.innerHTML = rows.map(r => {
         const status = String(r.status||'').toLowerCase();
         const veh = r.vehicle_label || r.vehicle_plate || '';
         const when = r.pickup_time ? new Date(r.pickup_time).toLocaleString() : '';
         const updated = r.updated_at ? new Date(r.updated_at).toLocaleString() : '';
         return `<tr>
-          <td class="mono id">${r.id??''}</td>
+          <td>${r.id}</td>
           <td>${when}</td>
-          <td>${esc(r.customer_name||'')}</td>
-          <td>${esc(r.pickup_location||'')} → ${esc(r.dropoff_location||'')}</td>
-          <td>${esc(veh)}</td>
+          <td>${escapeHtml(r.customer_name||'')}</td>
+          <td>${escapeHtml(r.pickup_location||'')} → ${escapeHtml(r.dropoff_location||'')}</td>
+          <td>${escapeHtml(veh)}</td>
           <td><span class="status ${status}">${status}</span></td>
-          <td>${esc(r.driver_name||'')}</td>
+          <td>${escapeHtml(r.driver_name||'')}</td>
           <td>${updated}</td>
         </tr>`;
       }).join('');
     }
     document.getElementById('btnRefetchReservations').addEventListener('click', ()=>{
       fetchReservations().then(()=>showToast('Reservas actualizadas', true))
-        .catch(e=>showToast('Error cargando reservas: '+e.message));
+        .catch(e=>showToast('Error: '+e.message));
     });
 
+    // Asignar / desasignar
     document.getElementById('btnAssign').addEventListener('click', async ()=>{
       const id = Number(document.getElementById('resId').value);
       const driver_id = (document.getElementById('resDriverId').value || '').trim() || null;
@@ -256,21 +271,26 @@
       }catch(e){ showToast('No se pudo asignar: '+e.message); }
     });
 
-    // ================== VEHICLES ==================
+    // =========================
+    // VEHICLES
+    // =========================
     const $tblVeh = document.querySelector('#tblVehicles tbody');
+
     async function fetchVehicles(){
       const res = await apiFetch('/api/admin/vehicles', { method:'GET' });
       const vehicles = res?.vehicles || res || [];
-      $tblVeh.innerHTML = vehicles.map(v=>`
+      $tblVeh.innerHTML = vehicles.map(v => `
         <tr>
-          <td class="mono id">${v.id??''}</td>
-          <td>${esc(v.plate||'')}</td>
-          <td>${esc(v.driver_name||'')}</td>
-          <td>${esc((v.kind||'').toUpperCase())}</td>
-          <td>${v.year??''}</td>
-          <td>${esc(v.model||'')}</td>
+          <td class="mono">${v.id||''}</td>
+          <td>${escapeHtml(v.plate||'')}</td>
+          <td>${escapeHtml(v.driver_name||'')}</td>
+          <td>${escapeHtml((v.kind||'').toUpperCase())}</td>
+          <td>${v.year||''}</td>
+          <td>${escapeHtml(v.model||'')}</td>
           <td>${v.active? '✓' : '—'}</td>
-          <td class="right"><button data-id="${v.id}" class="secondary btnToggle">${v.active? 'Desactivar':'Activar'}</button></td>
+          <td class="right">
+            <button data-id="${v.id}" class="btn secondary btnToggle">${v.active? 'Desactivar':'Activar'}</button>
+          </td>
         </tr>
       `).join('');
 
@@ -284,13 +304,13 @@
             });
             await fetchVehicles();
             showToast('Vehículo actualizado', true);
-          }catch(e){ showToast('Error actualizando vehículo: '+e.message); }
+          }catch(e){ showToast('Error: '+e.message); }
         });
       });
     }
     document.getElementById('btnRefetchVehicles').addEventListener('click', ()=>{
       fetchVehicles().then(()=>showToast('Vehículos actualizados', true))
-        .catch(e=>showToast('Error cargando vehículos: '+e.message));
+        .catch(e=>showToast('Error: '+e.message));
     });
 
     document.getElementById('btnVehicleUpsert').addEventListener('click', async ()=>{
@@ -306,29 +326,32 @@
         await apiFetch('/api/admin/vehicles', { method:'POST', body: JSON.stringify(payload) });
         await fetchVehicles();
         showToast('Vehículo guardado', true);
-      }catch(e){ showToast('Error guardando vehículo: '+e.message); }
+      }catch(e){ showToast('Error: '+e.message); }
     });
 
-    // ================== CLIENTS ==================
+    // =========================
+    // CLIENTS
+    // =========================
     const $tblCli = document.querySelector('#tblClients tbody');
     async function fetchClients(){
       const r = await apiFetch('/api/admin/clients', { method:'GET' });
       const clients = r?.clients || r || [];
-      $tblCli.innerHTML = clients.map(c=>`
+      $tblCli.innerHTML = clients.map(c => `
         <tr>
-          <td class="mono id">${c.id??''}</td>
-          <td>${esc(c.name||'')}</td>
-          <td>${esc(c.email||'')}</td>
-          <td>${esc(c.phone||'')}</td>
-          <td>${esc(c.internal_rating||'')}</td>
-          <td class="right small">${c.created_at? new Date(c.created_at).toLocaleString() : ''}</td>
+          <td class="mono">${c.id||''}</td>
+          <td>${escapeHtml(c.name||'')}</td>
+          <td>${escapeHtml(c.email||'')}</td>
+          <td>${escapeHtml(c.phone||'')}</td>
+          <td>${escapeHtml(c.internal_rating||'')}</td>
+          <td class="small right">${c.created_at? new Date(c.created_at).toLocaleString() : ''}</td>
         </tr>
       `).join('');
     }
     document.getElementById('btnRefetchClients').addEventListener('click', ()=>{
       fetchClients().then(()=>showToast('Clientes actualizados', true))
-        .catch(e=>showToast('Error cargando clientes: '+e.message));
+        .catch(e=>showToast('Error: '+e.message));
     });
+
     document.getElementById('btnClientUpsert').addEventListener('click', async ()=>{
       const payload = {
         name: (document.getElementById('cName').value||'').trim(),
@@ -340,20 +363,22 @@
         await apiFetch('/api/admin/clients', { method:'POST', body: JSON.stringify(payload) });
         await fetchClients();
         showToast('Cliente guardado', true);
-      }catch(e){ showToast('Error guardando cliente: '+e.message); }
+      }catch(e){ showToast('Error: '+e.message); }
     });
 
-    // ================== DRIVERS ==================
+    // =========================
+    // DRIVERS
+    // =========================
     const $tblDrv = document.querySelector('#tblDrivers tbody');
     async function fetchDrivers(){
       const rows = await apiFetch('/api/drivers', { method:'GET' });
-      $tblDrv.innerHTML = rows.map(d=>`
+      $tblDrv.innerHTML = rows.map(d => `
         <tr>
-          <td class="mono id">${d.id??''}</td>
-          <td>${esc(d.name||'')}</td>
-          <td>${esc(d.email||'')}</td>
-          <td>${esc(d.phone||'')}</td>
-          <td>${esc(d.pay_mode||'')}</td>
+          <td class="mono">${d.id||''}</td>
+          <td>${escapeHtml(d.name||'')}</td>
+          <td>${escapeHtml(d.email||'')}</td>
+          <td>${escapeHtml(d.phone||'')}</td>
+          <td>${escapeHtml(d.pay_mode||'')}</td>
           <td class="small">
             ${d.hourly_rate!=null? ('$'+d.hourly_rate+'/h ') : '' }
             ${d.per_ride_rate!=null? ('$'+d.per_ride_rate+' por ride ') : '' }
@@ -365,26 +390,28 @@
     }
     document.getElementById('btnRefetchDrivers').addEventListener('click', ()=>{
       fetchDrivers().then(()=>showToast('Drivers actualizados', true))
-        .catch(e=>showToast('Error cargando drivers: '+e.message));
+        .catch(e=>showToast('Error: '+e.message));
     });
+
     document.getElementById('btnDriverCreate').addEventListener('click', async ()=>{
-      const name=(document.getElementById('dName').value||'').trim();
-      const email=(document.getElementById('dEmail').value||'').trim()||null;
-      const phone=(document.getElementById('dPhone').value||'').trim()||null;
-      if(!name){ showToast('Nombre es obligatorio'); return; }
+      const name  = (document.getElementById('dName').value||'').trim();
+      const email = (document.getElementById('dEmail').value||'').trim() || null;
+      const phone = (document.getElementById('dPhone').value||'').trim() || null;
+      if (!name){ showToast('Nombre es obligatorio'); return; }
       try{
-        await apiFetch('/api/drivers', { method:'POST', body: JSON.stringify({ name,email,phone }) });
+        await apiFetch('/api/drivers', { method:'POST', body: JSON.stringify({ name, email, phone }) });
         await fetchDrivers();
         showToast('Driver creado', true);
-      }catch(e){ showToast('Error creando driver: '+e.message); }
+      }catch(e){ showToast('Error: '+e.message); }
     });
 
-    // ================== Utils & boot ==================
-    function esc(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
+    // Utils
+    function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Primera carga
     (async function boot(){
       try{
-        await Promise.all([fetchReservations(), fetchVehicles(), fetchClients(), fetchDrivers()]);
+        await Promise.all([ fetchReservations(), fetchVehicles(), fetchClients(), fetchDrivers() ]);
         showToast('Datos cargados', true);
       }catch(e){
         alert('Error cargando datos. Verifica tu Admin Key o la API.');
