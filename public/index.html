@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#b66a2c" />
   <link rel="stylesheet" href="/app/styles/app.css" />
 
-  <!-- Configuración pública inyectada (se reemplaza en runtime o build) -->
+  <!-- Configuración pública (se reemplaza luego con API/env vars) -->
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "YOUR_GOOGLE_MAPS_API_KEY",
@@ -51,7 +51,9 @@
         <div class="mg-btn" data-choice="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</div>
         <div class="mg-btn active" data-choice="none" aria-pressed="true">No Meet & Greet</div>
       </div>
-      <div class="mg-note">Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.</div>
+      <div class="mg-note">
+        Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use curbside pickup.
+      </div>
     </div>
 
     <!-- Notas -->
@@ -76,7 +78,7 @@
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Visual -->
+    <!-- Visual vehículo -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
@@ -90,18 +92,20 @@
         <span class="luggage-chev"></span>
       </div>
       <div class="luggage-body">
-        <!-- (contenido igual que antes: SUV y Van con opciones de equipaje) -->
+        <!-- Aquí va el contenido detallado de equipaje (SUV y Van) -->
       </div>
     </div>
 
-    <!-- Terms / Accept switch -->
+    <!-- Terms -->
     <div class="terms-box" id="termsBox">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
           <div class="accept-dot"></div>
         </div>
         <div class="accept-label">
-          I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+          I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">
+            Terms &amp; Conditions
+          </a>
         </div>
       </div>
     </div>
@@ -111,11 +115,11 @@
     <div id="map"></div>
     <button id="pay" disabled style="display:none">PAY NOW</button>
 
-    <!-- Resumen del viaje -->
+    <!-- Resumen -->
     <div id="info"></div>
   </main>
 
-  <!-- ====== Scripts (orden obligatorio, con defer) ====== -->
+  <!-- ====== Scripts ====== -->
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
@@ -133,9 +137,9 @@
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Visual del vehículo + acordeón -->
+  <!-- Visual vehículo + acordeón -->
   <script>
-    (function vehicleVisualInline(){
+    (function(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
       window.__vehicleType=window.__vehicleType||"suv";
       const btns=document.querySelectorAll(".veh-btn");
@@ -144,13 +148,8 @@
 
       function applyVisual(){
         if(!img||!cap) return;
-        if(window.__vehicleType==="van"){ 
-          img.src=VAN_IMG; 
-          cap.textContent="Van — Up to 12 passengers (luggage varies)"; 
-        } else { 
-          img.src=SUV_IMG; 
-          cap.textContent="SUV — Max 5 passengers, 5 suitcases"; 
-        }
+        if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
+        else { img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
       }
       function setActive(t){
         window.__vehicleType=(t==="van")?"van":"suv";
@@ -159,17 +158,11 @@
         if(typeof window.recalcFromCache==="function") window.recalcFromCache();
       }
       btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
-      if(img){ 
-        img.onerror=()=>{ 
-          img.removeAttribute("src"); 
-          img.alt=window.__vehicleType.toUpperCase();
-          img.style.cssText="width:120px;height:80px;background:#1a1a1a;border:1px solid #444;border-radius:8px;";
-        };
+      if(img){ img.onerror=()=>{ img.removeAttribute("src"); img.alt=window.__vehicleType.toUpperCase();
+        img.style.cssText="width:120px;height:80px;background:#1a1a1a;border:1px solid #444;border-radius:8px;"; };
       }
       setActive(window.__vehicleType);
-    })();
 
-    (function(){
       const acc=document.getElementById("luggageAccordion");
       const sum=acc?.querySelector(".luggage-summary");
       sum?.addEventListener("click",()=>acc.classList.toggle("open"));
