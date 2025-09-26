@@ -4,17 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bonanza Transportation</title>
+
   <link rel="icon" href="/images/bonanza-logo.png" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#b66a2c" />
   <link rel="stylesheet" href="/app/styles/app.css" />
 
-  <!-- Configuración pública -->
+  <!-- Config pública (cárgala desde env en Vercel después) -->
   <script>
     window.__PUBLIC_CFG__ = {
-      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",  // tu key real aquí
-      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
-      MAP_ID: "YOUR_MAP_ID_HERE"  // opcional; créalo en Google Cloud → Maps IDs
+      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",  // Google Maps API Key
+      MAP_ID:    "be9f7b3d0f62a46ba10dc0ba",                 // Map ID
+      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
     };
   </script>
 </head>
@@ -79,7 +80,7 @@
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Visual vehículo -->
+    <!-- Visual del vehículo -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
@@ -93,7 +94,7 @@
         <span class="luggage-chev"></span>
       </div>
       <div class="luggage-body">
-        <!-- Aquí va el contenido detallado de equipaje -->
+        <!-- contenido detallado de equipaje -->
       </div>
     </div>
 
@@ -104,9 +105,7 @@
           <div class="accept-dot"></div>
         </div>
         <div class="accept-label">
-          I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">
-            Terms &amp; Conditions
-          </a>
+          I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
         </div>
       </div>
     </div>
@@ -120,33 +119,25 @@
     <div id="info"></div>
   </main>
 
-  <!-- ====== Scripts ====== -->
+  <!-- ====== Scripts de la app ====== -->
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
 
-  <!-- Google Maps -->
+  <!-- ====== Google Maps (orden importante) ====== -->
+  <!-- 1) Loader: define window.loadGoogleMaps -->
   <script src="/app/scripts/maps-loader.js"></script>
+  <!-- 2) Lógica de mapas (define window.initMap) -->
   <script src="/app/scripts/maps.js"></script>
+  <!-- 3) Arranque: carga la JS API con libraries y luego llama initMap -->
   <script>
-    (function () {
-      function start() {
-        var key = (window.__PUBLIC_CFG__ && window.__PUBLIC_CFG__.GMAPS_KEY) || "";
-        if (!key) { console.error("[maps-init] Missing Google Maps API key"); return; }
-        window.loadGoogleMaps(key, { libraries: "places,marker" })
-          .then(function(){ if (window.initMap) window.initMap(); })
-          .catch(function(err){ console.error("GMAPS load failed", err); });
-      }
-      if (window.loadGoogleMaps) start();
-      else {
-        var t0 = Date.now(), iv = setInterval(function(){
-          if (window.loadGoogleMaps) { clearInterval(iv); start(); }
-          else if (Date.now() - t0 > 15000) {
-            clearInterval(iv);
-            console.error("[maps-init] loadGoogleMaps not available (timeout)");
-          }
-        }, 50);
-      }
+    (function startMaps(){
+      var cfg = window.__PUBLIC_CFG__ || {};
+      if (!cfg.GMAPS_KEY) { console.error("[maps-init] Missing Google Maps API key"); return; }
+      // Cargamos libraries necesarias (places para Autocomplete, marker para AdvancedMarker)
+      window.loadGoogleMaps(cfg.GMAPS_KEY, { libraries: "places,marker" })
+        .then(function(){ if (window.initMap) window.initMap(); })
+        .catch(function(err){ console.error("GMAPS load failed", err); });
     })();
   </script>
 
@@ -175,8 +166,10 @@
         if(typeof window.recalcFromCache==="function") window.recalcFromCache();
       }
       btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
-      if(img){ img.onerror=()=>{ img.removeAttribute("src"); img.alt=window.__vehicleType.toUpperCase();
-        img.style.cssText="width:120px;height:80px;background:#1a1a1a;border:1px solid #444;border-radius:8px;"; };
+      if(img){
+        img.onerror=()=>{ img.removeAttribute("src"); img.alt=window.__vehicleType.toUpperCase();
+          img.style.cssText="width:120px;height:80px;background:#1a1a1a;border:1px solid #444;border-radius:8px;";
+        };
       }
       setActive(window.__vehicleType);
 
