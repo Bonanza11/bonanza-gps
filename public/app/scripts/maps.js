@@ -1,41 +1,169 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 ──────────────────────────────────────────────────────────────
-- Inicializa el mapa.
+- Inicializa el mapa y Places.
 - Autocomplete en pickup/dropoff (solo USA).
-- En place_changed del pickup dispara BNZ.onPickupPlaceChanged(place).
-- Calcula ruta (origin→destination) al evento "bnz:calculate".
-- Dibuja la ruta y pasa el primer leg a BNZ.renderQuote(leg, { surcharge }).
+- Expone helpers globales usados por otros módulos (BNZ/core/booking):
+    window.pickupPlace, window.dropoffPlace
+    window.isSLCInternational(place), window.isAirport(place), window.isUtah(place)
+    window.routeAsync(opts)
+
+- Calcula ruta al evento "bnz:calculate" y llama a BNZ.renderQuote(leg, { surcharge }).
+- Aplica la regla de recargo: $3/mi desde base cuando el pick-up está fuera de
+  Summit/Wasatch (o si pickup es aeropuerto y dropoff está fuera de Summit/Wasatch).
 
 Requiere en HTML:
   <div id="map"></div>
-  <script defer src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap"></script>
 */
-
 (function () {
   "use strict";
 
-  const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // Salt Lake City
+  const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
+  const BASE_ADDRESS   = "13742 N Jordanelle Pkwy, Kamas, UT 84036";
 
   let map, dirService, dirRenderer;
   let acPickup = null, acDropoff = null;
 
-  // Cache de textos para la ruta (por si el usuario teclea manualmente)
+  // Texto libre (si el usuario escribe sin seleccionar sugerencia)
   let originText = "";
   let destinationText = "";
 
-  // Si más adelante necesitas recargos por zona/distancia, ajústalo aquí:
-  function computeSurcharge(miles) {
+  // Expuestos globalmente (otros módulos los usan)
+  window.pickupPlace = window.pickupPlace || null;
+  window.dropoffPlace = window.dropoffPlace || null;
+
+  // ──────────────────────────────────────────────────────────────
+  // Helpers de Places/Geocoder
+  // ──────────────────────────────────────────────────────────────
+  function isAirport(place) {
+    const t = place?.types || [];
+    const txt = `${place?.name || ""} ${place?.formatted_address || ""}`.toLowerCase();
+    return t.includes("airport") || /airport/.test(txt);
+  }
+  window.isAirport = isAirport;
+
+  function isUtah(place) {
+    const addr = (place?.formatted_address || "").toLowerCase();
+    return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
+  }
+  window.isUtah = isUtah;
+
+  function isPrivateUtahAirport(place) {
+    if (!place || !isAirport(place) || !isUtah(place)) return false;
+    const text = `${place.name || ""} ${place.formatted_address || ""}`;
+    const FBO_RX = /\b(fbo|jet center|private terminal|general aviation|hangar|atlantic aviation|million air|signature|ross aviation|tac air|ok3 air|lynx|modern aviation|provo jet center)\b/i;
+    return FBO_RX.test(text);
+  }
+
+  // SLC comercial (no FBO)
+  function isSLCInternational(place) {
+    if (!place) return false;
+    const name = (place.name || "").toLowerCase();
+    const addr = (place.formatted_address || "").toLowerCase();
+    const hit = /salt lake city international/.test(name) || /salt lake city international/.test(addr) || /\bslc\b/.test(name) || /\bslc\b/.test(addr);
+    return hit && isAirport(place) && !isPrivateUtahAirport(place);
+  }
+  window.isSLCInternational = isSLCInternational;
+
+  function countyFrom(place) {
+    const comps = place?.address_components || [];
+    const c = comps.find((x) => x.types?.includes("administrative_area_level_2"));
+    return c?.long_name || "";
+  }
+
+  function geocodeAsync(req) {
+    return new Promise((resolve, reject) => {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode(req, (results, status) => {
+        if (status === "OK" && results?.[0]) resolve(results[0]);
+        else reject(status || "GEOCODE_ERROR");
+      });
+    });
+  }
+
+  // Distancia en millas de BASE_ADDRESS → placeId
+  function routeAsync(opts) {
+    return new Promise((resolve, reject) => {
+      dirService.route(opts, (r, s) => (s === "OK" && r ? resolve(r) : reject(s || "ROUTE_ERROR")));
+    });
+  }
+  window.routeAsync = routeAsync;
+
+  async function countyByPlaceId(placeId) {
+    try {
+      const r = await geocodeAsync({ placeId });
+      const c = r.address_components.find((x) => x.types?.includes("administrative_area_level_2"));
+      return c?.long_name || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  async function milesFromBaseTo(placeId) {
+    const r = await routeAsync({
+      origin: BASE_ADDRESS,
+      destination: { placeId },
+      travelMode: google.maps.TravelMode.DRIVING,
+      unitSystem: google.maps.UnitSystem.IMPERIAL,
+    });
+    const leg = r.routes[0].legs[0];
+    return leg.distance.value / 1609.34;
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Regla de recargo $3/mi
+  // ──────────────────────────────────────────────────────────────
+  async function computeSurchargeAsync() {
+    // Si no tenemos places reales, no aplicamos recargo
+    if (!window.pickupPlace && !window.dropoffPlace) return 0;
+
+    // Condados permitidos
+    const ALLOWED_RX = /Summit County|Wasatch County/;
+
+    const pickup = window.pickupPlace;
+    const drop   = window.dropoffPlace;
+
+    // County por place o por geocode
+    const pickupCounty = pickup
+      ? (countyFrom(pickup) || (pickup.place_id ? await countyByPlaceId(pickup.place_id) : ""))
+      : "";
+    const dropCounty = drop
+      ? (countyFrom(drop) || (drop.place_id ? await countyByPlaceId(drop.place_id) : ""))
+      : "";
+
+    const pickupIsAir = !!pickup && isAirport(pickup);
+
+    // Casos:
+    // A) Llegada a aeropuerto (pickup = aeropuerto). Si DROP está fuera de Summit/Wasatch → recargo desde BASE → PICKUP
+    if (pickupIsAir) {
+      const dropAllowed = ALLOWED_RX.test(dropCounty);
+      if (!dropAllowed && pickup?.place_id) {
+        const miles = await milesFromBaseTo(pickup.place_id);
+        return Math.round(miles * 3 * 100) / 100;
+      }
+      return 0;
+    }
+
+    // B) Pickup normal: si PICKUP está fuera de Summit/Wasatch → recargo desde BASE → PICKUP
+    const pickupAllowed = ALLOWED_RX.test(pickupCounty);
+    if (!pickupAllowed && pickup?.place_id) {
+      const miles = await milesFromBaseTo(pickup.place_id);
+      return Math.round(miles * 3 * 100) / 100;
+    }
+
     return 0;
   }
 
-  // ----- Autocomplete helper -------------------------------------------------
+  // ──────────────────────────────────────────────────────────────
+  // Autocomplete
+  // ──────────────────────────────────────────────────────────────
   function attachAutocomplete(inputId, opts = {}) {
     const input = document.getElementById(inputId);
     if (!input) return null;
 
     const ac = new google.maps.places.Autocomplete(input, {
-      fields: ["place_id", "geometry", "name", "formatted_address"],
+      fields: ["place_id", "geometry", "name", "formatted_address", "address_components", "types"],
       componentRestrictions: { country: ["us"] },
       ...opts,
     });
@@ -43,29 +171,35 @@ Requiere en HTML:
     ac.addListener("place_changed", () => {
       const place = ac.getPlace();
 
-      // Centrar el mapa si hay geometry
       const loc = place?.geometry?.location || null;
       if (loc) {
         map.panTo(loc);
         map.setZoom(12);
       }
 
-      // Texto “bonito” para la ruta
       const pretty = (place?.formatted_address || place?.name || input.value || "").trim();
 
       if (inputId === "pickup") {
         originText = pretty;
-        // Hook para Booking (decide JSX/FBO/Aeropuerto/M&G)
+        window.pickupPlace = place || null;
+
+        // Avisar al booking para visibilidad (JSX/SLC/FBO/etc.)
         if (window.BNZ && typeof BNZ.onPickupPlaceChanged === "function") {
           BNZ.onPickupPlaceChanged(place);
         }
+
+        // Algunos módulos muestran/ocultan Meet&Greet
+        if (typeof window.updateMeetGreetVisibility === "function") {
+          window.updateMeetGreetVisibility();
+        }
       } else {
         destinationText = pretty;
+        window.dropoffPlace = place || null;
       }
     });
 
-    // También cachea cambios manuales
-    ["input","change","blur"].forEach(ev => {
+    // Cachear texto cuando el usuario escribe sin seleccionar
+    ["input", "change", "blur"].forEach((ev) => {
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
         if (inputId === "pickup") originText = v;
@@ -76,9 +210,11 @@ Requiere en HTML:
     return ac;
   }
 
-  // ----- Routing + quote -----------------------------------------------------
+  // ──────────────────────────────────────────────────────────────
+  // Routing + quote
+  // ──────────────────────────────────────────────────────────────
   async function routeAndQuote() {
-    const origin = originText || document.getElementById("pickup")?.value || "";
+    const origin      = originText || document.getElementById("pickup")?.value || "";
     const destination = destinationText || document.getElementById("dropoff")?.value || "";
 
     if (!origin || !destination) {
@@ -96,22 +232,20 @@ Requiere en HTML:
       };
 
       const result = await dirService.route(req);
-      const route = result?.routes?.[0];
-      const leg = route?.legs?.[0];
+      const route  = result?.routes?.[0];
+      const leg    = route?.legs?.[0];
 
       if (!route || !leg) {
         alert("Could not compute a route. Please refine the addresses.");
         return;
       }
 
-      // Dibuja ruta
       dirRenderer.setDirections(result);
 
-      // Surcharge opcional
-      const miles = leg.distance?.value ? (leg.distance.value / 1609.34) : 0;
-      const surcharge = computeSurcharge(miles);
+      // Recargo según reglas ($3/mi desde BASE cuando corresponda)
+      const surcharge = await computeSurchargeAsync();
 
-      // Notifica al módulo de booking
+      // Notificar al módulo de booking para pintar el resumen
       if (window.BNZ && typeof BNZ.renderQuote === "function") {
         BNZ.renderQuote(leg, { surcharge });
       }
@@ -121,13 +255,13 @@ Requiere en HTML:
     }
   }
 
-  // Escucha del evento que dispara booking: document.dispatchEvent(new CustomEvent('bnz:calculate'))
   function wireCalculateListener() {
     document.addEventListener("bnz:calculate", routeAndQuote);
   }
 
-  // ----- Callback global para el loader de Google ----------------------------
-  // Debe existir antes de que Google intente llamarlo.
+  // ──────────────────────────────────────────────────────────────
+  // Callback global (Google Maps loader)
+  // ──────────────────────────────────────────────────────────────
   window.initMap = function () {
     const mapEl = document.getElementById("map");
     if (!mapEl) {
@@ -160,11 +294,11 @@ Requiere en HTML:
     acPickup  = attachAutocomplete("pickup");
     acDropoff = attachAutocomplete("dropoff");
 
-    // Si había texto pre-cargado, respétalo
-    originText      = document.getElementById("pickup")?.value     || originText;
-    destinationText = document.getElementById("dropoff")?.value    || destinationText;
+    // Respetar texto precargado
+    originText      = document.getElementById("pickup")?.value || originText;
+    destinationText = document.getElementById("dropoff")?.value || destinationText;
 
-    // Conectar “Calculate”
+    // Listener de cálculo
     wireCalculateListener();
   };
 })();
