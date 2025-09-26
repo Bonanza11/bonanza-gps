@@ -245,3 +245,17 @@ button:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
 @media (max-width:520px){
   #map{ height:320px }
 }
+/* Hard kill a cualquier borde/halo rojo que venga de reglas antiguas o del navegador */
+html body input:invalid,
+html body textarea:invalid,
+html body select:invalid{
+  box-shadow:none !important;
+  border-color:rgba(168,116,79,.35) !important;
+  outline:none !important;
+}
+
+html body .invalid,
+html body .time-input.field-invalid{
+  border-color:inherit !important;
+  box-shadow:none !important;
+}
