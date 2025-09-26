@@ -2,7 +2,7 @@
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 ──────────────────────────────────────────────────────────────
 - Inicializa mapa con Map ID.
-- Usa Place Autocomplete Element (nuevo API).
+- Usa PlaceAutocompleteElement (nuevo) con fallback a Autocomplete clásico.
 - Calcula ruta al disparar "bnz:calculate" y notifica BNZ.renderQuote(leg,{ surcharge }).
 - Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
 */
@@ -17,6 +17,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   let map, dirService, dirRenderer;
   let originText = "", destinationText = "";
 
+  // Expuestos globalmente (usados por otros módulos)
   window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
 
@@ -45,7 +46,10 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     if (!place) return false;
     const name = (place.name || "").toLowerCase();
     const addr = (place.formatted_address || "").toLowerCase();
-    const hit  = /salt lake city international/.test(name) || /salt lake city international/.test(addr) || /\bslc\b/.test(name) || /\bslc\b/.test(addr);
+    const hit  =
+      /salt lake city international/.test(name) ||
+      /salt lake city international/.test(addr) ||
+      /\bslc\b/.test(name) || /\bslc\b/.test(addr);
     return hit && isAirport(place) && !isPrivateUtahAirport(place);
   }
   window.isSLCInternational = isSLCInternational;
@@ -126,42 +130,71 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     return 0;
   }
 
-  // ─────────────── Autocomplete con nuevo API
+  // ─────────────── Autocomplete: nuevo (Element) con fallback a clásico
   function attachAutocomplete(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
 
-    const ac = new google.maps.places.PlaceAutocompleteElement({
-      inputElement: input,
-      fields: ["place_id","geometry","name","formatted_address","address_components","types"],
-      componentRestrictions: { country: "us" },
-    });
+    const HasNew = !!(google.maps.places && google.maps.places.PlaceAutocompleteElement);
 
-    ac.addEventListener("gmp-placeselect", (e) => {
-      const place = e.place;
-      if (!place) return;
+    if (HasNew) {
+      // NUEVO: NO usar 'fields' (causa InvalidValueError)
+      const ac = new google.maps.places.PlaceAutocompleteElement({
+        inputElement: input,
+        componentRestrictions: { country: "us" },
+      });
 
-      if (place.geometry?.location && map) {
-        map.panTo(place.geometry.location);
-        map.setZoom(12);
-      }
+      ac.addEventListener("gmp-placeselect", (e) => {
+        const place = e.place;
+        if (!place) return;
 
-      const pretty = (place.formatted_address || place.name || input.value || "").trim();
+        const loc = place.geometry?.location;
+        if (loc && map) { map.panTo(loc); map.setZoom(12); }
 
-      if (inputId === "pickup") {
-        originText = pretty;
-        window.pickupPlace = place;
-        if (window.BNZ?.onPickupPlaceChanged) BNZ.onPickupPlaceChanged(place);
-        if (window.updateMeetGreetVisibility) window.updateMeetGreetVisibility();
-      } else {
-        destinationText = pretty;
-        window.dropoffPlace = place;
-      }
-    });
+        const pretty = (place.formatted_address || place.name || input.value || "").trim();
 
-    input.addEventListener("input", () => {
-      const v = (input.value || "").trim();
-      if (inputId === "pickup") originText = v; else destinationText = v;
+        if (inputId === "pickup") {
+          originText = pretty;
+          window.pickupPlace = place;
+          if (window.BNZ?.onPickupPlaceChanged) BNZ.onPickupPlaceChanged(place);
+          if (window.updateMeetGreetVisibility) window.updateMeetGreetVisibility();
+        } else {
+          destinationText = pretty;
+          window.dropoffPlace = place;
+        }
+      });
+    } else {
+      // CLÁSICO (legacy) — aquí sí podemos usar 'fields'
+      const ac = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: ["us"] },
+        fields: ["place_id","geometry","name","formatted_address","address_components","types"],
+      });
+
+      ac.addListener("place_changed", () => {
+        const place = ac.getPlace();
+        const loc = place?.geometry?.location;
+        if (loc && map) { map.panTo(loc); map.setZoom(12); }
+
+        const pretty = (place?.formatted_address || place?.name || input.value || "").trim();
+
+        if (inputId === "pickup") {
+          originText = pretty;
+          window.pickupPlace = place || null;
+          if (window.BNZ?.onPickupPlaceChanged) BNZ.onPickupPlaceChanged(place);
+          if (window.updateMeetGreetVisibility) window.updateMeetGreetVisibility();
+        } else {
+          destinationText = pretty;
+          window.dropoffPlace = place || null;
+        }
+      });
+    }
+
+    // cachear texto libre
+    ["input","change","blur"].forEach(ev => {
+      input.addEventListener(ev, () => {
+        const v = (input.value || "").trim();
+        if (inputId === "pickup") originText = v; else destinationText = v;
+      });
     });
   }
 
@@ -223,7 +256,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
       zoom: 11,
-      mapId: MAP_ID, // ahora con tu Map ID
+      mapId: MAP_ID, // usa tu Map ID para evitar el warning y habilitar Advanced Markers
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
