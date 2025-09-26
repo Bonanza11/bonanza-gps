@@ -10,10 +10,11 @@
 
   <style>
     :root{
-      --copper:#a8744f; --copper-2:#c08b5c; --copper-3:#ffddae;
+      --copper:#a8744f;         /* cobre principal */
+      --copper-2:#c08b5c;       /* cobre claro para brillos */
+      --copper-3:#ffddae;       /* texto crema */
       --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b;
-      --bg:#000; --panel:#0e0e0e; --panel-2:#101010;
-      --field:#121212; --field-2:#1a1a1a; --border:#444;
+      --bg:#000; --panel:#0e0e0e; --field:#121212; --field-2:#1a1a1a; --border:#444;
     }
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--copper-3);font-family:Inter,system-ui,Arial,sans-serif}
@@ -22,54 +23,89 @@
       box-shadow:0 0 2px rgba(192,139,92,.35) inset, 0 0 8px rgba(0,0,0,.6), 0 0 10px rgba(192,139,92,.35)}
     main{max-width:860px;width:92vw;margin:0 auto 36px;padding:0 4px}
 
-    /* Labels + hints */
+    /* Etiquetas */
     label{display:block;margin:12px 0 6px;font-weight:800;color:var(--copper)}
-    .hint{font-size:.85rem;margin-top:6px}
-    .hint.ok{color:var(--ok)} .hint.warn{color:var(--warn)} .hint.err{color:var(--err)}
+    .hint{display:none;font-size:.85rem;margin-top:6px}       /* oculto por defecto */
+    .hint.ok{color:var(--ok)}
+    .hint.warn{color:var(--warn)}
+    .hint.err{color:var(--err)}
+    .hint.show{display:block}                                 /* se muestra por JS */
 
-    /* Inputs */
+    /* Campos */
     input,select,textarea{
-      width:100%;height:46px;padding:10px 12px;color:var(--copper-3);background:var(--field-2);
-      border:1px solid rgba(168,116,79,.45);border-radius:10px;outline:none;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 0 0 1px rgba(0,0,0,.45),0 0 0 0 rgba(168,116,79,.0);
+      width:100%;height:46px;padding:10px 12px;
+      color:var(--copper-3); background:var(--field-2);
+      border:1px solid rgba(168,116,79,.45); border-radius:10px; outline:none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.03),
+        0 0 0 1px rgba(0,0,0,.45),
+        0 0 0 0 rgba(168,116,79,.0);
       transition:border-color .15s, box-shadow .15s, background .15s;
     }
     textarea{height:64px}
     input:focus,select:focus,textarea:focus{
       border-color:var(--copper);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 0 0 1px rgba(0,0,0,.55),0 0 0 3px rgba(168,116,79,.26),0 0 14px 2px rgba(192,139,92,.16);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 0 0 1px rgba(0,0,0,.55),
+        0 0 0 3px rgba(168,116,79,.26),
+        0 0 14px 2px rgba(192,139,92,.16);
       background:var(--field);
     }
     ::placeholder{color:#cba686;opacity:.7}
 
     /* Autofill oscuro */
-    input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+    input:-webkit-autofill,
+    textarea:-webkit-autofill,
+    select:-webkit-autofill{
       -webkit-box-shadow:0 0 0 1000px var(--field-2) inset !important;
-      -webkit-text-fill-color: var(--copper-3) !important; transition: background-color 9999s ease-out 0s; caret-color: var(--copper-3);
+      -webkit-text-fill-color: var(--copper-3) !important;
+      transition: background-color 9999s ease-out 0s;
+      caret-color: var(--copper-3);
     }
 
-    /* Quitar rojo nativo en inválidos */
-    input:invalid, textarea:invalid, select:invalid{ box-shadow:none!important; outline:0!important; border-color:rgba(168,116,79,.45)!important; background:var(--field-2)!important }
-    input:focus:invalid, textarea:focus:invalid, select:focus:invalid{ border-color:var(--copper)!important; box-shadow:0 0 0 3px rgba(168,116,79,.26)!important; background:var(--field)!important }
-    :-moz-ui-invalid{ box-shadow:none!important; outline:0!important; border-color:rgba(168,116,79,.45)!important; background:var(--field-2)!important }
+    /* Quitamos highlight rojo nativo en inválidos (controlamos por JS) */
+    input:invalid, textarea:invalid, select:invalid{
+      box-shadow:none !important;
+      outline:0 !important;
+      border-color: rgba(168,116,79,.45) !important;
+      background: var(--field-2) !important;
+    }
+    input:focus:invalid, textarea:focus:invalid, select:focus:invalid{
+      border-color: var(--copper) !important;
+      box-shadow: 0 0 0 3px rgba(168,116,79,.26) !important;
+      background: var(--field) !important;
+    }
+    :-moz-ui-invalid{box-shadow:none !important;border-color: rgba(168,116,79,.45) !important;background: var(--field-2) !important;}
 
-    /* Grid fecha/hora */
+    /* Resaltado por JS cuando es inválido */
+    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important}
+
+    /* Dos columnas fecha/hora */
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:520px){.grid2{grid-template-columns:1fr}}
 
-    /* Vehicle selector */
+    /* Selector de vehículo */
     .veh-toggle{display:flex;gap:10px;margin:12px 0}
-    .veh-btn{flex:1;background:var(--field-2);color:var(--copper-3);border:1px solid rgba(168,116,79,.55);padding:12px;border-radius:10px;cursor:pointer;font-weight:800}
-    .veh-btn.active{background:var(--copper);color:#000;border-color:var(--copper);box-shadow:0 0 0 3px rgba(168,116,79,.25)}
+    .veh-btn{
+      flex:1;background:var(--field-2);color:var(--copper-3);
+      border:1px solid rgba(168,116,79,.55);padding:12px;border-radius:10px;cursor:pointer;font-weight:800
+    }
+    .veh-btn.active{
+      background:var(--copper);color:#000;border-color:var(--copper);
+      box-shadow:0 0 0 3px rgba(168,116,79,.25)
+    }
 
-    /* Vehicle visual */
+    /* Visual vehículo */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
-    .turntable .platform{width:220px;height:22px;border-radius:50%;background:radial-gradient(ellipse at center, rgba(0,0,0,.7), rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);margin-top:6px}
+    .turntable .platform{width:220px;height:22px;border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(0,0,0,.7), rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);margin-top:6px}
     .vehicle-caption{font-weight:800;color:#ffddae;margin-top:6px;letter-spacing:.2px}
 
     /* Meet & Greet */
-    .mg-card{display:none;margin:16px 0;border-radius:14px;border:1px solid rgba(168,116,79,.45);background:linear-gradient(180deg,#121212,#0b0b0b);box-shadow:0 12px 24px rgba(0,0,0,.35);padding:16px}
+    .mg-card{display:none;margin:16px 0;border-radius:14px;border:1px solid rgba(168,116,79,.45);
+      background:linear-gradient(180deg,#121212,#0b0b0b);box-shadow:0 12px 24px rgba(0,0,0,.35);padding:16px}
     .mg-card h3{margin:0 0 4px;color:#ffddae;font-size:1.1rem}
     .mg-card p{margin:0 0 12px;font-size:.9rem;opacity:.85}
     .mg-options{display:flex;gap:8px;margin-bottom:8px}
@@ -77,7 +113,7 @@
     .mg-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
     .mg-note{font-size:.85rem;color:#aa8b72}
 
-    /* Luggage */
+    /* Acordeón equipaje */
     .luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
     .luggage-title{font-weight:800;color:var(--copper)}
@@ -86,7 +122,7 @@
     .luggage-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
     .luggage-accordion.open .luggage-body{display:block}
 
-    /* Terms */
+    /* Términos pill + caja */
     .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
     .terms-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
     .accept-pill{min-width:28px;height:20px;border-radius:999px;border:1px solid #666;display:flex;align-items:center;padding:0 2px;background:#1a1a1a}
@@ -95,34 +131,13 @@
     .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
     .accept-label{font-size:.95rem;color:#ffddae}
 
-    /* Buttons */
+    /* Botones */
     button{width:100%;padding:14px 16px;margin-top:14px;background:var(--copper);color:#000;font-weight:800;border:0;border-radius:10px;cursor:pointer}
     button:disabled{opacity:.5;cursor:not-allowed}
 
-    /* Map + Info */
+    /* Info / resumen */
     #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #333}
-
-    /* ===== Trip Summary Card ===== */
-    #info{display:none}
-    .summary-card{
-      display:block; margin-top:14px; border-radius:16px; padding:18px;
-      background:linear-gradient(180deg, var(--panel), var(--panel-2));
-      border:1px solid rgba(192,139,92,.28); box-shadow:0 18px 40px rgba(0,0,0,.55); color:#e9d5c1;
-    }
-    .summary-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .summary-title{margin:0;font-weight:900;color:#ffedd2;font-size:1.15rem;letter-spacing:.3px}
-    .summary-cn{font-weight:800;padding:6px 10px;border-radius:10px;background:#141414;border:1px solid rgba(192,139,92,.35);color:#ffddb3}
-    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
-    .kpi{background:#0e0e0e;border:1px solid rgba(192,139,92,.18);border-radius:12px;padding:12px}
-    .kpi .label{font-size:.76rem;opacity:.8;margin-bottom:6px;color:#d7bb9a}
-    .kpi .value{font-size:1.35rem;font-weight:900;color:#ffedd2}
-    .kpi .unit{font-size:.9rem;opacity:.7;margin-left:4px}
-    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0 10px}
-    .breakdown{margin-top:4px}
-    .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0}
-    .row.total{font-weight:900;color:#ffddae;font-size:1.06rem}
-    .note{font-size:.88rem;color:#caa57e;margin-top:6px;font-style:italic}
-    @media (max-width:560px){ .kpis{grid-template-columns:1fr 1fr} .summary-top{flex-direction:column;align-items:flex-start} }
+    #info{display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);border-radius:12px;padding:14px;background:#0e0e0e}
   </style>
 </head>
 <body>
@@ -131,7 +146,7 @@
   </header>
 
   <main>
-    <!-- Passenger -->
+    <!-- Datos del cliente -->
     <label for="fullname">Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
 
@@ -143,7 +158,7 @@
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
     <div id="emailHelp" class="hint"></div>
 
-    <!-- Route -->
+    <!-- Direcciones -->
     <label for="pickup">Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
 
@@ -162,11 +177,11 @@
       <div class="mg-note">Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.</div>
     </div>
 
-    <!-- Notes -->
+    <!-- Notas -->
     <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <!-- Date/Time -->
+    <!-- Fecha/Hora -->
     <div class="grid2" style="margin-top:10px">
       <div>
         <label for="date">Date</label>
@@ -178,20 +193,20 @@
       </div>
     </div>
 
-    <!-- Vehicle selector -->
+    <!-- Selector de vehículo -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Vehicle visual -->
+    <!-- Visual -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Luggage accordion -->
+    <!-- Acordeón equipaje -->
     <div class="luggage-accordion" id="luggageAccordion">
       <div class="luggage-summary">
         <span class="luggage-title">Luggage Guidelines</span>
@@ -229,33 +244,22 @@
       </div>
     </div>
 
-    <!-- Terms -->
+    <!-- Términos -->
     <div class="terms-box" id="termsBox">
-      <div class="terms-summary" id="termsToggle" aria-controls="termsBody" aria-expanded="false">
+      <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
           <div class="accept-dot"></div>
         </div>
         <div class="accept-label">I accept the Terms &amp; Conditions</div>
-        <div class="chev" style="margin-left:auto;width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s"></div>
-      </div>
-      <div id="termsBody" class="terms-body" hidden>
-        <div style="line-height:1.6">
-          <h3 style="margin:0 0 8px;color:#ffddae">Terms and Conditions</h3>
-          <p style="opacity:.85;margin:0 0 10px">Bonanza Transportation — Last updated: <span id="tncDate">2025</span></p>
-          <div class="divider" style="height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0 12px"></div>
-          <p>By booking or using our services, you agree to these Terms and Conditions. We may update them at any time; the latest version will be posted on our website and becomes effective immediately.</p>
-          <p>Bookings must be made in advance; payments are processed securely (e.g., Stripe). Cancellation/reschedule: &gt;24h no fee (subject to availability); &lt;24h 50% charge. Waiting time: 20 min non-airport / 60 min airport. Flight delays are accommodated when possible. No smoking or illegal substances. Utah law applies. Commercial insurance in place. Privacy respected.</p>
-          <p>Contact: (786) 683-5128 • bonanzatransportation1@outlook.com • Park City, Utah, USA.</p>
-        </div>
       </div>
     </div>
 
-    <!-- Actions -->
+    <!-- Acciones -->
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <button id="pay" disabled style="display:none">PAY NOW</button>
 
-    <!-- Trip Summary (custom renderer llenará aquí) -->
+    <!-- Resumen del viaje -->
     <div id="info"></div>
   </main>
 
@@ -268,7 +272,7 @@
   <script>window.STRIPE_PK="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";</script>
   <script src="/app/scripts/stripe.js"></script>
 
-  <!-- Vehicle visual -->
+  <!-- Visual del vehículo (no choca con booking.js) -->
   <script>
     (function vehicleVisualInline(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
@@ -276,6 +280,7 @@
       const btns=document.querySelectorAll('.veh-btn');
       const img=document.getElementById('vehImg');
       const cap=document.getElementById('vehCap');
+
       function applyVisual(){
         if(!img||!cap) return;
         if(window.__vehicleType==='van'){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
@@ -293,7 +298,7 @@
       setActive(window.__vehicleType);
     })();
 
-    // Luggage accordion
+    // Acordeón equipaje
     (function(){
       const acc=document.getElementById('luggageAccordion');
       const sum=acc?.querySelector('.luggage-summary');
@@ -301,140 +306,61 @@
     })();
   </script>
 
-  <!-- Terms logic: switch + habilitar botones + desplegable -->
+  <!-- Hints en vivo: solo aparecen tras interacción o si hay texto -->
   <script>
-    (function termsAndButtons(){
-      const pill = document.getElementById('acceptPill');
-      const label = document.querySelector('.accept-label');
-      const toggle = document.getElementById('termsToggle');
-      const body = document.getElementById('termsBody');
-      const chev = toggle?.querySelector('.chev');
-      const btnCalc = document.getElementById('calculate');
-      const btnPay  = document.getElementById('pay');
-      function setAccepted(on){
-        pill.classList.toggle('on', on);
-        pill.setAttribute('aria-checked', on ? 'true' : 'false');
-        if (btnCalc) btnCalc.disabled = !on;
-        if (btnPay)  btnPay.disabled  = !on;
-        window.__termsAccepted = !!on;
+    (function liveHints(){
+      const phoneEl = document.getElementById('phone');
+      const emailEl = document.getElementById('email');
+      const phoneHelp = document.getElementById('phoneHelp');
+      const emailHelp = document.getElementById('emailHelp');
+
+      const state = { phoneTouched:false, emailTouched:false };
+
+      const isValidUSPhone = (v) => {
+        const d = String(v||'').replace(/\D/g,'');
+        if (d.length===11 && d.startsWith('1')) return true;
+        return d.length===10;
+      };
+      const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v||'').trim());
+
+      function showHint(helpEl, type, text){
+        if(!helpEl) return;
+        helpEl.className = 'hint show ' + (type||'');
+        helpEl.textContent = text||'';
       }
-      function toggleTerms(){
-        const isOpen = !body.hasAttribute('hidden');
-        if (isOpen) { body.setAttribute('hidden',''); toggle?.setAttribute('aria-expanded','false'); if (chev) chev.style.transform='rotate(-45deg)'; }
-        else { body.removeAttribute('hidden'); toggle?.setAttribute('aria-expanded','true'); if (chev) chev.style.transform='rotate(45deg)'; }
+      function hideHint(helpEl){
+        if(!helpEl) return;
+        helpEl.className = 'hint'; helpEl.textContent='';
       }
-      toggle?.addEventListener('click', (e)=>{ if (e.target === pill || pill.contains(e.target)) return; toggleTerms(); });
-      pill?.addEventListener('click', ()=> setAccepted(!pill.classList.contains('on')));
-      pill?.addEventListener('keydown',(e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAccepted(!pill.classList.contains('on')); }});
-      label?.addEventListener('click', ()=> setAccepted(!pill.classList.contains('on')));
-      function guard(e){ if (!pill.classList.contains('on')){ e?.preventDefault?.(); alert('Please accept the Terms & Conditions to continue.'); return false; } return true; }
-      btnCalc?.addEventListener('click', guard, true);
-      btnPay?.addEventListener('click', guard, true);
-      setAccepted(false);
-      const el=document.getElementById('tncDate'); if(el) el.textContent=new Date().getFullYear();
+
+      function evalPhone(){
+        const v = phoneEl.value;
+        const touchedOrFilled = state.phoneTouched || v.trim().length>0;
+        if(!touchedOrFilled){ hideHint(phoneHelp); phoneEl.classList.remove('invalid'); return; }
+        if(isValidUSPhone(v)){ showHint(phoneHelp, 'ok', 'Valid US phone'); phoneEl.classList.remove('invalid'); }
+        else{ showHint(phoneHelp, 'err', 'Enter a valid US number'); phoneEl.classList.add('invalid'); }
+      }
+      function evalEmail(){
+        const v = emailEl.value;
+        const touchedOrFilled = state.emailTouched || v.trim().length>0;
+        if(!touchedOrFilled){ hideHint(emailHelp); emailEl.classList.remove('invalid'); return; }
+        if(isValidEmail(v)){ showHint(emailHelp, 'ok', 'Valid email'); emailEl.classList.remove('invalid'); }
+        else{ showHint(emailHelp, 'err', 'Please enter a valid email (e.g., name@domain.com)'); emailEl.classList.add('invalid'); }
+      }
+
+      phoneEl?.addEventListener('blur',  ()=>{ state.phoneTouched=true; evalPhone(); });
+      emailEl?.addEventListener('blur',  ()=>{ state.emailTouched=true; evalEmail(); });
+      phoneEl?.addEventListener('input', evalPhone);
+      emailEl?.addEventListener('input', evalEmail);
+
+      // inicio limpio
+      hideHint(phoneHelp); hideHint(emailHelp);
     })();
   </script>
 
-  <!-- Pretty Trip Summary renderer (auto-formatea lo que ponga booking.js) -->
-  <script>
-    (function summaryRenderer(){
-      const info = document.getElementById('info');
-
-      // Utilidad: dinero
-      const money = v => {
-        if (typeof v === 'number') return '$' + v.toFixed(2);
-        const n = parseFloat(String(v).replace(/[^0-9.]/g,'')); return isNaN(n)?'$0.00':'$'+n.toFixed(2);
-      };
-
-      // CN helper: si tu backend expone uno, úsalo; si no, generamos uno temporal
-      function getCN(){
-        if (window.__confirmationNumber) return window.__confirmationNumber;
-        const now = new Date();
-        const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
-        const rnd = Math.random().toString(36).slice(2,6).toUpperCase();
-        return `BZ-${y}${m}${d}-${rnd}`;
-      }
-
-      // API pública por si booking.js quiere llamarla directamente:
-      window.renderTripSummary = function(payload){
-        const p = payload || {};
-        const distanceMi = p.distance_miles ?? p.distance ?? '';
-        const duration   = p.duration_text ?? p.duration ?? '';
-        const base       = p.base_price ?? p.price ?? '';
-        const surge      = p.distance_surcharge ?? p.surcharge ?? 0;
-        const mg         = p.meet_greet_fee ?? p.meet_and_greet ?? 0;
-        const total      = p.total ?? p.total_price ?? base;
-
-        const html = `
-          <section class="summary-card" role="region" aria-label="Trip Summary">
-            <div class="summary-top">
-              <h2 class="summary-title">Trip Summary</h2>
-              <div class="summary-cn">Confirmation # <span>${getCN()}</span></div>
-            </div>
-
-            <div class="kpis">
-              <div class="kpi">
-                <div class="label">Distance</div>
-                <div class="value">${(distanceMi&&+distanceMi)?(+distanceMi).toFixed(1):'—'}<span class="unit">mi</span></div>
-              </div>
-              <div class="kpi">
-                <div class="label">Duration</div>
-                <div class="value">${duration||'—'}</div>
-              </div>
-              <div class="kpi">
-                <div class="label">Vehicle</div>
-                <div class="value">${(window.__vehicleType||'SUV').toUpperCase()}</div>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="breakdown">
-              <div class="row"><span>Base Price</span><span>${money(base)}</span></div>
-              <div class="row"><span>Distance Surcharge</span><span>${money(surge)}</span></div>
-              <div class="row"><span>Meet &amp; Greet (SLC)</span><span>${money(mg)}</span></div>
-              <div class="row total"><span>Total</span><span>${money(total)}</span></div>
-              <div class="note">Taxes &amp; gratuity included.</div>
-            </div>
-          </section>
-        `;
-        info.innerHTML = html;
-        info.style.display = 'block';
-      };
-
-      // Fallback automático: si booking.js deja texto plano, lo parseamos y re-renderizamos
-      const parseFromText = txt => {
-        const g = (label) => {
-          const m = txt.match(new RegExp(label+"\\s*\\$?([0-9.,a-zA-Z ]+)", "i"));
-          return m ? m[1].trim() : "";
-        };
-        const distance = (txt.match(/Distance\s*([0-9.]+)\s*mi/i)||[])[1];
-        const duration = (txt.match(/Duration\s*([0-9a-z\s]+)/i)||[])[1];
-        const base     = g("Price");
-        const surcharge= g("Distance Surcharge");
-        const mg       = g("Meet & Greet");
-        const total    = g("Total");
-        return {distance_miles: distance?parseFloat(distance):null, duration_text: duration||'', base_price: parseFloat((base||'').replace(/[^0-9.]/g,''))||0, distance_surcharge: parseFloat((surcharge||'').replace(/[^0-9.]/g,''))||0, meet_greet_fee: parseFloat((mg||'').replace(/[^0-9.]/g,''))||0, total: parseFloat((total||'').replace(/[^0-9.]/g,''))||0};
-      };
-
-      const mo = new MutationObserver(() => {
-        if (!info || !info.isConnected) return;
-        const raw = info.innerText || info.textContent || "";
-        if (!raw) return;
-        // Si no es nuestra tarjeta, lo convertimos:
-        if (!info.querySelector('.summary-card')) {
-          const data = parseFromText(raw);
-          window.renderTripSummary(data);
-        }
-      });
-      mo.observe(info, {childList:true, subtree:true});
-
-      // Por si tu JS guarda un objeto global con el último cálculo:
-      if (window.__lastQuote) { try{ window.renderTripSummary(window.__lastQuote); }catch(_){} }
-    })();
+  <!-- Google Maps (con Places) – maps.js debe exponer window.initMap -->
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
-
-  <!-- Google Maps -->
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap"></script>
 </body>
 </html>
