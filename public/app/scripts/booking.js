@@ -19,7 +19,62 @@
   const SUV_IMG = "/images/suburban.png";
   const VAN_IMG = "/images/van-sprinter.png";
 
+  // ────────────────────────────────────────────────────────────
+  // Listas de coincidencias por NOMBRE/DIRECCIÓN (sin GPS)
+  // ────────────────────────────────────────────────────────────
+  // Puedes ajustar/añadir variantes libremente:
+  const SLC_MATCHES = (window.BNZ_AIRPORTS?.slcNames) || [
+    "salt lake city international airport",
+    "slc airport",
+    "slc intl",
+    "slc int’l",
+    "salt lake city airport",
+    "airport slc",
+    "slc terminal",
+  ];
+
+  const JSX_MATCHES = (window.BNZ_AIRPORTS?.jsxNames) || [
+    "jsx",
+    "jsx slc",
+    "jsx terminal",
+    "jsx salt lake",
+    "signature flight support jsx", // variantes comunes
+  ];
+
+  // Normaliza texto para comparar
+  function norm(x){
+    return String(x || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  // Obtiene el texto de pick-up (preferimos el input; si existe Google Place, también lo probamos)
+  function getPickupText(){
+    const inputVal = document.getElementById("pickup")?.value || "";
+    // Si maps.js te deja algo en window.pickupPlace, tratamos de usar nombre o dirección
+    const place = window.pickupPlace || null;
+    const fromPlace = place
+      ? (place.name || place.formatted_address || place.vicinity || "")
+      : "";
+    // Preferimos lo más específico disponible
+    const cand = fromPlace.length >= inputVal.length ? fromPlace : inputVal;
+    return norm(cand);
+  }
+
+  // ¿El pick-up es SLC Airport o JSX?
+  function isPickupSLCorJSX(){
+    const txt = getPickupText();
+    if (!txt) return false;
+
+    const hitSLC = SLC_MATCHES.some(k => txt.includes(norm(k)));
+    const hitJSX = JSX_MATCHES.some(k => txt.includes(norm(k)));
+    return hitSLC || hitJSX;
+  }
+
+  // ────────────────────────────────────────────────────────────
   // Estado compartido
+  // ────────────────────────────────────────────────────────────
   const BNZ = window.BNZ = window.BNZ || {};
   BNZ.state = BNZ.state || {
     vehicle: "suv",            // 'suv' | 'van'
@@ -29,9 +84,9 @@
 
   // Guarda totals para stripe.js
   function publishTotals(t){
-    window.__lastQuotedTotal  = t.total;
-    window.__lastDistanceMiles= t.miles;
-    window.__vehicleType      = BNZ.state.vehicle;
+    window.__lastQuotedTotal   = t.total;
+    window.__lastDistanceMiles = t.miles;
+    window.__vehicleType       = BNZ.state.vehicle;
   }
 
   // Tabla base (mismo criterio histórico)
@@ -85,7 +140,9 @@
 
   // Meet & Greet (visible sólo si SLC comercial y SUV)
   function mgShouldShow(){
-    return (BNZ.state.vehicle === "suv") && (typeof window.isSLCInternational === "function") && window.isSLCInternational(window.pickupPlace || null);
+    return (BNZ.state.vehicle === "suv") &&
+           (typeof window.isSLCInternational === "function") &&
+           window.isSLCInternational(window.pickupPlace || null);
   }
   function mgFee(){ return BNZ.state.mgChoice !== "none" ? MG_FEE_USD : 0; }
   function mgSyncCard(){
@@ -109,26 +166,45 @@
     mgSyncCard();
   };
 
+  // ────────────────────────────────────────────────────────────
   // Render del presupuesto (leg + surcharge viene de maps.js)
+  // ────────────────────────────────────────────────────────────
   BNZ.renderQuote = function(leg, {surcharge=0}={}){
     const miles = (leg?.distance?.value || 0) / 1609.34;
+
+    // ✅ EXCEPCIÓN: SLC Airport o JSX → NO aplicar Distance Surcharge
+    let adjustedSurcharge = surcharge;
+    if (isPickupSLCorJSX()){
+      adjustedSurcharge = 0;
+    }
 
     const base  = baseFare(miles);
     const dateV = document.getElementById("date")?.value || "";
     const timeV = document.getElementById("time")?.value || "";
-    const ah    = isAfterHours(dateV, timeV) ? (base + surcharge) * AFTER_HOURS_PCT : 0;
+    const ah    = isAfterHours(dateV, timeV) ? (base + adjustedSurcharge) * AFTER_HOURS_PCT : 0;
     const mg    = mgFee();
 
-    const subtotal = base + surcharge + ah + mg;
+    const subtotal = base + adjustedSurcharge + ah + mg;
     const total    = applyVehicle(subtotal);
 
-    BNZ.state.last = { miles, base, surcharge, ah, mg, total, leg };
+    BNZ.state.last = {
+      miles,
+      base,
+      surcharge: adjustedSurcharge,
+      ah,
+      mg,
+      total,
+      leg
+    };
+
     publishTotals(BNZ.state.last);
     paintSummary(BNZ.state.last, leg);
     enablePayIfReady();
   };
 
-  // UI — Resumen
+  // ────────────────────────────────────────────────────────────
+  // UI — Resumen (con Confirmation # si está disponible)
+  // ────────────────────────────────────────────────────────────
   function paintSummary(t, leg){
     const el = document.getElementById("info");
     if(!el) return;
@@ -141,19 +217,43 @@
       t.mg>0        ? row("Meet & Greet (SLC)",t.mg)        : ""
     ].filter(Boolean).join("");
 
+    const cn = window.__lastCN || window.__reservationCode || "";
+
     el.style.display = "block";
     el.innerHTML = `
-      <h3 class="info-title">Trip Summary</h3>
-      <div class="kpis">
-        <div class="kpi"><div class="label">Distance</div><div class="value">${distTxt}</div></div>
-        <div class="kpi"><div class="label">Duration</div><div class="value">${durTxt}</div></div>
-        <div class="kpi"><div class="label">Price</div><div class="value price">$${t.total.toFixed(2)}</div></div>
+      <div class="info-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Trip Summary</span>
+        ${cn ? `<span style="font-weight:700;color:#ffddae;font-size:.95rem">Confirmation: <span style="letter-spacing:.3px">${cn}</span></span>` : ""}
       </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Distance</div>
+          <div class="value">${distTxt}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Duration</div>
+          <div class="value">${durTxt}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Price</div>
+          <div class="value price">$${t.total.toFixed(2)}</div>
+        </div>
+      </div>
+
       ${rows ? `<div class="divider"></div><div class="breakdown">${rows}</div>` : ""}
-      <div class="row total"><span>Total</span><span>$${t.total.toFixed(2)}</span></div>
+
+      <div class="row total" style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;margin-top:6px">
+        <span>Total</span><span>$${t.total.toFixed(2)}</span>
+      </div>
       <div class="tax-note">Taxes & gratuity included</div>
     `;
-    function row(label, val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
+
+    function row(label, val){
+      return `<div class="row" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
+                <span>${label}</span><span>$${val.toFixed(2)}</span>
+              </div>`;
+    }
   }
 
   // ────────────────────────────────────────────────────────────
