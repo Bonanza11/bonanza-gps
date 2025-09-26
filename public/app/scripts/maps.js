@@ -1,21 +1,10 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
-──────────────────────────────────────────────────────────────
-- Inicializa el mapa y Places.
-- Autocomplete en pickup/dropoff (solo USA).
-- Expuestos globalmente:
-    window.pickupPlace, window.dropoffPlace
-    window.isSLCInternational(place), window.isAirport(place), window.isUtah(place)
-    window.routeAsync(opts)
+- Inicializa mapa, Autocomplete en pickup/dropoff (US-only).
+- Calcula ruta al disparar "bnz:calculate" y notifica BNZ.renderQuote(leg,{ surcharge }).
+- Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
 
-- Escucha "bnz:calculate" → calcula ruta → BNZ.renderQuote(leg, { surcharge })
-- Regla de recargo: $3/mi desde BASE cuando:
-  A) pickup es aeropuerto y dropoff está fuera de Summit/Wasatch → BASE→PICKUP
-  B) pickup fuera de Summit/Wasatch → BASE→PICKUP
-
-Requiere en HTML:
-  <div id="map"></div>
-  loadGoogleMaps(key,{ libraries:"places" }).then(()=>window.initMap && window.initMap())
+Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initMap()
 */
 (function () {
   "use strict";
@@ -24,19 +13,16 @@ Requiere en HTML:
   const BASE_ADDRESS   = "13742 N Jordanelle Pkwy, Kamas, UT 84036";
 
   let map, dirService, dirRenderer;
-  let acPickup = null, acDropoff = null;
 
-  // Texto libre (cuando el usuario no selecciona una sugerencia)
+  // Texto libre (si no seleccionan sugerencia)
   let originText = "";
   let destinationText = "";
 
   // Globals usados por otros módulos
-  window.pickupPlace = window.pickupPlace || null;
+  window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
 
-  // ──────────────────────────────────────────────────────────────
-  // Helpers Places/Geocoder
-  // ──────────────────────────────────────────────────────────────
+  // ───────────────── helpers
   function isAirport(place) {
     const t = place?.types || [];
     const txt = `${place?.name || ""} ${place?.formatted_address || ""}`.toLowerCase();
@@ -57,12 +43,11 @@ Requiere en HTML:
     return FBO_RX.test(text);
   }
 
-  // SLC comercial (no FBO)
   function isSLCInternational(place) {
     if (!place) return false;
     const name = (place.name || "").toLowerCase();
     const addr = (place.formatted_address || "").toLowerCase();
-    const hit = /salt lake city international/.test(name) || /salt lake city international/.test(addr) || /\bslc\b/.test(name) || /\bslc\b/.test(addr);
+    const hit  = /salt lake city international/.test(name) || /salt lake city international/.test(addr) || /\bslc\b/.test(name) || /\bslc\b/.test(addr);
     return hit && isAirport(place) && !isPrivateUtahAirport(place);
   }
   window.isSLCInternational = isSLCInternational;
@@ -83,7 +68,6 @@ Requiere en HTML:
     });
   }
 
-  // DirectionsService (callback → Promise)
   function routeAsync(opts) {
     return new Promise((resolve, reject) => {
       dirService.route(opts, (r, s) => (s === "OK" && r ? resolve(r) : reject(s || "ROUTE_ERROR")));
@@ -96,9 +80,7 @@ Requiere en HTML:
       const r = await geocodeAsync({ placeId });
       const c = r.address_components.find((x) => x.types?.includes("administrative_area_level_2"));
       return c?.long_name || "";
-    } catch (_) {
-      return "";
-    }
+    } catch { return ""; }
   }
 
   async function milesFromBaseTo(placeId) {
@@ -112,9 +94,7 @@ Requiere en HTML:
     return leg.distance.value / 1609.34;
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Regla de recargo $3/mi
-  // ──────────────────────────────────────────────────────────────
+  // ─────────────── recargo $3/mi
   async function computeSurchargeAsync() {
     if (!window.pickupPlace && !window.dropoffPlace) return 0;
 
@@ -131,7 +111,7 @@ Requiere en HTML:
 
     const pickupIsAir = !!pickup && isAirport(pickup);
 
-    // A) Pickup aeropuerto + drop fuera de Summit/Wasatch → BASE→PICKUP
+    // A) Aeropuerto + drop fuera de Summit/Wasatch → BASE→PICKUP
     if (pickupIsAir) {
       const dropAllowed = ALLOWED_RX.test(dropCounty);
       if (!dropAllowed && pickup?.place_id) {
@@ -141,25 +121,22 @@ Requiere en HTML:
       return 0;
     }
 
-    // B) Pickup normal fuera de Summit/Wasatch → BASE→PICKUP
+    // B) Pickup fuera de Summit/Wasatch → BASE→PICKUP
     const pickupAllowed = ALLOWED_RX.test(pickupCounty);
     if (!pickupAllowed && pickup?.place_id) {
       const miles = await milesFromBaseTo(pickup.place_id);
       return Math.round(miles * 3 * 100) / 100;
     }
-
     return 0;
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Autocomplete
-  // ──────────────────────────────────────────────────────────────
+  // ─────────────── autocomplete clásico (estable hoy)
   function attachAutocomplete(inputId, opts = {}) {
     const input = document.getElementById(inputId);
     if (!input) return null;
 
     const ac = new google.maps.places.Autocomplete(input, {
-      fields: ["place_id", "geometry", "name", "formatted_address", "address_components", "types"],
+      fields: ["place_id","geometry","name","formatted_address","address_components","types"],
       componentRestrictions: { country: ["us"] },
       ...opts,
     });
@@ -167,44 +144,31 @@ Requiere en HTML:
     ac.addListener("place_changed", () => {
       const place = ac.getPlace();
       const loc = place?.geometry?.location || null;
-      if (loc && map) {
-        map.panTo(loc);
-        map.setZoom(12);
-      }
-
+      if (loc && map) { map.panTo(loc); map.setZoom(12); }
       const pretty = (place?.formatted_address || place?.name || input.value || "").trim();
 
       if (inputId === "pickup") {
         originText = pretty;
         window.pickupPlace = place || null;
-
-        if (window.BNZ && typeof BNZ.onPickupPlaceChanged === "function") {
-          BNZ.onPickupPlaceChanged(place);
-        }
-        if (typeof window.updateMeetGreetVisibility === "function") {
-          window.updateMeetGreetVisibility();
-        }
+        if (window.BNZ?.onPickupPlaceChanged) BNZ.onPickupPlaceChanged(place);
+        if (window.updateMeetGreetVisibility) window.updateMeetGreetVisibility();
       } else {
         destinationText = pretty;
         window.dropoffPlace = place || null;
       }
     });
 
-    // Cachear texto libre
-    ["input", "change", "blur"].forEach((ev) => {
+    // cachear texto libre
+    ["input","change","blur"].forEach(ev => {
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
-        if (inputId === "pickup") originText = v;
-        else destinationText = v;
+        if (inputId === "pickup") originText = v; else destinationText = v;
       });
     });
 
     return ac;
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Routing + quote
-  // ──────────────────────────────────────────────────────────────
   async function routeAndQuote() {
     const origin      = originText || document.getElementById("pickup")?.value || "";
     const destination = destinationText || document.getElementById("dropoff")?.value || "";
@@ -216,32 +180,21 @@ Requiere en HTML:
 
     try {
       const req = {
-        origin,
-        destination,
+        origin, destination,
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.IMPERIAL,
         provideRouteAlternatives: false,
       };
 
-      // ✅ usar wrapper consistente (callback → Promise)
       const result = await routeAsync(req);
       const route  = result?.routes?.[0];
       const leg    = route?.legs?.[0];
-
-      if (!route || !leg) {
-        alert("Could not compute a route. Please refine the addresses.");
-        return;
-      }
+      if (!route || !leg) { alert("Could not compute a route. Please refine the addresses."); return; }
 
       dirRenderer.setDirections(result);
 
-      // Recargo según reglas
       const surcharge = await computeSurchargeAsync();
-
-      // Notificar al módulo de booking
-      if (window.BNZ && typeof BNZ.renderQuote === "function") {
-        BNZ.renderQuote(leg, { surcharge });
-      }
+      if (window.BNZ?.renderQuote) BNZ.renderQuote(leg, { surcharge });
     } catch (err) {
       console.error("[maps] route error:", err);
       alert("There was an error calculating the route. Try again.");
@@ -252,15 +205,24 @@ Requiere en HTML:
     document.addEventListener("bnz:calculate", routeAndQuote);
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Callback global (Google Maps loader)
-  // ──────────────────────────────────────────────────────────────
+  // ─────────────── marcador: usa AdvancedMarker si está, fallback a Marker
+  function addHomeMarker() {
+    try {
+      const AdvancedMarker = google.maps.marker?.AdvancedMarkerElement;
+      if (AdvancedMarker) {
+        new AdvancedMarker({ map, position: DEFAULT_CENTER, title: "Bonanza Transportation" });
+      } else {
+        new google.maps.Marker({ map, position: DEFAULT_CENTER, title: "Bonanza Transportation" });
+      }
+    } catch {
+      new google.maps.Marker({ map, position: DEFAULT_CENTER, title: "Bonanza Transportation" });
+    }
+  }
+
+  // ─────────────── callback global
   window.initMap = function () {
     const mapEl = document.getElementById("map");
-    if (!mapEl) {
-      console.warn("[maps] #map not found");
-      return;
-    }
+    if (!mapEl) { console.warn("[maps] #map not found"); return; }
 
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
@@ -270,28 +232,19 @@ Requiere en HTML:
       fullscreenControl: false,
     });
 
-    new google.maps.Marker({
-      position: DEFAULT_CENTER,
-      map,
-      title: "Bonanza Transportation",
-    });
+    addHomeMarker();
 
     dirService  = new google.maps.DirectionsService();
-    dirRenderer = new google.maps.DirectionsRenderer({
-      map,
-      suppressMarkers: false,
-      preserveViewport: false,
-    });
+    dirRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: false, preserveViewport: false });
 
     // Autocomplete
-    acPickup  = attachAutocomplete("pickup");
-    acDropoff = attachAutocomplete("dropoff");
+    attachAutocomplete("pickup");
+    attachAutocomplete("dropoff");
 
     // Respetar texto precargado
     originText      = document.getElementById("pickup")?.value || originText;
     destinationText = document.getElementById("dropoff")?.value || destinationText;
 
-    // Listener de cálculo
     wireCalculateListener();
   };
 })();
