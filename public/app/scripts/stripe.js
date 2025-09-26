@@ -37,7 +37,10 @@
   function setInvalid(el, bad) {
     if (!el) return;
     el.classList.toggle("invalid", !!bad);
-    el.classList.toggle("valid", !bad && String(el.value || "").trim().length > 0);
+    el.classList.toggle(
+      "valid",
+      !bad && String(el.value || "").trim().length > 0
+    );
   }
 
   function getValue(id) {
@@ -169,7 +172,9 @@
           return;
         }
         const stripe = Stripe(STRIPE_PK);
-        const { error } = await stripe.redirectToCheckout({ sessionId: data.id });
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: data.id,
+        });
         if (error) throw error;
         return;
       }
