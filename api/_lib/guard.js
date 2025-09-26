@@ -1,30 +1,97 @@
-// /api/_lib/guard.js (seguro, sin master key)
-import jwt from "jsonwebtoken";
+// api/_lib/guard.js
 
-const JWT_SECRET = process.env.JWT_SECRET; // ← DEBE existir en Vercel
+// ===== Utilidades de respuesta =====
+export function send(res, status, payload = {}) {
+  res.status(status).json({ ok: status < 400, ...payload });
+}
 
-export function requireAuth(allowedRoles = []) {
-  if (!JWT_SECRET) {
-    // ayuda para detectar faltas de config en deploys
-    console.warn("[guard] Missing JWT_SECRET env var");
+export function badRequest(res, msg = 'Bad Request') {
+  return send(res, 400, { error: msg });
+}
+
+export function notFound(res, msg = 'Not Found') {
+  return send(res, 404, { error: msg });
+}
+
+// ===== CORS =====
+function getAllowedOrigin() {
+  try {
+    const base = new URL(process.env.PUBLIC_BASE_URL || '');
+    return base.origin;
+  } catch {
+    return '*'; // fallback si no configuraste PUBLIC_BASE_URL
   }
+}
 
-  return (handler) => async (req, res) => {
+export function applyCors(req, res) {
+  const origin = getAllowedOrigin();
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin'); // para caches
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type,Authorization,x-admin-token'
+  );
+  // Responder preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return true;
+  }
+  return false;
+}
+
+// ===== Auth Admin =====
+export function assertAdmin(req) {
+  const token = req.headers['x-admin-token'];
+  if (!token || token !== process.env.ADMIN_TOKEN) {
+    const e = new Error('Unauthorized');
+    e.status = 401;
+    throw e;
+  }
+}
+
+// ===== Helpers de entrada =====
+export function ensureMethods(req, res, allowed = []) {
+  if (!allowed.includes(req.method)) {
+    res.setHeader('Allow', allowed.join(','));
+    send(res, 405, { error: 'Method Not Allowed' });
+    return false;
+  }
+  return true;
+}
+
+export function jsonBody(req) {
+  if (!req.body) return {};
+  if (typeof req.body === 'string') {
+    try { return JSON.parse(req.body); } catch { return {}; }
+  }
+  return req.body;
+}
+
+export function requireFields(obj, fields = []) {
+  const missing = fields.filter((k) => obj[k] === undefined || obj[k] === null || obj[k] === '');
+  if (missing.length) {
+    const e = new Error(`Missing fields: ${missing.join(', ')}`);
+    e.status = 400;
+    throw e;
+  }
+}
+
+// ===== Wrapper principal =====
+/**
+ * guard: aplica CORS, valida método y captura errores para cualquier handler.
+ * Uso: export default guard(['GET','POST'], async (req,res)=>{...})
+ */
+export function guard(allowedMethods, handler) {
+  return async (req, res) => {
     try {
-      const auth = req.headers.authorization || "";
-      const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-      if (!token) return res.status(401).json({ ok:false, error:"missing_token" });
-
-      const payload = jwt.verify(token, JWT_SECRET); // { sub, roles? }
-      const roles = payload.roles || (payload.role ? [payload.role] : []);
-      if (allowedRoles.length && !roles.some(r => allowedRoles.includes(r))) {
-        return res.status(403).json({ ok:false, error:"forbidden" });
-      }
-
-      req.user = { id: payload.sub, roles };
-      return handler(req, res);
-    } catch (e) {
-      console.error("[requireAuth]", e);
-      return res.status(401).json({ ok:false, error:"invalid_token" });
+      if (applyCors(req, res)) return; // preflight
+      if (!ensureMethods(req, res, allowedMethods)) return;
+      await handler(req, res);
+    } catch (err) {
+      const code = err.status || 500;
+      console.error('API error:', err);
+      send(res, code, { error: err.message || 'Server Error' });
     }
   };
+}
