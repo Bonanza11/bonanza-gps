@@ -9,11 +9,11 @@
   <meta name="theme-color" content="#b66a2c" />
   <link rel="stylesheet" href="/app/styles/app.css" />
 
-  <!-- Configuración pública (se reemplaza luego con API/env vars) -->
+  <!-- Configuración pública (se puede reemplazar con env vars en Vercel) -->
   <script>
     window.__PUBLIC_CFG__ = {
-      GMAPS_KEY: "YOUR_GOOGLE_MAPS_API_KEY",
-      STRIPE_PK: "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx"
+      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",   // Google Maps API Key
+      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp" // Stripe Public Key (test)
     };
   </script>
 </head>
@@ -124,28 +124,13 @@
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
 
-  <!-- Google Maps (sin defer para evitar race) -->
-  <script src="/app/scripts/maps-loader.js"></script>
-  <script src="/app/scripts/maps.js"></script>
+  <!-- Google Maps -->
+  <script src="/app/scripts/maps-loader.js" defer></script>
+  <script src="/app/scripts/maps.js" defer></script>
   <script>
-    (function () {
-      function start() {
-        var key = (window.__PUBLIC_CFG__ && window.__PUBLIC_CFG__.GMAPS_KEY) || "";
-        if (!key) { console.error("[maps-init] Missing Google Maps API key"); return; }
-        loadGoogleMaps(key, { libraries: "places" })
-          .then(function(){ if (window.initMap) window.initMap(); })
-          .catch(function(err){ console.error("GMAPS load failed", err); });
-      }
-      if (window.loadGoogleMaps) {
-        start();
-      } else {
-        var t0 = Date.now();
-        var iv = setInterval(function(){
-          if (window.loadGoogleMaps) { clearInterval(iv); start(); }
-          else if (Date.now() - t0 > 15000) { clearInterval(iv); console.error("[maps-init] loadGoogleMaps not available (timeout)"); }
-        }, 50);
-      }
-    })();
+    loadGoogleMaps(window.__PUBLIC_CFG__.GMAPS_KEY, { libraries: "places" })
+      .then(() => { if (window.initMap) window.initMap(); })
+      .catch(err => console.error("GMAPS load failed", err));
   </script>
 
   <!-- Stripe -->
