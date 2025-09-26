@@ -1,82 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Payment Success — Bonanza</title>
-  <link rel="icon" href="/images/bonanza-logo.png"/>
-  <style>
-    :root{--copper:#a8744f;--copper2:#c08b5c;--txt:#ffddae;--bg:#000;--panel:#0f0f0f}
-    *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,Arial,sans-serif}
-    .wrap{max-width:820px;margin:0 auto;padding:30px 16px}
-    .card{background:linear-gradient(180deg,#111,#0b0b0b);border:1px solid rgba(168,116,79,.35);
-      border-radius:16px;box-shadow:0 18px 48px rgba(0,0,0,.6);padding:18px;position:relative}
-    .badge{position:absolute;top:14px;right:14px;width:68px;height:68px;border-radius:50%;
-      border:2px solid var(--copper);background:#000 url("/images/bonanza-logo.png") center/cover no-repeat;
-      box-shadow:0 0 14px rgba(192,139,92,.35)}
-    h1{margin:0 0 6px;color:#ffe5c3;text-align:center}
-    .ok{display:inline-flex;align-items:center;gap:8px;background:#0f1913;border:1px solid rgba(23,201,100,.4);
-      color:#93ffb2;padding:8px 10px;border-radius:10px;font-weight:800}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
-    .box{background:#101010;border:1px solid rgba(168,116,79,.25);border-radius:12px;padding:12px}
-    .label{opacity:.85;font-size:.85rem;margin-bottom:6px}
-    .value{font-weight:800;color:#ffddae}
-    .btns{display:flex;gap:10px;margin-top:10px}
-    .btn{flex:1 1 0;padding:12px 14px;border-radius:10px;font-weight:800;cursor:pointer;border:1px solid rgba(168,116,79,.45)}
-    .primary{background:var(--copper);color:#000;border-color:var(--copper)}
-    .ghost{background:#141414;color:#ffedd2}
-    .hint{margin-top:8px;opacity:.85;font-size:.9rem}
-  </style>
+  <meta charset="utf-8">
+  <title>Payment Successful — Bonanza Transportation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/images/bonanza-logo.png">
+  <link rel="stylesheet" href="/app/styles/app.css">
+  <style>main{max-width:760px;margin:32px auto;padding:0 16px;text-align:center}</style>
 </head>
 <body>
-  <main class="wrap">
-    <div class="card">
-      <div class="badge" aria-hidden="true"></div>
-      <div style="text-align:center;margin-bottom:8px">
-        <span class="ok">✓ Payment successful</span>
-      </div>
-      <h1>Thank you for your booking</h1>
+  <header style="display:flex;justify-content:center;padding:20px 16px">
+    <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation" style="width:120px;height:120px;border-radius:50%">
+  </header>
 
-      <div class="grid">
-        <div class="box">
-          <div class="label">Reservation Code (CN)</div>
-          <div id="cn" class="value">—</div>
-        </div>
-        <div class="box">
-          <div class="label">Amount Paid</div>
-          <div id="amount" class="value">$0.00</div>
-        </div>
-        <div class="box">
-          <div class="label">Passenger</div>
-          <div id="name" class="value">—</div>
-        </div>
-        <div class="box">
-          <div class="label">Email</div>
-          <div id="email" class="value">—</div>
-        </div>
-      </div>
-
-      <div class="hint">A confirmation email has been sent. If you need to make changes, you can reschedule using your CN code.</div>
-
-      <div class="btns">
-        <button id="back" class="btn primary">Back to Booking</button>
-        <button id="resched" class="btn ghost">Reschedule</button>
-      </div>
-    </div>
+  <main>
+    <h1 style="color:#ffddae;margin:0 0 8px">Payment Successful</h1>
+    <p>Thank you! Your booking has been received.</p>
+    <p>If you need to make changes, please call or email us.</p>
+    <div class="divider"></div>
+    <p><a class="hq-link" href="/">← Back to booking</a></p>
   </main>
-
-  <script>
-    const $ = s => document.querySelector(s);
-    const p = new URLSearchParams(location.search);
-    const money = v => '$' + (Number(v||0)/100).toFixed(2);
-
-    $('#cn').textContent     = p.get('cn') || '—';
-    $('#amount').textContent = p.get('amount_cents') ? money(p.get('amount_cents')) : (p.get('amount')||'$0.00');
-    $('#name').textContent   = p.get('name') || '—';
-    $('#email').textContent  = p.get('email') || '—';
-
-    $('#back').onclick   = ()=> location.href = '/';
-    $('#resched').onclick= ()=> location.href = '/app/reschedule.html' + (p.get('cn')? ('?cn='+encodeURIComponent(p.get('cn'))):'');
-  </script>
 </body>
 </html>
