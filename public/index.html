@@ -4,12 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bonanza Transportation</title>
-  <link rel="icon" href="/images/bonanza-logo.png">
+  <link rel="icon" href="/images/bonanza-logo.png" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#b66a2c" />
-
-  <!-- CSS modular -->
-  <link rel="stylesheet" href="/app/styles/app.css">
+  <link rel="stylesheet" href="/app/styles/app.css" />
 </head>
 <body>
   <header>
@@ -115,13 +113,15 @@
       </div>
     </div>
 
-    <!-- Términos -->
+    <!-- Terms / Accept switch -->
     <div class="terms-box" id="termsBox">
       <div class="terms-summary">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
           <div class="accept-dot"></div>
         </div>
-        <div class="accept-label">I accept the Terms &amp; Conditions</div>
+        <div class="accept-label">
+          I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+        </div>
       </div>
     </div>
 
@@ -143,7 +143,7 @@
   <script>window.STRIPE_PK="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";</script>
   <script src="/app/scripts/stripe.js"></script>
 
-  <!-- Visual del vehículo (pequeño helper) -->
+  <!-- Visual del vehículo -->
   <script>
     (function vehicleVisualInline(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
@@ -177,7 +177,7 @@
     })();
   </script>
 
-  <!-- Google Maps (con Places) – maps.js debe exponer window.initMap -->
+  <!-- Google Maps (con Places) -->
   <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
