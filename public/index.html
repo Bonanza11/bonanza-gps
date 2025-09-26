@@ -138,7 +138,18 @@
   <script src="/app/scripts/validators.js"></script>
   <script src="/app/scripts/core.js"></script>
   <script src="/app/scripts/booking.js"></script>
+
+  <!-- Google Maps (loader único + init) -->
+  <script>window.GMAPS_KEY="TU_API_KEY_AQUI";</script>
+  <script src="/app/scripts/maps-loader.js"></script>
   <script src="/app/scripts/maps.js"></script>
+  <script>
+    loadGoogleMaps(window.GMAPS_KEY, { libraries: "places" })
+      .then(() => { if (window.initMap) window.initMap(); })
+      .catch(err => console.error('GMAPS load failed', err));
+  </script>
+
+  <!-- Stripe -->
   <script src="https://js.stripe.com/v3"></script>
   <script>window.STRIPE_PK="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";</script>
   <script src="/app/scripts/stripe.js"></script>
@@ -175,11 +186,6 @@
       const sum=acc?.querySelector('.luggage-summary');
       sum?.addEventListener('click',()=>acc.classList.toggle('open'));
     })();
-  </script>
-
-  <!-- Google Maps (con Places) -->
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
 </body>
 </html>
