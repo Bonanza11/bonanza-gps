@@ -1,57 +1,145 @@
-/* =========================================================
-   Archivo: core.js
-   Ubicación: /public/app/scripts/core.js
-   Rol:
-     - Configuración global y constantes
-     - Utilidades de fecha/hora/formatos
-     - Validaciones básicas de formulario
-   ========================================================= */
-window.BNZ = window.BNZ || {};
+/* =======================================================
+   Bonanza — UI helpers (integrado en core.js)
+   Control de: vehículo, T&C pill, luggage accordion,
+   Meet&Greet y modal de términos.
+   ======================================================= */
+(function () {
+  // -------- Vehicle toggle --------
+  const vehBtns = document.querySelectorAll(".veh-btn");
+  const carImg = document.querySelector(".turntable .car");
+  const caption = document.querySelector(".vehicle-caption");
 
-/* --- Configuración global --- */
-Object.assign(window.BNZ, {
-  SUV_IMG: "/images/suburban.png",
-  VAN_IMG: "/images/van-sprinter.png",
-  BASE_ADDRESS: "13742 N Jordanelle Pkwy, Kamas, UT",
-  FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app/flight",
-  OPERATING_START: "06:00",
-  OPERATING_END:   "23:00",
-  STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
-});
+  // variable global usada por otros módulos (maps/booking)
+  window.__vehicleType = window.__vehicleType || "suv";
 
-/* --- Utils de fecha/hora --- */
-BNZ.nextQuarter = function(d){
-  const m=d.getMinutes(); const add=15-(m%15||15);
-  d.setMinutes(m+add,0,0); return d;
-};
-BNZ.localISODate = d=>{
-  const off=d.getTimezoneOffset()*60000;
-  return new Date(d-off).toISOString().slice(0,10);
-};
-BNZ.earliestAllowedDt = ()=> BNZ.nextQuarter(new Date(Date.now()+24*60*60*1000));
-BNZ.setTimeValue = (el,h,m)=>{ if(el) el.value=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; };
-BNZ.isAfterHours = (dateStr,timeStr)=>{
-  if(!dateStr||!timeStr) return false;
-  const d=new Date(`${dateStr}T${timeStr}:00`);
-  const [sh,sm]=BNZ.OPERATING_START.split(':').map(Number);
-  const [eh,em]=BNZ.OPERATING_END.split(':').map(Number);
-  const start=new Date(d); start.setHours(sh,sm,0,0);
-  const end=new Date(d); end.setHours(eh,em,0,0);
-  return (d<start)||(d>end);
-};
+  function setVehicle(type) {
+    window.__vehicleType = type; // 'suv' | 'van'
+    if (type === "suv") {
+      if (carImg) carImg.src = "/images/suburban.png";
+      if (caption) caption.textContent = "SUV — Max 5 passengers, 5 suitcases";
+    } else {
+      if (carImg) carImg.src = "/images/van-sprinter.png";
+      if (caption) caption.textContent = "Van — Up to 12 passengers, 12–14 suitcases";
+    }
+    // si existe función de re-cálculo (booking/maps), la invocamos
+    if (typeof window.recalcFromCache === "function") window.recalcFromCache();
+    if (typeof window.updateMeetGreetVisibility === "function") window.updateMeetGreetVisibility();
+  }
 
-/* --- Validaciones --- */
-BNZ.requiredFields = ['fullname','phone','email','pickup','dropoff','date','time'];
-BNZ.validateForm = ()=>{
-  let ok=true;
-  BNZ.requiredFields.forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    if(!el.value.trim()){ el.classList.add("invalid"); ok=false; }
-    else { el.classList.remove("invalid"); }
+  vehBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      vehBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      setVehicle(btn.dataset.type || "suv");
+    });
   });
-  return ok;
-};
-document.getElementById("calculate")?.addEventListener("click",e=>{
-  if(!BNZ.validateForm()){ e.preventDefault(); alert("Please complete all required fields."); }
-});
+
+  // -------- Terms pill --------
+  const acceptPill = document.getElementById("acceptPill");
+  const calcBtn = document.getElementById("calculate");
+  const payBtn = document.getElementById("pay");
+
+  function syncButtons() {
+    const on = !!(acceptPill && acceptPill.classList.contains("on"));
+    if (calcBtn) calcBtn.disabled = !on;
+    if (payBtn) {
+      const readyPay = !!window.__lastQuotedTotal && on;
+      payBtn.disabled = !readyPay;
+      payBtn.style.display = "block";
+      payBtn.style.opacity = readyPay ? 1 : 0.5;
+      payBtn.style.cursor = readyPay ? "pointer" : "not-allowed";
+    }
+  }
+  window.syncButtons = syncButtons; // expone para booking.js
+
+  function setAcceptedState(on) {
+    if (!acceptPill) return;
+    acceptPill.classList.toggle("on", on);
+    acceptPill.setAttribute("aria-checked", on ? "true" : "false");
+    syncButtons();
+  }
+  window.isAccepted = () => !!(acceptPill && acceptPill.classList.contains("on")); // usado por stripe.js
+
+  acceptPill?.addEventListener("click", () => setAcceptedState(!window.isAccepted()));
+  acceptPill?.addEventListener("keydown", (e) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      setAcceptedState(!window.isAccepted());
+    }
+  });
+
+  // -------- Luggage accordion --------
+  const luggageAccordion = document.getElementById("luggageAccordion");
+  const luggageSummary = luggageAccordion?.querySelector(".luggage-summary");
+  luggageSummary?.addEventListener("click", () => {
+    luggageAccordion.classList.toggle("open");
+  });
+
+  // -------- Meet & Greet card --------
+  // Visibilidad: solo SUV + pickup SLC (lógica de SLC la resuelve maps.js y expone window.isSLCInternational/pickupPlace)
+  window.__mgChoice = window.__mgChoice || "none"; // 'none' | 'tsa_exit' | 'baggage_claim'
+  window.getMGFee = () => (window.__mgChoice === "none" ? 0 : 50);
+
+  window.updateMeetGreetVisibility = function () {
+    const card = document.getElementById("meetGreetCard");
+    if (!card) return;
+    const suv = window.__vehicleType === "suv";
+    const show = suv && typeof window.isSLCInternational === "function" && window.isSLCInternational(window.pickupPlace || null);
+    if (show) {
+      card.style.display = "block";
+      card.style.animation = "mgFadeIn .25s ease";
+    } else {
+      card.style.display = "none";
+      window.__mgChoice = "none";
+      const btns = card.querySelectorAll(".mg-btn");
+      btns.forEach((b) => {
+        const on = b.dataset.choice === "none";
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+      if (typeof window.recalcFromCache === "function") window.recalcFromCache();
+    }
+  };
+
+  (function wireMeetGreetButtons() {
+    const card = document.getElementById("meetGreetCard");
+    if (!card) return;
+    const btns = Array.from(card.querySelectorAll(".mg-btn"));
+    function activate(choice) {
+      window.__mgChoice = choice;
+      btns.forEach((b) => {
+        const on = b.dataset.choice === choice;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+      if (typeof window.recalcFromCache === "function") window.recalcFromCache();
+    }
+    btns.forEach((b) => b.addEventListener("click", () => activate(b.dataset.choice)));
+    activate("none");
+  })();
+
+  // -------- Terms modal --------
+  const termsModal = document.getElementById("termsModal");
+  const openTerms = document.getElementById("openTermsModal");
+  const closeTerms = document.getElementById("closeTerms");
+  function openModal() {
+    if (!termsModal) return;
+    termsModal.classList.add("open");
+    termsModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    closeTerms?.focus();
+  }
+  function closeModal() {
+    if (!termsModal) return;
+    termsModal.classList.remove("open");
+    termsModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    openTerms?.focus();
+  }
+  openTerms?.addEventListener("click", openModal);
+  closeTerms?.addEventListener("click", closeModal);
+  termsModal?.addEventListener("click", (e) => { if (e.target === termsModal) closeModal(); });
+
+  // Inicial sync
+  syncButtons();
+})();
