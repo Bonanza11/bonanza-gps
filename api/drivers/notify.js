@@ -8,70 +8,65 @@
 //   "from": "2025-09-01T00:00:00Z",           // opcional si no pasas reservation_ids
 //   "to":   "2025-09-07T23:59:59Z"            // opcional si no pasas reservation_ids
 // }
-import { query } from "../_db.js";
+import { q } from '../_lib/db.js';
 
-export const config = { runtime: "nodejs" };
+export const config = { runtime: 'nodejs' };
 
-const ADMIN = process.env.ADMIN_KEY || "supersecreto123";
-const TZ = "America/Denver";
+const ADMIN = process.env.ADMIN_KEY || 'supersecreto123';
+const TZ = 'America/Denver';
 
 // --- Helpers ---
 function isAuthorized(req) {
-  const hdr = req.headers["x-admin-key"] || req.headers["X-Admin-Key"];
-  return String(hdr || "") === String(ADMIN);
+  const hdr = req.headers['x-admin-key'] || req.headers['X-Admin-Key'];
+  return String(hdr || '') === String(ADMIN);
 }
 
 const strOrNull = (v) =>
-  v === undefined || v === null || String(v).trim() === "" ? null : String(v);
+  v === undefined || v === null || String(v).trim() === '' ? null : String(v);
 
 const toIntArray = (arr) => {
   if (!Array.isArray(arr)) return [];
   return arr
-    .map((x) =>
-      x === "" || x === null || x === undefined ? null : Number(x)
-    )
+    .map((x) => (x === '' || x === null || x === undefined ? null : Number(x)))
     .filter((x) => Number.isInteger(x));
 };
 
 function normalizeChannels(ch) {
-  const c = ch && typeof ch === "object" ? ch : {};
+  const c = ch && typeof ch === 'object' ? ch : {};
   return { email: !!c.email, sms: !!c.sms };
 }
 
-const fmtDateTime = new Intl.DateTimeFormat("en-US", {
+const fmtDateTime = new Intl.DateTimeFormat('en-US', {
   timeZone: TZ,
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit'
 });
 
 function buildMessage(driver, rides) {
-  const header = `Hola ${driver.name || "driver"}, estas son tus asignaciones:\n`;
+  const header = `Hola ${driver.name || 'driver'}, estas son tus asignaciones:\n`;
   if (!rides.length) {
-    return header + "No tienes asignaciones en el rango seleccionado.";
+    return header + 'No tienes asignaciones en el rango seleccionado.';
   }
   const lines = rides.map((r) => {
     const when = fmtDateTime.format(new Date(r.pickup_time));
-    const who =
-      r.customer_name + (r.phone ? `, ${r.phone}` : "");
+    const who = r.customer_name + (r.phone ? `, ${r.phone}` : '');
     return `• ${when} — ${r.pickup_location} → ${r.dropoff_location} (${who})`;
   });
-  return header + lines.join("\n");
+  return header + lines.join('\n');
 }
 
 export default async function handler(req, res) {
   try {
     if (!isAuthorized(req)) {
-      return res.status(401).json({ ok: false, error: "unauthorized" });
+      return res.status(401).json({ ok: false, error: 'unauthorized' });
     }
 
-    if (req.method !== "POST") {
-      res.setHeader("Allow", "POST");
-      return res
-        .status(405)
-        .json({ ok: false, error: "method_not_allowed" });
+    if (req.method !== 'POST') {
+      res.setHeader('Allow', 'POST');
+      return res.status(405).json({ ok: false, error: 'method_not_allowed' });
     }
 
     let {
@@ -79,13 +74,11 @@ export default async function handler(req, res) {
       reservation_ids = [],
       channels = { email: true, sms: false },
       from = null,
-      to = null,
+      to = null
     } = req.body || {};
 
     if (!driver_id) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "missing_driver_id" });
+      return res.status(400).json({ ok: false, error: 'missing_driver_id' });
     }
 
     // Normaliza inputs
@@ -97,30 +90,29 @@ export default async function handler(req, res) {
 
     // Valida rango si se pasó alguno
     if ((from && isNaN(Date.parse(from))) || (to && isNaN(Date.parse(to)))) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "invalid_datetime_range" });
+      return res.status(400).json({ ok: false, error: 'invalid_datetime_range' });
     }
     if (from && to && Date.parse(from) > Date.parse(to)) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "from_after_to" });
+      return res.status(400).json({ ok: false, error: 'from_after_to' });
     }
 
     // 1) Driver
-    const [driver] = await query(
-      `select id::text as id, name, email, phone from drivers where id = $1::uuid limit 1`,
+    const { rows: drows } = await q(
+      `select id::text as id, name, email, phone
+         from drivers
+        where id = $1::uuid
+        limit 1`,
       [driver_id]
     );
-    if (!driver)
-      return res
-        .status(404)
-        .json({ ok: false, error: "driver_not_found" });
+    const driver = drows[0];
+    if (!driver) {
+      return res.status(404).json({ ok: false, error: 'driver_not_found' });
+    }
 
     // 2) Rides
     let rides = [];
     if (reservation_ids.length > 0) {
-      rides = await query(
+      const { rows } = await q(
         `select id,
                 customer_name, phone,
                 pickup_location, dropoff_location,
@@ -131,9 +123,9 @@ export default async function handler(req, res) {
           order by pickup_time asc`,
         [reservation_ids, driver_id]
       );
+      rides = rows;
     } else {
-      // Por defecto: próximos 7 días si no hay rango
-      rides = await query(
+      const { rows } = await q(
         `select id,
                 customer_name, phone,
                 pickup_location, dropoff_location,
@@ -149,6 +141,7 @@ export default async function handler(req, res) {
           order by pickup_time asc`,
         [driver_id, from, to]
       );
+      rides = rows;
     }
 
     const text = buildMessage(driver, rides);
@@ -157,7 +150,7 @@ export default async function handler(req, res) {
     const preview = {
       to_email: channels.email ? driver.email || null : null,
       to_phone: channels.sms ? driver.phone || null : null,
-      text,
+      text
     };
 
     return res.json({
@@ -166,14 +159,14 @@ export default async function handler(req, res) {
       channels,
       counts: { rides: rides.length },
       rides, // útil para UI de HQ
-      driver,
+      driver
     });
   } catch (err) {
-    console.error("[/api/drivers/notify] ", err);
+    console.error('[/api/drivers/notify] ', err);
     return res.status(500).json({
       ok: false,
-      error: "server_error",
-      detail: String(err?.message || err),
+      error: 'server_error',
+      detail: String(err?.message || err)
     });
   }
 }
