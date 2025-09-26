@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Successful — Bonanza Transportation</title>
+  <link rel="icon" href="/images/bonanza-logo.png" />
+  <style>
+    :root{ --copper:#b27b52; --copper-2:#c89366; --text:#f2e7d6; --muted:#d0a67f; }
+    html,body{height:100%}
+    body{
+      margin:0; background:
+        radial-gradient(1200px 800px at 110% -10%, rgba(178,123,82,.08), transparent 60%),
+        radial-gradient(900px 600px at -10% 110%, rgba(178,123,82,.06), transparent 55%),
+        #000;
+      color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:28px 16px}
+    .card{
+      max-width:720px; width:100%; background:linear-gradient(180deg,#111,#151515);
+      border:1px solid rgba(192,139,92,.32); border-radius:18px; padding:22px;
+      box-shadow:0 20px 60px rgba(0,0,0,.55); position:relative; overflow:hidden;
+    }
+    .brand{position:absolute; top:16px; right:16px; width:72px; height:72px; border-radius:50%;
+      border:2px solid var(--copper); background:#000 url("/images/bonanza-logo.png") center/cover no-repeat;
+      box-shadow:0 0 14px rgba(178,123,82,.4);
+    }
+    h1{margin:0 0 8px; color:#ffedd2; text-align:center}
+    p{margin:8px 0; color:#e9d5c1}
+    .mono{font-family:ui-monospace, Menlo, Consolas, monospace; color:#ffddb3}
+    .hint{color:var(--muted); font-size:.95rem}
+    .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px}
+    .btn{
+      appearance:none; border:1px solid rgba(0,0,0,.4);
+      background:linear-gradient(180deg, var(--copper-2), var(--copper));
+      color:#111; font-weight:800; padding:12px 14px; border-radius:10px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+      box-shadow:0 8px 22px rgba(168,116,79,.35);
+    }
+    .ghost{background:#141414; color:#ffedd2; border:1px solid rgba(168,116,79,.35); box-shadow:none}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media (max-width:560px){ .grid{grid-template-columns:1fr} }
+    .row{display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06)}
+    .label{color:#d0a67f}
+    .value{color:#ffdfb8; font-weight:800}
+    .ok{color:#84ffa1; font-weight:800}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand" aria-hidden="true"></div>
+      <h1>Payment Successful</h1>
+      <p class="hint">Thank you! Your payment has been processed. Below is a quick summary.</p>
+
+      <div id="summary" class="grid" style="margin-top:10px">
+        <div class="row"><span class="label">Status</span><span class="value ok">PAID</span></div>
+        <div class="row"><span class="label">Session</span><span id="sid" class="value mono">—</span></div>
+        <div class="row"><span class="label">Confirmation #</span><span id="cn" class="value mono">—</span></div>
+        <div class="row"><span class="label">Email</span><span id="email" class="value">—</span></div>
+      </div>
+
+      <div class="btns">
+        <a href="/" class="btn">Back to Home</a>
+        <a href="/reschedule.html" class="btn ghost">Reschedule a Trip</a>
+      </div>
+
+      <p class="hint" style="margin-top:14px">
+        Tip: keep your confirmation number handy; you’ll need it if you want to reschedule.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Lee parámetros opcionales de la URL: ?session_id=...&cn=...&email=...
+    (function(){
+      const p = new URLSearchParams(location.search);
+      const sid = p.get('session_id') || p.get('sid') || '';
+      const cn  = p.get('cn') || '';
+      const email = p.get('email') || '';
+      if (sid) document.getElementById('sid').textContent = sid;
+      if (cn)  document.getElementById('cn').textContent  = cn;
+      if (email) document.getElementById('email').textContent = email;
+    })();
+  </script>
+</body>
+</html>
