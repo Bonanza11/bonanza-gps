@@ -65,10 +65,10 @@ input:invalid:focus, textarea:invalid:focus, select:invalid:focus{ border-color:
 /* Firefox tiene su propio pseudoestado */
 :-moz-ui-invalid{ box-shadow:none !important; border-color:rgba(168,116,79,.35) !important }
 
-/* Clase de error controlada por tu JS (opcional si la usas) */
+/* Clase de error controlada por tu JS – SIN borde rojo */
 .invalid{
-  border-color: var(--err) !important;
-  box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
+  border-color: inherit !important;
+  box-shadow: none !important;
 }
 
 /* Autofill oscuro (Chrome/Safari) */
@@ -87,10 +87,13 @@ input:-webkit-autofill:focus{
   border:1px solid rgba(168,116,79,.45);
 }
 #date:focus, .time-input:focus{ outline:none; border-color:var(--copper); box-shadow:var(--ring) }
+
+/* SIN borde rojo en hora inválida */
 .time-input.field-invalid{
-  border-color: var(--err) !important;
-  box-shadow: 0 0 0 3px rgba(255,107,107,.25) !important;
+  border-color: inherit !important;
+  box-shadow: none !important;
 }
+
 .helper{ font-size:.85rem; opacity:.95; margin-top:6px; color:#ffddae }
 
 /* Botones */
