@@ -224,9 +224,13 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
     const mapEl = document.getElementById("map");
     if (!mapEl) { console.warn("[maps] #map not found"); return; }
 
+    // toma MAP_ID si lo definiste en window.__PUBLIC_CFG__
+    const mapId = window.__PUBLIC_CFG && window.__PUBLIC_CFG__.MAP_ID;
+
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
       zoom: 11,
+      mapId: mapId || undefined, // evita warning de Advanced Markers si no hay ID
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
