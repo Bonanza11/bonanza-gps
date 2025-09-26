@@ -1,124 +1,73 @@
-// /api/admin/clients.js
-import { neon } from '@neondatabase/serverless';
-import { requireAuth } from '../_lib/guard.js';
+// api/admin/clients.js
+import { q } from '../_lib/db.js';
+import { guard, send, jsonBody, assertAdmin } from '../_lib/guard.js';
 
-const RATINGS = new Set(['good', 'watch', 'restricted']);
+/**
+ * Modelo sugerido (ver migración más abajo):
+ * clients(id, name, email, phone, notes, default_pickup_addr, created_at, updated_at)
+ */
 
-function norm(body = {}) {
-  const name  = String(body.name ?? '').trim();
-  const email = String(body.email ?? '').trim().toLowerCase();
-  const phone = String(body.phone ?? '').trim();
-  const home  = String(body.home_address ?? '').trim();
-  const notes = String(body.notes ?? '').trim();
-  const rRaw  = String(body.internal_rating ?? 'good').trim().toLowerCase();
-  const rating = RATINGS.has(rRaw) ? rRaw : 'good';
+export default guard(['GET','POST','PUT','DELETE'], async (req, res) => {
+  // Solo admin
+  assertAdmin(req);
 
-  return {
-    id: body.id ? String(body.id) : null,
-    name,
-    email: email || null,
-    phone: phone || null,
-    home_address: home || null,
-    internal_rating: rating,
-    notes: notes || null,
-  };
-}
-
-async function handler(req, res) {
-  try {
-    const sql = neon(process.env.DATABASE_URL);
-
-    // ===== GET (lista simple; admite ?q= búsqueda básica) =====
-    if (req.method === 'GET') {
-      const q = String(req.query.q ?? '').trim().toLowerCase();
-      let rows;
-      if (q) {
-        rows = await sql`
-          SELECT id::text AS id, name, email, phone, home_address, internal_rating, notes, created_at
-            FROM clients
-           WHERE lower(name)  LIKE ${'%' + q + '%'}
-              OR lower(email) LIKE ${'%' + q + '%'}
-              OR phone        LIKE ${'%' + q + '%'}
-           ORDER BY created_at DESC
-           LIMIT 500;
-        `;
-      } else {
-        rows = await sql`
-          SELECT id::text AS id, name, email, phone, home_address, internal_rating, notes, created_at
-            FROM clients
-           ORDER BY created_at DESC
-           LIMIT 500;
-        `;
-      }
-      return res.status(200).json({ ok: true, clients: rows });
+  if (req.method === 'GET') {
+    const search = (req.query.search || '').trim();
+    if (search) {
+      const like = `%${search}%`;
+      const { rows } = await q(
+        `SELECT * FROM clients
+         WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1
+         ORDER BY updated_at DESC NULLS LAST, created_at DESC
+         LIMIT 200`,
+        [like]
+      );
+      return send(res, 200, { clients: rows });
     }
-
-    // ===== POST (crear / actualizar / upsert por email) =====
-    if (req.method === 'POST') {
-      const b = norm(req.body || {});
-      if (!b.name) return res.status(400).json({ ok:false, error:'missing_name' });
-
-      // UPDATE por id
-      if (b.id) {
-        const rows = await sql`
-          UPDATE clients
-             SET name = ${b.name},
-                 email = ${b.email},
-                 phone = ${b.phone},
-                 home_address = ${b.home_address},
-                 internal_rating = ${b.internal_rating},
-                 notes = ${b.notes},
-                 updated_at = now()
-           WHERE id::text = ${b.id}
-       RETURNING id::text AS id, name, email, phone, home_address, internal_rating, notes, created_at;
-        `;
-        if (!rows.length) return res.status(404).json({ ok:false, error:'not_found' });
-        return res.status(200).json({ ok:true, client: rows[0] });
-      }
-
-      // INSERT (upsert por email si viene email)
-      if (b.email) {
-        const rows = await sql`
-          INSERT INTO clients (name, email, phone, home_address, internal_rating, notes)
-          VALUES (${b.name}, ${b.email}, ${b.phone}, ${b.home_address}, ${b.internal_rating}, ${b.notes})
-          ON CONFLICT (email) DO UPDATE
-             SET name = EXCLUDED.name,
-                 phone = EXCLUDED.phone,
-                 home_address = EXCLUDED.home_address,
-                 internal_rating = EXCLUDED.internal_rating,
-                 notes = EXCLUDED.notes,
-                 updated_at = now()
-       RETURNING id::text AS id, name, email, phone, home_address, internal_rating, notes, created_at;
-        `;
-        return res.status(200).json({ ok:true, client: rows[0] });
-      }
-
-      // INSERT sin email
-      const rows = await sql`
-        INSERT INTO clients (name, email, phone, home_address, internal_rating, notes)
-        VALUES (${b.name}, ${null}, ${b.phone}, ${b.home_address}, ${b.internal_rating}, ${b.notes})
-        RETURNING id::text AS id, name, email, phone, home_address, internal_rating, notes, created_at;
-      `;
-      return res.status(201).json({ ok:true, client: rows[0] });
-    }
-
-    // ===== DELETE por id =====
-    if (req.method === 'DELETE') {
-      const id = String(req.query.id ?? '');
-      if (!id) return res.status(400).json({ ok:false, error:'missing_id' });
-
-      const r = await sql`DELETE FROM clients WHERE id::text = ${id};`;
-      if (!r.count) return res.status(404).json({ ok:false, error:'not_found' });
-      return res.status(200).json({ ok:true });
-    }
-
-    res.setHeader('Allow', 'GET,POST,DELETE');
-    return res.status(405).json({ ok:false, error:'method_not_allowed' });
-  } catch (e) {
-    console.error('[/api/admin/clients] error:', e);
-    return res.status(500).json({ ok:false, error:'server_error' });
+    const { rows } = await q(
+      'SELECT * FROM clients ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 200'
+    );
+    return send(res, 200, { clients: rows });
   }
-}
 
-// Solo OWNER / ADMIN pueden gestionar clientes
-export default requireAuth(['OWNER','ADMIN'])(handler);
+  const b = jsonBody(req);
+
+  if (req.method === 'POST') {
+    const { name, email, phone, notes, defaultPickupAddr } = b;
+    if (!name) return send(res, 400, { error: 'name is required' });
+
+    const { rows } = await q(
+      `INSERT INTO clients (name, email, phone, notes, default_pickup_addr, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5, now(), now())
+       RETURNING *`,
+      [name, email || null, phone || null, notes || null, defaultPickupAddr || null]
+    );
+    return send(res, 201, { client: rows[0] });
+  }
+
+  if (req.method === 'PUT') {
+    const { id, name, email, phone, notes, defaultPickupAddr } = b;
+    if (!id) return send(res, 400, { error: 'id is required' });
+
+    const { rows } = await q(
+      `UPDATE clients SET
+          name = COALESCE($2, name),
+          email = COALESCE($3, email),
+          phone = COALESCE($4, phone),
+          notes = COALESCE($5, notes),
+          default_pickup_addr = COALESCE($6, default_pickup_addr),
+          updated_at = now()
+       WHERE id = $1
+       RETURNING *`,
+      [id, name, email, phone, notes, defaultPickupAddr]
+    );
+    return rows[0] ? send(res, 200, { client: rows[0] }) : send(res, 404, { error: 'Not found' });
+  }
+
+  if (req.method === 'DELETE') {
+    const { id } = b;
+    if (!id) return send(res, 400, { error: 'id is required' });
+    await q('DELETE FROM clients WHERE id = $1', [id]);
+    return send(res, 204, {});
+  }
+});
