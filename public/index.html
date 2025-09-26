@@ -25,6 +25,8 @@
 
     /* Etiquetas */
     label{display:block;margin:12px 0 6px;font-weight:800;color:var(--copper)}
+    .hint{font-size:.85rem;margin-top:6px}
+    .hint.ok{color:var(--ok)} .hint.warn{color:var(--warn)} .hint.err{color:var(--err)}
 
     /* Campos */
     input,select,textarea{
@@ -49,7 +51,7 @@
     }
     ::placeholder{color:#cba686;opacity:.7}
 
-    /* ✅ Fix fondo blanco (autofill) */
+    /* ✅ Fondo oscuro también en autofill */
     input:-webkit-autofill,
     textarea:-webkit-autofill,
     select:-webkit-autofill{
@@ -59,7 +61,25 @@
       caret-color: var(--copper-3);
     }
 
-    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important}
+    /* ⛔️ Quitar borde rojo nativo del navegador en inválidos */
+    input:invalid, textarea:invalid, select:invalid{
+      box-shadow:none !important;
+      outline:0 !important;
+      border-color: rgba(168,116,79,.45) !important;
+      background: var(--field-2) !important;
+    }
+    input:focus:invalid, textarea:focus:invalid, select:focus:invalid{
+      border-color: var(--copper) !important;
+      box-shadow: 0 0 0 3px rgba(168,116,79,.26) !important;
+      background: var(--field) !important;
+    }
+    /* Firefox */
+    :-moz-ui-invalid{
+      box-shadow:none !important;
+      outline:0 !important;
+      border-color: rgba(168,116,79,.45) !important;
+      background: var(--field-2) !important;
+    }
 
     /* Dos columnas fecha/hora */
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
