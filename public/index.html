@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bonanza Transportation</title>
+  <link rel="icon" href="/images/bonanza-logo.png">
+
+  <!-- Estilos mínimos (mapa visible + layout básico) -->
+  <style>
+    :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#000;color:#e9d5c1;font-family:Inter,system-ui,Arial,sans-serif}
+    header{display:flex;justify-content:center;padding:22px 16px}
+    .logo{width:160px;height:160px;border-radius:50%;border:2px solid var(--copper);object-fit:cover}
+    main{max-width:760px;width:92vw;margin:0 auto 40px}
+    label{display:block;margin:12px 0 6px;font-weight:700}
+    input,select,textarea{width:100%;height:44px;padding:10px 12px;background:#1a1a1a;color:#ffddae;border:1px solid #444;border-radius:8px}
+    textarea{height:64px}
+    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important}
+    .veh-toggle{display:flex;gap:8px;margin:12px 0}
+    .veh-btn{flex:1;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);color:#ffddae;padding:12px;border-radius:10px;font-weight:700;cursor:pointer}
+    .veh-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
+    #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #333}
+    #info{display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);border-radius:12px;padding:14px;background:#0e0e0e}
+    .accept-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #666;border-radius:999px;padding:4px 8px;background:#1a1a1a;cursor:pointer}
+    .accept-pill.on{border-color:var(--ok)}
+    button{width:100%;padding:14px 16px;margin-top:14px;background:var(--copper);color:#000;font-weight:800;border:0;border-radius:10px;cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}
+  </style>
+</head>
+<body>
+  <header>
+    <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation">
+  </header>
+
+  <main>
+    <!-- Datos del cliente -->
+    <label>Full Name</label>
+    <input id="fullname" autocomplete="name" placeholder="John Doe" />
+
+    <label>Phone Number (US)</label>
+    <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" />
+    <div id="phoneHelp" class="hint"></div>
+
+    <label>Email Address</label>
+    <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+    <div id="emailHelp" class="hint"></div>
+
+    <!-- Direcciones -->
+    <label>Pick-up Address</label>
+    <input id="pickup" placeholder="e.g. SLC Airport" />
+
+    <label>Drop-off Address</label>
+    <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
+
+    <!-- Notas -->
+    <label>Special Instructions</label>
+    <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
+
+    <!-- Fecha/Hora -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+      <div>
+        <label>Date</label>
+        <input id="date" type="date" />
+      </div>
+      <div>
+        <label>Time</label>
+        <input id="time" type="time" step="900" />
+      </div>
+    </div>
+
+    <!-- Selector de vehículo -->
+    <div class="veh-toggle">
+      <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
+      <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
+    </div>
+
+    <!-- Aceptación de términos -->
+    <div id="acceptPill" class="accept-pill" tabindex="0" role="switch" aria-checked="false">
+      <span>✓</span><span>I accept the Terms & Conditions</span>
+    </div>
+
+    <!-- Acciones -->
+    <button id="calculate" disabled>Calculate Price</button>
+    <div id="map"></div>
+    <button id="pay" disabled style="display:none">PAY NOW</button>
+
+    <!-- Resumen del viaje -->
+    <div id="info"></div>
+  </main>
+
+  <!-- ====== Scripts (ORDEN OBLIGATORIO) ====== -->
+  <script src="/app/scripts/validators.js"></script>
+  <script src="/app/scripts/core.js"></script>
+  <script src="/app/scripts/booking.js"></script>
+  <script src="/app/scripts/maps.js"></script>
+  <script src="https://js.stripe.com/v3"></script>
+  <script>
+    // Define tu publishable key aquí o desde el servidor
+    window.STRIPE_PK = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";
+  </script>
+  <script src="/app/scripts/stripe.js"></script>
+  <!-- Google Maps (con Places) – requiere que maps.js exponga window.initMap -->
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap">
+  </script>
+</body>
+</html>
