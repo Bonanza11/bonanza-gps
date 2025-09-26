@@ -1,5 +1,5 @@
 // /api/admin/drivers/set-shifts.js
-import { neon } from '@neondatabase/serverless';
+import { q } from '../../_lib/db.js';
 import { requireAuth } from '../../_lib/guard.js'; // roles OWNER/ADMIN/DISPATCHER
 
 const ALLOWED_MODES = new Set(['24h', 'custom']);
@@ -29,39 +29,25 @@ async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'shifts_must_be_array_for_custom' });
   }
 
-  const sql = neon(process.env.DATABASE_URL);
-
   try {
     // 1) Actualizar modo de trabajo del driver
-    await sql`
-      UPDATE drivers
-      SET work_mode = ${mode}, updated_at = now()
-      WHERE id = ${driver_id};
-    `;
+    await q(
+      'UPDATE drivers SET work_mode=$1, updated_at=now() WHERE id=$2',
+      [mode, driver_id]
+    );
 
     // 2) Si es custom: limpiar e insertar nuevos turnos
     if (mode === 'custom') {
-      await sql`DELETE FROM driver_shifts WHERE driver_id = ${driver_id};`;
+      await q('DELETE FROM driver_shifts WHERE driver_id=$1', [driver_id]);
 
       for (const s of shifts) {
         // Validar cada bloque
-        if (
-          !s ||
-          typeof s.weekday !== 'number' ||
-          !s.start_time ||
-          !s.end_time
-        ) continue;
+        if (!s || typeof s.weekday !== 'number' || !s.start_time || !s.end_time) continue;
 
-        await sql`
-          INSERT INTO driver_shifts (driver_id, weekday, start_time, end_time, timezone)
-          VALUES (
-            ${driver_id},
-            ${s.weekday},                 -- 0..6 (Dom..Sáb)
-            ${s.start_time},              -- 'HH:MM'
-            ${s.end_time},                -- 'HH:MM'
-            ${s.timezone || 'America/Denver'}
-          );
-        `;
+        await q(
+          'INSERT INTO driver_shifts (driver_id, weekday, start_time, end_time, timezone) VALUES ($1,$2,$3,$4,$5)',
+          [driver_id, s.weekday, s.start_time, s.end_time, s.timezone || 'America/Denver']
+        );
       }
     }
 
