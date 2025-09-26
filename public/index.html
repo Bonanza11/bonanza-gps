@@ -9,21 +9,21 @@
   <!-- ===== Bonanza Copper Theme ===== -->
   <style>
     :root{
-      --copper:#a8744f;               /* cobre base */
-      --copper-2:#c58c61;             /* cobre claro para brillos */
-      --copper-3:#7a5337;             /* cobre oscuro para sombras */
+      --copper:#a8744f;
+      --copper-light:#d6a079;
+      --copper-soft:#b88c65;
       --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b;
-      --ink:#e9d5c1;                  /* tipografía principal */
-      --field:#111318;                /* fondo de campos */
-      --field-border:#30343b;         /* borde base de campos */
-      --panel:#0b0d12;                /* panel/mapa */
-      --bg:#000;                      /* fondo página */
+      --ink:#e9d5c1;
+      --field:#0d0e10;
+      --field-border:#383838;
+      --panel:#0b0d12;
+      --bg:#000;
     }
 
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Arial,sans-serif}
 
-    /* Header + logo con aro cobre elegante (no neón) */
+    /* Header + logo */
     header{display:flex;justify-content:center;padding:22px 16px}
     .logo{
       width:160px;height:160px;border-radius:50%;object-fit:cover;
@@ -35,32 +35,31 @@
         0 0 22px rgba(167,116,79,.16);
     }
 
-    /* Layout */
     main{max-width:760px;width:92vw;margin:0 auto 40px}
-    label{display:block;margin:12px 0 6px;font-weight:700;letter-spacing:.2px}
+    label{display:block;margin:12px 0 6px;font-weight:700;letter-spacing:.2px;color:var(--copper-light)}
 
-    /* Campos */
+    /* Campos con halo cobre al focus */
     input,select,textarea{
       width:100%;height:44px;padding:10px 12px;
-      background:var(--field);color:#ffddae;
+      background:var(--field);color:var(--copper-light);
       border:1px solid var(--field-border);border-radius:10px;
-      outline:0; transition:border-color .2s, box-shadow .2s, background .2s;
+      outline:0; transition:border-color .25s, box-shadow .25s, background .25s;
+      font-weight:500;
     }
     textarea{height:64px}
-    input::placeholder,textarea::placeholder{color:#b89f8c}
+    input::placeholder,textarea::placeholder{color:var(--copper-soft)}
     input:focus,select:focus,textarea:focus{
       border-color:var(--copper);
       box-shadow:
-        0 0 0 2px rgba(167,116,79,.15),
-        0 0 0 1px var(--copper) inset;
-      background:#0f1116;
+        0 0 6px rgba(167,116,79,.45),
+        0 0 14px rgba(167,116,79,.25);
+      background:#111214;
     }
     .invalid{
       border-color:var(--err)!important;
       box-shadow:0 0 0 3px rgba(255,107,107,.25)!important;
     }
 
-    /* Hints de validación (usados por validators.js) */
     .hint{font-size:12px;margin-top:4px}
     .hint.ok{color:var(--ok)}
     .hint.err{color:var(--err)}
@@ -70,18 +69,18 @@
     .veh-btn{
       flex:1;background:var(--field);
       border:1px solid rgba(168,116,79,.55);
-      color:#ffddae;padding:12px;border-radius:12px;
+      color:var(--copper-light);padding:12px;border-radius:12px;
       font-weight:800;cursor:pointer;letter-spacing:.2px;
       transition:transform .06s ease, box-shadow .2s, background .2s;
     }
     .veh-btn:active{transform:translateY(1px)}
     .veh-btn.active{
-      background:linear-gradient(180deg, var(--copper-2), var(--copper));
+      background:linear-gradient(180deg, var(--copper-light), var(--copper));
       color:#000;border-color:var(--copper);
       box-shadow:0 4px 18px rgba(167,116,79,.25), inset 0 0 0 1px rgba(0,0,0,.15);
     }
 
-    /* Bloque visual del vehículo */
+    /* Visual vehículo */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
     .turntable .platform{
@@ -89,9 +88,9 @@
       background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
       margin-top:6px;
     }
-    .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
+    .vehicle-caption{font-weight:700;color:var(--copper-light);margin-top:6px;letter-spacing:.2px;}
 
-    /* Mapa + tarjeta resumen */
+    /* Mapa + resumen */
     #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #2a2f38;background:var(--panel)}
     #info{
       display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);
@@ -103,70 +102,18 @@
       display:inline-flex;align-items:center;gap:8px;
       border:1px solid #646b77;border-radius:999px;padding:6px 10px;
       background:#12151b;cursor:pointer;user-select:none;
-      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
-    }
-    .accept-pill span:first-child{
-      display:inline-grid;place-items:center;
-      width:18px;height:18px;border-radius:50%;
-      border:1px solid #778190; font-weight:900; font-size:12px; color:#9fb0c3;
     }
     .accept-pill.on{border-color:var(--ok)}
-    .accept-pill.on span:first-child{
-      background:linear-gradient(180deg, #47e08b, #17c964);
-      color:#04210f;border-color:transparent;
-      box-shadow:0 0 0 2px rgba(23,201,100,.18);
-    }
 
-    /* Botones principales */
+    /* Botones */
     button{
       width:100%;padding:14px 16px;margin-top:14px;
-      background:linear-gradient(180deg, var(--copper-2), var(--copper));
+      background:linear-gradient(180deg, var(--copper-light), var(--copper));
       color:#000;font-weight:900;border:0;border-radius:12px;
       cursor:pointer;letter-spacing:.2px;
-      box-shadow:0 6px 26px rgba(167,116,79,.25), inset 0 -1px 0 rgba(0,0,0,.2);
-      transition:transform .06s ease, filter .2s ease, box-shadow .2s ease;
+      box-shadow:0 6px 26px rgba(167,116,79,.25);
     }
-    button:hover{filter:brightness(1.03)}
-    button:active{transform:translateY(1px)}
-    button:disabled{opacity:.55;cursor:not-allowed;filter:none}
-
-    /* ===== Responsive Bonanza ===== */
-    @media (max-width: 820px) {
-      main{ width:94vw; margin:0 auto 36px }
-      .logo{ width:150px; height:150px }
-      input, select, textarea{ height:44px; font-size:16px } /* evita zoom iOS */
-      button{ padding:14px 16px; font-size:16px }
-      .veh-btn{ padding:12px; font-size:15px }
-      .turntable .car{ width:260px }
-      #map{ height:340px }
-    }
-    @media (max-width: 640px) {
-      .logo{ width:140px; height:140px;
-        box-shadow: inset 0 0 2px rgba(255,255,255,.06),
-                    0 0 0 2px rgba(168,116,79,.22),
-                    0 6px 22px rgba(0,0,0,.5),
-                    0 0 18px rgba(168,116,79,.18);
-      }
-      /* la fila de fecha/hora baja a una columna */
-      main > div[style*="grid-template-columns"]{
-        grid-template-columns: 1fr !important; gap:10px !important;
-      }
-      .turntable .car{ width:240px }
-      .turntable .platform{ width:200px; height:20px }
-      #map{ height:320px }
-    }
-    @media (max-width: 400px) {
-      html, body{ font-size:15px }
-      .logo{ width:128px; height:128px }
-      .veh-btn{ font-size:14px; padding:10px }
-      .turntable .car{ width:210px }
-      .turntable .platform{ width:180px; height:18px }
-      #map{ height:300px }
-    }
-    @media (pointer:coarse) {
-      .accept-pill{ padding:10px 14px }
-      input, select, textarea{ padding:12px 14px }
-    }
+    button:disabled{opacity:.55;cursor:not-allowed}
   </style>
 </head>
 <body>
@@ -175,7 +122,6 @@
   </header>
 
   <main>
-    <!-- Datos del cliente -->
     <label>Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
 
@@ -187,18 +133,15 @@
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
     <div id="emailHelp" class="hint" aria-live="polite"></div>
 
-    <!-- Direcciones -->
     <label>Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
 
     <label>Drop-off Address</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
 
-    <!-- Notas -->
     <label>Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <!-- Fecha/Hora -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
       <div>
         <label>Date</label>
@@ -210,46 +153,37 @@
       </div>
     </div>
 
-    <!-- Selector de vehículo -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Bloque visual del vehículo -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Aceptación de términos -->
     <div id="acceptPill" class="accept-pill" tabindex="0" role="switch" aria-checked="false">
       <span>✓</span><span>I accept the Terms & Conditions</span>
     </div>
 
-    <!-- Acciones -->
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <button id="pay" disabled style="display:none">PAY NOW</button>
-
-    <!-- Resumen del viaje -->
     <div id="info"></div>
   </main>
 
-  <!-- ====== Scripts (ORDEN OBLIGATORIO) ====== -->
   <script src="/app/scripts/validators.js"></script>
   <script src="/app/scripts/core.js"></script>
   <script src="/app/scripts/booking.js"></script>
   <script src="/app/scripts/maps.js"></script>
   <script src="https://js.stripe.com/v3"></script>
   <script>
-    // Publishable key de Stripe (reemplaza por la tuya real)
     window.STRIPE_PK = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";
   </script>
   <script src="/app/scripts/stripe.js"></script>
 
-  <!-- Lógica mínima del visual (no choca con booking.js) -->
   <script>
     (function vehicleVisualInline(){
       const SUV_IMG = "/images/suburban.png";
@@ -279,24 +213,10 @@
       }
 
       btns.forEach(b => b.addEventListener('click', () => setActive(b.dataset.type || 'suv')));
-
-      if (img){
-        img.onerror = () => {
-          img.removeAttribute('src');
-          img.alt = window.__vehicleType.toUpperCase();
-          img.style.width = '120px';
-          img.style.height = '80px';
-          img.style.background = '#1a1a1a';
-          img.style.border = '1px solid #444';
-          img.style.borderRadius = '8px';
-        };
-      }
-
       setActive(window.__vehicleType);
     })();
   </script>
 
-  <!-- Google Maps (con Places) – maps.js debe exponer window.initMap -->
   <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
