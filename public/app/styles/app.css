@@ -177,3 +177,71 @@ button:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
 /* Grid fecha/hora */
 .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
 @media (max-width:520px){ .grid2{ grid-template-columns:1fr } }
+/* ================================
+   Terms & Conditions Switch
+   ================================ */
+
+.terms-box {
+  border: 1px solid rgba(168,116,79,.45);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  background: #0e0e0e;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+}
+
+.terms-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.accept-pill {
+  min-width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid #666;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  background: #1a1a1a;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.accept-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #333;
+  border: 1px solid #555;
+  transition: all .2s ease;
+}
+
+.accept-pill.on {
+  border-color: var(--ok);
+  background: rgba(23,201,100,.12);
+}
+
+.accept-pill.on .accept-dot {
+  transform: translateX(14px);
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+.accept-label {
+  font-size: .95rem;
+  color: #ffddae;
+}
+
+.terms-link {
+  color: var(--copper-2);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(168,116,79,.55);
+  transition: color .2s ease;
+}
+
+.terms-link:hover {
+  filter: brightness(1.08);
+  color: var(--copper);
+}
