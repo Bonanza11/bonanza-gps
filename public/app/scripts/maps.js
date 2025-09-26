@@ -3,18 +3,19 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 ──────────────────────────────────────────────────────────────
 - Inicializa el mapa y Places.
 - Autocomplete en pickup/dropoff (solo USA).
-- Expone helpers globales usados por otros módulos (BNZ/core/booking):
+- Expuestos globalmente:
     window.pickupPlace, window.dropoffPlace
     window.isSLCInternational(place), window.isAirport(place), window.isUtah(place)
     window.routeAsync(opts)
 
-- Calcula ruta al evento "bnz:calculate" y llama a BNZ.renderQuote(leg, { surcharge }).
-- Aplica la regla de recargo: $3/mi desde base cuando el pick-up está fuera de
-  Summit/Wasatch (o si pickup es aeropuerto y dropoff está fuera de Summit/Wasatch).
+- Escucha "bnz:calculate" → calcula ruta → BNZ.renderQuote(leg, { surcharge })
+- Regla de recargo: $3/mi desde BASE cuando:
+  A) pickup es aeropuerto y dropoff está fuera de Summit/Wasatch → BASE→PICKUP
+  B) pickup fuera de Summit/Wasatch → BASE→PICKUP
 
 Requiere en HTML:
   <div id="map"></div>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places&callback=initMap"></script>
+  loadGoogleMaps(key,{ libraries:"places" }).then(()=>window.initMap && window.initMap())
 */
 (function () {
   "use strict";
@@ -25,16 +26,16 @@ Requiere en HTML:
   let map, dirService, dirRenderer;
   let acPickup = null, acDropoff = null;
 
-  // Texto libre (si el usuario escribe sin seleccionar sugerencia)
+  // Texto libre (cuando el usuario no selecciona una sugerencia)
   let originText = "";
   let destinationText = "";
 
-  // Expuestos globalmente (otros módulos los usan)
+  // Globals usados por otros módulos
   window.pickupPlace = window.pickupPlace || null;
   window.dropoffPlace = window.dropoffPlace || null;
 
   // ──────────────────────────────────────────────────────────────
-  // Helpers de Places/Geocoder
+  // Helpers Places/Geocoder
   // ──────────────────────────────────────────────────────────────
   function isAirport(place) {
     const t = place?.types || [];
@@ -82,7 +83,7 @@ Requiere en HTML:
     });
   }
 
-  // Distancia en millas de BASE_ADDRESS → placeId
+  // DirectionsService (callback → Promise)
   function routeAsync(opts) {
     return new Promise((resolve, reject) => {
       dirService.route(opts, (r, s) => (s === "OK" && r ? resolve(r) : reject(s || "ROUTE_ERROR")));
@@ -115,16 +116,12 @@ Requiere en HTML:
   // Regla de recargo $3/mi
   // ──────────────────────────────────────────────────────────────
   async function computeSurchargeAsync() {
-    // Si no tenemos places reales, no aplicamos recargo
     if (!window.pickupPlace && !window.dropoffPlace) return 0;
 
-    // Condados permitidos
     const ALLOWED_RX = /Summit County|Wasatch County/;
-
     const pickup = window.pickupPlace;
     const drop   = window.dropoffPlace;
 
-    // County por place o por geocode
     const pickupCounty = pickup
       ? (countyFrom(pickup) || (pickup.place_id ? await countyByPlaceId(pickup.place_id) : ""))
       : "";
@@ -134,8 +131,7 @@ Requiere en HTML:
 
     const pickupIsAir = !!pickup && isAirport(pickup);
 
-    // Casos:
-    // A) Llegada a aeropuerto (pickup = aeropuerto). Si DROP está fuera de Summit/Wasatch → recargo desde BASE → PICKUP
+    // A) Pickup aeropuerto + drop fuera de Summit/Wasatch → BASE→PICKUP
     if (pickupIsAir) {
       const dropAllowed = ALLOWED_RX.test(dropCounty);
       if (!dropAllowed && pickup?.place_id) {
@@ -145,7 +141,7 @@ Requiere en HTML:
       return 0;
     }
 
-    // B) Pickup normal: si PICKUP está fuera de Summit/Wasatch → recargo desde BASE → PICKUP
+    // B) Pickup normal fuera de Summit/Wasatch → BASE→PICKUP
     const pickupAllowed = ALLOWED_RX.test(pickupCounty);
     if (!pickupAllowed && pickup?.place_id) {
       const miles = await milesFromBaseTo(pickup.place_id);
@@ -170,9 +166,8 @@ Requiere en HTML:
 
     ac.addListener("place_changed", () => {
       const place = ac.getPlace();
-
       const loc = place?.geometry?.location || null;
-      if (loc) {
+      if (loc && map) {
         map.panTo(loc);
         map.setZoom(12);
       }
@@ -183,12 +178,9 @@ Requiere en HTML:
         originText = pretty;
         window.pickupPlace = place || null;
 
-        // Avisar al booking para visibilidad (JSX/SLC/FBO/etc.)
         if (window.BNZ && typeof BNZ.onPickupPlaceChanged === "function") {
           BNZ.onPickupPlaceChanged(place);
         }
-
-        // Algunos módulos muestran/ocultan Meet&Greet
         if (typeof window.updateMeetGreetVisibility === "function") {
           window.updateMeetGreetVisibility();
         }
@@ -198,7 +190,7 @@ Requiere en HTML:
       }
     });
 
-    // Cachear texto cuando el usuario escribe sin seleccionar
+    // Cachear texto libre
     ["input", "change", "blur"].forEach((ev) => {
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
@@ -231,7 +223,8 @@ Requiere en HTML:
         provideRouteAlternatives: false,
       };
 
-      const result = await dirService.route(req);
+      // ✅ usar wrapper consistente (callback → Promise)
+      const result = await routeAsync(req);
       const route  = result?.routes?.[0];
       const leg    = route?.legs?.[0];
 
@@ -242,10 +235,10 @@ Requiere en HTML:
 
       dirRenderer.setDirections(result);
 
-      // Recargo según reglas ($3/mi desde BASE cuando corresponda)
+      // Recargo según reglas
       const surcharge = await computeSurchargeAsync();
 
-      // Notificar al módulo de booking para pintar el resumen
+      // Notificar al módulo de booking
       if (window.BNZ && typeof BNZ.renderQuote === "function") {
         BNZ.renderQuote(leg, { surcharge });
       }
