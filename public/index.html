@@ -244,13 +244,80 @@
       </div>
     </div>
 
-    <!-- Términos -->
+    <!-- Terms & Conditions -->
     <div class="terms-box" id="termsBox">
-      <div class="terms-summary">
+      <div class="terms-summary" id="termsToggle" aria-controls="termsBody" aria-expanded="false">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
           <div class="accept-dot"></div>
         </div>
         <div class="accept-label">I accept the Terms &amp; Conditions</div>
+        <div class="chev" style="margin-left:auto;width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s"></div>
+      </div>
+
+      <div id="termsBody" class="terms-body" hidden>
+        <div style="line-height:1.6">
+          <h3 style="margin:0 0 8px;color:#ffddae">Terms and Conditions</h3>
+          <p style="opacity:.85;margin:0 0 10px">Bonanza Transportation — Last updated: <span id="tncDate">2025</span></p>
+          <div class="divider" style="height:1px;background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent);margin:6px 0 12px"></div>
+
+          <h4>1) Introduction & Acceptance</h4>
+          <p>By booking or using our services, you agree to these Terms and Conditions. We may update them at any time; the latest version will be posted on our website and becomes effective immediately.</p>
+
+          <h4>2) Definitions</h4>
+          <ul>
+            <li><b>Client:</b> Person or company hiring the service.</li>
+            <li><b>Service:</b> Private transportation including airport pickups, events, transfers and private trips.</li>
+            <li><b>Reservation:</b> Confirmed service contract with Bonanza Transportation.</li>
+            <li><b>Cancellation:</b> Annulment of a confirmed reservation.</li>
+            <li><b>Fare:</b> Price agreed for the service.</li>
+          </ul>
+
+          <h4>3) Bookings & Payments</h4>
+          <ul>
+            <li>Bookings must be made in advance via website, phone, or email.</li>
+            <li>Payments are accepted by credit/debit card or secure providers such as Stripe.</li>
+            <li>We may require partial or full payment to confirm a reservation.</li>
+            <li>All fares are in USD and include applicable taxes unless stated otherwise.</li>
+          </ul>
+
+          <h4>4) Cancellation & Reschedule Policy</h4>
+          <ul>
+            <li><b>More than 24 hours</b> before pickup: reschedule with no fee, subject to availability.</li>
+            <li><b>Within 24 hours:</b> reschedule allowed with a 50% charge of the agreed fare.</li>
+            <li>Reschedules must be confirmed directly by phone or email.</li>
+          </ul>
+
+          <h4>5) No-Show & Waiting Time</h4>
+          <ul>
+            <li>No-Show: client does not arrive at the agreed time/place without notice.</li>
+            <li>Included waiting: <b>20 min</b> non-airport / <b>60 min</b> at airport after on-time landing.</li>
+            <li>Additional waiting beyond those windows may be charged.</li>
+          </ul>
+
+          <h4>6) Flight Delays</h4>
+          <p>Flights are monitored and pickup times adjusted when possible. Excessive delays may require rescheduling subject to availability.</p>
+
+          <h4>7) Luggage & Belongings</h4>
+          <p>Please disclose luggage quantity/size upon booking. Bonanza is not responsible for personal items left in the vehicle.</p>
+
+          <h4>8) Client Conduct</h4>
+          <p>No smoking, alcohol, or illegal substances in vehicles. Respect for driver and vehicle is required. Service may be refused for unsafe or unlawful behavior.</p>
+
+          <h4>9) Liability</h4>
+          <p>We are not liable for delays, loss or damage due to traffic, weather, accidents, or force majeure; nor for indirect or consequential damages.</p>
+
+          <h4>10) Insurance</h4>
+          <p>All services carry commercial coverage as required by Utah law.</p>
+
+          <h4>11) Privacy</h4>
+          <p>Personal data is used only to provide the service, consistent with our Privacy Policy.</p>
+
+          <h4>12) Jurisdiction</h4>
+          <p>These terms are governed by the laws of the State of Utah, USA. Disputes are subject to Utah courts.</p>
+
+          <h4>Contact</h4>
+          <p>Phone: (786) 683-5128 — Email: bonanzatransportation1@outlook.com — Park City, Utah, USA.</p>
+        </div>
       </div>
     </div>
 
@@ -303,6 +370,62 @@
       const acc=document.getElementById('luggageAccordion');
       const sum=acc?.querySelector('.luggage-summary');
       sum?.addEventListener('click',()=>acc.classList.toggle('open'));
+    })();
+  </script>
+
+  <!-- Terms logic: switch + habilitar botones + desplegable -->
+  <script>
+    (function termsAndButtons(){
+      const pill = document.getElementById('acceptPill');
+      const label = document.querySelector('.accept-label');
+      const toggle = document.getElementById('termsToggle');
+      const body = document.getElementById('termsBody');
+      const chev = toggle?.querySelector('.chev');
+      const btnCalc = document.getElementById('calculate');
+      const btnPay  = document.getElementById('pay');
+
+      function setAccepted(on){
+        pill.classList.toggle('on', on);
+        pill.setAttribute('aria-checked', on ? 'true' : 'false');
+        if (btnCalc) btnCalc.disabled = !on;
+        if (btnPay)  btnPay.disabled  = !on;
+        window.__termsAccepted = !!on;
+      }
+
+      function toggleTerms(){
+        const isOpen = !body.hasAttribute('hidden');
+        if (isOpen) {
+          body.setAttribute('hidden','');
+          toggle?.setAttribute('aria-expanded','false');
+          if (chev) chev.style.transform = 'rotate(-45deg)';
+        } else {
+          body.removeAttribute('hidden');
+          toggle?.setAttribute('aria-expanded','true');
+          if (chev) chev.style.transform = 'rotate(45deg)';
+        }
+      }
+
+      toggle?.addEventListener('click', (e)=>{
+        if (e.target === pill || pill.contains(e.target)) return; // si fue al switch, no desplegar
+        toggleTerms();
+      });
+      pill?.addEventListener('click', ()=> setAccepted(!pill.classList.contains('on')));
+      pill?.addEventListener('keydown',(e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setAccepted(!pill.classList.contains('on')); }});
+      label?.addEventListener('click', ()=> setAccepted(!pill.classList.contains('on')));
+
+      function guard(e){
+        if (!pill.classList.contains('on')) {
+          e?.preventDefault?.();
+          alert('Please accept the Terms & Conditions to continue.');
+          return false;
+        }
+        return true;
+      }
+      btnCalc?.addEventListener('click', guard, true);
+      btnPay?.addEventListener('click', guard, true);
+
+      setAccepted(false);
+      const el = document.getElementById('tncDate'); if (el) el.textContent = new Date().getFullYear();
     })();
   </script>
 
