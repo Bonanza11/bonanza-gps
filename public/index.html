@@ -6,25 +6,82 @@
   <title>Bonanza Transportation</title>
   <link rel="icon" href="/images/bonanza-logo.png">
 
-  <!-- Estilos mínimos (mapa visible + layout básico) -->
+  <!-- ===== Bonanza Copper Theme ===== -->
   <style>
-    :root{ --copper:#a8744f; --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b; }
+    :root{
+      --copper:#a8744f;               /* cobre base */
+      --copper-2:#c58c61;             /* cobre claro para brillos */
+      --copper-3:#7a5337;             /* cobre oscuro para sombras */
+      --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b;
+      --ink:#e9d5c1;                  /* tipografía principal */
+      --field:#111318;                /* fondo de campos */
+      --field-border:#30343b;         /* borde base de campos */
+      --panel:#0b0d12;                /* panel/mapa */
+      --bg:#000;                      /* fondo página */
+    }
+
     *{box-sizing:border-box}
-    html,body{margin:0;background:#000;color:#e9d5c1;font-family:Inter,system-ui,Arial,sans-serif}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Arial,sans-serif}
+
+    /* Header + logo con aro cobre elegante (no neón) */
     header{display:flex;justify-content:center;padding:22px 16px}
-    .logo{width:160px;height:160px;border-radius:50%;border:2px solid var(--copper);object-fit:cover}
+    .logo{
+      width:160px;height:160px;border-radius:50%;object-fit:cover;
+      border:2px solid var(--copper);
+      box-shadow:
+        inset 0 0 2px rgba(255,255,255,.06),
+        0 0 0 2px rgba(168,116,79,.22),
+        0 10px 28px rgba(0,0,0,.55),
+        0 0 22px rgba(167,116,79,.16);
+    }
+
+    /* Layout */
     main{max-width:760px;width:92vw;margin:0 auto 40px}
-    label{display:block;margin:12px 0 6px;font-weight:700}
-    input,select,textarea{width:100%;height:44px;padding:10px 12px;background:#1a1a1a;color:#ffddae;border:1px solid #444;border-radius:8px}
+    label{display:block;margin:12px 0 6px;font-weight:700;letter-spacing:.2px}
+
+    /* Campos */
+    input,select,textarea{
+      width:100%;height:44px;padding:10px 12px;
+      background:var(--field);color:#ffddae;
+      border:1px solid var(--field-border);border-radius:10px;
+      outline:0; transition:border-color .2s, box-shadow .2s, background .2s;
+    }
     textarea{height:64px}
-    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important}
+    input::placeholder,textarea::placeholder{color:#b89f8c}
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--copper);
+      box-shadow:
+        0 0 0 2px rgba(167,116,79,.15),
+        0 0 0 1px var(--copper) inset;
+      background:#0f1116;
+    }
+    .invalid{
+      border-color:var(--err)!important;
+      box-shadow:0 0 0 3px rgba(255,107,107,.25)!important;
+    }
+
+    /* Hints de validación (usados por validators.js) */
+    .hint{font-size:12px;margin-top:4px}
+    .hint.ok{color:var(--ok)}
+    .hint.err{color:var(--err)}
 
     /* Selector de vehículo */
     .veh-toggle{display:flex;gap:8px;margin:12px 0}
-    .veh-btn{flex:1;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);color:#ffddae;padding:12px;border-radius:10px;font-weight:700;cursor:pointer}
-    .veh-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
+    .veh-btn{
+      flex:1;background:var(--field);
+      border:1px solid rgba(168,116,79,.55);
+      color:#ffddae;padding:12px;border-radius:12px;
+      font-weight:800;cursor:pointer;letter-spacing:.2px;
+      transition:transform .06s ease, box-shadow .2s, background .2s;
+    }
+    .veh-btn:active{transform:translateY(1px)}
+    .veh-btn.active{
+      background:linear-gradient(180deg, var(--copper-2), var(--copper));
+      color:#000;border-color:var(--copper);
+      box-shadow:0 4px 18px rgba(167,116,79,.25), inset 0 0 0 1px rgba(0,0,0,.15);
+    }
 
-    /* Visual del vehículo */
+    /* Bloque visual del vehículo */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
     .turntable .platform{
@@ -34,16 +91,82 @@
     }
     .vehicle-caption{font-weight:700;color:#ffddae;margin-top:6px;letter-spacing:.2px;}
 
-    #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #333}
-    #info{display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);border-radius:12px;padding:14px;background:#0e0e0e}
+    /* Mapa + tarjeta resumen */
+    #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #2a2f38;background:var(--panel)}
+    #info{
+      display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);
+      border-radius:12px;padding:14px;background:#0e0e0e
+    }
 
     /* Términos */
-    .accept-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #666;border-radius:999px;padding:4px 8px;background:#1a1a1a;cursor:pointer}
+    .accept-pill{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid #646b77;border-radius:999px;padding:6px 10px;
+      background:#12151b;cursor:pointer;user-select:none;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .accept-pill span:first-child{
+      display:inline-grid;place-items:center;
+      width:18px;height:18px;border-radius:50%;
+      border:1px solid #778190; font-weight:900; font-size:12px; color:#9fb0c3;
+    }
     .accept-pill.on{border-color:var(--ok)}
+    .accept-pill.on span:first-child{
+      background:linear-gradient(180deg, #47e08b, #17c964);
+      color:#04210f;border-color:transparent;
+      box-shadow:0 0 0 2px rgba(23,201,100,.18);
+    }
 
-    /* Botones */
-    button{width:100%;padding:14px 16px;margin-top:14px;background:var(--copper);color:#000;font-weight:800;border:0;border-radius:10px;cursor:pointer}
-    button:disabled{opacity:.5;cursor:not-allowed}
+    /* Botones principales */
+    button{
+      width:100%;padding:14px 16px;margin-top:14px;
+      background:linear-gradient(180deg, var(--copper-2), var(--copper));
+      color:#000;font-weight:900;border:0;border-radius:12px;
+      cursor:pointer;letter-spacing:.2px;
+      box-shadow:0 6px 26px rgba(167,116,79,.25), inset 0 -1px 0 rgba(0,0,0,.2);
+      transition:transform .06s ease, filter .2s ease, box-shadow .2s ease;
+    }
+    button:hover{filter:brightness(1.03)}
+    button:active{transform:translateY(1px)}
+    button:disabled{opacity:.55;cursor:not-allowed;filter:none}
+
+    /* ===== Responsive Bonanza ===== */
+    @media (max-width: 820px) {
+      main{ width:94vw; margin:0 auto 36px }
+      .logo{ width:150px; height:150px }
+      input, select, textarea{ height:44px; font-size:16px } /* evita zoom iOS */
+      button{ padding:14px 16px; font-size:16px }
+      .veh-btn{ padding:12px; font-size:15px }
+      .turntable .car{ width:260px }
+      #map{ height:340px }
+    }
+    @media (max-width: 640px) {
+      .logo{ width:140px; height:140px;
+        box-shadow: inset 0 0 2px rgba(255,255,255,.06),
+                    0 0 0 2px rgba(168,116,79,.22),
+                    0 6px 22px rgba(0,0,0,.5),
+                    0 0 18px rgba(168,116,79,.18);
+      }
+      /* la fila de fecha/hora baja a una columna */
+      main > div[style*="grid-template-columns"]{
+        grid-template-columns: 1fr !important; gap:10px !important;
+      }
+      .turntable .car{ width:240px }
+      .turntable .platform{ width:200px; height:20px }
+      #map{ height:320px }
+    }
+    @media (max-width: 400px) {
+      html, body{ font-size:15px }
+      .logo{ width:128px; height:128px }
+      .veh-btn{ font-size:14px; padding:10px }
+      .turntable .car{ width:210px }
+      .turntable .platform{ width:180px; height:18px }
+      #map{ height:300px }
+    }
+    @media (pointer:coarse) {
+      .accept-pill{ padding:10px 14px }
+      input, select, textarea{ padding:12px 14px }
+    }
   </style>
 </head>
 <body>
@@ -58,11 +181,11 @@
 
     <label>Phone Number (US)</label>
     <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" />
-    <div id="phoneHelp" class="hint"></div>
+    <div id="phoneHelp" class="hint" aria-live="polite"></div>
 
     <label>Email Address</label>
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
-    <div id="emailHelp" class="hint"></div>
+    <div id="emailHelp" class="hint" aria-live="polite"></div>
 
     <!-- Direcciones -->
     <label>Pick-up Address</label>
