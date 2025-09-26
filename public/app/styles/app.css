@@ -1,16 +1,12 @@
-/* =========================================================================
-   /public/app/styles/app.css — Bonanza UI (modo oscuro, sin bordes rojos)
-   ========================================================================= */
-
-:root{
-  --copper:#a8744f;         /* cobre principal */
-  --copper-2:#c89366;       /* cobre claro para acentos */
-  --panel:#0e0f11;          /* fondo panel */
+                              :root{
+  --copper:#a8744f;
+  --copper-2:#c89366;
+  --panel:#0e0f11;
   --panel-2:#101214;
-  --text:#e9d5c1;           /* texto claro cálido */
-  --muted:#caa784;          /* texto secundario */
+  --text:#e9d5c1;
+  --muted:#caa784;
   --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b;
-  --ring:0 0 0 3px rgba(168,116,79,.22); /* halo cobre */
+  --ring:0 0 0 3px rgba(168,116,79,.22);
 }
 
 /* Reset */
@@ -21,7 +17,7 @@ html,body{
     radial-gradient(1200px 800px at 110% -10%, rgba(168,116,79,.06), transparent 60%),
     radial-gradient(900px 600px at -10% 110%, rgba(168,116,79,.05), transparent 55%),
     #000;
-  color:var(--text);
+  color:var(--copper);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue";
   -webkit-font-smoothing: antialiased;
 }
@@ -35,101 +31,98 @@ header{ display:flex; justify-content:center; align-items:center; padding:20px 1
   filter: drop-shadow(0 0 5px rgba(192,139,92,.45));
 }
 
-/* Layout principal */
+/* Layout */
 main{ max-width:760px; width:92vw; margin:0 auto 40px; padding:0 16px }
 label{ display:block; margin:12px 0 6px; font-weight:700; color:#ffddb3 }
 
-/* ---------- Campos de formulario ---------- */
+/* Campos — look 2ª foto */
 input, select, textarea{
-  display:block; width:100%; height:44px; padding:10px 12px;
-  background:#121416;
+  display:block; width:100%; height:52px; padding:12px;
+  background:linear-gradient(180deg,#141619,#0f1113);
   color:#ffddae;
-  border:1px solid rgba(168,116,79,.35);
-  border-radius:10px; outline:none; caret-color:var(--copper);
-  transition:border .15s, box-shadow .15s, background .15s, color .15s;
+  border:1px solid rgba(192,139,92,.48);
+  border-radius:12px; outline:none; caret-color:var(--copper);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 1px 0 rgba(0,0,0,.55),
+    0 0 0 1px rgba(0,0,0,.55);
+  transition:border .15s, box-shadow .15s, background .15s, color .15s, transform .05s;
 }
-textarea{ height:60px; resize:vertical; min-height:60px }
+textarea{ height:64px; min-height:64px; resize:vertical }
 ::placeholder{ color:#cba686; opacity:.75 }
 
-/* Foco cobre */
 input:focus, select:focus, textarea:focus{
   border-color:var(--copper);
-  box-shadow: var(--ring);
-  background:#14171a;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 1px 0 rgba(0,0,0,.6),
+    0 0 0 3px rgba(168,116,79,.32),
+    0 12px 26px rgba(0,0,0,.44);
+  background:#15181b;
 }
 
-/* ---------- Quitar por completo bordes rojos nativos ---------- */
+/* Eliminar rojo nativo (solo mostrará tus hints) */
 input:invalid, textarea:invalid, select:invalid{
   box-shadow:none !important;
-  outline:0 !important;
-  border-color: rgba(168,116,79,.35) !important;
-  background:#121416 !important;
+  border-color:rgba(168,116,79,.45) !important;
+  outline:none !important;
+  background:#141619 !important;
 }
 @supports selector(:user-invalid){
   input:user-invalid, textarea:user-invalid, select:user-invalid{
     box-shadow:none !important;
-    outline:0 !important;
-    border-color: rgba(168,116,79,.35) !important;
-    background:#121416 !important;
+    border-color:rgba(168,116,79,.45) !important;
+    background:#141619 !important;
   }
 }
-:-moz-ui-invalid{
-  box-shadow:none !important;
-  outline:0 !important;
-  border-color: rgba(168,116,79,.35) !important;
-  background:#121416 !important;
-}
+:-moz-ui-invalid{ box-shadow:none !important; border-color:rgba(168,116,79,.45) !important }
 
-/* La clase .invalid NO pinta bordes (solo sirve como flag JS) */
+/* Clase .invalid no pinta rojo (solo lógica) */
 .invalid{ border-color:inherit !important; box-shadow:none !important }
 
-/* Autofill oscuro (Chrome/Safari) */
+/* Autofill oscuro */
 input:-webkit-autofill,
-textarea:-webkit-autofill,
-select:-webkit-autofill{
-  -webkit-text-fill-color:#ffddae !important;
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#ffddae;
   transition: background-color 50000s ease-in-out 0s;
-  box-shadow: 0 0 0 1000px #121416 inset !important;
+  box-shadow: 0 0 0 1000px #141619 inset, var(--ring);
   border:1px solid rgba(168,116,79,.35);
-  caret-color:var(--copper);
 }
 
 /* Date / Time */
 #date, #time{
-  height:54px; font-size:16px; border-radius:12px;
+  height:56px; font-size:16px; border-radius:14px;
   background:#16181b; color:#ffedd2;
-  border:1px solid rgba(168,116,79,.45);
+  border:1px solid rgba(168,116,79,.55);
 }
 #date:focus, #time:focus{ outline:none; border-color:var(--copper); box-shadow:var(--ring) }
 
-/* Hints (mensajes debajo de inputs) */
-.hint{ display:none; font-size:.85rem; margin-top:6px }
-.hint.ok{ color:var(--ok) }
-.hint.warn{ color:var(--warn) }
-.hint.err{ color:var(--err) }
+/* Hints */
+.hint{ display:none; font-size:.86rem; margin-top:6px }
 .hint.show{ display:block }
+.hint.err{ color:var(--err) }
+.hint.ok{ color:var(--ok) }
 
-/* Grid fecha/hora */
-.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
-@media (max-width:520px){ .grid2{ grid-template-columns:1fr } }
-
-/* Selector de vehículo */
-.veh-toggle{ display:flex; gap:8px; margin:10px 0 }
+/* Vehículo toggle */
+.veh-toggle{ display:flex; gap:12px; margin:14px 0 }
 .veh-btn{
-  flex:1 1 0; background:#141619;
+  flex:1 1 0; background:linear-gradient(180deg,#1a1a1a,#101214);
   border:1px solid rgba(168,116,79,.55); color:var(--copper);
-  padding:12px; border-radius:10px; cursor:pointer; font-weight:700;
-  transition:filter .15s, box-shadow .15s, background .15s, color .15s;
+  padding:14px 12px; border-radius:12px; cursor:pointer; font-weight:800;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 1px 0 rgba(0,0,0,.6);
+  transition:filter .15s, box-shadow .15s, background .15s, color .15s, transform .05s;
 }
 .veh-btn:hover{ filter:brightness(1.05) }
+.veh-btn:active{ transform:translateY(1px) }
 .veh-btn.active{
-  background:var(--copper); color:#000; border-color:var(--copper);
-  box-shadow: var(--ring);
+  background:linear-gradient(180deg,var(--copper-2),var(--copper));
+  color:#111; border-color:var(--copper);
+  box-shadow:0 12px 28px rgba(168,116,79,.36), 0 0 0 3px rgba(168,116,79,.26);
 }
 
 /* Visual del vehículo */
 .turntable{ margin:10px 0 6px; display:flex; flex-direction:column; align-items:center }
-.turntable .car{ width:260px; height:auto; filter:drop-shadow(0 12px 18px rgba(0,0,0,.6)) }
+.turntable .car{ width:300px; height:auto; filter:drop-shadow(0 14px 22px rgba(0,0,0,.62)) }
 .turntable .platform{
   width:220px; height:22px; border-radius:50%;
   background:radial-gradient(ellipse at center, rgba(0,0,0,.7), rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
@@ -137,25 +130,12 @@ select:-webkit-autofill{
 }
 .vehicle-caption{ font-weight:700; color:#ffddae; margin-top:6px; letter-spacing:.2px }
 
-/* Meet & Greet */
-.mg-card{
-  display:none; margin:16px 0; border-radius:14px;
-  border:1px solid rgba(168,116,79,.45);
-  background:linear-gradient(180deg,#121212,#0b0b0b);
-  box-shadow:0 12px 24px rgba(0,0,0,.35); padding:16px;
+/* Acordeones / cajas */
+.terms-box,
+.luggage-accordion{
+  border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e;
+  box-shadow:0 10px 24px rgba(0,0,0,.38);
 }
-.mg-card h3{ margin:0 0 4px; color:#ffddae; font-size:1.1rem }
-.mg-card p{ margin:0 0 12px; font-size:.9rem; opacity:.85 }
-.mg-options{ display:flex; gap:8px; margin-bottom:8px }
-.mg-btn{
-  flex:1 1 0; background:#1a1a1a; border:1px solid rgba(168,116,79,.55);
-  color:var(--copper); padding:10px; border-radius:8px; cursor:pointer; font-weight:700; text-align:center;
-}
-.mg-btn.active{ background:var(--copper); color:#000; border-color:var(--copper) }
-.mg-note{ font-size:.85rem; color:#aa8b72 }
-
-/* Acordeón equipaje */
-.luggage-accordion{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
 .luggage-summary{ display:flex; align-items:center; gap:10px; cursor:pointer }
 .luggage-title{ font-weight:800; color:var(--copper) }
 .luggage-chev{ width:10px; height:10px; border-right:2px solid var(--copper); border-bottom:2px solid var(--copper); transform:rotate(-45deg); transition:.2s; margin-left:auto }
@@ -163,36 +143,25 @@ select:-webkit-autofill{
 .luggage-body{ display:none; margin-top:10px; color:#e9d5c1; font-size:.95rem; line-height:1.55 }
 .luggage-accordion.open .luggage-body{ display:block }
 
-/* Terms */
-.terms-box{ border:1px solid rgba(168,116,79,.45); border-radius:12px; padding:10px 12px; margin-top:10px; background:#0e0e0e }
-.terms-summary{ display:flex; align-items:center; gap:10px; cursor:pointer }
-.accept-pill{ min-width:28px; height:20px; border-radius:999px; border:1px solid #666; display:flex; align-items:center; padding:0 2px; background:#1a1a1a }
-.accept-dot{ width:14px; height:14px; border-radius:50%; background:#333; transition:.2s; border:1px solid #555 }
-.accept-pill.on{ border-color:var(--ok); background:rgba(23,201,100,.12) }
-.accept-pill.on .accept-dot{ transform:translateX(8px); background:var(--ok); border-color:var(--ok) }
-.accept-label{ font-size:.9rem; color:#ffddae }
-
 /* Botones */
 button{
-  width:100%; padding:14px 16px; margin-top:18px;
+  width:100%; height:56px; padding:14px 16px; margin-top:18px;
   background:linear-gradient(180deg, var(--copper-2), var(--copper));
-  color:#111; font-weight:700; font-size:18px;
-  border:1px solid rgba(0,0,0,.45); border-radius:10px; cursor:pointer;
-  box-shadow:0 10px 28px rgba(168,116,79,.35);
+  color:#111; font-weight:800; font-size:18px;
+  border:1px solid rgba(0,0,0,.45); border-radius:12px; cursor:pointer;
+  box-shadow:0 14px 32px rgba(168,116,79,.34);
   transition:filter .15s, transform .05s, box-shadow .2s;
 }
 button:hover{ filter:saturate(1.06) brightness(1.02) }
 button:active{ transform:translateY(1px) }
 button:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
 
-/* Mapa */
+/* Mapa y resumen */
 #map{
-  height:380px; margin-top:10px; border-radius:12px; overflow:hidden;
-  border:1px solid rgba(168,116,79,.25);
-  box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  height:380px; margin-top:10px; border-radius:14px; overflow:hidden;
+  border:1px solid rgba(168,116,79,.28);
+  box-shadow: 0 12px 28px rgba(0,0,0,.5);
 }
-
-/* Resumen del viaje */
 #info{
   display:none; margin-top:18px; border-radius:16px; padding:18px; color:var(--text);
   background:linear-gradient(180deg, var(--panel), var(--panel-2));
@@ -204,15 +173,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25) }
 .kpi .label{ font-size:.75rem; opacity:.8; margin-bottom:6px }
 .kpi .value{ font-size:1.35rem; font-weight:800; color:#f0d1ad }
 .kpi .value.price{ color:#ffddae }
-.breakdown{ margin:6px 0 12px }
-.breakdown .row{ display:flex; justify-content:space-between; align-items:center; padding:6px 0 }
-.divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(192,139,92,.35),transparent); margin:6px 0 }
-.tax-note{ font-size:13px; color:#c9a97c; font-style:italic; text-align:right; margin-top:4px }
 
-/* Utilidades */
-.hidden{ display:none !important }
-
-/* Responsive */
-@media (max-width:520px){
-  #map{ height:320px }
-}
+/* Grid fecha/hora */
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+@media (max-width:520px){ .grid2{ grid-template-columns:1fr } }
