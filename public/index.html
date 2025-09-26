@@ -9,11 +9,11 @@
   <meta name="theme-color" content="#b66a2c" />
   <link rel="stylesheet" href="/app/styles/app.css" />
 
-  <!-- Configuración pública (se puede reemplazar con env vars en Vercel) -->
+  <!-- Configuración pública -->
   <script>
     window.__PUBLIC_CFG__ = {
-      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",   // Google Maps API Key
-      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp" // Stripe Public Key (test)
+      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",  // tu key real aquí
+      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
     };
   </script>
 </head>
@@ -92,7 +92,7 @@
         <span class="luggage-chev"></span>
       </div>
       <div class="luggage-body">
-        <!-- Aquí va el contenido detallado de equipaje (SUV y Van) -->
+        <!-- Aquí va el contenido detallado de equipaje -->
       </div>
     </div>
 
@@ -125,12 +125,28 @@
   <script src="/app/scripts/booking.js" defer></script>
 
   <!-- Google Maps -->
-  <script src="/app/scripts/maps-loader.js" defer></script>
-  <script src="/app/scripts/maps.js" defer></script>
+  <script src="/app/scripts/maps-loader.js"></script>
+  <script src="/app/scripts/maps.js"></script>
   <script>
-    loadGoogleMaps(window.__PUBLIC_CFG__.GMAPS_KEY, { libraries: "places" })
-      .then(() => { if (window.initMap) window.initMap(); })
-      .catch(err => console.error("GMAPS load failed", err));
+    (function () {
+      function start() {
+        var key = (window.__PUBLIC_CFG__ && window.__PUBLIC_CFG__.GMAPS_KEY) || "";
+        if (!key) { console.error("[maps-init] Missing Google Maps API key"); return; }
+        window.loadGoogleMaps(key, { libraries: "places,marker" })
+          .then(function(){ if (window.initMap) window.initMap(); })
+          .catch(function(err){ console.error("GMAPS load failed", err); });
+      }
+      if (window.loadGoogleMaps) start();
+      else {
+        var t0 = Date.now(), iv = setInterval(function(){
+          if (window.loadGoogleMaps) { clearInterval(iv); start(); }
+          else if (Date.now() - t0 > 15000) {
+            clearInterval(iv);
+            console.error("[maps-init] loadGoogleMaps not available (timeout)");
+          }
+        }, 50);
+      }
+    })();
   </script>
 
   <!-- Stripe -->
