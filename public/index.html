@@ -5,121 +5,119 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bonanza Transportation</title>
   <link rel="icon" href="/images/bonanza-logo.png">
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#b66a2c" />
 
-  <!-- ===== Bonanza Copper Theme ===== -->
   <style>
     :root{
-      --copper:#a8744f;
-      --copper-light:#d6a079;
-      --copper-soft:#b88c65;
+      --copper:#a8744f;         /* cobre principal */
+      --copper-2:#c08b5c;       /* cobre claro para brillos */
+      --copper-3:#ffddae;       /* texto crema */
       --ok:#17c964; --warn:#ffcc66; --err:#ff6b6b;
-      --ink:#e9d5c1;
-      --field:#0d0e10;
-      --field-border:#383838;
-      --panel:#0b0d12;
-      --bg:#000;
+      --bg:#000; --panel:#0e0e0e; --field:#121212; --field-2:#1a1a1a; --border:#444;
     }
-
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,Arial,sans-serif}
+    html,body{margin:0;background:var(--bg);color:var(--copper-3);font-family:Inter,system-ui,Arial,sans-serif}
+    header{display:flex;justify-content:center;padding:20px 16px}
+    .logo{width:170px;height:170px;border-radius:50%;object-fit:cover;border:2px solid var(--copper);
+      box-shadow:0 0 2px rgba(192,139,92,.35) inset, 0 0 8px rgba(0,0,0,.6), 0 0 10px rgba(192,139,92,.35)}
+    main{max-width:860px;width:92vw;margin:0 auto 36px;padding:0 4px}
 
-    /* Header + logo */
-    header{display:flex;justify-content:center;padding:22px 16px}
-    .logo{
-      width:160px;height:160px;border-radius:50%;object-fit:cover;
-      border:2px solid var(--copper);
-      box-shadow:
-        inset 0 0 2px rgba(255,255,255,.06),
-        0 0 0 2px rgba(168,116,79,.22),
-        0 10px 28px rgba(0,0,0,.55),
-        0 0 22px rgba(167,116,79,.16);
-    }
+    /* Etiquetas */
+    label{display:block;margin:12px 0 6px;font-weight:800;color:var(--copper)}
 
-    main{max-width:760px;width:92vw;margin:0 auto 40px}
-    label{display:block;margin:12px 0 6px;font-weight:700;letter-spacing:.2px;color:var(--copper-light)}
-
-    /* Campos oscuros con halo cobre */
+    /* Campos */
     input,select,textarea{
-      width:100%;height:44px;padding:10px 12px;
-      background-color:var(--field) !important;
-      color:var(--copper-light) !important;
-      border:1px solid var(--field-border);border-radius:10px;
-      outline:0;
-      transition:border-color .25s, box-shadow .25s, background .25s;
-      font-weight:500;
-      color-scheme: dark;
+      width:100%;height:46px;padding:10px 12px;
+      color:var(--copper-3); background:var(--field-2);
+      border:1px solid rgba(168,116,79,.45); border-radius:10px; outline:none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.03),
+        0 0 0 1px rgba(0,0,0,.45),
+        0 0 0 0 rgba(168,116,79,.0);
+      transition:border-color .15s, box-shadow .15s, background .15s;
     }
     textarea{height:64px}
-    input::placeholder,textarea::placeholder{color:var(--copper-soft)}
     input:focus,select:focus,textarea:focus{
       border-color:var(--copper);
-      box-shadow:0 0 6px rgba(167,116,79,.45),0 0 14px rgba(167,116,79,.25);
-      background-color:#111214 !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 0 0 1px rgba(0,0,0,.55),
+        0 0 0 3px rgba(168,116,79,.26),          /* halo suave cobre */
+        0 0 14px 2px rgba(192,139,92,.16);       /* brillo elegante */
+      background:var(--field);
     }
-    input:-webkit-autofill {
-      -webkit-box-shadow: 0 0 0px 1000px #0d0e10 inset !important;
-      -webkit-text-fill-color: var(--copper-light) !important;
+    ::placeholder{color:#cba686;opacity:.7}
+
+    /* ✅ Fix fondo blanco (autofill) */
+    input:-webkit-autofill,
+    textarea:-webkit-autofill,
+    select:-webkit-autofill{
+      -webkit-box-shadow:0 0 0 1000px var(--field-2) inset !important;
+      -webkit-text-fill-color: var(--copper-3) !important;
+      transition: background-color 9999s ease-out 0s;
+      caret-color: var(--copper-3);
     }
 
-    .invalid{
-      border-color:var(--err)!important;
-      box-shadow:0 0 0 3px rgba(255,107,107,.25)!important;
-    }
+    .invalid{border-color:var(--err)!important;box-shadow:0 0 0 3px rgba(255,107,107,.25)!important}
 
-    .hint{font-size:12px;margin-top:4px}
-    .hint.ok{color:var(--ok)}
-    .hint.err{color:var(--err)}
+    /* Dos columnas fecha/hora */
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:520px){.grid2{grid-template-columns:1fr}}
 
     /* Selector de vehículo */
-    .veh-toggle{display:flex;gap:8px;margin:12px 0}
+    .veh-toggle{display:flex;gap:10px;margin:12px 0}
     .veh-btn{
-      flex:1;background:var(--field);
-      border:1px solid rgba(168,116,79,.55);
-      color:var(--copper-light);padding:12px;border-radius:12px;
-      font-weight:800;cursor:pointer;letter-spacing:.2px;
-      transition:transform .06s ease, box-shadow .2s, background .2s;
+      flex:1;background:var(--field-2);color:var(--copper-3);
+      border:1px solid rgba(168,116,79,.55);padding:12px;border-radius:10px;cursor:pointer;font-weight:800
     }
-    .veh-btn:active{transform:translateY(1px)}
     .veh-btn.active{
-      background:linear-gradient(180deg, var(--copper-light), var(--copper));
-      color:#000;border-color:var(--copper);
-      box-shadow:0 4px 18px rgba(167,116,79,.25), inset 0 0 0 1px rgba(0,0,0,.15);
+      background:var(--copper);color:#000;border-color:var(--copper);
+      box-shadow:0 0 0 3px rgba(168,116,79,.25)
     }
 
     /* Visual vehículo */
     .turntable{margin:10px 0 6px; display:flex; flex-direction:column; align-items:center;}
     .turntable .car{width:260px;height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6))}
-    .turntable .platform{
-      width:220px;height:22px;border-radius:50%;
-      background:radial-gradient(ellipse at center, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);
-      margin-top:6px;
-    }
-    .vehicle-caption{font-weight:700;color:var(--copper-light);margin-top:6px;letter-spacing:.2px;}
+    .turntable .platform{width:220px;height:22px;border-radius:50%;
+      background:radial-gradient(ellipse at center, rgba(0,0,0,.7), rgba(0,0,0,.25) 60%, rgba(0,0,0,0) 70%);margin-top:6px}
+    .vehicle-caption{font-weight:800;color:#ffddae;margin-top:6px;letter-spacing:.2px}
 
-    /* Mapa + resumen */
-    #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #2a2f38;background:var(--panel)}
-    #info{
-      display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);
-      border-radius:12px;padding:14px;background:#0e0e0e
-    }
+    /* Meet & Greet */
+    .mg-card{display:none;margin:16px 0;border-radius:14px;border:1px solid rgba(168,116,79,.45);
+      background:linear-gradient(180deg,#121212,#0b0b0b);box-shadow:0 12px 24px rgba(0,0,0,.35);padding:16px}
+    .mg-card h3{margin:0 0 4px;color:#ffddae;font-size:1.1rem}
+    .mg-card p{margin:0 0 12px;font-size:.9rem;opacity:.85}
+    .mg-options{display:flex;gap:8px;margin-bottom:8px}
+    .mg-btn{flex:1;background:#1a1a1a;border:1px solid rgba(168,116,79,.55);color:var(--copper);padding:10px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center}
+    .mg-btn.active{background:var(--copper);color:#000;border-color:var(--copper)}
+    .mg-note{font-size:.85rem;color:#aa8b72}
 
-    /* Términos */
-    .accept-pill{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid #646b77;border-radius:999px;padding:6px 10px;
-      background:#12151b;cursor:pointer;user-select:none;
-    }
-    .accept-pill.on{border-color:var(--ok)}
+    /* Acordeón equipaje */
+    .luggage-accordion{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
+    .luggage-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
+    .luggage-title{font-weight:800;color:var(--copper)}
+    .luggage-chev{width:10px;height:10px;border-right:2px solid var(--copper);border-bottom:2px solid var(--copper);transform:rotate(-45deg);transition:.2s;margin-left:auto}
+    .luggage-accordion.open .luggage-chev{transform:rotate(45deg)}
+    .luggage-body{display:none;margin-top:10px;color:#e9d5c1;font-size:.95rem;line-height:1.55}
+    .luggage-accordion.open .luggage-body{display:block}
+
+    /* Términos pill + caja */
+    .terms-box{border:1px solid rgba(168,116,79,.45);border-radius:12px;padding:10px 12px;margin-top:10px;background:#0e0e0e}
+    .terms-summary{display:flex;align-items:center;gap:10px;cursor:pointer}
+    .accept-pill{min-width:28px;height:20px;border-radius:999px;border:1px solid #666;display:flex;align-items:center;padding:0 2px;background:#1a1a1a}
+    .accept-dot{width:14px;height:14px;border-radius:50%;background:#333;transition:.2s;border:1px solid #555}
+    .accept-pill.on{border-color:var(--ok);background:rgba(23,201,100,.12)}
+    .accept-pill.on .accept-dot{transform:translateX(8px);background:var(--ok);border-color:var(--ok)}
+    .accept-label{font-size:.95rem;color:#ffddae}
 
     /* Botones */
-    button{
-      width:100%;padding:14px 16px;margin-top:14px;
-      background:linear-gradient(180deg, var(--copper-light), var(--copper));
-      color:#000;font-weight:900;border:0;border-radius:12px;
-      cursor:pointer;letter-spacing:.2px;
-      box-shadow:0 6px 26px rgba(167,116,79,.25);
-    }
-    button:disabled{opacity:.55;cursor:not-allowed}
+    button{width:100%;padding:14px 16px;margin-top:14px;background:var(--copper);color:#000;font-weight:800;border:0;border-radius:10px;cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Info / resumen */
+    #map{height:380px;margin-top:10px;border-radius:12px;border:1px solid #333}
+    #info{display:none;margin-top:14px;border:1px solid rgba(168,116,79,.28);border-radius:12px;padding:14px;background:#0e0e0e}
   </style>
 </head>
 <body>
@@ -128,102 +126,167 @@
   </header>
 
   <main>
-    <label>Full Name</label>
+    <!-- Datos del cliente -->
+    <label for="fullname">Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
 
-    <label>Phone Number (US)</label>
+    <label for="phone">Phone Number (US)</label>
     <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" />
-    <div id="phoneHelp" class="hint" aria-live="polite"></div>
+    <div id="phoneHelp" class="hint"></div>
 
-    <label>Email Address</label>
+    <label for="email">Email Address</label>
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
-    <div id="emailHelp" class="hint" aria-live="polite"></div>
+    <div id="emailHelp" class="hint"></div>
 
-    <label>Pick-up Address</label>
+    <!-- Direcciones -->
+    <label for="pickup">Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
 
-    <label>Drop-off Address</label>
+    <label for="dropoff">Drop-off Address</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
 
-    <label>Special Instructions</label>
+    <!-- Meet & Greet (SLC) -->
+    <div class="mg-card" id="meetGreetCard" aria-label="Meet & Greet options">
+      <h3>Meet & Greet — SLC Only</h3>
+      <p>Choose where you want your driver to meet you inside the terminal.</p>
+      <div class="mg-options" role="group" aria-label="Meet & Greet selection">
+        <div class="mg-btn" data-choice="tsa_exit" aria-pressed="false">TSA Exit (+$50)</div>
+        <div class="mg-btn" data-choice="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</div>
+        <div class="mg-btn active" data-choice="none" aria-pressed="true">No Meet & Greet</div>
+      </div>
+      <div class="mg-note">Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use the designated curbside pickup area.</div>
+    </div>
+
+    <!-- Notas -->
+    <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+    <!-- Fecha/Hora -->
+    <div class="grid2" style="margin-top:10px">
       <div>
-        <label>Date</label>
+        <label for="date">Date</label>
         <input id="date" type="date" />
       </div>
       <div>
-        <label>Time</label>
+        <label for="time">Time</label>
         <input id="time" type="time" step="900" />
       </div>
     </div>
 
+    <!-- Selector de vehículo -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
+    <!-- Visual -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <div id="acceptPill" class="accept-pill" tabindex="0" role="switch" aria-checked="false">
-      <span>✓</span><span>I accept the Terms & Conditions</span>
+    <!-- Acordeón equipaje -->
+    <div class="luggage-accordion" id="luggageAccordion">
+      <div class="luggage-summary">
+        <span class="luggage-title">Luggage Guidelines</span>
+        <span class="luggage-chev"></span>
+      </div>
+      <div class="luggage-body">
+        <div class="lug-section">
+          <h4>SUV – 1 to 5 Passengers</h4>
+          <h5>Option 1 – With Sports Equipment</h5>
+          <ul>
+            <li>5 sports equipment items (ski bags or golf bags)</li>
+            <li>3 large suitcases (28–32”)</li>
+            <li>3 small suitcases (20–24”)</li>
+          </ul>
+          <h5>Option 2 – Without Sports Equipment</h5>
+          <ul>
+            <li>4 large suitcases (28–32”)</li>
+            <li>4 small suitcases (20–24”)</li>
+          </ul>
+        </div>
+        <div class="lug-section">
+          <h4>Van – Up to 12 Passengers</h4>
+          <h5>Option 1 – With Sports Equipment</h5>
+          <ul>
+            <li>8 sports equipment items</li>
+            <li>8 large suitcases (28–32”)</li>
+            <li>Carry-on: 1 per passenger</li>
+          </ul>
+          <h5>Option 2 – Without Sports Equipment</h5>
+          <ul>
+            <li>12–14 large suitcases (28–32”)</li>
+            <li>Carry-on: 1 per passenger</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
+    <!-- Términos -->
+    <div class="terms-box" id="termsBox">
+      <div class="terms-summary">
+        <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
+          <div class="accept-dot"></div>
+        </div>
+        <div class="accept-label">I accept the Terms &amp; Conditions</div>
+      </div>
+    </div>
+
+    <!-- Acciones -->
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <button id="pay" disabled style="display:none">PAY NOW</button>
+
+    <!-- Resumen del viaje -->
     <div id="info"></div>
   </main>
 
-  <!-- ====== Scripts ====== -->
+  <!-- ====== Scripts (ORDEN OBLIGATORIO) ====== -->
   <script src="/app/scripts/validators.js"></script>
   <script src="/app/scripts/core.js"></script>
   <script src="/app/scripts/booking.js"></script>
   <script src="/app/scripts/maps.js"></script>
   <script src="https://js.stripe.com/v3"></script>
-  <script>
-    window.STRIPE_PK = "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";
-  </script>
+  <script>window.STRIPE_PK="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxx";</script>
   <script src="/app/scripts/stripe.js"></script>
 
+  <!-- Visual del vehículo (no choca con booking.js) -->
   <script>
     (function vehicleVisualInline(){
-      const SUV_IMG = "/images/suburban.png";
-      const VAN_IMG = "/images/van-sprinter.png";
-      window.__vehicleType = window.__vehicleType || "suv";
-
-      const btns = document.querySelectorAll('.veh-btn');
-      const img  = document.getElementById('vehImg');
-      const cap  = document.getElementById('vehCap');
+      const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
+      window.__vehicleType=window.__vehicleType||"suv";
+      const btns=document.querySelectorAll('.veh-btn');
+      const img=document.getElementById('vehImg');
+      const cap=document.getElementById('vehCap');
 
       function applyVisual(){
-        if (!img || !cap) return;
-        if (window.__vehicleType === 'van'){
-          img.src = VAN_IMG;
-          cap.textContent = "Van — Up to 12 passengers (luggage varies)";
-        } else {
-          img.src = SUV_IMG;
-          cap.textContent = "SUV — Max 5 passengers, 5 suitcases";
-        }
+        if(!img||!cap) return;
+        if(window.__vehicleType==='van'){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
+        else{ img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
       }
-
-      function setActive(type){
-        window.__vehicleType = (type === 'van') ? 'van' : 'suv';
-        btns.forEach(b => b.classList.toggle('active', b.dataset.type === window.__vehicleType));
+      function setActive(t){
+        window.__vehicleType=(t==='van')?'van':'suv';
+        btns.forEach(b=>b.classList.toggle('active', b.dataset.type===window.__vehicleType));
         applyVisual();
-        if (typeof window.recalcFromCache === 'function') window.recalcFromCache();
+        if(typeof window.recalcFromCache==='function') window.recalcFromCache();
       }
-
-      btns.forEach(b => b.addEventListener('click', () => setActive(b.dataset.type || 'suv')));
+      btns.forEach(b=>b.addEventListener('click',()=>setActive(b.dataset.type||'suv')));
+      if(img){ img.onerror=()=>{ img.removeAttribute('src'); img.alt=window.__vehicleType.toUpperCase();
+        img.style.width='120px'; img.style.height='80px'; img.style.background='#1a1a1a'; img.style.border='1px solid #444'; img.style.borderRadius='8px';};}
       setActive(window.__vehicleType);
+    })();
+
+    // Acordeón equipaje
+    (function(){
+      const acc=document.getElementById('luggageAccordion');
+      const sum=acc?.querySelector('.luggage-summary');
+      sum?.addEventListener('click',()=>acc.classList.toggle('open'));
     })();
   </script>
 
+  <!-- Google Maps (con Places) – maps.js debe exponer window.initMap -->
   <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts&libraries=places&callback=initMap">
   </script>
