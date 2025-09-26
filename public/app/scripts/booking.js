@@ -1,177 +1,263 @@
-/* =========================================================
-   Booking UI logic (validators, Meet&Greet, vehicle, terms,
-   time combo scroll, summary render)
-   ========================================================= */
+/* booking.js — Bonanza GPS (UI + pricing + reglas de negocio)
+   Depende de:
+     - maps.js  → escucha 'bnz:calculate' y llama BNZ.renderQuote(leg,{surcharge})
+     - stripe.js → usa window.__lastQuotedTotal, __vehicleType, __lastDistanceMiles
+*/
 
-window.BNZ = window.BNZ || {};
-BNZ.selectedVehicle = BNZ.selectedVehicle || 'suv';
-BNZ.mgChoice = BNZ.mgChoice || 'none';
-BNZ.distance = BNZ.distance || 10;   // demo value until route sets it
-BNZ.duration = BNZ.duration || 25;
+(function(){
+  "use strict";
 
-/* ---------------- Validators (email/phone) ---------------- */
-function validateEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
-function validatePhone(phone){ return /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(phone); }
+  // ────────────────────────────────────────────────────────────
+  // Config / Reglas
+  // ────────────────────────────────────────────────────────────
+  const OPERATING_START = "06:00";  // 6:00 AM
+  const OPERATING_END   = "23:00";  // 11:00 PM
+  const AFTER_HOURS_PCT = 0.25;     // 25%
+  const MG_FEE_USD      = 50;       // Meet & Greet (SLC only, SUV)
+  const VAN_MULTIPLIER  = 1.30;     // VAN ×1.30
 
-function wireValidators(){
-  const emailEl = document.getElementById('email');
-  const emailHelp = document.getElementById('emailHelp');
-  if (emailEl && emailHelp){
-    emailEl.addEventListener('input', ()=>{
-      if(validateEmail(emailEl.value)){ emailEl.classList.add('valid'); emailEl.classList.remove('invalid'); emailHelp.textContent='Valid email'; emailHelp.className='hint ok'; }
-      else { emailEl.classList.add('invalid'); emailEl.classList.remove('valid'); emailHelp.textContent='Invalid email'; emailHelp.className='hint err'; }
-    });
+  const SUV_IMG = "/images/suburban.png";
+  const VAN_IMG = "/images/van-sprinter.png";
+
+  // Estado compartido
+  const BNZ = window.BNZ = window.BNZ || {};
+  BNZ.state = BNZ.state || {
+    vehicle: "suv",            // 'suv' | 'van'
+    mgChoice: "none",          // 'none'|'tsa_exit'|'baggage_claim'
+    last: null                 // último cálculo
+  };
+
+  // Guarda totals para stripe.js
+  function publishTotals(t){
+    window.__lastQuotedTotal  = t.total;
+    window.__lastDistanceMiles= t.miles;
+    window.__vehicleType      = BNZ.state.vehicle;
   }
-  const phoneEl = document.getElementById('phone');
-  const phoneHelp = document.getElementById('phoneHelp');
-  if (phoneEl && phoneHelp){
-    phoneEl.addEventListener('input', ()=>{
-      if(validatePhone(phoneEl.value)){ phoneEl.classList.add('valid'); phoneEl.classList.remove('invalid'); phoneHelp.textContent='Valid US phone'; phoneHelp.className='hint ok'; }
-      else { phoneEl.classList.add('invalid'); phoneEl.classList.remove('valid'); phoneHelp.textContent='Invalid phone'; phoneHelp.className='hint err'; }
-    });
+
+  // Tabla base (mismo criterio histórico)
+  function baseFare(miles){
+    if (miles <= 10) return 120;
+    if (miles <= 35) return 190;
+    if (miles <= 39) return 210;
+    if (miles <= 48) return 230;
+    if (miles <= 55) return 250;
+    return miles * 5.4;
   }
-}
 
-/* ---------------- Time combo (single field + scroll) ---------------- */
-function buildTimeOptions(panel){
-  panel.innerHTML = '';
-  const start = 7*60, end = 22*60 + 30; // 7:00 AM -> 10:30 PM
-  for(let m = start; m <= end; m += 15){
-    const h24 = Math.floor(m/60), mm = String(m%60).padStart(2,'0');
-    let h12 = h24 % 12; if(h12===0) h12=12;
-    const ap = h24<12?'AM':'PM';
-    const label = `${h12}:${mm} ${ap}`;
-    const opt = document.createElement('div');
-    opt.className = 'time-opt';
-    opt.setAttribute('role','option');
-    opt.textContent = label;
-    opt.addEventListener('click', ()=>{
-      const input = document.getElementById('time');
-      input.value = label;
-      input.setAttribute('aria-expanded','false');
-      panel.classList.remove('open');
-      const errEl = document.getElementById('timeError');
-      if (errEl){ errEl.style.display='none'; errEl.textContent=''; }
-    });
-    panel.appendChild(opt);
+  // Vehículo
+  function applyVehicle(total){
+    return BNZ.state.vehicle === "van" ? Math.round(total * VAN_MULTIPLIER) : Math.round(total);
   }
-}
-function wireTimeCombo(){
-  const combo = document.getElementById('timeCombo');
-  const input = document.getElementById('time');
-  const caret = combo ? combo.querySelector('.time-caret') : null;
-  const panel = document.getElementById('timePanel');
-  if(!combo || !input || !panel) return;
 
-  const open = ()=>{ buildTimeOptions(panel); panel.classList.add('open'); input.setAttribute('aria-expanded','true'); };
-  const close = ()=>{ panel.classList.remove('open'); input.setAttribute('aria-expanded','false'); };
-  const toggle = ()=> panel.classList.contains('open') ? close() : open();
+  // 24h helpers
+  function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
+  function earliestAllowed(){ return nextQuarter(new Date(Date.now()+24*60*60*1000)); }
+  function localISO(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
+  function ensureMin24h(){
+    const dEl = document.getElementById("date");
+    const tEl = document.getElementById("time");
+    const min = earliestAllowed();
+    if (dEl){ dEl.min = localISO(min); if(!dEl.value) dEl.value = localISO(min); }
+    if (tEl && !tEl.value){
+      tEl.value = String(min.getHours()).padStart(2,"0")+":"+String(min.getMinutes()).padStart(2,"0");
+    }
+  }
+  function selectedDateTime(){
+    const ds = document.getElementById("date")?.value;
+    const ts = document.getElementById("time")?.value;
+    if(!ds || !ts) return null;
+    return new Date(`${ds}T${ts}:00`);
+  }
+  function atLeast24h(dt){
+    return dt && (dt.getTime() - Date.now() >= 24*60*60*1000);
+  }
 
-  input.addEventListener('click', toggle);
-  caret?.addEventListener('click', toggle);
-  document.addEventListener('click', (e)=>{ if (!combo.contains(e.target)) close(); });
-  combo.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); if(e.key==='Enter' && !panel.classList.contains('open')) open(); });
-}
+  // After-hours
+  function isAfterHours(dateStr, timeStr){
+    if(!dateStr || !timeStr) return false;
+    const d = new Date(`${dateStr}T${timeStr}:00`);
+    const [sh,sm] = OPERATING_START.split(":").map(Number);
+    const [eh,em] = OPERATING_END.split(":").map(Number);
+    const start = new Date(d); start.setHours(sh, sm, 0, 0);
+    const end   = new Date(d); end.setHours(eh, em, 0, 0);
+    return (d < start) || (d > end);
+  }
 
-/* ---------------- Vehicle toggle ---------------- */
-function wireVehicleToggle(){
-  const btns = document.querySelectorAll('.veh-btn');
-  if(!btns.length) return;
-  btns.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      btns.forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      BNZ.selectedVehicle = btn.dataset.type;
+  // Meet & Greet (visible sólo si SLC comercial y SUV)
+  function mgShouldShow(){
+    return (BNZ.state.vehicle === "suv") && (typeof window.isSLCInternational === "function") && window.isSLCInternational(window.pickupPlace || null);
+  }
+  function mgFee(){ return BNZ.state.mgChoice !== "none" ? MG_FEE_USD : 0; }
+  function mgSyncCard(){
+    const card = document.getElementById("meetGreetCard");
+    if(!card) return;
+    if (mgShouldShow()){
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+      BNZ.state.mgChoice = "none";
+      card.querySelectorAll(".mg-btn")?.forEach(b=>{
+        const on = b.dataset.choice === "none";
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+    }
+  }
 
-      // change image + caption
-      const img = document.querySelector('.turntable .car');
-      const caption = document.querySelector('.vehicle-caption');
-      if (BNZ.selectedVehicle === 'van'){
-        if (img) img.src = '/images/van-sprinter.png';
-        if (caption) caption.textContent = 'Van — Up to 12 passengers';
-      } else {
-        if (img) img.src = '/images/suburban.png';
-        if (caption) caption.textContent = 'SUV — Max 5 passengers, 5 suitcases';
-      }
-      BNZ.recalcFromCache?.();
+  // Expuesto para maps.js (cuando cambia pickup)
+  BNZ.onPickupPlaceChanged = function(/*place*/){
+    mgSyncCard();
+  };
+
+  // Render del presupuesto (leg + surcharge viene de maps.js)
+  BNZ.renderQuote = function(leg, {surcharge=0}={}){
+    const miles = (leg?.distance?.value || 0) / 1609.34;
+
+    const base  = baseFare(miles);
+    const dateV = document.getElementById("date")?.value || "";
+    const timeV = document.getElementById("time")?.value || "";
+    const ah    = isAfterHours(dateV, timeV) ? (base + surcharge) * AFTER_HOURS_PCT : 0;
+    const mg    = mgFee();
+
+    const subtotal = base + surcharge + ah + mg;
+    const total    = applyVehicle(subtotal);
+
+    BNZ.state.last = { miles, base, surcharge, ah, mg, total, leg };
+    publishTotals(BNZ.state.last);
+    paintSummary(BNZ.state.last, leg);
+    enablePayIfReady();
+  };
+
+  // UI — Resumen
+  function paintSummary(t, leg){
+    const el = document.getElementById("info");
+    if(!el) return;
+
+    const distTxt = t.miles.toFixed(1) + " mi";
+    const durTxt  = leg?.duration?.text || "";
+    const rows = [
+      t.surcharge>0 ? row("Distance Surcharge", t.surcharge) : "",
+      t.ah>0        ? row("After-Hours (25%)",  t.ah)        : "",
+      t.mg>0        ? row("Meet & Greet (SLC)",t.mg)        : ""
+    ].filter(Boolean).join("");
+
+    el.style.display = "block";
+    el.innerHTML = `
+      <h3 class="info-title">Trip Summary</h3>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Distance</div><div class="value">${distTxt}</div></div>
+        <div class="kpi"><div class="label">Duration</div><div class="value">${durTxt}</div></div>
+        <div class="kpi"><div class="label">Price</div><div class="value price">$${t.total.toFixed(2)}</div></div>
+      </div>
+      ${rows ? `<div class="divider"></div><div class="breakdown">${rows}</div>` : ""}
+      <div class="row total"><span>Total</span><span>$${t.total.toFixed(2)}</span></div>
+      <div class="tax-note">Taxes & gratuity included</div>
+    `;
+    function row(label, val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
+  }
+
+  // ────────────────────────────────────────────────────────────
+  // Botones / Terms / Validaciones mínimas
+  // ────────────────────────────────────────────────────────────
+  const acceptPill = document.getElementById("acceptPill");
+  const calcBtn    = document.getElementById("calculate");
+  const payBtn     = document.getElementById("pay");
+
+  function isAccepted(){ return acceptPill?.classList.contains("on"); }
+  function setAccepted(on){
+    if(!acceptPill) return;
+    acceptPill.classList.toggle("on", on);
+    acceptPill.setAttribute("aria-checked", on ? "true" : "false");
+    syncButtons();
+  }
+  function syncButtons(){
+    if (calcBtn) calcBtn.disabled = !isAccepted();
+    enablePayIfReady();
+  }
+  function enablePayIfReady(){
+    const ready = !!window.__lastQuotedTotal && isAccepted();
+    if (payBtn){
+      payBtn.style.display = "block";
+      payBtn.disabled = !ready;
+      payBtn.style.opacity = ready ? 1 : .5;
+      payBtn.style.cursor  = ready ? "pointer" : "not-allowed";
+    }
+  }
+  acceptPill?.addEventListener("click", ()=> setAccepted(!isAccepted()));
+  acceptPill?.addEventListener("keydown", (e)=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); setAccepted(!isAccepted()); }});
+
+  // Vehículo (cambia imagen/caption y re-evalúa MG)
+  (function wireVehicle(){
+    const btns = document.querySelectorAll(".veh-btn");
+    const img  = document.querySelector(".turntable .car");
+    const cap  = document.querySelector(".turntable .vehicle-caption");
+    btns.forEach(b=>{
+      b.addEventListener("click", ()=>{
+        btns.forEach(x=>x.classList.remove("active"));
+        b.classList.add("active");
+        BNZ.state.vehicle = b.dataset.type || "suv";
+        if (BNZ.state.vehicle === "suv"){
+          if (img) img.src = SUV_IMG;
+          if (cap) cap.textContent = "SUV — Max 5 passengers, 5 suitcases";
+        } else {
+          if (img) img.src = VAN_IMG;
+          if (cap) cap.textContent = "Van — Up to 12 passengers, luggage varies";
+        }
+        mgSyncCard();
+        // Si ya hay quote, re-pinta totales (solo cambia multiplicador/MG)
+        if (BNZ.state.last){
+          BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
+        }
+      });
     });
+  })();
+
+  // Meet & Greet botones
+  (function wireMG(){
+    const card = document.getElementById("meetGreetCard");
+    if(!card) return;
+    const btns = card.querySelectorAll(".mg-btn");
+    btns.forEach(b=>{
+      b.addEventListener("click", ()=>{
+        BNZ.state.mgChoice = b.dataset.choice || "none";
+        btns.forEach(x=>{
+          const on = x.dataset.choice === BNZ.state.mgChoice;
+          x.classList.toggle("active", on);
+          x.setAttribute("aria-pressed", String(on));
+        });
+        if (BNZ.state.last){
+          BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
+        }
+      });
+    });
+    mgSyncCard();
+  })();
+
+  // Calculate → valida mínimos y dispara routing
+  calcBtn?.addEventListener("click", ()=>{
+    if (!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
+
+    // Requeridos básicos
+    const need = ["fullname","phone","email","pickup","dropoff","date","time"];
+    const missing = need.filter(id => {
+      const el = document.getElementById(id);
+      const empty = !el || !el.value || !String(el.value).trim();
+      if (el) el.classList.toggle("invalid", empty);
+      return empty;
+    });
+    if (missing.length){ alert("Please complete all required fields."); return; }
+
+    const dt = selectedDateTime();
+    if (!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
+
+    // Deben existir los inputs (Maps Autocomplete), pero si el usuario tecleó libre,
+    // maps.js usa el texto igualmente.
+    document.dispatchEvent(new CustomEvent("bnz:calculate"));
   });
-}
 
-/* ---------------- Meet & Greet ---------------- */
-function wireMeetGreet(){
-  const mgBtns = document.querySelectorAll('.mg-btn');
-  if(!mgBtns.length) return;
-  mgBtns.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      mgBtns.forEach(b=>{ b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
-      btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
-      BNZ.mgChoice = btn.dataset.choice; // 'none' | 'tsa_exit' | 'baggage_claim'
-      BNZ.recalcFromCache?.();
-    });
+  // On load
+  document.addEventListener("DOMContentLoaded", ()=>{
+    ensureMin24h();
+    syncButtons();
   });
-}
-
-/* ---------------- Terms (switch + modal) ---------------- */
-function wireTerms(){
-  const pill = document.getElementById('acceptPill');
-  const calcBtn = document.getElementById('calculate');
-  const openBtn = document.getElementById('openTermsModal');
-  const modal = document.getElementById('termsModal');
-  const closeBtn = document.getElementById('closeTerms');
-
-  const update = ()=>{ if(calcBtn && pill) calcBtn.disabled = !pill.classList.contains('on'); };
-  pill?.addEventListener('click', ()=>{ pill.classList.toggle('on'); update(); });
-  pill?.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pill.classList.toggle('on'); update(); }});
-  update();
-
-  const open = ()=> modal?.classList.add('open');
-  const close = ()=> modal?.classList.remove('open');
-  openBtn?.addEventListener('click', open);
-  closeBtn?.addEventListener('click', close);
-  modal?.addEventListener('click', e=>{ if(e.target===modal) close(); });
-}
-
-/* ---------------- Pricing (simple demo, incluye M&G) ---------------- */
-BNZ.recalcFromCache = function(){
-  const miles = BNZ.distance || 10;
-  let price = 0;
-  if(miles<=10) price=120;
-  else if(miles<=35) price=190;
-  else if(miles<=39) price=210;
-  else if(miles<=48) price=230;
-  else if(miles<=55) price=250;
-  else price = miles * 5.4;
-
-  if(BNZ.selectedVehicle==='van') price = Math.round(price * 1.30); // +30%
-  if(BNZ.mgChoice!=='none' && BNZ.selectedVehicle==='suv') price += 50;
-
-  BNZ.price = price;
-  renderSummary();
-};
-
-function renderSummary(){
-  const info = document.getElementById('info');
-  if(!info) return;
-  info.style.display = 'block';
-  info.innerHTML = `
-    <div class="info-title">Trip Summary</div>
-    <div class="kpis">
-      <div class="kpi"><div class="label">Distance</div><div class="value">${Number(BNZ.distance||0).toFixed(1)}<span class="unit">mi</span></div></div>
-      <div class="kpi"><div class="label">Duration</div><div class="value">${Number(BNZ.duration||0).toFixed(0)}<span class="unit">min</span></div></div>
-      <div class="kpi"><div class="label">Price</div><div class="value price">$${BNZ.price.toFixed(2)}</div></div>
-    </div>
-  `;
-}
-
-/* ---------------- Init ---------------- */
-function initBooking(){
-  wireValidators();
-  wireTimeCombo();
-  wireVehicleToggle();
-  wireMeetGreet();
-  wireTerms();
-}
-document.addEventListener('DOMContentLoaded', initBooking);
-
-/* If your maps.js sets BNZ.distance/duration later, call BNZ.recalcFromCache() after route. */
+})();
