@@ -1,28 +1,26 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
-- Inicializa mapa, Autocomplete en pickup/dropoff (US-only).
+──────────────────────────────────────────────────────────────
+- Inicializa mapa con Map ID.
+- Usa Place Autocomplete Element (nuevo API).
 - Calcula ruta al disparar "bnz:calculate" y notifica BNZ.renderQuote(leg,{ surcharge }).
 - Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
-
-Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initMap()
 */
+
 (function () {
   "use strict";
 
   const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
   const BASE_ADDRESS   = "13742 N Jordanelle Pkwy, Kamas, UT 84036";
+  const MAP_ID         = "be9f7b3d0f62a46ba10dc0ba"; // <-- tu Map ID
 
   let map, dirService, dirRenderer;
+  let originText = "", destinationText = "";
 
-  // Texto libre (si no seleccionan sugerencia)
-  let originText = "";
-  let destinationText = "";
-
-  // Globals usados por otros módulos
   window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
 
-  // ───────────────── helpers
+  // ─────────────── helpers
   function isAirport(place) {
     const t = place?.types || [];
     const txt = `${place?.name || ""} ${place?.formatted_address || ""}`.toLowerCase();
@@ -111,7 +109,6 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
 
     const pickupIsAir = !!pickup && isAirport(pickup);
 
-    // A) Aeropuerto + drop fuera de Summit/Wasatch → BASE→PICKUP
     if (pickupIsAir) {
       const dropAllowed = ALLOWED_RX.test(dropCounty);
       if (!dropAllowed && pickup?.place_id) {
@@ -121,7 +118,6 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
       return 0;
     }
 
-    // B) Pickup fuera de Summit/Wasatch → BASE→PICKUP
     const pickupAllowed = ALLOWED_RX.test(pickupCounty);
     if (!pickupAllowed && pickup?.place_id) {
       const miles = await milesFromBaseTo(pickup.place_id);
@@ -130,45 +126,46 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
     return 0;
   }
 
-  // ─────────────── autocomplete clásico (estable hoy)
-  function attachAutocomplete(inputId, opts = {}) {
+  // ─────────────── Autocomplete con nuevo API
+  function attachAutocomplete(inputId) {
     const input = document.getElementById(inputId);
-    if (!input) return null;
+    if (!input) return;
 
-    const ac = new google.maps.places.Autocomplete(input, {
+    const ac = new google.maps.places.PlaceAutocompleteElement({
+      inputElement: input,
       fields: ["place_id","geometry","name","formatted_address","address_components","types"],
-      componentRestrictions: { country: ["us"] },
-      ...opts,
+      componentRestrictions: { country: "us" },
     });
 
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      const loc = place?.geometry?.location || null;
-      if (loc && map) { map.panTo(loc); map.setZoom(12); }
-      const pretty = (place?.formatted_address || place?.name || input.value || "").trim();
+    ac.addEventListener("gmp-placeselect", (e) => {
+      const place = e.place;
+      if (!place) return;
+
+      if (place.geometry?.location && map) {
+        map.panTo(place.geometry.location);
+        map.setZoom(12);
+      }
+
+      const pretty = (place.formatted_address || place.name || input.value || "").trim();
 
       if (inputId === "pickup") {
         originText = pretty;
-        window.pickupPlace = place || null;
+        window.pickupPlace = place;
         if (window.BNZ?.onPickupPlaceChanged) BNZ.onPickupPlaceChanged(place);
         if (window.updateMeetGreetVisibility) window.updateMeetGreetVisibility();
       } else {
         destinationText = pretty;
-        window.dropoffPlace = place || null;
+        window.dropoffPlace = place;
       }
     });
 
-    // cachear texto libre
-    ["input","change","blur"].forEach(ev => {
-      input.addEventListener(ev, () => {
-        const v = (input.value || "").trim();
-        if (inputId === "pickup") originText = v; else destinationText = v;
-      });
+    input.addEventListener("input", () => {
+      const v = (input.value || "").trim();
+      if (inputId === "pickup") originText = v; else destinationText = v;
     });
-
-    return ac;
   }
 
+  // ─────────────── Routing + Quote
   async function routeAndQuote() {
     const origin      = originText || document.getElementById("pickup")?.value || "";
     const destination = destinationText || document.getElementById("dropoff")?.value || "";
@@ -183,7 +180,6 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
         origin, destination,
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.IMPERIAL,
-        provideRouteAlternatives: false,
       };
 
       const result = await routeAsync(req);
@@ -205,7 +201,7 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
     document.addEventListener("bnz:calculate", routeAndQuote);
   }
 
-  // ─────────────── marcador: usa AdvancedMarker si está, fallback a Marker
+  // ─────────────── marcador: AdvancedMarker o Marker
   function addHomeMarker() {
     try {
       const AdvancedMarker = google.maps.marker?.AdvancedMarkerElement;
@@ -224,28 +220,22 @@ Requiere: loadGoogleMaps(key,{ libraries:"places,marker" }) y luego window.initM
     const mapEl = document.getElementById("map");
     if (!mapEl) { console.warn("[maps] #map not found"); return; }
 
-    // toma MAP_ID si lo definiste en window.__PUBLIC_CFG__
-    const mapId = window.__PUBLIC_CFG && window.__PUBLIC_CFG__.MAP_ID;
-
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
       zoom: 11,
-      mapId: mapId || undefined, // evita warning de Advanced Markers si no hay ID
+      mapId: MAP_ID, // ahora con tu Map ID
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
     });
 
     addHomeMarker();
-
     dirService  = new google.maps.DirectionsService();
-    dirRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: false, preserveViewport: false });
+    dirRenderer = new google.maps.DirectionsRenderer({ map });
 
-    // Autocomplete
     attachAutocomplete("pickup");
     attachAutocomplete("dropoff");
 
-    // Respetar texto precargado
     originText      = document.getElementById("pickup")?.value || originText;
     destinationText = document.getElementById("dropoff")?.value || destinationText;
 
