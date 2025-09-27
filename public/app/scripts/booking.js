@@ -1,3 +1,4 @@
+
 /* booking.js — Bonanza GPS (UI + pricing + reglas de negocio)
    Depende de:
      - maps.js  → escucha 'bnz:calculate' y llama BNZ.renderQuote(leg,{surcharge})
