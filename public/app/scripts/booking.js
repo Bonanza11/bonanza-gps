@@ -293,21 +293,28 @@
   // ────────────────────────────────────────────────────────────
   // Botones / Terms / Validaciones mínimas
   // ────────────────────────────────────────────────────────────
-  const acceptPill = document.getElementById("acceptPill");
-  const calcBtn    = document.getElementById("calculate");
-  const payBtn     = document.getElementById("pay");
+  const acceptPill   = document.getElementById("acceptPill");
+  const termsSummary = document.querySelector("#termsBox .terms-summary");
+  const calcBtn      = document.getElementById("calculate");
+  const payBtn       = document.getElementById("pay");
 
-  function isAccepted(){ return acceptPill?.classList.contains("on"); }
+  function isAccepted(){
+    return acceptPill?.classList.contains("on") ||
+           acceptPill?.getAttribute("aria-checked") === "true";
+  }
+
   function setAccepted(on){
     if(!acceptPill) return;
     acceptPill.classList.toggle("on", on);
     acceptPill.setAttribute("aria-checked", on ? "true" : "false");
     syncButtons();
   }
+
   function syncButtons(){
     if (calcBtn) calcBtn.disabled = !isAccepted();
     enablePayIfReady();
   }
+
   function enablePayIfReady(){
     const ready = !!window.__lastQuotedTotal && isAccepted();
     if (payBtn){
@@ -317,8 +324,25 @@
       payBtn.style.cursor  = ready ? "pointer" : "not-allowed";
     }
   }
-  acceptPill?.addEventListener("click", ()=> setAccepted(!isAccepted()));
-  acceptPill?.addEventListener("keydown", (e)=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); setAccepted(!isAccepted()); }});
+
+  // — Listeners (clic en el pill y en toda la fila, excepto el link)
+  acceptPill?.addEventListener("click", (e)=> {
+    e.stopPropagation();
+    setAccepted(!isAccepted());
+  });
+
+  termsSummary?.addEventListener("click", (e)=>{
+    if (e.target.closest("a")) return; // no cambiar si clic en el link
+    setAccepted(!isAccepted());
+  });
+
+  // Accesibilidad teclado
+  acceptPill?.addEventListener("keydown", (e)=>{
+    if (e.key===" " || e.key==="Enter"){
+      e.preventDefault();
+      setAccepted(!isAccepted());
+    }
+  });
 
   // Vehículo (cambia imagen/caption y re-evalúa MG)
   (function wireVehicle(){
@@ -380,7 +404,7 @@
   })();
 
   // Calculate → valida mínimos y dispara routing
-  calcBtn?.addEventListener("click", ()=>{
+  const handleCalculate = ()=>{
     if (!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
 
     // Requeridos básicos
@@ -400,12 +424,17 @@
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 
     document.dispatchEvent(new CustomEvent("bnz:calculate"));
-  });
+  };
+  calcBtn?.addEventListener("click", handleCalculate);
 
   // On load
   document.addEventListener("DOMContentLoaded", ()=>{
     ensureMin24h();
-    syncButtons();
+
+    // Estado inicial desde aria-checked (por si server/hidratación lo marca)
+    const initial = acceptPill?.getAttribute("aria-checked")==="true" || acceptPill?.classList.contains("on");
+    setAccepted(!!initial);
+
     mgSyncCard(); // asegura estado correcto al abrir
   });
 })();
