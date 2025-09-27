@@ -39,16 +39,21 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 ::placeholder{ color:#cba686; opacity:.75 }
 .hint{ font-size:12px; color:var(--muted); margin-top:2px }
 
+/* Invalid helper */
+.invalid{ border-color:#b74a4a !important; box-shadow:0 0 0 3px rgba(183,74,74,.22) !important }
+
 /* Grid 2 cols (fecha/hora) */
 .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
 @media (max-width:640px){ .grid2{ grid-template-columns:1fr } }
 
 /* Vehicle toggle */
-.veh-toggle{ display:flex; gap:8px; margin-top:6px }
+.veh-toggle{ display:flex; gap:8px; margin-top:6px; position:relative; z-index:3 }
 .veh-btn{
   flex:1; padding:10px 12px; cursor:pointer; border-radius:10px;
   border:1px solid var(--border); background:#0e141b; color:#ffddae; font-weight:800;
+  transition:filter .15s, transform .05s, background .15s;
 }
+.veh-btn:hover{ filter:saturate(1.06) brightness(1.02) }
 .veh-btn.active{ background:linear-gradient(180deg,var(--copper-2),var(--copper)); color:#111; box-shadow:var(--ring) }
 
 /* Turntable visual */
@@ -61,9 +66,27 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 }
 .vehicle-caption{ font-size:14px; color:#d7e3f0; text-align:center }
 
+/* Meet & Greet card */
+.mg-card{
+  border:1px solid var(--border); border-radius:12px; background:var(--panel);
+  padding:12px; display:block; position:relative; z-index:3;
+}
+.mg-card h3{ margin:0 0 6px; color:#ffdeb3 }
+.mg-card p{ margin:0 0 8px; color:#cbbba6; font-size:.95rem }
+.mg-options{ display:flex; gap:8px; flex-wrap:wrap }
+.mg-btn{
+  padding:8px 10px; border-radius:10px; cursor:pointer; user-select:none;
+  border:1px solid var(--border); background:#10151b; color:#ffddae; font-weight:700;
+  transition:background .15s, transform .05s;
+}
+.mg-btn:hover{ filter:saturate(1.06) brightness(1.02) }
+.mg-btn.active{ background:linear-gradient(180deg,var(--copper-2),var(--copper)); color:#111; box-shadow:var(--ring) }
+.mg-note{ margin-top:8px; color:#9fb0c3; font-size:.9rem }
+
 /* Luggage accordion */
 .luggage-accordion{
   border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel);
+  position:relative; z-index:2;
 }
 .luggage-summary{
   display:flex; justify-content:space-between; align-items:center;
@@ -78,18 +101,20 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 /* Terms switch */
 .terms-box{
   border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px;
+  position:relative; z-index:3;
 }
 .terms-summary{ display:flex; align-items:center; gap:10px }
 .accept-pill{
   width:46px; height:26px; background:#141a21; border:1px solid var(--border); border-radius:999px;
   position:relative; cursor:pointer;
 }
-.accept-pill[aria-checked="true"]{ background:var(--copper); border-color:var(--copper) }
+.accept-pill[aria-checked="true"], .accept-pill.on{ background:var(--copper); border-color:var(--copper) }
 .accept-dot{
   position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
   background:#ffddae; transition:left .15s
 }
-.accept-pill[aria-checked="true"] .accept-dot{ left:23px }
+.accept-pill[aria-checked="true"] .accept-dot,
+.accept-pill.on .accept-dot{ left:23px }
 .terms-link{ color:#ffddae; text-decoration:underline }
 
 /* Buttons */
@@ -98,28 +123,42 @@ button{
   background:linear-gradient(180deg, var(--copper-2), var(--copper));
   color:#111; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:900;
   box-shadow:0 10px 24px rgba(168,116,79,.35); transition:filter .15s, transform .05s;
+  position:relative; z-index:3;
 }
 button[disabled]{ opacity:.5; cursor:not-allowed }
 button:hover:not([disabled]){ filter:saturate(1.06) brightness(1.02) }
 button:active:not([disabled]){ transform:translateY(1px) }
 
-/* Map container */
+/* Map container (asegura que no tape los botones) */
 #map{
   width:100%;
   min-height:340px;
   border:1px solid var(--border);
   border-radius:12px;
   background:#0b1016;
+  position:relative;
+  z-index:1;              /* Mapa por debajo de los controles */
+  pointer-events:auto;    /* clicks normales */
 }
 
 /* Info box (resumen) */
 #info{
   border:1px solid var(--border); border-radius:12px; background:var(--panel);
   padding:10px 12px; min-height:120px; color:#d7e3f0;
+  position:relative; z-index:2;
 }
 
 /* --- Google Maps / Places hardening --- */
-/* Dropdown de Places por encima de todo */
+/* Dropdown de Places (legacy Autocomplete) por encima de todo */
 .pac-container { z-index: 10000 !important; }
 /* Evitar que resets afecten los tiles del mapa */
 #map img { max-width: none !important; }
+
+/* Accesibilidad foco visible en elementos interactivos */
+.veh-btn:focus,
+.mg-btn:focus,
+button:focus,
+.accept-pill:focus{
+  outline:2px solid #c89366;
+  outline-offset:2px;
+}
