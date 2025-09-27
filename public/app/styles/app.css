@@ -39,7 +39,7 @@ input:focus, textarea:focus, select:focus{
   border-color:var(--copper); box-shadow:var(--ring); background:#0d1319;
 }
 ::placeholder{ color:#cba686; opacity:.75 }
-.hint{ font-size:12px; color:var(--muted); margin-top:2px }
+.hint{ font-size:12px; color:#9fb0c3; margin-top:2px }
 
 /* Invalid helper */
 .invalid{ border-color:#b74a4a !important; box-shadow:0 0 0 3px rgba(183,74,74,.22) !important }
@@ -76,7 +76,7 @@ input:focus, textarea:focus, select:focus{
 }
 .vehicle-caption{ font-size:14px; color:#d7e3f0; text-align:center }
 
-/* Meet & Greet card + botones (restaurado) */
+/* Meet & Greet card + botones */
 .mg-card{
   position:relative; z-index:4;
   border:1px solid var(--border); border-radius:12px; background:var(--panel);
@@ -121,7 +121,8 @@ input:focus, textarea:focus, select:focus{
   border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px;
   position:relative; z-index:3;
 }
-.terms-summary{ display:flex; align-items:center; gap:10px }
+.terms-summary{ display:flex; align-items:center; gap:10px; cursor:pointer; } /* fila clicable */
+.terms-summary a{ cursor:auto; } /* el link mantiene su cursor normal */
 .accept-pill{
   width:46px; height:26px; background:#141a21; border:1px solid var(--border); border-radius:999px;
   position:relative; cursor:pointer;
