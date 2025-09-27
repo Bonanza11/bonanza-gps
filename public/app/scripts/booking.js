@@ -3,7 +3,6 @@
      - maps.js  → escucha 'bnz:calculate' y llama BNZ.renderQuote(leg,{surcharge})
      - stripe.js → usa window.__lastQuotedTotal, __vehicleType, __lastDistanceMiles
 */
-
 (function(){
   "use strict";
 
@@ -20,25 +19,28 @@
   const VAN_IMG = "/images/van-sprinter.png";
 
   // ────────────────────────────────────────────────────────────
-  // Listas de coincidencias por NOMBRE/DIRECCIÓN (sin GPS)
+  // Listas de coincidencias por NOMBRE/DIRECCIÓN (fallback texto)
   // ────────────────────────────────────────────────────────────
-  // Puedes ajustar/añadir variantes libremente:
   const SLC_MATCHES = (window.BNZ_AIRPORTS?.slcNames) || [
     "salt lake city international airport",
     "slc airport",
     "slc intl",
     "slc int’l",
     "salt lake city airport",
-    "airport slc",
-    "slc terminal",
+    "w terminal dr, salt lake city",
+    "slc terminal"
   ];
-
   const JSX_MATCHES = (window.BNZ_AIRPORTS?.jsxNames) || [
     "jsx",
     "jsx slc",
     "jsx terminal",
     "jsx salt lake",
-    "signature flight support jsx", // variantes comunes
+    "signature flight support jsx"
+  ];
+  const FBO_MATCHES = [
+    "fbo","jet center","private terminal","general aviation","hangar",
+    "atlantic aviation","million air","signature","ross aviation","tac air",
+    "ok3 air","lynx","modern aviation","provo jet center"
   ];
 
   // Normaliza texto para comparar
@@ -49,24 +51,31 @@
       .trim();
   }
 
-  // Obtiene el texto de pick-up (preferimos el input; si existe Google Place, también lo probamos)
+  // Obtén texto “mejor disponible” del pickup
   function getPickupText(){
     const inputVal = document.getElementById("pickup")?.value || "";
-    // Si maps.js te deja algo en window.pickupPlace, tratamos de usar nombre o dirección
     const place = window.pickupPlace || null;
     const fromPlace = place
       ? (place.name || place.formatted_address || place.vicinity || "")
       : "";
-    // Preferimos lo más específico disponible
     const cand = fromPlace.length >= inputVal.length ? fromPlace : inputVal;
     return norm(cand);
   }
 
-  // ¿El pick-up es SLC Airport o JSX?
+  // Texto parece SLC comercial (no JSX ni FBO)
+  function looksLikeSLCCommercialByText(){
+    const txt = getPickupText();
+    if (!txt) return false;
+    const isSLC = SLC_MATCHES.some(k => txt.includes(norm(k)));
+    const isJSX = JSX_MATCHES.some(k => txt.includes(norm(k)));
+    const isFBO = FBO_MATCHES.some(k => txt.includes(norm(k)));
+    return isSLC && !isJSX && !isFBO;
+  }
+
+  // ¿Pickup es SLC o JSX (para la excepción del surcharge)?
   function isPickupSLCorJSX(){
     const txt = getPickupText();
     if (!txt) return false;
-
     const hitSLC = SLC_MATCHES.some(k => txt.includes(norm(k)));
     const hitJSX = JSX_MATCHES.some(k => txt.includes(norm(k)));
     return hitSLC || hitJSX;
@@ -89,7 +98,7 @@
     window.__vehicleType       = BNZ.state.vehicle;
   }
 
-  // Tabla base (mismo criterio histórico)
+  // Tabla base
   function baseFare(miles){
     if (miles <= 10) return 120;
     if (miles <= 35) return 190;
@@ -101,7 +110,9 @@
 
   // Vehículo
   function applyVehicle(total){
-    return BNZ.state.vehicle === "van" ? Math.round(total * VAN_MULTIPLIER) : Math.round(total);
+    return BNZ.state.vehicle === "van"
+      ? Math.round(total * VAN_MULTIPLIER)
+      : Math.round(total);
   }
 
   // 24h helpers
@@ -140,19 +151,32 @@
 
   // Meet & Greet (visible sólo si SLC comercial y SUV)
   function mgShouldShow(){
-    return (BNZ.state.vehicle === "suv") &&
-           (typeof window.isSLCInternational === "function") &&
-           window.isSLCInternational(window.pickupPlace || null);
+    if (BNZ.state.vehicle !== "suv") return false;
+
+    // 1) Si maps.js nos dio un place con tipos/dirección → usa isSLCInternational
+    const hasPlace = !!window.pickupPlace;
+    const okByPlace = hasPlace &&
+      typeof window.isSLCInternational === "function" &&
+      window.isSLCInternational(window.pickupPlace);
+
+    // 2) Fallback por texto (si no hay place completo o el usuario escribió a mano)
+    const okByText = looksLikeSLCCommercialByText();
+
+    return okByPlace || okByText;
   }
+
   function mgFee(){ return BNZ.state.mgChoice !== "none" ? MG_FEE_USD : 0; }
+
   function mgSyncCard(){
     const card = document.getElementById("meetGreetCard");
     if(!card) return;
+
     if (mgShouldShow()){
       card.style.display = "block";
     } else {
       card.style.display = "none";
       BNZ.state.mgChoice = "none";
+      // feedback visual/aria
       card.querySelectorAll(".mg-btn")?.forEach(b=>{
         const on = b.dataset.choice === "none";
         b.classList.toggle("active", on);
@@ -304,7 +328,6 @@
           if (cap) cap.textContent = "Van — Up to 12 passengers, luggage varies";
         }
         mgSyncCard();
-        // Si ya hay quote, re-pinta totales (solo cambia multiplicador/MG)
         if (BNZ.state.last){
           BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
         }
@@ -350,8 +373,6 @@
     const dt = selectedDateTime();
     if (!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
-    // Deben existir los inputs (Maps Autocomplete), pero si el usuario tecleó libre,
-    // maps.js usa el texto igualmente.
     document.dispatchEvent(new CustomEvent("bnz:calculate"));
   });
 
@@ -359,5 +380,6 @@
   document.addEventListener("DOMContentLoaded", ()=>{
     ensureMin24h();
     syncButtons();
+    mgSyncCard(); // asegura estado correcto al abrir
   });
 })();
