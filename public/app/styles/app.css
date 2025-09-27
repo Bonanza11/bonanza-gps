@@ -121,8 +121,8 @@ input:focus, textarea:focus, select:focus{
   border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px;
   position:relative; z-index:3;
 }
-.terms-summary{ display:flex; align-items:center; gap:10px; cursor:pointer; } /* fila clicable */
-.terms-summary a{ cursor:auto; } /* el link mantiene su cursor normal */
+.terms-summary{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+.terms-summary a{ cursor:pointer; } /* ← antes estaba 'auto' */
 .accept-pill{
   width:46px; height:26px; background:#141a21; border:1px solid var(--border); border-radius:999px;
   position:relative; cursor:pointer;
@@ -167,8 +167,8 @@ button:active:not([disabled]){ transform:translateY(1px) }
 }
 
 /* --- Google Maps / Places hardening --- */
-.pac-container { z-index: 10000 !important; }   /* dropdown de Places por encima de todo */
-#map img { max-width: none !important; }        /* evita que resets afecten los tiles */
+.pac-container { z-index: 10000 !important; }
+#map img { max-width: none !important; }
 
 /* Accesibilidad: foco visible en elementos interactivos */
 .veh-btn:focus,
