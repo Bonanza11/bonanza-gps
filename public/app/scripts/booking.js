@@ -294,7 +294,8 @@
   // Botones / Terms / Validaciones mínimas
   // ────────────────────────────────────────────────────────────
   const acceptPill   = document.getElementById("acceptPill");
-  const termsSummary = document.querySelector("#termsBox .terms-summary");
+  // Selector robusto: intenta por clase global y cae a #termsBox .terms-summary si existe
+  let termsSummary = document.querySelector(".terms-summary") || document.querySelector("#termsBox .terms-summary");
   const calcBtn      = document.getElementById("calculate");
   const payBtn       = document.getElementById("pay");
 
@@ -425,13 +426,21 @@
 
     document.dispatchEvent(new CustomEvent("bnz:calculate"));
   };
-  calcBtn?.addEventListener("click", handleCalculate);
+  document.getElementById("calculate")?.removeEventListener?.("click", handleCalculate);
+  document.getElementById("calculate")?.addEventListener("click", handleCalculate);
 
   // On load
   document.addEventListener("DOMContentLoaded", ()=>{
     ensureMin24h();
 
-    // Estado inicial desde aria-checked (por si server/hidratación lo marca)
+    // Blinda atributos de accesibilidad del switch (por si faltan en el HTML)
+    if (acceptPill){
+      if (!acceptPill.hasAttribute("role"))     acceptPill.setAttribute("role","switch");
+      if (!acceptPill.hasAttribute("tabindex")) acceptPill.setAttribute("tabindex","0");
+      if (!acceptPill.hasAttribute("aria-checked")) acceptPill.setAttribute("aria-checked","false");
+    }
+
+    // Estado inicial desde aria-checked/clase
     const initial = acceptPill?.getAttribute("aria-checked")==="true" || acceptPill?.classList.contains("on");
     setAccepted(!!initial);
 
