@@ -9,14 +9,15 @@
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#b66a2c" />
   <link rel="stylesheet" href="/app/styles/app.css?v=5" />
-  <!-- ↑ cache-bust opcional para asegurar estilos actualizados -->
 
   <!-- Config pública -->
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
       MAP_ID:    "be9f7b3d0f62a46ba10dc0ba",
-      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
+      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
+      /* 👇 pega aquí la URL de Cloud Run que mostraste en la foto */
+      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app/api/check"
     };
   </script>
 </head>
@@ -59,6 +60,25 @@
       </div>
     </div>
 
+    <!-- ✈️ Flight Details -->
+    <div class="mg-card" id="flightCard" aria-label="Flight information" style="display:none">
+      <h3>Flight Details (arrivals)</h3>
+      <div class="grid2" style="margin-top:6px">
+        <div>
+          <label for="flightNumber">Flight Number</label>
+          <input id="flightNumber" inputmode="text" placeholder="AA1234" autocomplete="off" />
+          <div id="flightNumberHelp" class="hint">Airline + number (e.g. DL567, UA1203)</div>
+        </div>
+        <div>
+          <label for="flightOrigin">Origin City / Airport</label>
+          <input id="flightOrigin" inputmode="text" placeholder="e.g. LAX, Miami, JFK" autocomplete="off" />
+          <div id="flightOriginHelp" class="hint">City or airport code/name</div>
+        </div>
+      </div>
+      <div id="flightStatusHelp" class="hint"></div>
+      <div class="mg-note">These fields help us track your arrival and adjust pickup timing.</div>
+    </div>
+
     <!-- Notas -->
     <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
@@ -77,8 +97,8 @@
 
     <!-- Selector de vehículo -->
     <div class="veh-toggle">
-      <button class="veh-btn active" data-type="suv" type="button">SUV (1–5 Passengers)</button>
-      <button class="veh-btn" data-type="van" type="button">Van (up to 12 Passengers)</button>
+      <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
+      <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
     <!-- Visual del vehículo -->
@@ -94,14 +114,11 @@
         <span class="luggage-title">Luggage Guidelines</span>
         <span class="luggage-chev"></span>
       </div>
-      <div class="luggage-body">
-        <!-- contenido detallado de equipaje -->
-      </div>
+      <div class="luggage-body"></div>
     </div>
 
     <!-- Terms -->
     <div class="terms-box" id="termsBox">
-      <!-- Toda la fila es clicable; role/tabindex para a11y -->
       <div class="terms-summary" role="button" tabindex="0" aria-label="Accept Terms and Conditions">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false" aria-label="Terms switch">
           <div class="accept-dot"></div>
@@ -113,9 +130,9 @@
     </div>
 
     <!-- Acciones -->
-    <button id="calculate" type="button" disabled>Calculate Price</button>
+    <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
-    <button id="pay" type="button" disabled style="display:none">PAY NOW</button>
+    <button id="pay" disabled style="display:none">PAY NOW</button>
 
     <!-- Resumen -->
     <div id="info"></div>
@@ -125,13 +142,11 @@
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
+  <script src="/app/scripts/flightcheck.js" defer></script> <!-- 👈 nuevo -->
 
-  <!-- ====== Google Maps (orden importante) ====== -->
-  <!-- 1) Loader: define window.loadGoogleMaps -->
+  <!-- Google Maps -->
   <script src="/app/scripts/maps-loader.js"></script>
-  <!-- 2) Lógica de mapas (define window.initMap) -->
   <script src="/app/scripts/maps.js"></script>
-  <!-- 3) Arranque: carga la JS API con libraries y luego llama initMap -->
   <script>
     (function startMaps(){
       var cfg = window.__PUBLIC_CFG__ || {};
@@ -146,7 +161,7 @@
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Visual vehículo + acordeón + accesibilidad T&C -->
+  <!-- Visual vehículo + acordeón + a11y T&C -->
   <script>
     (function(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
@@ -157,13 +172,8 @@
 
       function applyVisual(){
         if(!img||!cap) return;
-        if(window.__vehicleType==="van"){
-          img.src=VAN_IMG;
-          cap.textContent="Van — Up to 12 passengers (luggage varies)";
-        }else{
-          img.src=SUV_IMG;
-          cap.textContent="SUV — Max 5 passengers, 5 suitcases";
-        }
+        if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
+        else { img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
       }
       function setActive(t){
         window.__vehicleType=(t==="van")?"van":"suv";
@@ -183,7 +193,7 @@
       const sum=acc?.querySelector(".luggage-summary");
       sum?.addEventListener("click",()=>acc.classList.toggle("open"));
 
-      // Accesibilidad/UX: permitir Enter/Espacio en toda la fila de T&C
+      // A11y: Enter/Espacio en toda la fila de T&C
       const ts = document.querySelector("#termsBox .terms-summary");
       ts?.addEventListener("keydown", (e)=>{
         if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
