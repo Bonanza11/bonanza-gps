@@ -31,11 +31,12 @@ main{
 label{ font-weight:700; color:#ffdeb3; margin-top:8px }
 input, textarea, select{
   width:100%; min-height:38px; border-radius:10px; outline:none;
-  border:1px solid var(--border); background:#0a0f14; color:#ffddae;
+  border:2px solid var(--copper);          /* ← borde cobre por defecto */
+  background:#0a0f14; color:#ffddae;
   padding:8px 10px; transition:border .15s, box-shadow .15s, background .15s, color .15s;
 }
 textarea{ min-height:90px; resize:vertical }
-input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shadow:var(--ring); background:#0d1319 }
+input:focus, textarea:focus, select:focus{ border-color:var(--copper-2); box-shadow:var(--ring); background:#0d1319 }
 ::placeholder{ color:#cba686; opacity:.75 }
 .hint{ font-size:12px; color:var(--muted); margin-top:2px }
 
@@ -50,7 +51,7 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 .veh-toggle{ display:flex; gap:12px; margin-top:8px; position:relative; z-index:3 }
 .veh-btn{
   flex:1; padding:12px 14px; cursor:pointer; border-radius:12px;
-  border:2px solid var(--border); background:#0e141b; color:#ffddae; font-weight:800;
+  border:2px solid var(--copper); background:#0e141b; color:#ffddae; font-weight:800;
   transition:filter .15s, transform .05s, background .15s, border-color .15s;
 }
 .veh-btn.active{ 
@@ -61,7 +62,7 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 /* Turntable visual (tamaño controlado) */
 .turntable{ display:flex; flex-direction:column; align-items:center; gap:8px; margin:8px 0 }
 .car{
-  width: clamp(240px, 48vw, 360px);   /* ← límite superior 360px */
+  width: clamp(240px, 48vw, 360px);   /* límite superior 360px */
   max-width: 90%;
   height: auto;
   display:block;
@@ -73,14 +74,14 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 }
 .vehicle-caption{ font-size:14px; color:#d7e3f0; text-align:center }
 
-/* Meet & Greet card + botones (más marcados y siempre por encima del mapa) */
-.mg-card{ position:relative; z-index:4; border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px; }
+/* Meet & Greet card + botones */
+.mg-card{ position:relative; z-index:4; border:2px solid var(--copper); border-radius:12px; background:var(--panel); padding:10px 12px; }
 .mg-options{ display:flex; gap:12px; flex-wrap:wrap; margin-top:8px }
 .mg-btn{
   display:inline-block;
   padding:10px 14px;
   border-radius:12px;
-  border:2px solid var(--border);
+  border:2px solid var(--copper);
   background:#10151b;
   color:#ffddae;
   font-weight:700;
@@ -90,13 +91,13 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 .mg-btn:hover{ filter:saturate(1.05) brightness(1.03) }
 .mg-btn.active{ 
   background:linear-gradient(180deg,var(--copper-2),var(--copper));
-  color:#111; border-color:var(--copper); box-shadow:var(--ring);
+  color:#111; border-color:var(--copper-2); box-shadow:var(--ring);
 }
 .mg-note{ margin-top:8px; color:#c9d4e1; font-size:.9rem }
 
 /* Luggage accordion */
 .luggage-accordion{
-  border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel);
+  border:2px solid var(--copper); border-radius:12px; overflow:hidden; background:var(--panel);
   position:relative; z-index:2;
 }
 .luggage-summary{
@@ -111,15 +112,15 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 
 /* Terms switch */
 .terms-box{
-  border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px;
+  border:2px solid var(--copper); border-radius:12px; background:var(--panel); padding:10px 12px;
   position:relative; z-index:3;
 }
 .terms-summary{ display:flex; align-items:center; gap:10px }
 .accept-pill{
-  width:46px; height:26px; background:#141a21; border:1px solid var(--border); border-radius:999px;
+  width:46px; height:26px; background:#141a21; border:2px solid var(--copper); border-radius:999px;
   position:relative; cursor:pointer;
 }
-.accept-pill[aria-checked="true"], .accept-pill.on{ background:var(--copper); border-color:var(--copper) }
+.accept-pill[aria-checked="true"], .accept-pill.on{ background:var(--copper); border-color:var(--copper-2) }
 .accept-dot{
   position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
   background:#ffddae; transition:left .15s
@@ -129,9 +130,9 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 
 /* Buttons */
 button{
-  border:1px solid rgba(0,0,0,.45);
+  border:2px solid var(--copper);
   background:linear-gradient(180deg, var(--copper-2), var(--copper));
-  color:#111; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:900;
+  color:#111; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:900;
   box-shadow:0 10px 24px rgba(168,116,79,.35); transition:filter .15s, transform .05s;
   position:relative; z-index:3;
 }
@@ -139,11 +140,11 @@ button[disabled]{ opacity:.5; cursor:not-allowed }
 button:hover:not([disabled]){ filter:saturate(1.06) brightness(1.02) }
 button:active:not([disabled]){ transform:translateY(1px) }
 
-/* Map container (por debajo de controles, sin taparlos) */
+/* Map container */
 #map{
   width:100%;
   min-height:340px;
-  border:1px solid var(--border);
+  border:2px solid var(--copper);
   border-radius:12px;
   background:#0b1016;
   position:relative;
@@ -153,7 +154,7 @@ button:active:not([disabled]){ transform:translateY(1px) }
 
 /* Info box (resumen) */
 #info{
-  border:1px solid var(--border); border-radius:12px; background:var(--panel);
+  border:2px solid var(--copper); border-radius:12px; background:var(--panel);
   padding:10px 12px; min-height:120px; color:#d7e3f0;
   position:relative; z-index:2;
 }
