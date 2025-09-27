@@ -207,3 +207,15 @@ button:focus,
 @media (prefers-reduced-motion: reduce) {
   *{ transition:none !important; animation:none !important }
 }
+/* --- Fix iOS Safari autofill to match desktop style --- */
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #0a0f14 inset !important; /* igual que tu fondo normal */
+  -webkit-text-fill-color: #ffddae !important; /* mismo color del texto */
+  caret-color: #ffddae !important; /* cursor visible en tu color */
+  transition: background-color 9999s ease-in-out 0s !important;
+}
