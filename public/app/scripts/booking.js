@@ -153,15 +153,12 @@
   function mgShouldShow(){
     if (BNZ.state.vehicle !== "suv") return false;
 
-    // 1) place con tipos → usa isSLCInternational
     const hasPlace = !!window.pickupPlace;
     const okByPlace = hasPlace &&
       typeof window.isSLCInternational === "function" &&
       window.isSLCInternational(window.pickupPlace);
 
-    // 2) Fallback por texto
     const okByText = looksLikeSLCCommercialByText();
-
     return okByPlace || okByText;
   }
 
@@ -178,7 +175,6 @@
       BNZ.state.mgChoice = "none";
     }
 
-    // Sincroniza estado visual/ARIA
     card.querySelectorAll(".mg-btn")?.forEach(b=>{
       const on = (b.dataset.choice || "none") === BNZ.state.mgChoice;
       b.classList.toggle("active", on);
@@ -187,13 +183,8 @@
     });
   }
 
-  // Expuesto para maps.js (cuando cambia pickup)
   BNZ.onPickupPlaceChanged = function(){ mgSyncCard(); };
-
-  // También lo expone para llamadas directas desde otros módulos
   window.updateMeetGreetVisibility = mgSyncCard;
-
-  // Permite re-calcular totales con el último leg (lo usa el inline del index)
   window.recalcFromCache = function(){
     if (BNZ.state.last){
       BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
@@ -222,13 +213,9 @@
     const total    = applyVehicle(subtotal);
 
     BNZ.state.last = {
-      miles,
-      base,
+      miles, base,
       surcharge: adjustedSurcharge,
-      ah,
-      mg,
-      total,
-      leg
+      ah, mg, total, leg
     };
 
     publishTotals(BNZ.state.last);
@@ -261,18 +248,9 @@
       </div>
 
       <div class="kpis">
-        <div class="kpi">
-          <div class="label">Distance</div>
-          <div class="value">${distTxt}</div>
-        </div>
-        <div class="kpi">
-          <div class="label">Duration</div>
-          <div class="value">${durTxt}</div>
-        </div>
-        <div class="kpi">
-          <div class="label">Price</div>
-          <div class="value price">$${t.total.toFixed(2)}</div>
-        </div>
+        <div class="kpi"><div class="label">Distance</div><div class="value">${distTxt}</div></div>
+        <div class="kpi"><div class="label">Duration</div><div class="value">${durTxt}</div></div>
+        <div class="kpi"><div class="label">Price</div><div class="value price">$${t.total.toFixed(2)}</div></div>
       </div>
 
       ${rows ? `<div class="divider"></div><div class="breakdown">${rows}</div>` : ""}
@@ -309,7 +287,6 @@
     if(!acceptPill) return;
     acceptPill.classList.toggle("on", on);
     acceptPill.setAttribute("aria-checked", on ? "true" : "false");
-    // refleja estado también en la fila para a11y
     termsSummary?.setAttribute("aria-pressed", on ? "true" : "false");
     syncButtons();
   }
@@ -329,46 +306,40 @@
     }
   }
 
-  // — Listeners: ahora cualquier parte de la fila sirve (menos el link)
-  const toggleFromEvent = (e)=>{
-    if (e.target.closest("a")) return; // clic en el link → no togglear
+  // Handler único y robusto (funciona en pill, texto o fila; ignora el link)
+  const shouldToggle = (e) => !e.target.closest("a");
+  const toggleAccept = (e) => {
+    if (!shouldToggle(e)) return;
     setAccepted(!isAccepted());
   };
 
-  // pill
-  acceptPill?.addEventListener("click", (e)=>{ e.stopPropagation(); toggleFromEvent(e); });
+  // Click + pointer + touch (mejor en iOS)
+  ["click","pointerup","touchend"].forEach(evt=>{
+    acceptPill?.addEventListener(evt, toggleAccept);
+    termsSummary?.addEventListener(evt, toggleAccept);
+    termsBox?.addEventListener(evt, toggleAccept);
+    acceptLabel?.addEventListener(evt, toggleAccept);
+  });
 
-  // toda la fila
-  termsSummary?.addEventListener("click", toggleFromEvent);
-
-  // también el contenedor por si el clic cae en espacios vacíos
-  termsBox?.addEventListener("click", toggleFromEvent);
-
-  // y el texto “I accept …”
-  acceptLabel?.addEventListener("click", toggleFromEvent);
-
-  // Accesibilidad teclado en pill y fila
-  const kbdHandler = (e)=>{
+  // Accesibilidad teclado
+  const kbd = (e)=>{
     if (e.key===" " || e.key==="Enter"){
       if (e.target.closest("a")) return;
       e.preventDefault();
       setAccepted(!isAccepted());
     }
   };
-  acceptPill?.addEventListener("keydown", kbdHandler);
-  termsSummary?.addEventListener("keydown", kbdHandler);
+  acceptPill?.addEventListener("keydown", kbd);
+  termsSummary?.addEventListener("keydown", kbd);
 
-  // Vehículo (cambia imagen/caption y re-evalúa MG)
+  // Vehículo
   (function wireVehicle(){
     const btns = document.querySelectorAll(".veh-btn");
     const img  = document.querySelector(".turntable .car");
     const cap  = document.querySelector(".turntable .vehicle-caption");
 
-    // Detecta el botón activo inicial para fijar el estado
     const initiallyActive = Array.from(btns).find(b => b.classList.contains("active"));
-    if (initiallyActive) {
-      BNZ.state.vehicle = initiallyActive.dataset.type || "suv";
-    }
+    if (initiallyActive) BNZ.state.vehicle = initiallyActive.dataset.type || "suv";
 
     btns.forEach(b=>{
       b.addEventListener("click", ()=>{
@@ -390,18 +361,16 @@
     });
   })();
 
-  // Meet & Greet botones
+  // Meet & Greet
   (function wireMG(){
     const card = document.getElementById("meetGreetCard");
     if(!card) return;
     const btns = card.querySelectorAll(".mg-btn");
     btns.forEach(b=>{
-      // estado inicial aria
       const on = (b.dataset.choice || "none") === BNZ.state.mgChoice;
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", String(on));
       b.setAttribute("tabindex", "0");
-
       b.addEventListener("click", ()=>{
         BNZ.state.mgChoice = b.dataset.choice || "none";
         btns.forEach(x=>{
@@ -417,11 +386,10 @@
     mgSyncCard();
   })();
 
-  // Calculate → valida mínimos y dispara routing
+  // Calculate
   const handleCalculate = ()=>{
     if (!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
 
-    // Requeridos básicos
     const need = ["fullname","phone","email","pickup","dropoff","date","time"];
     const missing = need.filter(id => {
       const el = document.getElementById(id);
@@ -434,21 +402,15 @@
     const dt = selectedDateTime();
     if (!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
-    // UX: cierra teclado/focus móvil antes de calcular
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-
+    if (document.activeElement?.blur) document.activeElement.blur();
     document.dispatchEvent(new CustomEvent("bnz:calculate"));
   };
-  calcBtn?.addEventListener("click", handleCalculate);
+  document.getElementById("calculate")?.addEventListener("click", handleCalculate);
 
   // On load
   document.addEventListener("DOMContentLoaded", ()=>{
     ensureMin24h();
-
-    // Estado inicial desde aria-checked (por si server/hidratación lo marca)
-    const initial = acceptPill?.getAttribute("aria-checked")==="true" || acceptPill?.classList.contains("on");
-    setAccepted(!!initial);
-
-    mgSyncCard(); // asegura estado correcto al abrir
+    setAccepted(acceptPill?.getAttribute("aria-checked")==="true" || acceptPill?.classList.contains("on"));
+    mgSyncCard();
   });
 })();
