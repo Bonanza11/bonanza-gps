@@ -4,83 +4,40 @@
   <meta charset="utf-8">
   <title>Terms & Conditions — Bonanza Transportation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Bonanza Transportation — Terms & Conditions">
   <link rel="icon" href="/images/bonanza-logo.png">
   <!-- Hoja global -->
   <link rel="stylesheet" href="/app/styles/app.css?v=5">
-
-  <!-- Overrides específicos para esta página -->
   <style>
     :root{
-      /* tonos ya usados en tu app */
-      --copper:#a8744f;
-      --copper-2:#c08b5c;
-      --cream:#ffddae;
-      --cream-2:#ffe8cc;   /* texto de cuerpo más claro */
-      --muted:#caa784;
+      --copper:#a8744f; --copper-2:#c08b5c;
+      --cream:#ffddae; --cream-2:#ffe8cc; --muted:#caa784;
     }
     body{ background:#000; }
     main{ max-width:860px; margin:32px auto 24px; padding:0 16px; }
-
-    /* Cabecera */
     .back-link{
       display:inline-flex; align-items:center; gap:6px;
       padding:8px 10px; border:1px solid rgba(168,116,79,.45); border-radius:8px;
-      color:var(--cream); text-decoration:none; background:#0e0e0e;
+      color:var(--cream); text-decoration:none; background:#0e0e0e; cursor:pointer;
     }
     .back-link:hover{ filter:brightness(1.06); }
-
-    /* Título principal oscuro */
-    h1{
-      margin:14px 0 4px;
-      font-size:2rem; line-height:1.15;
-      color:var(--copper-2);              /* más oscuro */
-      text-shadow:0 0 0 transparent;
-    }
-
-    /* Subtítulo / meta */
-    .meta{
-      margin:0 0 16px;
-      color:var(--muted);
-      font-size:0.98rem;
-    }
+    h1{ margin:14px 0 4px; font-size:2rem; line-height:1.15; color:var(--copper-2); text-shadow:0 0 0 transparent; }
+    .meta{ margin:0 0 16px; color:var(--muted); font-size:.98rem; }
     .meta strong{ color:var(--cream); font-weight:700; }
-
-    /* Divisor finito en cobre */
-    .divider{
-      height:1px; border:0; margin:14px 0 18px;
-      background:linear-gradient(90deg,transparent,rgba(192,139,92,.5),transparent);
-    }
-
-    /* Encabezados de sección: más oscuros */
-    h3{
-      margin:18px 0 8px;
-      color:var(--copper);                /* oscuro */
-      font-size:1.12rem;
-      letter-spacing:.2px;
-    }
-
-    /* Texto de cuerpo: más claro */
-    p, li{ color:var(--cream-2); }
-    p{ margin:8px 0 10px; line-height:1.58; }
-    ul{ margin:6px 0 14px 18px; }
-    li{ margin:6px 0; }
-
-    /* Negritas dentro del cuerpo con leve acento */
+    .divider{ height:1px; border:0; margin:14px 0 18px;
+      background:linear-gradient(90deg,transparent,rgba(192,139,92,.5),transparent); }
+    h3{ margin:18px 0 8px; color:var(--copper); font-size:1.12rem; letter-spacing:.2px; }
+    p, li{ color:var(--cream-2); } p{ margin:8px 0 10px; line-height:1.58; }
+    ul{ margin:6px 0 14px 18px; } li{ margin:6px 0; }
     strong{ color:#ffe0bd; }
-
-    /* Links dentro del texto */
     a{ color:#f0c69a; text-decoration:underline dotted rgba(168,116,79,.55); }
     a:hover{ color:#ffd4ac; }
-
-    /* Logo */
     .logo{ width:120px; height:120px; border-radius:50%; border:2px solid var(--copper); }
   </style>
 </head>
 <body>
   <main>
-    <!-- Ajustado a /app/index.html para que vuelva al booking correcto -->
-    <a class="back-link" href="/app/index.html">← Back to booking</a>
+    <!-- Apunta a la raíz para evitar 404 en Vercel -->
+    <a class="back-link" id="backLink" href="/">← Back to booking</a>
 
     <header style="display:flex;justify-content:center;padding:18px 0 6px">
       <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation">
@@ -176,5 +133,19 @@
       Park City, Utah — USA
     </p>
   </main>
+
+  <!-- Fallback por si el host necesita /index.html -->
+  <script>
+    (function(){
+      var back = document.getElementById('backLink');
+      back.addEventListener('click', function(ev){
+        // si la raíz (/) llegara a fallar en algún host, probar /index.html
+        // No bloquea navegación normal en Vercel
+        setTimeout(function(){
+          if (document.visibilityState === 'visible') { window.location.href = '/index.html'; }
+        }, 350);
+      });
+    })();
+  </script>
 </body>
 </html>
