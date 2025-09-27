@@ -1,4 +1,3 @@
-
 /* booking.js — Bonanza GPS (UI + pricing + reglas de negocio)
    Depende de:
      - maps.js  → escucha 'bnz:calculate' y llama BNZ.renderQuote(leg,{surcharge})
@@ -154,13 +153,13 @@
   function mgShouldShow(){
     if (BNZ.state.vehicle !== "suv") return false;
 
-    // 1) Si maps.js nos dio un place con tipos/dirección → usa isSLCInternational
+    // 1) place con tipos → usa isSLCInternational
     const hasPlace = !!window.pickupPlace;
     const okByPlace = hasPlace &&
       typeof window.isSLCInternational === "function" &&
       window.isSLCInternational(window.pickupPlace);
 
-    // 2) Fallback por texto (si no hay place completo o el usuario escribió a mano)
+    // 2) Fallback por texto
     const okByText = looksLikeSLCCommercialByText();
 
     return okByPlace || okByText;
@@ -177,18 +176,28 @@
     } else {
       card.style.display = "none";
       BNZ.state.mgChoice = "none";
-      // feedback visual/aria
-      card.querySelectorAll(".mg-btn")?.forEach(b=>{
-        const on = b.dataset.choice === "none";
-        b.classList.toggle("active", on);
-        b.setAttribute("aria-pressed", String(on));
-      });
     }
+
+    // Sincroniza estado visual/ARIA
+    card.querySelectorAll(".mg-btn")?.forEach(b=>{
+      const on = (b.dataset.choice || "none") === BNZ.state.mgChoice;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+      b.setAttribute("tabindex", "0");
+    });
   }
 
   // Expuesto para maps.js (cuando cambia pickup)
-  BNZ.onPickupPlaceChanged = function(/*place*/){
-    mgSyncCard();
+  BNZ.onPickupPlaceChanged = function(){ mgSyncCard(); };
+
+  // También lo expone para llamadas directas desde otros módulos
+  window.updateMeetGreetVisibility = mgSyncCard;
+
+  // Permite re-calcular totales con el último leg (lo usa el inline del index)
+  window.recalcFromCache = function(){
+    if (BNZ.state.last){
+      BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
+    }
   };
 
   // ────────────────────────────────────────────────────────────
@@ -228,7 +237,7 @@
   };
 
   // ────────────────────────────────────────────────────────────
-  // UI — Resumen (con Confirmation # si está disponible)
+  // UI — Resumen
   // ────────────────────────────────────────────────────────────
   function paintSummary(t, leg){
     const el = document.getElementById("info");
@@ -316,6 +325,13 @@
     const btns = document.querySelectorAll(".veh-btn");
     const img  = document.querySelector(".turntable .car");
     const cap  = document.querySelector(".turntable .vehicle-caption");
+
+    // Detecta el botón activo inicial para fijar el estado
+    const initiallyActive = Array.from(btns).find(b => b.classList.contains("active"));
+    if (initiallyActive) {
+      BNZ.state.vehicle = initiallyActive.dataset.type || "suv";
+    }
+
     btns.forEach(b=>{
       b.addEventListener("click", ()=>{
         btns.forEach(x=>x.classList.remove("active"));
@@ -342,12 +358,18 @@
     if(!card) return;
     const btns = card.querySelectorAll(".mg-btn");
     btns.forEach(b=>{
+      // estado inicial aria
+      const on = (b.dataset.choice || "none") === BNZ.state.mgChoice;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+      b.setAttribute("tabindex", "0");
+
       b.addEventListener("click", ()=>{
         BNZ.state.mgChoice = b.dataset.choice || "none";
         btns.forEach(x=>{
-          const on = x.dataset.choice === BNZ.state.mgChoice;
-          x.classList.toggle("active", on);
-          x.setAttribute("aria-pressed", String(on));
+          const on2 = x.dataset.choice === BNZ.state.mgChoice;
+          x.classList.toggle("active", on2);
+          x.setAttribute("aria-pressed", String(on2));
         });
         if (BNZ.state.last){
           BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
@@ -373,6 +395,9 @@
 
     const dt = selectedDateTime();
     if (!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
+
+    // UX: cierra teclado/focus móvil antes de calcular
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 
     document.dispatchEvent(new CustomEvent("bnz:calculate"));
   });
