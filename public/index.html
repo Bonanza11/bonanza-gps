@@ -8,13 +8,14 @@
   <link rel="icon" href="/images/bonanza-logo.png" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#b66a2c" />
-  <link rel="stylesheet" href="/app/styles/app.css" />
+  <link rel="stylesheet" href="/app/styles/app.css?v=5" />
+  <!-- ↑ cache-bust opcional para asegurar estilos actualizados -->
 
-  <!-- Config pública (cárgala desde env en Vercel después) -->
+  <!-- Config pública -->
   <script>
     window.__PUBLIC_CFG__ = {
-      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",  // Google Maps API Key
-      MAP_ID:    "be9f7b3d0f62a46ba10dc0ba",                 // Map ID
+      GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
+      MAP_ID:    "be9f7b3d0f62a46ba10dc0ba",
       STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
     };
   </script>
@@ -100,8 +101,9 @@
 
     <!-- Terms -->
     <div class="terms-box" id="termsBox">
-      <div class="terms-summary">
-        <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false">
+      <!-- Toda la fila es clicable (booking.js ya lo maneja); role/tabindex para a11y -->
+      <div class="terms-summary" role="button" tabindex="0" aria-label="Accept Terms and Conditions">
+        <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false" aria-label="Terms switch">
           <div class="accept-dot"></div>
         </div>
         <div class="accept-label">
@@ -134,7 +136,6 @@
     (function startMaps(){
       var cfg = window.__PUBLIC_CFG__ || {};
       if (!cfg.GMAPS_KEY) { console.error("[maps-init] Missing Google Maps API key"); return; }
-      // Cargamos libraries necesarias (places para Autocomplete, marker para AdvancedMarker)
       window.loadGoogleMaps(cfg.GMAPS_KEY, { libraries: "places,marker" })
         .then(function(){ if (window.initMap) window.initMap(); })
         .catch(function(err){ console.error("GMAPS load failed", err); });
@@ -176,6 +177,15 @@
       const acc=document.getElementById("luggageAccordion");
       const sum=acc?.querySelector(".luggage-summary");
       sum?.addEventListener("click",()=>acc.classList.toggle("open"));
+
+      // Accesibilidad: permite usar Enter/Espacio en toda la fila de T&C
+      const ts = document.querySelector("#termsBox .terms-summary");
+      ts?.addEventListener("keydown", (e)=>{
+        if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
+          e.preventDefault();
+          document.getElementById("acceptPill")?.click();
+        }
+      });
     })();
   </script>
 </body>
