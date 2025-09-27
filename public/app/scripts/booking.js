@@ -294,8 +294,9 @@
   // Botones / Terms / Validaciones mínimas
   // ────────────────────────────────────────────────────────────
   const acceptPill   = document.getElementById("acceptPill");
-  // Selector robusto: intenta por clase global y cae a #termsBox .terms-summary si existe
-  let termsSummary = document.querySelector(".terms-summary") || document.querySelector("#termsBox .terms-summary");
+  const termsBox     = document.getElementById("termsBox");
+  const termsSummary = document.querySelector("#termsBox .terms-summary");
+  const acceptLabel  = document.querySelector("#termsBox .accept-label");
   const calcBtn      = document.getElementById("calculate");
   const payBtn       = document.getElementById("pay");
 
@@ -308,6 +309,8 @@
     if(!acceptPill) return;
     acceptPill.classList.toggle("on", on);
     acceptPill.setAttribute("aria-checked", on ? "true" : "false");
+    // refleja estado también en la fila para a11y
+    termsSummary?.setAttribute("aria-pressed", on ? "true" : "false");
     syncButtons();
   }
 
@@ -326,24 +329,34 @@
     }
   }
 
-  // — Listeners (clic en el pill y en toda la fila, excepto el link)
-  acceptPill?.addEventListener("click", (e)=> {
-    e.stopPropagation();
+  // — Listeners: ahora cualquier parte de la fila sirve (menos el link)
+  const toggleFromEvent = (e)=>{
+    if (e.target.closest("a")) return; // clic en el link → no togglear
     setAccepted(!isAccepted());
-  });
+  };
 
-  termsSummary?.addEventListener("click", (e)=>{
-    if (e.target.closest("a")) return; // no cambiar si clic en el link
-    setAccepted(!isAccepted());
-  });
+  // pill
+  acceptPill?.addEventListener("click", (e)=>{ e.stopPropagation(); toggleFromEvent(e); });
 
-  // Accesibilidad teclado
-  acceptPill?.addEventListener("keydown", (e)=>{
+  // toda la fila
+  termsSummary?.addEventListener("click", toggleFromEvent);
+
+  // también el contenedor por si el clic cae en espacios vacíos
+  termsBox?.addEventListener("click", toggleFromEvent);
+
+  // y el texto “I accept …”
+  acceptLabel?.addEventListener("click", toggleFromEvent);
+
+  // Accesibilidad teclado en pill y fila
+  const kbdHandler = (e)=>{
     if (e.key===" " || e.key==="Enter"){
+      if (e.target.closest("a")) return;
       e.preventDefault();
       setAccepted(!isAccepted());
     }
-  });
+  };
+  acceptPill?.addEventListener("keydown", kbdHandler);
+  termsSummary?.addEventListener("keydown", kbdHandler);
 
   // Vehículo (cambia imagen/caption y re-evalúa MG)
   (function wireVehicle(){
@@ -426,21 +439,13 @@
 
     document.dispatchEvent(new CustomEvent("bnz:calculate"));
   };
-  document.getElementById("calculate")?.removeEventListener?.("click", handleCalculate);
-  document.getElementById("calculate")?.addEventListener("click", handleCalculate);
+  calcBtn?.addEventListener("click", handleCalculate);
 
   // On load
   document.addEventListener("DOMContentLoaded", ()=>{
     ensureMin24h();
 
-    // Blinda atributos de accesibilidad del switch (por si faltan en el HTML)
-    if (acceptPill){
-      if (!acceptPill.hasAttribute("role"))     acceptPill.setAttribute("role","switch");
-      if (!acceptPill.hasAttribute("tabindex")) acceptPill.setAttribute("tabindex","0");
-      if (!acceptPill.hasAttribute("aria-checked")) acceptPill.setAttribute("aria-checked","false");
-    }
-
-    // Estado inicial desde aria-checked/clase
+    // Estado inicial desde aria-checked (por si server/hidratación lo marca)
     const initial = acceptPill?.getAttribute("aria-checked")==="true" || acceptPill?.classList.contains("on");
     setAccepted(!!initial);
 
