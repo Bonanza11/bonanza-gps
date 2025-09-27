@@ -77,8 +77,8 @@
 
     <!-- Selector de vehículo -->
     <div class="veh-toggle">
-      <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
-      <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
+      <button class="veh-btn active" data-type="suv" type="button">SUV (1–5 Passengers)</button>
+      <button class="veh-btn" data-type="van" type="button">Van (up to 12 Passengers)</button>
     </div>
 
     <!-- Visual del vehículo -->
@@ -101,7 +101,7 @@
 
     <!-- Terms -->
     <div class="terms-box" id="termsBox">
-      <!-- Toda la fila es clicable (booking.js ya lo maneja); role/tabindex para a11y -->
+      <!-- Toda la fila es clicable; role/tabindex para a11y -->
       <div class="terms-summary" role="button" tabindex="0" aria-label="Accept Terms and Conditions">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false" aria-label="Terms switch">
           <div class="accept-dot"></div>
@@ -113,9 +113,9 @@
     </div>
 
     <!-- Acciones -->
-    <button id="calculate" disabled>Calculate Price</button>
+    <button id="calculate" type="button" disabled>Calculate Price</button>
     <div id="map"></div>
-    <button id="pay" disabled style="display:none">PAY NOW</button>
+    <button id="pay" type="button" disabled style="display:none">PAY NOW</button>
 
     <!-- Resumen -->
     <div id="info"></div>
@@ -146,7 +146,7 @@
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Visual vehículo + acordeón -->
+  <!-- Visual vehículo + acordeón + accesibilidad T&C -->
   <script>
     (function(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
@@ -157,8 +157,13 @@
 
       function applyVisual(){
         if(!img||!cap) return;
-        if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
-        else { img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
+        if(window.__vehicleType==="van"){
+          img.src=VAN_IMG;
+          cap.textContent="Van — Up to 12 passengers (luggage varies)";
+        }else{
+          img.src=SUV_IMG;
+          cap.textContent="SUV — Max 5 passengers, 5 suitcases";
+        }
       }
       function setActive(t){
         window.__vehicleType=(t==="van")?"van":"suv";
@@ -178,7 +183,7 @@
       const sum=acc?.querySelector(".luggage-summary");
       sum?.addEventListener("click",()=>acc.classList.toggle("open"));
 
-      // Accesibilidad: permite usar Enter/Espacio en toda la fila de T&C
+      // Accesibilidad/UX: permitir Enter/Espacio en toda la fila de T&C
       const ts = document.querySelector("#termsBox .terms-summary");
       ts?.addEventListener("keydown", (e)=>{
         if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
