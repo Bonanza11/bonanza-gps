@@ -23,19 +23,11 @@
   // ────────────────────────────────────────────────────────────
   const SLC_MATCHES = (window.BNZ_AIRPORTS?.slcNames) || [
     "salt lake city international airport",
-    "slc airport",
-    "slc intl",
-    "slc int’l",
-    "salt lake city airport",
-    "w terminal dr, salt lake city",
-    "slc terminal"
+    "slc airport","slc intl","slc int’l",
+    "salt lake city airport","w terminal dr, salt lake city","slc terminal"
   ];
   const JSX_MATCHES = (window.BNZ_AIRPORTS?.jsxNames) || [
-    "jsx",
-    "jsx slc",
-    "jsx terminal",
-    "jsx salt lake",
-    "signature flight support jsx"
+    "jsx","jsx slc","jsx terminal","jsx salt lake","signature flight support jsx"
   ];
   const FBO_MATCHES = [
     "fbo","jet center","private terminal","general aviation","hangar",
@@ -45,19 +37,14 @@
 
   // Normaliza texto para comparar
   function norm(x){
-    return String(x || "")
-      .toLowerCase()
-      .replace(/\s+/g, " ")
-      .trim();
+    return String(x || "").toLowerCase().replace(/\s+/g, " ").trim();
   }
 
   // Obtén texto “mejor disponible” del pickup
   function getPickupText(){
     const inputVal = document.getElementById("pickup")?.value || "";
     const place = window.pickupPlace || null;
-    const fromPlace = place
-      ? (place.name || place.formatted_address || place.vicinity || "")
-      : "";
+    const fromPlace = place ? (place.name || place.formatted_address || place.vicinity || "") : "";
     const cand = fromPlace.length >= inputVal.length ? fromPlace : inputVal;
     return norm(cand);
   }
@@ -212,11 +199,7 @@
     const subtotal = base + adjustedSurcharge + ah + mg;
     const total    = applyVehicle(subtotal);
 
-    BNZ.state.last = {
-      miles, base,
-      surcharge: adjustedSurcharge,
-      ah, mg, total, leg
-    };
+    BNZ.state.last = { miles, base, surcharge: adjustedSurcharge, ah, mg, total, leg };
 
     publishTotals(BNZ.state.last);
     paintSummary(BNZ.state.last, leg);
@@ -306,33 +289,35 @@
     }
   }
 
-  // Handler único y robusto (funciona en pill, texto o fila; ignora el link)
-  const shouldToggle = (e) => !e.target.closest("a");
-  const toggleAccept = (e) => {
-    if (!shouldToggle(e)) return;
+  // --- Toggle T&C: un solo manejador de pointer + teclado (evita dobles en móvil)
+  const isFromLink = (e) => !!e.target.closest("a");
+
+  function onPointerToggle(e){
+    if (isFromLink(e)) return;
+    // Sólo aceptar clicks primarios / taps
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     setAccepted(!isAccepted());
-  };
+  }
+  // Usamos pointerup en el contenedor; no registramos click/touchend para evitar duplicados
+  termsBox?.addEventListener("pointerup", onPointerToggle);
+  acceptPill?.addEventListener("pointerup", onPointerToggle);
+  acceptLabel?.addEventListener("pointerup", onPointerToggle);
+  termsSummary?.addEventListener("pointerup", onPointerToggle);
 
-  // Click + pointer + touch (mejor en iOS)
-  ["click","pointerup","touchend"].forEach(evt=>{
-    acceptPill?.addEventListener(evt, toggleAccept);
-    termsSummary?.addEventListener(evt, toggleAccept);
-    termsBox?.addEventListener(evt, toggleAccept);
-    acceptLabel?.addEventListener(evt, toggleAccept);
-  });
-
-  // Accesibilidad teclado
-  const kbd = (e)=>{
+  // Accesibilidad teclado (Enter/Espacio)
+  function onKey(e){
+    if (isFromLink(e)) return;
     if (e.key===" " || e.key==="Enter"){
-      if (e.target.closest("a")) return;
       e.preventDefault();
       setAccepted(!isAccepted());
     }
-  };
-  acceptPill?.addEventListener("keydown", kbd);
-  termsSummary?.addEventListener("keydown", kbd);
+  }
+  termsSummary?.addEventListener("keydown", onKey);
+  acceptPill?.addEventListener("keydown", onKey);
 
+  // ────────────────────────────────────────────────────────────
   // Vehículo
+  // ────────────────────────────────────────────────────────────
   (function wireVehicle(){
     const btns = document.querySelectorAll(".veh-btn");
     const img  = document.querySelector(".turntable .car");
@@ -361,7 +346,9 @@
     });
   })();
 
+  // ────────────────────────────────────────────────────────────
   // Meet & Greet
+  // ────────────────────────────────────────────────────────────
   (function wireMG(){
     const card = document.getElementById("meetGreetCard");
     if(!card) return;
@@ -386,7 +373,9 @@
     mgSyncCard();
   })();
 
+  // ────────────────────────────────────────────────────────────
   // Calculate
+  // ────────────────────────────────────────────────────────────
   const handleCalculate = ()=>{
     if (!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
 
@@ -407,7 +396,9 @@
   };
   document.getElementById("calculate")?.addEventListener("click", handleCalculate);
 
+  // ────────────────────────────────────────────────────────────
   // On load
+  // ────────────────────────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", ()=>{
     ensureMin24h();
     setAccepted(acceptPill?.getAttribute("aria-checked")==="true" || acceptPill?.classList.contains("on"));
