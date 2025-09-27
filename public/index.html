@@ -15,11 +15,18 @@
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
       MAP_ID:    "be9f7b3d0f62a46ba10dc0ba",
-      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
-      /* 👇 pega aquí la URL de Cloud Run que mostraste en la foto */
-      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app/api/check"
+      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
     };
   </script>
+
+  <style>
+    /* Mini-estilos para la sección de vuelo (reutiliza tu tema) */
+    .flight-box{ border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px; }
+    .flight-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+    @media (max-width:640px){ .flight-grid{ grid-template-columns:1fr } }
+    .badge{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:#ffdeb3; margin-left:6px; font-size:.78rem }
+    .muted{ color:#9fb0c3; font-size:.9rem; }
+  </style>
 </head>
 <body>
   <header>
@@ -60,23 +67,33 @@
       </div>
     </div>
 
-    <!-- ✈️ Flight Details -->
-    <div class="mg-card" id="flightCard" aria-label="Flight information" style="display:none">
-      <h3>Flight Details (arrivals)</h3>
-      <div class="grid2" style="margin-top:6px">
+    <!-- VUELO / ORIGEN (visible según pickup) -->
+    <div class="flight-box" id="flightBox" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
+        <span id="flightBadge" class="badge">Commercial</span>
+      </div>
+      <div id="flightExplain" class="muted" style="margin-bottom:6px"></div>
+
+      <!-- Commercial / JSX -->
+      <div id="flightCommercial" class="flight-grid" style="display:none">
         <div>
           <label for="flightNumber">Flight Number</label>
-          <input id="flightNumber" inputmode="text" placeholder="AA1234" autocomplete="off" />
-          <div id="flightNumberHelp" class="hint">Airline + number (e.g. DL567, UA1203)</div>
+          <input id="flightNumber" placeholder="e.g. DL1234" autocomplete="off" />
         </div>
         <div>
-          <label for="flightOrigin">Origin City / Airport</label>
-          <input id="flightOrigin" inputmode="text" placeholder="e.g. LAX, Miami, JFK" autocomplete="off" />
-          <div id="flightOriginHelp" class="hint">City or airport code/name</div>
+          <label for="flightOrigin">Origin City</label>
+          <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
         </div>
       </div>
-      <div id="flightStatusHelp" class="hint"></div>
-      <div class="mg-note">These fields help us track your arrival and adjust pickup timing.</div>
+
+      <!-- FBO / Municipales (private) -->
+      <div id="flightPrivate" style="display:none">
+        <label for="tailNumber">Tail Number</label>
+        <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
+      </div>
+
+      <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
 
     <!-- Notas -->
@@ -114,7 +131,9 @@
         <span class="luggage-title">Luggage Guidelines</span>
         <span class="luggage-chev"></span>
       </div>
-      <div class="luggage-body"></div>
+      <div class="luggage-body">
+        <!-- contenido detallado de equipaje -->
+      </div>
     </div>
 
     <!-- Terms -->
@@ -142,9 +161,8 @@
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
-  <script src="/app/scripts/flightcheck.js" defer></script> <!-- 👈 nuevo -->
 
-  <!-- Google Maps -->
+  <!-- ====== Google Maps (orden importante) ====== -->
   <script src="/app/scripts/maps-loader.js"></script>
   <script src="/app/scripts/maps.js"></script>
   <script>
@@ -161,7 +179,7 @@
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Visual vehículo + acordeón + a11y T&C -->
+  <!-- Visual vehículo + acordeón -->
   <script>
     (function(){
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
@@ -193,7 +211,7 @@
       const sum=acc?.querySelector(".luggage-summary");
       sum?.addEventListener("click",()=>acc.classList.toggle("open"));
 
-      // A11y: Enter/Espacio en toda la fila de T&C
+      // Accesibilidad: Enter/Espacio en toda la fila de T&C
       const ts = document.querySelector("#termsBox .terms-summary");
       ts?.addEventListener("keydown", (e)=>{
         if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
