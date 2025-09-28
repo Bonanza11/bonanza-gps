@@ -183,8 +183,8 @@ button:active:not([disabled]){ transform:translateY(1px) }
 }
 
 /* --- Google Maps / Places hardening --- */
-.pac-container { z-index: 10000 !important; }
-#map img { max-width: none !important; }
+.pac-container { z-index: 10000 !important; }   /* dropdown por encima de todo */
+#map img { max-width: none !important; }        /* evita que resets afecten tiles */
 
 /* Accesibilidad: foco visible en elementos interactivos (fallback) */
 .veh-btn:focus,
@@ -197,9 +197,9 @@ button:focus,
 
 /* ===== Ajustes finos responsivos ===== */
 @media (max-width:400px){
-  .veh-btn{ flex:1 1 100% }
+  .veh-btn{ flex:1 1 100% }                      /* botones de vehículo en columna */
   .mg-options{ gap:10px }
-  .mg-btn{ flex:1 1 100% }
+  .mg-btn{ flex:1 1 100% }                       /* botones MG full width si hace falta */
   .car{ width: clamp(220px, 70vw, 340px) }
 }
 
@@ -207,7 +207,6 @@ button:focus,
 @media (prefers-reduced-motion: reduce) {
   *{ transition:none !important; animation:none !important }
 }
-
 /* --- Fix iOS Safari autofill to match desktop style --- */
 input:-webkit-autofill,
 input:-webkit-autofill:focus,
@@ -215,46 +214,67 @@ textarea:-webkit-autofill,
 textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #0a0f14 inset !important;
-  -webkit-text-fill-color: #ffddae !important;
-  caret-color: #ffddae !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0a0f14 inset !important; /* igual que tu fondo normal */
+  -webkit-text-fill-color: #ffddae !important; /* mismo color del texto */
+  caret-color: #ffddae !important; /* cursor visible en tu color */
   transition: background-color 9999s ease-in-out 0s !important;
 }
 
-/* === Spacing/ergonomía extra para Flight Details (SOLO dentro de #flightBox) === */
+/* === Spacing/ergonomía extra para Flight Details === */
 #flightBox{ padding:14px 14px 16px; }
 
 #flightBox .muted{
   margin-top:4px;
-  margin-bottom:14px;            /* separa el texto “Optional…” de los campos */
+  margin-bottom:12px;           /* separa el texto “Optional…” de los campos */
 }
 
 #flightBox .flight-grid{
   grid-template-columns: 1fr 1fr;
-  column-gap: 20px;              /* separación horizontal entre Flight y Origin */
-  row-gap: 20px;                 /* separación vertical de la fila */
+  column-gap: 18px;             /* separación horizontal entre Flight y Origin */
+  row-gap: 18px;                /* separación vertical de la fila */
 }
 
 #flightBox .flight-grid > div{
   display:flex;
   flex-direction:column;
-  gap:12px;                      /* espacio entre el label y su input */
+  gap:10px;                     /* espacio entre el label y su input */
 }
 
 #flightBox label{
-  margin: 0 0 10px;              /* baja el input respecto al label */
+  margin: 2px 0 8px;            /* baja el input respecto al label */
   line-height: 1.25;
 }
 
 #flightBox input{
-  padding: 14px 16px;            /* input un poco más alto */
+  padding: 14px 16px;           /* input un poco más alto */
   min-height: 48px;
 }
 
-/* En móvil: una sola columna */
+/* En móvil: una sola columna y algo menos de gap para que no se alargue tanto */
 @media (max-width:640px){
   #flightBox .flight-grid{
     grid-template-columns: 1fr;
-    row-gap: 16px;
+    row-gap: 14px;
+  }
+}
+
+/* === FIX: alinear Tail Number y City === */
+#flightBox .flight-grid > div > label{
+  display:block;
+  line-height:1.25;
+  min-height:44px;         /* iguala altura de label en ambas columnas */
+  margin:0 0 10px;
+}
+#flightBox .flight-grid{
+  column-gap:20px;
+  row-gap:20px;
+}
+@media (max-width:640px){
+  #flightBox .flight-grid > div > label{
+    min-height:0;
+    margin-bottom:8px;
+  }
+  #flightBox .flight-grid{
+    row-gap:16px;
   }
 }
