@@ -17,7 +17,7 @@
       align-items:center;
       gap:6px;
 
-      padding:12px 48px;           /* más ancho */
+      padding:12px 48px;
       border-radius:999px;
       font-weight:800;
       font-size:1rem;
@@ -98,6 +98,31 @@
       color:var(--muted-blue); margin-bottom:22px;
     }
     .meta strong{ color:var(--text); }
+
+    /* Logo HQ flotante */
+    .hq-logo{
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      width:52px; height:52px;
+      border-radius:50%;
+      background:#0a0c0f;
+      padding:6px;
+      box-shadow:0 4px 12px rgba(0,0,0,.4);
+      cursor:pointer;
+      transition:transform .2s ease, box-shadow .25s ease;
+      z-index:100;
+    }
+    .hq-logo:hover{
+      transform:scale(1.08);
+      box-shadow:0 0 10px rgba(200,147,102,.6), 0 0 20px rgba(168,116,79,.45);
+    }
+    .hq-logo img{
+      width:100%;
+      height:100%;
+      border-radius:50%;
+      display:block;
+    }
   </style>
 </head>
 <body>
@@ -205,6 +230,11 @@
       </div>
     </div>
   </main>
+
+  <!-- Botón HQ -->
+  <a href="/" class="hq-logo" title="Bonanza HQ">
+    <img src="/images/bonanza-logo.png" alt="Bonanza HQ">
+  </a>
 
   <script>
     (function(){
