@@ -12,7 +12,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
   const BASE_ADDRESS   = "13742 N Jordanelle Pkwy, Kamas, UT 84036";
 
-  // ← usa el MAP_ID de la config pública; fallback al estilo oscuro nuevo
+  // Usa el MAP_ID de la config pública; fallback al estilo oscuro nuevo
   const MAP_ID = (window.__PUBLIC_CFG__ && window.__PUBLIC_CFG__.MAP_ID)
     ? window.__PUBLIC_CFG__.MAP_ID
     : "1803eda89e913c8354156119";
@@ -23,7 +23,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
 
-  // Alias disponibles para booking.js (fallback de texto)
+  // Alias disponibles para booking.js
   window.BNZ_AIRPORTS = window.BNZ_AIRPORTS || {
     slcNames: [
       "salt lake city international airport",
@@ -135,7 +135,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     const pickupIsAir = !!pickup && isAirport(pickup);
 
-    // Si el pickup es aeropuerto y el drop NO es Summit/Wasatch → recargo desde base→pickup
     if (pickupIsAir) {
       const dropAllowed = ALLOWED_RX.test(dropCounty);
       if (!dropAllowed && pickup?.place_id) {
@@ -145,7 +144,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       return 0;
     }
 
-    // Si el pickup NO es Summit/Wasatch → recargo desde base→pickup
     const pickupAllowed = ALLOWED_RX.test(pickupCounty);
     if (!pickupAllowed && pickup?.place_id) {
       const miles = await milesFromBaseTo(pickup.place_id);
@@ -154,12 +152,10 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     return 0;
   }
 
-  // ─────────────── Autocomplete (clásico, estable)
+  // ─────────────── Autocomplete
   function attachAutocomplete(inputId, opts = {}) {
     const input = document.getElementById(inputId);
     if (!input) return;
-
-    // Evita interferencia de autofill
     input.setAttribute("autocomplete", "off");
 
     if (!google.maps.places || !google.maps.places.Autocomplete) {
@@ -191,7 +187,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       }
     });
 
-    // Cache de texto libre (por si el usuario no selecciona una sugerencia)
     ["input","change","blur"].forEach(ev => {
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
@@ -236,7 +231,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     document.addEventListener("bnz:calculate", routeAndQuote);
   }
 
-  // ─────────────── marcador: AdvancedMarker o Marker
+  // ─────────────── marcador
   function addHomeMarker() {
     try {
       const AdvancedMarker = google.maps.marker?.AdvancedMarkerElement;
