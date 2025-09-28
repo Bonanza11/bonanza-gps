@@ -26,11 +26,18 @@ header{ display:flex; justify-content:center; padding:18px 12px }
 
 /* Logo superior integrado — versión más grande, sin borde */
 header .logo {
-  width:240px; height:240px; border-radius:50%;
-  padding:12px;
-  background:radial-gradient(circle at center,#10151b 0%, #0a0c0f 70%, #000 100%);
-  box-shadow:0 0 14px rgba(0,0,0,.55), 0 8px 20px rgba(0,0,0,.7), inset 0 0 10px rgba(0,0,0,.35);
-  object-fit:contain; display:block;
+  width:240px;              /* más grande para resaltar el texto */
+  height:240px;
+  border-radius:50%;        /* mantiene la forma redonda */
+  padding:12px;             /* espacio interno */
+  background:radial-gradient(circle at center,
+    #10151b 0%, #0a0c0f 70%, #000 100%);  /* fondo integrado */
+  box-shadow:
+    0 0 14px rgba(0,0,0,.55),
+    0 8px 20px rgba(0,0,0,.7),
+    inset 0 0 10px rgba(0,0,0,.35);       /* sin neón, elegante */
+  object-fit:contain;
+  display:block;
 }
 
 /* Contenedor principal */
@@ -185,27 +192,39 @@ button:active:not([disabled]){ transform:translateY(1px) }
   width:auto;
 }
 
-/* ---- Promo code (diseño fino, centrado, borde delgado) ---- */
+/* ---- Promo code (más fino, centrado y sin resplandor) ---- */
 .promo{ margin:8px 0 4px }
 .promo-field{
-  display:flex; align-items:center; justify-content:center; gap:8px;
+  display:flex; align-items:center; justify-content:center; gap:6px;
 }
 .promo-input{
-  width:min(340px, 80%); height:40px;
-  border:1px solid var(--copper);       /* borde delgado */
+  width:min(300px, 72%);
+  height:36px;                         /* más pequeño */
+  border:1px solid var(--copper);      /* borde delgado */
   background:#0a0f14; color:#ffddae;
-  padding:8px 14px; border-radius:999px;
-  font-weight:800; letter-spacing:.3px;
+  padding:6px 14px;
+  border-radius:999px;
+  font-weight:700; letter-spacing:.25px;
 }
 .promo-input::placeholder{ color:#cba686; opacity:.6 }
 .promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
+
+/* Botón Apply sin glow/neón */
 .promo-btn{
-  min-height:36px; padding:8px 14px; border-radius:999px;
+  min-height:36px; padding:8px 14px;
+  border-radius:999px;
   border:1px solid var(--border);
-  background:#0e141b; color:var(--muted-blue);
+  background:#0d1319;                  /* tono panel */
+  color:var(--muted-blue);
   font-weight:900; cursor:pointer;
+  box-shadow:none; text-shadow:none;   /* 🔧 sin resplandor */
+  transition:background .15s, border-color .15s, transform .05s, filter .15s;
 }
-.promo-btn:hover:not([disabled]){ filter:saturate(1.05) brightness(1.03) }
+.promo-btn:hover:not([disabled]){
+  background:#10161d;                  /* sutil */
+  filter:none;                          /* sin brillo */
+}
+.promo-btn:active:not([disabled]){ transform:translateY(1px) }
 .promo-btn[disabled]{ opacity:.55; cursor:not-allowed }
 
 /* --- Google Maps / Places --- */
@@ -260,25 +279,74 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 }
 
 /* =================== Luggage — Pro cards =================== */
-.lugg-policy{ display:grid; gap:12px }
+.lugg-policy{
+  display:grid;
+  gap:12px;
+}
 .lugg-card{
   border:1px solid var(--border);
   border-radius:12px;
   background:var(--panel);
   box-shadow:0 8px 18px rgba(0,0,0,.22);
-  overflow:hidden; padding:12px;
+  overflow:hidden;
+  padding:12px;
 }
 .lugg-head{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding-bottom:8px; border-bottom:1px solid rgba(155,178,203,.18);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(155,178,203,.18);
 }
-.lugg-title{ margin:0; font-size:1.02rem; font-weight:900; letter-spacing:.2px; color:#ffdeb3 }
-.lugg-thumb{ width:120px; max-height:72px; object-fit:contain; display:block; filter:drop-shadow(0 2px 8px rgba(0,0,0,.35)); background:transparent; mix-blend-mode:screen }
-.lugg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px }
-@media (max-width:720px){ .lugg-grid{ grid-template-columns:1fr } }
-.lugg-opt{ border:1px solid var(--border); border-radius:10px; background:#0d1319; padding:10px 12px }
-.lugg-opt-title{ font-weight:800; color:var(--muted-blue); margin-bottom:2px }
-.lugg-sub{ color:var(--muted-blue); font-size:.9rem; margin-bottom:6px }
-.lugg-list{ margin:0 0 0 18px; padding:0 }
-.lugg-list li{ color:#dfe8f3; line-height:1.35; margin:4px 0 }
+.lugg-title{
+  margin:0;
+  font-size:1.02rem;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#ffdeb3;
+}
+.lugg-thumb{
+  width:120px;
+  max-height:72px;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.35));
+  background:transparent;
+  mix-blend-mode:screen;   /* 🔥 Fusión con el fondo */
+}
+.lugg-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+@media (max-width:720px){
+  .lugg-grid{ grid-template-columns:1fr }
+}
+.lugg-opt{
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#0d1319;
+  padding:10px 12px;
+}
+.lugg-opt-title{
+  font-weight:800;
+  color:var(--muted-blue);
+  margin-bottom:2px;
+}
+.lugg-sub{
+  color:var(--muted-blue);
+  font-size:.9rem;
+  margin-bottom:6px;
+}
+.lugg-list{
+  margin:0 0 0 18px;
+  padding:0;
+}
+.lugg-list li{
+  color:#dfe8f3;
+  line-height:1.35;
+  margin:4px 0;
+}
 .lugg-list li::marker{ color:var(--muted-blue) }
