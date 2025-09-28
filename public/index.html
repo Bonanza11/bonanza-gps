@@ -20,10 +20,13 @@
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
-      MAP_ID:    "b2ff3b1036f246da10cb0dea",  // tu Map ID oscurecido
+      MAP_ID:    "b2ff3b1036f246da10cb0dea",  // tu Map ID
       STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
-      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"  // ← tu Cloud Run
+      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"  // Cloud Run
     };
+
+    // ← espeja a la variable que usa booking.js
+    window.__FLIGHTCHECK_URL = window.__PUBLIC_CFG__.FLIGHTCHECK_URL;
   </script>
 
   <style>
@@ -166,7 +169,8 @@
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
-  <script src="/app/scripts/flight.js" defer></script>   <!-- ← NUEVO -->
+  <!-- flight.js es opcional; si no existe puedes quitar esta línea -->
+  <script src="/app/scripts/flight.js" defer></script>
 
   <!-- ====== Google Maps (orden importante) ====== -->
   <script src="/app/scripts/maps-loader.js"></script>
