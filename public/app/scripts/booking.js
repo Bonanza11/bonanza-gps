@@ -69,7 +69,7 @@
     if (hasAny(txt, JSX_MATCHES)) return "jsx";
     if (hasAny(txt, SLC_MATCHES)) return "slc";
     if (hasAny(txt, PVU_MATCHES)) return "pvu";
-    if (looksLikeHeber()) return "fbo";               // Heber como FBO
+    if (looksLikeHeber()) return "fbo";                // Heber como FBO
     if (hasAny(txt, FBO_MATCHES)) return "fbo";
     if (hasAny(txt, MUNICIPAL_KEYWORDS)) return "municipal";
     return "other";
@@ -187,7 +187,7 @@
   }
 
   // ────────────────────────────────────────────────────────────
-  // Flight UI — según categoría de pickup
+  // Flight UI — según categoría de pickup (sin validación)
   // ────────────────────────────────────────────────────────────
   function flightSyncUI(){
     const box = document.getElementById("flightBox");
@@ -209,19 +209,19 @@
       box.style.display = "block"; comm.style.display = "grid";
       badge.textContent = "Commercial";
       title.textContent = "Flight Details";
-      explain.textContent = "Add your flight number and origin city (optional).";
+      explain.textContent = "Add your flight number and origin city to help your driver.";
       hint.textContent = "Example: DL1234 — Los Angeles (LAX).";
     } else if (cat === "jsx") {
       box.style.display = "block"; comm.style.display = "grid";
       badge.textContent = "JSX";
       title.textContent = "JSX Flight";
-      explain.textContent = "Add your flight number and origin city (optional).";
+      explain.textContent = "Add your flight number and origin city.";
       hint.textContent = "Example: XE123 — Burbank (BUR).";
     } else if (cat === "fbo" || cat === "municipal") {
       box.style.display = "block"; priv.style.display = "grid";
       badge.textContent = "Private / FBO";
       title.textContent = "Private Flight Details";
-      // ← SIN “Optional:”
+      // ← sin “Optional:” como pediste
       explain.textContent = "Add your aircraft tail number and city (origin or destination).";
       hint.textContent = "Examples: Tail N123AB — City Burbank (BUR) or Denver (DEN).";
     }
@@ -244,7 +244,7 @@
   };
 
   // ────────────────────────────────────────────────────────────
-  // Render del presupuesto
+  // Render del presupuesto (Trip Summary + PAY NOW adentro)
   // ────────────────────────────────────────────────────────────
   BNZ.renderQuote = function(leg, {surcharge=0}={}){
     const miles = (leg?.distance?.value || 0) / 1609.34;
@@ -268,9 +268,6 @@
     enablePayIfReady();
   };
 
-  // ────────────────────────────────────────────────────────────
-  // UI — Resumen
-  // ────────────────────────────────────────────────────────────
   function paintSummary(t, leg){
     const el = document.getElementById("info");
     if(!el) return;
@@ -304,7 +301,22 @@
         <span>Total</span><span>$${t.total.toFixed(2)}</span>
       </div>
       <div class="tax-note">Taxes & gratuity included</div>
+
+      <!-- Botón Pay dentro del resumen -->
+      <div class="pay-row" style="display:flex;justify-content:flex-end;margin-top:12px">
+        <button id="payProxy">PAY NOW</button>
+      </div>
     `;
+
+    // Sincroniza el "proxy" con el botón real #pay que usa stripe.js
+    const proxy = document.getElementById("payProxy");
+    const real  = document.getElementById("pay");   // el original, oculto fuera del resumen
+    if (proxy && real){
+      proxy.addEventListener("click", ()=> real.click());
+      proxy.disabled = real.disabled || !window.__lastQuotedTotal;
+      proxy.style.opacity = proxy.disabled ? .5 : 1;
+      proxy.style.cursor  = proxy.disabled ? "not-allowed" : "pointer";
+    }
 
     function row(label, val){
       return `<div class="row" style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
@@ -314,7 +326,7 @@
   }
 
   // ────────────────────────────────────────────────────────────
-  // Términos & Botones (FIX iPhone: un solo toque)
+  // Términos & Botones
   // ────────────────────────────────────────────────────────────
   const acceptPill   = document.getElementById("acceptPill");
   const termsBox     = document.getElementById("termsBox");
@@ -346,32 +358,23 @@
       payBtn.style.opacity = ready ? 1 : .5;
       payBtn.style.cursor  = ready ? "pointer" : "not-allowed";
     }
+    const proxy = document.getElementById("payProxy");
+    if (proxy){
+      proxy.disabled = !ready;
+      proxy.style.opacity = ready ? 1 : .5;
+      proxy.style.cursor  = ready ? "pointer" : "not-allowed";
+    }
   }
 
   const shouldToggle = (e) => !e.target.closest("a");
-  let lastPointerToggle = 0;
+  const toggleAccept = (e) => { if (shouldToggle(e)) { e.stopPropagation(); setAccepted(!isAccepted()); } };
 
-  function handleToggle(e){
-    if (!shouldToggle(e)) return;
-    const now = Date.now();
-
-    if (e.type === "pointerdown") {
-      e.preventDefault(); // activa al primer toque en iOS
-      lastPointerToggle = now;
-      setAccepted(!isAccepted());
-      return;
-    }
-    // En click, evita doble disparo si ya hubo pointerdown reciente
-    if (e.type === "click" && now - lastPointerToggle < 400) return;
-
-    setAccepted(!isAccepted());
-  }
-
-  ["pointerdown","click"].forEach(evt=>{
-    acceptPill?.addEventListener(evt, handleToggle);
-    termsSummary?.addEventListener(evt, handleToggle);
-    termsBox?.addEventListener(evt, handleToggle);
-    acceptLabel?.addEventListener(evt, handleToggle);
+  // Manejo robusto de toque en iPhone
+  ["touchstart","click","pointerup","touchend"].forEach(evt=>{
+    acceptPill?.addEventListener(evt, toggleAccept, {passive:true});
+    termsSummary?.addEventListener(evt, toggleAccept, {passive:true});
+    termsBox?.addEventListener(evt, toggleAccept, {passive:true});
+    acceptLabel?.addEventListener(evt, toggleAccept, {passive:true});
   });
 
   const kbd = (e)=>{
@@ -459,16 +462,16 @@
 
     const cat = pickupCategory();
 
-    // Campos de vuelo (opcionales)
+    // Campos de vuelo
     const flightNumberEl = document.getElementById("flightNumber");
-    const originCityEl   = document.getElementById("flightOrigin"); // comercial/jsx
+    const originCityEl   = document.getElementById("flightOrigin");      // comercial/jsx
     const tailNumberEl   = document.getElementById("tailNumber");
-    const fboCityEl      = document.getElementById("fboCity");      // privados
+    const privCityEl     = document.getElementById("flightCityPrivate"); // privados
 
     let flightNumber = flightNumberEl?.value?.trim();
     let originCity   = originCityEl?.value?.trim();
     let tailNumber   = tailNumberEl?.value?.trim();
-    let privCity     = fboCityEl?.value?.trim();
+    let privCity     = privCityEl?.value?.trim();
 
     if (flightNumber) flightNumber = flightNumber.replace(/\s+/g,"").toUpperCase();
     if (tailNumber)   tailNumber   = tailNumber.replace(/\s+/g,"").toUpperCase();
@@ -476,7 +479,7 @@
     // UX: cierra teclado/focus móvil antes de calcular
     if (document.activeElement?.blur) document.activeElement.blur();
 
-    // Dispara cálculo con metadatos (sin bloquear por verificación)
+    // Dispara cálculo con metadatos de vuelo (comercial o privados)
     document.dispatchEvent(new CustomEvent("bnz:calculate", {
       detail: {
         flight: {
