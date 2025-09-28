@@ -38,9 +38,19 @@
   ];
   const MUNICIPAL_KEYWORDS = ["municipal airport","city airport"];
 
-  // Helpers de texto
-  const norm = (x)=>String(x||"").toLowerCase().replace(/\s+/g," ").trim();
+  // Heber Valley Airport (Russ McDonald Field) — tratar como FBO
+  const HEBER_MATCHES = [
+    "heber valley airport",
+    "heber city municipal",
+    "russ mcdonald field",
+    "khcr", "hcr",
+    "south airport road, heber city"
+  ];
 
+  // Normaliza texto
+  function norm(x){ return String(x || "").toLowerCase().replace(/\s+/g, " ").trim(); }
+
+  // Texto “mejor” del pickup
   function getPickupText(){
     const inputVal = document.getElementById("pickup")?.value || "";
     const place = window.pickupPlace || null;
@@ -49,34 +59,37 @@
     return norm(cand);
   }
 
+  const hasAny = (txt, arr) => arr.some(k => txt.includes(norm(k)));
+  const looksLikeHeber = () => hasAny(getPickupText(), HEBER_MATCHES);
+
   // Categoría del pickup → slc | jsx | pvu | fbo | municipal | other
   function pickupCategory(){
     const txt = getPickupText();
     if (!txt) return "other";
-    const hit = (arr)=>arr.some(k => txt.includes(norm(k)));
-    if (hit(JSX_MATCHES)) return "jsx";
-    if (hit(SLC_MATCHES)) return "slc";
-    if (hit(PVU_MATCHES)) return "pvu";
-    if (hit(FBO_MATCHES)) return "fbo";
-    if (hit(MUNICIPAL_KEYWORDS)) return "municipal";
+    if (hasAny(txt, JSX_MATCHES)) return "jsx";
+    if (hasAny(txt, SLC_MATCHES)) return "slc";
+    if (hasAny(txt, PVU_MATCHES)) return "pvu";
+    if (looksLikeHeber())      return "fbo";       // Heber como FBO
+    if (hasAny(txt, FBO_MATCHES)) return "fbo";
+    if (hasAny(txt, MUNICIPAL_KEYWORDS)) return "municipal";
     return "other";
   }
 
+  // Texto parece SLC comercial (no JSX ni FBO)
   function looksLikeSLCCommercialByText(){
     const txt = getPickupText();
     if (!txt) return false;
-    const isSLC = SLC_MATCHES.some(k => txt.includes(norm(k)));
-    const isJSX = JSX_MATCHES.some(k => txt.includes(norm(k)));
-    const isFBO = FBO_MATCHES.some(k => txt.includes(norm(k)));
+    const isSLC = hasAny(txt, SLC_MATCHES);
+    const isJSX = hasAny(txt, JSX_MATCHES);
+    const isFBO = hasAny(txt, FBO_MATCHES) || looksLikeHeber();
     return isSLC && !isJSX && !isFBO;
   }
 
+  // ¿Pickup es SLC o JSX (para excepción de surcharge)?
   function isPickupSLCorJSX(){
     const txt = getPickupText();
     if (!txt) return false;
-    const hitSLC = SLC_MATCHES.some(k => txt.includes(norm(k)));
-    const hitJSX = JSX_MATCHES.some(k => txt.includes(norm(k)));
-    return hitSLC || hitJSX;
+    return hasAny(txt, SLC_MATCHES) || hasAny(txt, JSX_MATCHES);
   }
 
   // ────────────────────────────────────────────────────────────
@@ -89,6 +102,7 @@
     last: null                 // último cálculo
   };
 
+  // Guarda totals para stripe.js
   function publishTotals(t){
     window.__lastQuotedTotal   = t.total;
     window.__lastDistanceMiles = t.miles;
@@ -105,6 +119,7 @@
     return miles * 5.4;
   }
 
+  // Vehículo
   function applyVehicle(total){
     return BNZ.state.vehicle === "van" ? Math.round(total * VAN_MULTIPLIER) : Math.round(total);
   }
@@ -128,9 +143,7 @@
     if(!ds || !ts) return null;
     return new Date(`${ds}T${ts}:00`);
   }
-  function atLeast24h(dt){
-    return dt && (dt.getTime() - Date.now() >= 24*60*60*1000);
-  }
+  function atLeast24h(dt){ return dt && (dt.getTime() - Date.now() >= 24*60*60*1000); }
 
   // After-hours
   function isAfterHours(dateStr, timeStr){
@@ -153,6 +166,7 @@
     const okByText = looksLikeSLCCommercialByText();
     return okByPlace || okByText;
   }
+
   function mgFee(){ return BNZ.state.mgChoice !== "none" ? MG_FEE_USD : 0; }
 
   function mgSyncCard(){
@@ -173,7 +187,7 @@
   }
 
   // ────────────────────────────────────────────────────────────
-  // Flight UI — sin validación (todo opcional)
+  // Flight UI — según categoría de pickup
   // ────────────────────────────────────────────────────────────
   function flightSyncUI(){
     const box = document.getElementById("flightBox");
@@ -182,6 +196,8 @@
     const badge = document.getElementById("flightBadge");
     const title = document.getElementById("flightTitle");
     const explain = document.getElementById("flightExplain");
+    const hint = document.getElementById("flightHint");
+    const privOriginWrap = document.getElementById("privOriginWrap");
     if(!box || !comm || !priv) return;
 
     const cat = pickupCategory();
@@ -195,25 +211,33 @@
       badge.textContent = "Commercial";
       title.textContent = "Flight Details";
       explain.textContent = "Optional: add your flight number and origin city to help your driver.";
+      hint.textContent = "Example: DL1234 — Los Angeles (LAX).";
     } else if (cat === "jsx") {
       box.style.display = "block"; comm.style.display = "grid";
       badge.textContent = "JSX";
       title.textContent = "JSX Flight";
-      explain.textContent = "Optional: add your JSX flight number and origin city.";
+      explain.textContent = "Optional: flight number and origin city (JSX is trackable).";
+      hint.textContent = "Example: XE123 — Burbank (BUR).";
     } else if (cat === "fbo" || cat === "municipal") {
-      box.style.display = "block"; priv.style.display = "block";
+      box.style.display = "block"; priv.style.display = "grid";
+      if (privOriginWrap) privOriginWrap.style.display = "block";
       badge.textContent = "Private / FBO";
-      title.textContent = "Tail Number";
-      explain.textContent = "Optional: add the aircraft tail number (or details in Special Instructions).";
+      title.textContent = "Private Flight Details";
+      explain.textContent = "Optional: add your aircraft tail number and city (origin or destination).";
+      hint.textContent = "Examples: Tail N123AB — City Burbank (BUR) or Denver (DEN).";
     }
   }
 
+  // Expuesto para maps.js (cuando cambia pickup)
   BNZ.onPickupPlaceChanged = function(){
     mgSyncCard();
     flightSyncUI();
   };
+
+  // También expuesto por conveniencia
   window.updateMeetGreetVisibility = mgSyncCard;
 
+  // Recalcular totales si ya hay leg
   window.recalcFromCache = function(){
     if (BNZ.state.last){
       BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
@@ -226,6 +250,7 @@
   BNZ.renderQuote = function(leg, {surcharge=0}={}){
     const miles = (leg?.distance?.value || 0) / 1609.34;
 
+    // Excepción: SLC/JSX sin distance surcharge
     let adjustedSurcharge = surcharge;
     if (isPickupSLCorJSX()) adjustedSurcharge = 0;
 
@@ -324,7 +349,7 @@
     }
   }
   const shouldToggle = (e) => !e.target.closest("a");
-  const toggleAccept = (e) => { if (shouldToggle(e)) setAccepted(!isAccepted()); };
+  const toggleAccept = (e) => { if (shouldToggle(e)) { e.stopPropagation(); setAccepted(!isAccepted()); } };
   ["click","pointerup","touchend"].forEach(evt=>{
     acceptPill?.addEventListener(evt, toggleAccept);
     termsSummary?.addEventListener(evt, toggleAccept);
@@ -397,9 +422,9 @@
   })();
 
   // ────────────────────────────────────────────────────────────
-  // Calculate (sin validar campos de vuelo)
+  // Calculate (sin validación de vuelos)
   // ────────────────────────────────────────────────────────────
-  const handleCalculate = ()=>{
+  const handleCalculate = async ()=>{
     if (!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
 
     const need = ["fullname","phone","email","pickup","dropoff","date","time"];
@@ -414,16 +439,40 @@
     const dt = selectedDateTime();
     if (!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
-    // No se valida vuelo — solo se toma lo que haya (opcional)
     const cat = pickupCategory();
-    const flightNumber = document.getElementById("flightNumber")?.value?.trim() || "";
-    const originCity   = document.getElementById("flightOrigin")?.value?.trim() || "";
-    const tailNumber   = document.getElementById("tailNumber")?.value?.trim() || "";
 
+    // Campos de vuelo
+    const flightNumberEl = document.getElementById("flightNumber");
+    const originCityEl   = document.getElementById("flightOrigin");      // comercial/jsx
+    const tailNumberEl   = document.getElementById("tailNumber");
+    const privCityEl     = document.getElementById("flightCityPrivate"); // privados
+
+    let flightNumber = flightNumberEl?.value?.trim();
+    let originCity   = originCityEl?.value?.trim();
+    let tailNumber   = tailNumberEl?.value?.trim();
+    let privCity     = privCityEl?.value?.trim();
+
+    if (flightNumber) flightNumber = flightNumber.replace(/\s+/g,"").toUpperCase();
+    if (tailNumber)   tailNumber   = tailNumber.replace(/\s+/g,"").toUpperCase();
+
+    // Sin validación dura: todos opcionales
+
+    // UX: cierra teclado/focus móvil antes de calcular
     if (document.activeElement?.blur) document.activeElement.blur();
 
+    // Dispara cálculo con metadatos de vuelo (comercial o privados)
     document.dispatchEvent(new CustomEvent("bnz:calculate", {
-      detail: { flight: { cat, flightNumber, originCity, tailNumber, verified:false, verification:null } }
+      detail: {
+        flight: {
+          cat,
+          flightNumber,
+          originCity: originCity || privCity || "",
+          privateCity: privCity || "",
+          tailNumber,
+          verified: false,
+          verification: null
+        }
+      }
     }));
   };
   document.getElementById("calculate")?.addEventListener("click", handleCalculate);
