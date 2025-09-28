@@ -8,9 +8,11 @@
     "node": "20.x"
   },
   "scripts": {
+    "dev": "nodemon api/**/*.js",
     "lint": "eslint . --ext .js",
     "format": "prettier --write .",
-    "build": "echo \"No build step required\" && exit 0",
+    "build": "echo \"No build step required (static + API on Vercel)\" && exit 0",
+    "start": "node api/index.js",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [
