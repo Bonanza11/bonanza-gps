@@ -121,7 +121,7 @@ input:focus, textarea:focus, select:focus{
 .accept-pill[aria-checked="true"] .accept-dot, .accept-pill.on .accept-dot{ left:23px }
 .terms-link{ color:#ffddae; text-decoration:underline }
 
-/* =================== Buttons =================== */
+/* =================== Buttons (base) =================== */
 button{
   border:1px solid rgba(0,0,0,.45);
   background:linear-gradient(180deg,var(--copper-2),var(--copper));
@@ -174,44 +174,76 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .ts-total span:first-child{ font-weight:900; color:#eedac4; letter-spacing:.2px }
 .ts-total span:last-child{ font-weight:900; font-size:1.05rem; color:#fff2e2 }
 
-.tax-note{ color:var(--muted-blue); font-size:.82rem; margin-top:4px }
+.tax-note{ color:#9fb0c3; font-size:.82rem; margin-top:4px }
 
-/* PAY NOW dentro del summary (compacto, centrado, elegante) */
+/* ===== Botones refinados para Summary ===== */
+/* Calculate Price — pill oscuro con borde cobre (sin glow) */
+#calculate{
+  display:block;
+  width:100%;
+  max-width:260px;
+  margin:18px auto 8px;     /* centrado */
+  min-height:46px;
+  padding:10px 18px;
+  border-radius:999px;
+  border:1px solid var(--copper);
+  background:#0d1319;
+  color:#ffddae;
+  font-weight:900;
+  font-size:1rem;
+  letter-spacing:.3px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:none;
+  transition:background .15s, border-color .15s, transform .05s, opacity .15s;
+}
+#calculate:hover:not([disabled]){ background:#111922; border-color:var(--copper-2); }
+#calculate:active:not([disabled]){ transform:translateY(1px); }
+#calculate[disabled]{ opacity:.55; cursor:not-allowed; }
+
+/* PAY NOW dentro del summary — mismo look */
 #info .pay-now{
   display:block;
-  margin:14px auto 8px;
-  padding:10px 28px;
-  min-height:40px;
-  min-width:160px;
+  width:100%;
+  max-width:240px;
+  margin:16px auto 8px;     /* centrado */
+  min-height:46px;
+  padding:10px 22px;
   border-radius:999px;
+  border:1px solid var(--copper);
+  background:#0d1319;
+  color:#ffddae;
   font-weight:900;
-  font-size:.95rem;
-  background:linear-gradient(180deg, #d7a577, #b97a4f);
-  box-shadow:0 8px 18px rgba(185,122,79,.28);
+  font-size:.98rem;
+  letter-spacing:.3px;
   text-align:center;
-  width:auto;
+  box-shadow:none;          /* sin resplandor */
+  transition:background .15s, border-color .15s, transform .05s, opacity .15s;
 }
+#info .pay-now:hover:not([disabled]){ background:#111922; border-color:var(--copper-2); }
+#info .pay-now:active:not([disabled]){ transform:translateY(1px); }
+#info .pay-now[disabled]{ opacity:.55; cursor:not-allowed; }
 
 /* ---- Promo code refinado ---- */
 .promo{
-  margin:14px 0 10px;   /* más espacio vertical */
+  margin:18px 0 12px;      /* más aire general */
 }
 
 .promo-field{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;             /* separación input/botón */
-  margin-top:6px;      /* espacio entre label y input */
+  gap:10px;                /* separación input/botón */
+  margin-top:8px;          /* entre label e input */
 }
 
 .promo-input{
-  width:min(280px, 70%);
-  height:40px;                      /* un poco más alto */
+  width:min(260px, 72%);   /* un poquito más compacto */
+  height:38px;             /* menos alto */
   border:1px solid var(--copper);
   background:#0a0f14;
   color:#ffddae;
-  padding:8px 16px;                 /* más respirado */
+  padding:6px 14px;        /* equilibrio visual */
   border-radius:999px;
   font-weight:700;
   letter-spacing:.25px;
@@ -229,33 +261,23 @@ button:active:not([disabled]){ transform:translateY(1px) }
   border-color:var(--copper);
 }
 
-/* Botón Apply sin glow */
+/* Botón Apply sin glow, consistente con los otros */
 .promo-btn{
-  min-height:40px;
-  padding:8px 16px;
+  min-height:38px;
+  padding:6px 16px;
   border-radius:999px;
-  border:1px solid var(--border);
+  border:1px solid var(--copper);
   background:#0d1319;
-  color:var(--muted-blue);
+  color:#b6c4d6;           /* azul-gris de la UI */
   font-weight:900;
   cursor:pointer;
-  box-shadow:none;
+  box-shadow:none;         /* sin resplandor */
   text-shadow:none;
-  transition:background .15s, border-color .15s, transform .05s;
+  transition:background .15s, border-color .15s, transform .05s, opacity .15s;
 }
-
-.promo-btn:hover:not([disabled]){
-  background:#10161d;
-}
-
-.promo-btn:active:not([disabled]){
-  transform:translateY(1px);
-}
-
-.promo-btn[disabled]{
-  opacity:.55;
-  cursor:not-allowed;
-}
+.promo-btn:hover:not([disabled]){ background:#10161d; border-color:var(--copper-2); }
+.promo-btn:active:not([disabled]){ transform:translateY(1px); }
+.promo-btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
 /* --- Google Maps / Places --- */
 .pac-container { z-index:10000 !important }
@@ -316,7 +338,7 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 .lugg-card{
   border:1px solid var(--border);
   border-radius:12px;
-  background:var(--panel);
+  background:#0d1319;
   box-shadow:0 8px 18px rgba(0,0,0,.22);
   overflow:hidden;
   padding:12px;
