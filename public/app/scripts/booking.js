@@ -2,7 +2,6 @@
    Depende de:
      - maps.js  → escucha 'bnz:calculate' y llama BNZ.renderQuote(leg,{surcharge})
      - stripe.js → usa window.__lastQuotedTotal, __vehicleType, __lastDistanceMiles
-     - flightcheck.js → window.lookupFlight(number, origin)
 */
 (function(){
   "use strict";
@@ -39,12 +38,9 @@
   ];
   const MUNICIPAL_KEYWORDS = ["municipal airport","city airport"];
 
-  // Normaliza texto
-  function norm(x){
-    return String(x || "").toLowerCase().replace(/\s+/g, " ").trim();
-  }
+  // Helpers de texto
+  const norm = (x)=>String(x||"").toLowerCase().replace(/\s+/g," ").trim();
 
-  // Texto “mejor” del pickup
   function getPickupText(){
     const inputVal = document.getElementById("pickup")?.value || "";
     const place = window.pickupPlace || null;
@@ -66,7 +62,6 @@
     return "other";
   }
 
-  // Texto parece SLC comercial (no JSX ni FBO)
   function looksLikeSLCCommercialByText(){
     const txt = getPickupText();
     if (!txt) return false;
@@ -76,7 +71,6 @@
     return isSLC && !isJSX && !isFBO;
   }
 
-  // ¿Pickup es SLC o JSX (para excepción de surcharge)?
   function isPickupSLCorJSX(){
     const txt = getPickupText();
     if (!txt) return false;
@@ -95,7 +89,6 @@
     last: null                 // último cálculo
   };
 
-  // Guarda totals para stripe.js
   function publishTotals(t){
     window.__lastQuotedTotal   = t.total;
     window.__lastDistanceMiles = t.miles;
@@ -112,7 +105,6 @@
     return miles * 5.4;
   }
 
-  // Vehículo
   function applyVehicle(total){
     return BNZ.state.vehicle === "van" ? Math.round(total * VAN_MULTIPLIER) : Math.round(total);
   }
@@ -161,7 +153,6 @@
     const okByText = looksLikeSLCCommercialByText();
     return okByPlace || okByText;
   }
-
   function mgFee(){ return BNZ.state.mgChoice !== "none" ? MG_FEE_USD : 0; }
 
   function mgSyncCard(){
@@ -182,7 +173,7 @@
   }
 
   // ────────────────────────────────────────────────────────────
-  // Flight UI — según categoría de pickup
+  // Flight UI — sin validación (todo opcional)
   // ────────────────────────────────────────────────────────────
   function flightSyncUI(){
     const box = document.getElementById("flightBox");
@@ -191,7 +182,6 @@
     const badge = document.getElementById("flightBadge");
     const title = document.getElementById("flightTitle");
     const explain = document.getElementById("flightExplain");
-    const hint = document.getElementById("flightHint");
     if(!box || !comm || !priv) return;
 
     const cat = pickupCategory();
@@ -204,33 +194,26 @@
       box.style.display = "block"; comm.style.display = "grid";
       badge.textContent = "Commercial";
       title.textContent = "Flight Details";
-      explain.textContent = "Please provide your airline flight number and the origin city.";
-      hint.textContent = "Example: DL1234 — Los Angeles (LAX).";
+      explain.textContent = "Optional: add your flight number and origin city to help your driver.";
     } else if (cat === "jsx") {
       box.style.display = "block"; comm.style.display = "grid";
       badge.textContent = "JSX";
       title.textContent = "JSX Flight";
-      explain.textContent = "JSX is trackable. Provide flight number and origin city.";
-      hint.textContent = "Example: XE123 — Burbank (BUR).";
+      explain.textContent = "Optional: add your JSX flight number and origin city.";
     } else if (cat === "fbo" || cat === "municipal") {
       box.style.display = "block"; priv.style.display = "block";
       badge.textContent = "Private / FBO";
       title.textContent = "Tail Number";
-      explain.textContent = "For private/FBO or municipal airports, provide the aircraft tail number.";
-      hint.textContent = "Example: N123AB. If tracking isn’t possible, leave blank and add details in Special Instructions.";
+      explain.textContent = "Optional: add the aircraft tail number (or details in Special Instructions).";
     }
   }
 
-  // Expuesto para maps.js (cuando cambia pickup)
   BNZ.onPickupPlaceChanged = function(){
     mgSyncCard();
     flightSyncUI();
   };
-
-  // También expuesto por conveniencia
   window.updateMeetGreetVisibility = mgSyncCard;
 
-  // Recalcular totales si ya hay leg
   window.recalcFromCache = function(){
     if (BNZ.state.last){
       BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
@@ -243,7 +226,6 @@
   BNZ.renderQuote = function(leg, {surcharge=0}={}){
     const miles = (leg?.distance?.value || 0) / 1609.34;
 
-    // Excepción: SLC/JSX sin distance surcharge
     let adjustedSurcharge = surcharge;
     if (isPickupSLCorJSX()) adjustedSurcharge = 0;
 
@@ -270,9 +252,6 @@
     if(!el) return;
 
     const distTxt = t.miles.toFixed(1) + " mi";
-    theDuration: {
-      /* keep original */
-    }
     const durTxt  = leg?.duration?.text || "";
     const rows = [
       t.surcharge>0 ? row("Distance Surcharge", t.surcharge) : "",
@@ -345,7 +324,7 @@
     }
   }
   const shouldToggle = (e) => !e.target.closest("a");
-  const toggleAccept = (e) => { if (shouldToggle(e)) { e.stopPropagation(); setAccepted(!isAccepted()); } };
+  const toggleAccept = (e) => { if (shouldToggle(e)) setAccepted(!isAccepted()); };
   ["click","pointerup","touchend"].forEach(evt=>{
     acceptPill?.addEventListener(evt, toggleAccept);
     termsSummary?.addEventListener(evt, toggleAccept);
@@ -418,86 +397,9 @@
   })();
 
   // ────────────────────────────────────────────────────────────
-  // FlightCheck API (preferir lookupFlight; fallback a POST /verify)
+  // Calculate (sin validar campos de vuelo)
   // ────────────────────────────────────────────────────────────
-  const FLIGHTCHECK_URL = window.__PUBLIC_CFG__?.FLIGHTCHECK_URL || window.__FLIGHTCHECK_URL || "";
-
-  async function postJSON(url, payload){
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    return res.json();
-  }
-
-  // Adapta cualquier respuesta razonable del backend
-  function shapeFlightcheckResponse(data){
-    const ok = !!(data.ok ?? data.valid ?? data.success ?? false);
-    const n  = data.normalized || data.data || data.result || null;
-    const msg = data.message || data.error || "";
-    return { ok, normalized:n, message:msg, raw:data };
-  }
-
-  async function verifyFlight(cat, flightNumber, originCity, tailNumber, whenISO){
-    // 1) Comercial/JSX: usa lookupFlight si existe
-    if ((cat === "slc" || cat === "pvu" || cat === "jsx") && typeof window.lookupFlight === "function") {
-      const r = await window.lookupFlight(flightNumber, originCity);
-      if (r && r.ok && r.flight){
-        const f = r.flight;
-        return {
-          ok:true,
-          normalized:{
-            type: cat === "jsx" ? "jsx" : "commercial",
-            airline: f.airline,
-            flightNumber: f.number || flightNumber,
-            originCity: f.origin || originCity,
-            scheduled: f.schedArrival,
-            estimated: f.estArrival,
-            status: f.status
-          },
-          message:"OK (lookupFlight)",
-          raw:r
-        };
-      }
-      // si falla, seguirá el fallback abajo
-    }
-
-    // 2) Fallback: POST a /verify o /check
-    if (!FLIGHTCHECK_URL) return { ok:false, normalized:null, message:"FlightCheck URL missing" };
-
-    const payload = { cat, flightNumber, originCity, tailNumber, whenISO };
-    try{
-      const data = await postJSON(`${FLIGHTCHECK_URL}/verify`, payload);
-      return shapeFlightcheckResponse(data);
-    }catch(_e1){
-      try{
-        const data2 = await postJSON(`${FLIGHTCHECK_URL}/check`, payload);
-        return shapeFlightcheckResponse(data2);
-      }catch(e2){
-        return { ok:false, normalized:null, message:`FlightCheck unreachable: ${e2.message}` };
-      }
-    }
-  }
-
-  function setFlightHint(text, good){
-    const el = document.getElementById("flightHint");
-    if (!el) return;
-    el.textContent = text || "";
-    el.style.color = good ? "#b7f2c6" : "var(--muted)";
-  }
-  function blockCalculate(block){
-    const btn = document.getElementById("calculate");
-    if (!btn) return;
-    btn.disabled = !!block;
-    btn.textContent = block ? "Verifying flight…" : "Calculate Price";
-  }
-
-  // ────────────────────────────────────────────────────────────
-  // Calculate
-  // ────────────────────────────────────────────────────────────
-  const handleCalculate = async ()=>{
+  const handleCalculate = ()=>{
     if (!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
 
     const need = ["fullname","phone","email","pickup","dropoff","date","time"];
@@ -512,86 +414,16 @@
     const dt = selectedDateTime();
     if (!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
-    // Datos de vuelo según categoría
+    // No se valida vuelo — solo se toma lo que haya (opcional)
     const cat = pickupCategory();
-    const flightNumberEl = document.getElementById("flightNumber");
-    const originCityEl   = document.getElementById("flightOrigin");
-    const tailNumberEl   = document.getElementById("tailNumber");
-
-    let flightNumber = flightNumberEl?.value?.trim();
-    let originCity   = originCityEl?.value?.trim();
-    let tailNumber   = tailNumberEl?.value?.trim();
-
-    // Normaliza formatos básicos
-    if (flightNumber) flightNumber = flightNumber.replace(/\s+/g,"").toUpperCase();
-    if (tailNumber)   tailNumber   = tailNumber.replace(/\s+/g,"").toUpperCase();
-
-    if (cat === "slc" || cat === "pvu" || cat === "jsx"){
-      if (!flightNumber || !originCity){
-        alert("Please provide Flight Number and Origin City for your arrival.");
-        document.getElementById("flightBox")?.scrollIntoView({behavior:"smooth",block:"center"});
-        return;
-      }
-    } else if (cat === "fbo" || cat === "municipal"){
-      if (!tailNumber){
-        alert("Please provide the aircraft Tail Number for private/FBO or municipal airports.");
-        document.getElementById("flightBox")?.scrollIntoView({behavior:"smooth",block:"center"});
-        return;
-      }
-    }
-
-    // Intento de verificación (opcional si falla)
-    const whenISO = document.getElementById("date")?.value
-      ? `${document.getElementById("date").value}T${document.getElementById("time").value || "00:00"}:00`
-      : null;
-
-    let verification = null;
-    try{
-      if (cat!=="other"){
-        setFlightHint("Verifying with FlightCheck…", false);
-        blockCalculate(true);
-        verification = await verifyFlight(cat, flightNumber, originCity, tailNumber, whenISO);
-      }
-    } finally {
-      blockCalculate(false);
-    }
-
-    if (verification && verification.ok && verification.normalized){
-      const n = verification.normalized;
-      if (n.flightNumber && flightNumberEl) {
-        flightNumberEl.value = String(n.flightNumber).toUpperCase();
-        flightNumber = flightNumberEl.value;
-      }
-      if (n.originCity && originCityEl) {
-        originCityEl.value = n.originCity + (n.originIata ? ` (${n.originIata})` : "");
-        originCity = originCityEl.value;
-      }
-      if (n.tailNumber && tailNumberEl) {
-        tailNumberEl.value = String(n.tailNumber).toUpperCase();
-        tailNumber = tailNumberEl.value;
-      }
-      setFlightHint(
-        n.status
-          ? `✓ Flight verified: ${n.status}${n.estimated ? ` — ETA ${n.estimated}` : ""}.`
-          : "✓ Flight verified.",
-        true
-      );
-    } else if (verification && !verification.ok){
-      setFlightHint(`⚠ Could not verify: ${verification.message || "service unavailable"}.`, false);
-    } else {
-      setFlightHint("", false);
-    }
+    const flightNumber = document.getElementById("flightNumber")?.value?.trim() || "";
+    const originCity   = document.getElementById("flightOrigin")?.value?.trim() || "";
+    const tailNumber   = document.getElementById("tailNumber")?.value?.trim() || "";
 
     if (document.activeElement?.blur) document.activeElement.blur();
 
     document.dispatchEvent(new CustomEvent("bnz:calculate", {
-      detail: {
-        flight: {
-          cat, flightNumber, originCity, tailNumber,
-          verified: !!(verification && verification.ok),
-          verification: verification || null
-        }
-      }
+      detail: { flight: { cat, flightNumber, originCity, tailNumber, verified:false, verification:null } }
     }));
   };
   document.getElementById("calculate")?.addEventListener("click", handleCalculate);
