@@ -40,15 +40,12 @@
 
   // Heber Valley Airport (Russ McDonald Field) — tratar como FBO
   const HEBER_MATCHES = [
-    "heber valley airport",
-    "heber city municipal",
-    "russ mcdonald field",
-    "khcr", "hcr",
-    "south airport road, heber city"
+    "heber valley airport","heber city municipal","russ mcdonald field",
+    "khcr","hcr","south airport road, heber city"
   ];
 
   // Normaliza texto
-  function norm(x){ return String(x || "").toLowerCase().replace(/\s+/g, " ").trim(); }
+  function norm(x){ return String(x || "").toLowerCase().replace(/\s+/g," ").trim(); }
 
   // Texto “mejor” del pickup
   function getPickupText(){
@@ -69,7 +66,7 @@
     if (hasAny(txt, JSX_MATCHES)) return "jsx";
     if (hasAny(txt, SLC_MATCHES)) return "slc";
     if (hasAny(txt, PVU_MATCHES)) return "pvu";
-    if (looksLikeHeber())         return "fbo";       // Heber como FBO
+    if (looksLikeHeber())         return "fbo";   // Heber como FBO
     if (hasAny(txt, FBO_MATCHES)) return "fbo";
     if (hasAny(txt, MUNICIPAL_KEYWORDS)) return "municipal";
     return "other";
@@ -156,15 +153,10 @@
     return (d < start) || (d > end);
   }
 
-  // Meet & Greet (visible sólo si SLC comercial y SUV)
+  // Meet & Greet (visible SOLO si SLC comercial y SUV)
   function mgShouldShow(){
     if (BNZ.state.vehicle !== "suv") return false;
-    const hasPlace = !!window.pickupPlace;
-    const okByPlace = hasPlace &&
-      typeof window.isSLCInternational === "function" &&
-      window.isSLCInternational(window.pickupPlace);
-    const okByText = looksLikeSLCCommercialByText();
-    return okByPlace || okByText;
+    return pickupCategory() === "slc";
   }
 
   function mgFee(){ return BNZ.state.mgChoice !== "none" ? MG_FEE_USD : 0; }
@@ -227,7 +219,6 @@
   }
 
   // Expuesto para maps.js (cuando cambia pickup)
-  const BNZ = window.BNZ || (window.BNZ = {});
   BNZ.onPickupPlaceChanged = function(){
     mgSyncCard();
     flightSyncUI();
@@ -248,12 +239,27 @@
   // ────────────────────────────────────────────────────────────
   function injectPayNow(){
     const box = document.getElementById("info");
-    const btn = document.getElementById("pay");
-    if (!box || !btn) return;
+    if (!box) return;
+
+    let btn = document.getElementById("pay");
+    if (!btn){
+      btn = document.createElement("button");
+      btn.id = "pay";
+      btn.textContent = "PAY NOW";
+      btn.disabled = true;
+    }
     btn.classList.add("pay-now");
     btn.style.display = "block";
-    // mueve el botón al final del resumen
+
+    // mueve/crea dentro del resumen
     if (btn.parentElement !== box) box.appendChild(btn);
+
+    // si existe un hook de stripe, lo invocamos; si no, emitimos evento
+    if (typeof window.wireStripePayButton === "function"){
+      try { window.wireStripePayButton(btn); } catch(_e){}
+    } else {
+      document.dispatchEvent(new CustomEvent("bnz:pay-mounted", { detail:{ button: btn }}));
+    }
   }
 
   BNZ.renderQuote = function(leg, {surcharge=0}={}){
@@ -332,7 +338,7 @@
   const termsSummary = document.querySelector("#termsBox .terms-summary");
   const acceptLabel  = document.querySelector("#termsBox .accept-label");
   const calcBtn      = document.getElementById("calculate");
-  const payBtn       = document.getElementById("pay");
+  let   payBtn       = document.getElementById("pay"); // puede no existir aún
 
   function isAccepted(){
     return acceptPill?.classList.contains("on") ||
@@ -350,6 +356,8 @@
     enablePayIfReady();
   }
   function enablePayIfReady(){
+    // si el botón aún no existe, lo intentamos localizar (por si ya se creó)
+    payBtn = payBtn || document.getElementById("pay");
     const ready = !!window.__lastQuotedTotal && isAccepted();
     if (payBtn){
       payBtn.disabled = !ready;
@@ -360,7 +368,6 @@
   const shouldToggle = (e) => !e.target.closest("a");
   const toggleAccept = (e) => { if (shouldToggle(e)) { e.stopPropagation(); setAccepted(!isAccepted()); } };
 
-  // Escuchas: click + pointer + touch para iPhone (un solo toque)
   ["click","pointerup","touchend"].forEach(evt=>{
     acceptPill?.addEventListener(evt, toggleAccept, { passive:true });
     termsSummary?.addEventListener(evt, toggleAccept, { passive:true });
