@@ -162,17 +162,20 @@ button:active:not([disabled]){ transform:translateY(1px) }
 
 .tax-note{ color:var(--muted-blue); font-size:.82rem; }
 
-/* PAY NOW dentro del summary (más pequeño y bonito) */
+/* PAY NOW dentro del summary (más pequeño, centrado y elegante) */
 #info .pay-now{
-  width:100%;
+  display:block;
+  margin:14px auto 8px;       /* centrado */
+  padding:10px 28px;          /* más compacto en horizontal */
   min-height:40px;
-  padding:10px 16px;
-  margin-top:8px;
-  border-radius:999px;
+  min-width:160px;            /* evita que se vea demasiado chico */
+  border-radius:999px;        /* pill */
   font-weight:900;
   font-size:.95rem;
   background:linear-gradient(180deg, #d7a577, #b97a4f);
   box-shadow:0 8px 18px rgba(185,122,79,.28);
+  text-align:center;
+  width:auto;                 /* no ocupa todo */
 }
 
 /* --- Google Maps / Places --- */
