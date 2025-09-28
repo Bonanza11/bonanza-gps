@@ -20,23 +20,13 @@
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
-      MAP_ID:    "b2ff3b1036f246da10cb0dea",  // Map ID oscuro
+      MAP_ID:    "b2ff3b1036f246da10cb0dea",
       STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
-      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app" // (no se usa por ahora)
+      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"
     };
-    // espejo para JS antiguos si hiciera falta
+    // espejo para booking.js
     window.__FLIGHTCHECK_URL = window.__PUBLIC_CFG__.FLIGHTCHECK_URL;
   </script>
-
-  <!-- Micro estilos del bloque de vuelo (espaciado extra) -->
-  <style>
-    .flight-box{ border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:14px 14px; }
-    .flight-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    .flight-field{ display:flex; flex-direction:column; gap:8px; }        /* ← separa label / input */
-    @media (max-width:640px){ .flight-grid{ grid-template-columns:1fr } }
-    .badge{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:#ffdeb3; margin-left:6px; font-size:.78rem }
-    .muted{ color:#9fb0c3; font-size:.9rem; }
-  </style>
 </head>
 <body>
   <header>
@@ -77,35 +67,36 @@
       </div>
     </div>
 
-    <!-- VUELO / ORIGEN -->
+    <!-- Flight / Tail -->
     <div class="flight-box" id="flightBox" style="display:none">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
         <span id="flightBadge" class="badge">Commercial</span>
       </div>
-      <div id="flightExplain" class="muted" style="margin-bottom:6px"></div>
+      <div id="flightExplain" class="muted"></div>
 
       <!-- Commercial / JSX -->
       <div id="flightCommercial" class="flight-grid" style="display:none">
-        <div class="flight-field">
+        <div class="field-col">
           <label for="flightNumber">Flight Number</label>
           <input id="flightNumber" placeholder="e.g. DL1234" autocomplete="off" />
         </div>
-        <div class="flight-field">
+        <div class="field-col">
           <label for="flightOrigin">Origin City</label>
           <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
         </div>
       </div>
 
-      <!-- FBO / Municipales (private) -->
+      <!-- Private / FBO / Municipales -->
       <div id="flightPrivate" class="flight-grid" style="display:none">
-        <div class="flight-field">
+        <div class="field-col">
           <label for="tailNumber">Tail Number</label>
           <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
+          <div class="hint" id="tailHint" aria-hidden="true"></div>
         </div>
-        <div id="privOriginWrap" class="flight-field">
-          <label for="flightCityPrivate">City (Origin or Destination)</label>
-          <input id="flightCityPrivate" placeholder="e.g. Burbank (BUR) or Denver (DEN)" autocomplete="off" />
+        <div class="field-col">
+          <label for="fboCity">City (Origin or Destination)</label>
+          <input id="fboCity" placeholder="e.g. Burbank (BUR) or Denver (DEN)" autocomplete="off" />
         </div>
       </div>
 
@@ -219,6 +210,7 @@
       const acc=document.getElementById("luggageAccordion");
       acc?.querySelector(".luggage-summary")?.addEventListener("click",()=>acc.classList.toggle("open"));
 
+      // Accesibilidad: Enter/Espacio en toda la fila de T&C
       const ts = document.querySelector("#termsBox .terms-summary");
       ts?.addEventListener("keydown", (e)=>{
         if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
