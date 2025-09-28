@@ -227,48 +227,52 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   #flightBox .flight-grid, #flightPrivate .flight-grid{ grid-template-columns:1fr; row-gap:14px }
   #flightCommercial .field-col > label, #flightPrivate .field-col > label{ min-height:0 }
 }
+
 /* =================== Luggage — Pro cards =================== */
-/* Contenedor general dentro del acordeón */
 .lugg-policy{
   display:grid;
-  gap:12px;
+  gap:14px;
 }
 
-/* Tarjeta */
 .lugg-card{
   border:1px solid var(--border);
-  border-radius:12px;
-  background:var(--panel);
-  box-shadow:0 8px 18px rgba(0,0,0,.22);
-  overflow:hidden;
-  padding:12px;
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,0)),
+             var(--panel-2);
+  box-shadow:0 6px 14px rgba(0,0,0,.25);
+  padding:14px;
 }
 
-/* Header: título + mini foto a la derecha */
 .lugg-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
-  padding-bottom:8px;
-  border-bottom:1px solid rgba(155,178,203,.18);
+  gap:14px;
+  margin-bottom:12px;
 }
+
 .lugg-title{
   margin:0;
-  font-size:1.02rem;
+  font-size:1.05rem;
   font-weight:900;
   letter-spacing:.2px;
   color:#ffdeb3;
-}
-.lugg-thumb{
-  width:120px;           /* controla tamaño de imagen */
-  max-height:72px;
-  object-fit:contain;    /* nunca se deforma */
-  display:block;
-  filter:drop-shadow(0 2px 8px rgba(0,0,0,.35));
+  flex:1;
 }
 
-/* Cuerpo con las dos opciones en columnas (desktop) */
+.lugg-thumb{
+  display:block;
+  max-width:160px;
+  max-height:90px;
+  object-fit:contain;
+  margin:0 auto;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));
+  background:transparent;   /* elimina recuadro */
+  border-radius:8px;
+  padding:4px;
+}
+
+/* Opciones en columnas */
 .lugg-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -279,7 +283,6 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   .lugg-grid{ grid-template-columns:1fr }
 }
 
-/* Cada opción en su “cajita” */
 .lugg-opt{
   border:1px solid var(--border);
   border-radius:10px;
@@ -287,7 +290,6 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   padding:10px 12px;
 }
 
-/* Títulos/Notas con azul grisáceo de tu paleta */
 .lugg-opt-title{
   font-weight:800;
   color:var(--muted-blue);
@@ -299,7 +301,6 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   margin-bottom:6px;
 }
 
-/* Listas limpias y legibles */
 .lugg-list{
   margin:0 0 0 18px;
   padding:0;
