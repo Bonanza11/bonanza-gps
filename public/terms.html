@@ -5,28 +5,29 @@
   <title>Terms & Conditions — Bonanza Transportation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/images/bonanza-logo.png">
-  <link rel="stylesheet" href="/app/styles/app.css?v=14">
+  <link rel="stylesheet" href="/app/styles/app.css?v=15">
   <style>
     body{ background:#000; }
-    main{ max-width:860px; margin:32px auto 24px; padding:0 16px; }
+    main{ max-width:860px; margin:32px auto 24px; padding:0 16px; text-align:center; }
 
-    /* Botón volver */
+    /* Botón volver (centrado, más pequeño) */
     .back-link{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 18px; border-radius:999px;
-      font-weight:800; font-size:.95rem;
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      padding:6px 14px;
+      border-radius:999px;
+      font-weight:700; font-size:.88rem;
       border:1px solid var(--copper);
       background:#0c0c0c;
       color:var(--muted-blue);
       text-decoration:none;
-      box-shadow:0 6px 14px rgba(0,0,0,.35);
+      box-shadow:0 4px 12px rgba(0,0,0,.35);
       transition:all .25s ease;
+      margin:0 auto 18px;
     }
     .back-link:hover{
-      background:linear-gradient(180deg,var(--copper-2),var(--copper));
-      color:#111;
-      border-color:var(--copper-2);
-      box-shadow:0 8px 22px rgba(168,116,79,.45);
+      border-color:#ffdeb3;
+      box-shadow:0 0 10px rgba(255,222,179,.7), 0 0 18px rgba(200,147,102,.6);
+      color:#ffdeb3;
     }
 
     /* Contenedor general */
@@ -35,6 +36,7 @@
       flex-direction:column;
       gap:16px;
       margin-top:20px;
+      text-align:left;
     }
 
     /* Card individual */
@@ -132,7 +134,7 @@
 </head>
 <body>
   <main>
-    <a class="back-link" id="backLink" href="/">← Back to booking</a>
+    <a class="back-link" id="backLink" href="/">← Back</a>
 
     <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation">
 
