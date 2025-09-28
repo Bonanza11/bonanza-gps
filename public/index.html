@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#0a0c0f" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#000000"   media="(prefers-color-scheme: light)">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <link rel="stylesheet" href="/app/styles/app.css?v=5" />
 
@@ -20,8 +20,9 @@
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
-      MAP_ID:    "1803eda89e913c8354156119", // ← estilo oscuro nuevo
-      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
+      MAP_ID:    "b2ff3b1036f246da10cb0dea",  // tu Map ID oscurecido
+      STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
+      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"  // ← tu Cloud Run
     };
   </script>
 
@@ -32,25 +33,6 @@
     @media (max-width:640px){ .flight-grid{ grid-template-columns:1fr } }
     .badge{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:#ffdeb3; margin-left:6px; font-size:.78rem }
     .muted{ color:#9fb0c3; font-size:.9rem; }
-
-    /* === iOS autofill (evita el amarillo y mantiene el dark theme) === */
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover,
-    input:-webkit-autofill:focus,
-    textarea:-webkit-autofill,
-    textarea:-webkit-autofill:hover,
-    textarea:-webkit-autofill:focus,
-    select:-webkit-autofill,
-    select:-webkit-autofill:hover,
-    select:-webkit-autofill:focus{
-      -webkit-text-fill-color:#ffddae;
-      caret-color:#ffddae;
-      transition: background-color 9999s ease-in-out 0s;
-      box-shadow: 0 0 0px 1000px #0a0f14 inset; /* mismo fondo que inputs en app.css */
-      border-radius:10px; /* coincide con tus inputs */
-    }
-    /* Barra inferior (notch) negra en iOS */
-    body{ background:#000; color:#e9d5c1; }
   </style>
 </head>
 <body>
@@ -156,9 +138,7 @@
         <span class="luggage-title">Luggage Guidelines</span>
         <span class="luggage-chev"></span>
       </div>
-      <div class="luggage-body">
-        <!-- contenido detallado de equipaje -->
-      </div>
+      <div class="luggage-body"></div>
     </div>
 
     <!-- Terms -->
@@ -186,6 +166,7 @@
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
+  <script src="/app/scripts/flight.js" defer></script>   <!-- ← NUEVO -->
 
   <!-- ====== Google Maps (orden importante) ====== -->
   <script src="/app/scripts/maps-loader.js"></script>
@@ -225,18 +206,12 @@
         if(typeof window.recalcFromCache==="function") window.recalcFromCache();
       }
       btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
-      if(img){
-        img.onerror=()=>{ img.removeAttribute("src"); img.alt=window.__vehicleType.toUpperCase();
-          img.style.cssText="width:120px;height:80px;background:#1a1a1a;border:1px solid #444;border-radius:8px;";
-        };
-      }
       setActive(window.__vehicleType);
 
       const acc=document.getElementById("luggageAccordion");
       const sum=acc?.querySelector(".luggage-summary");
       sum?.addEventListener("click",()=>acc.classList.toggle("open"));
 
-      // Accesibilidad: Enter/Espacio en toda la fila de T&C
       const ts = document.querySelector("#termsBox .terms-summary");
       ts?.addEventListener("keydown", (e)=>{
         if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
