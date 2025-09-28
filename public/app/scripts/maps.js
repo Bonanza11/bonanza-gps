@@ -1,7 +1,7 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 ──────────────────────────────────────────────────────────────
-- Inicializa mapa con Map ID.
+- Inicializa mapa con Map ID (desde window.__PUBLIC_CFG__.MAP_ID).
 - Autocomplete clásico (estable).
 - Calcula ruta al disparar "bnz:calculate" y notifica BNZ.renderQuote(leg,{ surcharge }).
 - Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
@@ -11,13 +11,37 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
   const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
   const BASE_ADDRESS   = "13742 N Jordanelle Pkwy, Kamas, UT 84036";
-  const MAP_ID         = "be9f7b3d0f62a46ba10dc0ba"; // <-- tu Map ID
+
+  // ← usa el MAP_ID de la config pública; fallback al estilo oscuro nuevo
+  const MAP_ID = (window.__PUBLIC_CFG__ && window.__PUBLIC_CFG__.MAP_ID)
+    ? window.__PUBLIC_CFG__.MAP_ID
+    : "1803eda89e913c8354156119";
 
   let map, dirService, dirRenderer;
   let originText = "", destinationText = "";
 
   window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
+
+  // Alias disponibles para booking.js (fallback de texto)
+  window.BNZ_AIRPORTS = window.BNZ_AIRPORTS || {
+    slcNames: [
+      "salt lake city international airport",
+      "slc airport",
+      "slc intl",
+      "slc int’l",
+      "salt lake city airport",
+      "w terminal dr, salt lake city",
+      "slc terminal"
+    ],
+    jsxNames: [
+      "jsx",
+      "jsx slc",
+      "jsx terminal",
+      "jsx salt lake",
+      "signature flight support jsx"
+    ]
+  };
 
   // ─────────────── helpers
   function isAirport(place) {
@@ -44,7 +68,10 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     if (!place) return false;
     const name = (place.name || "").toLowerCase();
     const addr = (place.formatted_address || "").toLowerCase();
-    const hit  = /salt lake city international/.test(name) || /salt lake city international/.test(addr) || /\bslc\b/.test(name) || /\bslc\b/.test(addr);
+    const hit  =
+      /salt lake city international/.test(name) ||
+      /salt lake city international/.test(addr) ||
+      /\bslc\b/.test(name) || /\bslc\b/.test(addr);
     return hit && isAirport(place) && !isPrivateUtahAirport(place);
   }
   window.isSLCInternational = isSLCInternational;
@@ -108,6 +135,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     const pickupIsAir = !!pickup && isAirport(pickup);
 
+    // Si el pickup es aeropuerto y el drop NO es Summit/Wasatch → recargo desde base→pickup
     if (pickupIsAir) {
       const dropAllowed = ALLOWED_RX.test(dropCounty);
       if (!dropAllowed && pickup?.place_id) {
@@ -117,6 +145,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       return 0;
     }
 
+    // Si el pickup NO es Summit/Wasatch → recargo desde base→pickup
     const pickupAllowed = ALLOWED_RX.test(pickupCounty);
     if (!pickupAllowed && pickup?.place_id) {
       const miles = await milesFromBaseTo(pickup.place_id);
@@ -162,7 +191,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       }
     });
 
-    // Cache de texto libre
+    // Cache de texto libre (por si el usuario no selecciona una sugerencia)
     ["input","change","blur"].forEach(ev => {
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
