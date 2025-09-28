@@ -26,17 +26,11 @@ header{ display:flex; justify-content:center; padding:18px 12px }
 
 /* Logo superior integrado — versión más grande, sin borde */
 header .logo {
-  width:240px;
-  height:240px;
-  border-radius:50%;
+  width:240px; height:240px; border-radius:50%;
   padding:12px;
-  background:radial-gradient(circle at center, #10151b 0%, #0a0c0f 70%, #000 100%);
-  box-shadow:
-    0 0 14px rgba(0,0,0,.55),
-    0 8px 20px rgba(0,0,0,.7),
-    inset 0 0 10px rgba(0,0,0,.35);
-  object-fit:contain;
-  display:block;
+  background:radial-gradient(circle at center,#10151b 0%, #0a0c0f 70%, #000 100%);
+  box-shadow:0 0 14px rgba(0,0,0,.55), 0 8px 20px rgba(0,0,0,.7), inset 0 0 10px rgba(0,0,0,.35);
+  object-fit:contain; display:block;
 }
 
 /* Contenedor principal */
@@ -169,44 +163,11 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .breakdown .row span:first-child{ color:var(--muted-blue); font-weight:700 }
 .breakdown .row span:last-child{ font-weight:800; color:#f2e6d6 }
 
-/* Descuento en verde suave (sin romper paleta) */
-.discount-row span:last-child{ color:#9fd0b6; }
-
-/* Promo UI */
-.promo-box{
-  margin-top:8px;
-  padding:10px 0 4px;
-}
-.promo-row{
-  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-}
-.promo-input{
-  flex:1 1 220px; min-width:200px;
-  min-height:40px; border-radius:999px;
-  border:1px solid var(--border);
-  background:#0d1319; color:#dfe8f3;
-  padding:10px 14px; font-weight:700;
-}
-.promo-input::placeholder{ color:#b6c4d6; opacity:.8; }
-.promo-apply{
-  border:1px solid rgba(182,196,214,.55);
-  background:linear-gradient(180deg, #15202a, #0f171f);
-  color:#dfe8f3; font-weight:900;
-  padding:10px 16px; min-height:40px; border-radius:999px;
-  box-shadow:0 8px 18px rgba(0,0,0,.25);
-}
-.promo-apply:hover{ filter:saturate(1.05) brightness(1.03) }
-.promo-help{
-  margin-top:6px; font-size:.85rem; color:#9fb0c3;
-}
-.promo-help.ok{ color:#9fd0b6; }
-.promo-help.err{ color:#c9a3a3; }
-
 .ts-total{ display:flex; justify-content:space-between; align-items:center; padding-top:6px; }
 .ts-total span:first-child{ font-weight:900; color:#eedac4; letter-spacing:.2px }
 .ts-total span:last-child{ font-weight:900; font-size:1.05rem; color:#fff2e2 }
 
-.tax-note{ color:#var(--muted-blue); font-size:.82rem; margin-top:4px }
+.tax-note{ color:var(--muted-blue); font-size:.82rem; margin-top:4px }
 
 /* PAY NOW dentro del summary (compacto, centrado, elegante) */
 #info .pay-now{
@@ -223,6 +184,29 @@ button:active:not([disabled]){ transform:translateY(1px) }
   text-align:center;
   width:auto;
 }
+
+/* ---- Promo code (diseño fino, centrado, borde delgado) ---- */
+.promo{ margin:8px 0 4px }
+.promo-field{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.promo-input{
+  width:min(340px, 80%); height:40px;
+  border:1px solid var(--copper);       /* borde delgado */
+  background:#0a0f14; color:#ffddae;
+  padding:8px 14px; border-radius:999px;
+  font-weight:800; letter-spacing:.3px;
+}
+.promo-input::placeholder{ color:#cba686; opacity:.6 }
+.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
+.promo-btn{
+  min-height:36px; padding:8px 14px; border-radius:999px;
+  border:1px solid var(--border);
+  background:#0e141b; color:var(--muted-blue);
+  font-weight:900; cursor:pointer;
+}
+.promo-btn:hover:not([disabled]){ filter:saturate(1.05) brightness(1.03) }
+.promo-btn[disabled]{ opacity:.55; cursor:not-allowed }
 
 /* --- Google Maps / Places --- */
 .pac-container { z-index:10000 !important }
@@ -276,35 +260,25 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 }
 
 /* =================== Luggage — Pro cards =================== */
-.lugg-policy{ display:grid; gap:12px; }
+.lugg-policy{ display:grid; gap:12px }
 .lugg-card{
   border:1px solid var(--border);
   border-radius:12px;
   background:var(--panel);
   box-shadow:0 8px 18px rgba(0,0,0,.22);
-  overflow:hidden;
-  padding:12px;
+  overflow:hidden; padding:12px;
 }
 .lugg-head{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   padding-bottom:8px; border-bottom:1px solid rgba(155,178,203,.18);
 }
-.lugg-title{
-  margin:0; font-size:1.02rem; font-weight:900; letter-spacing:.2px; color:#ffdeb3;
-}
-.lugg-thumb{
-  width:120px; max-height:72px; object-fit:contain; display:block;
-  filter:drop-shadow(0 2px 8px rgba(0,0,0,.35));
-  background:transparent;
-  mix-blend-mode:screen;   /* 🔥 Fusión con el fondo */
-}
-.lugg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; }
+.lugg-title{ margin:0; font-size:1.02rem; font-weight:900; letter-spacing:.2px; color:#ffdeb3 }
+.lugg-thumb{ width:120px; max-height:72px; object-fit:contain; display:block; filter:drop-shadow(0 2px 8px rgba(0,0,0,.35)); background:transparent; mix-blend-mode:screen }
+.lugg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px }
 @media (max-width:720px){ .lugg-grid{ grid-template-columns:1fr } }
-.lugg-opt{
-  border:1px solid var(--border); border-radius:10px; background:#0d1319; padding:10px 12px;
-}
-.lugg-opt-title{ font-weight:800; color:var(--muted-blue); margin-bottom:2px; }
-.lugg-sub{ color:var(--muted-blue); font-size:.9rem; margin-bottom:6px; }
-.lugg-list{ margin:0 0 0 18px; padding:0; }
-.lugg-list li{ color:#dfe8f3; line-height:1.35; margin:4px 0; }
+.lugg-opt{ border:1px solid var(--border); border-radius:10px; background:#0d1319; padding:10px 12px }
+.lugg-opt-title{ font-weight:800; color:var(--muted-blue); margin-bottom:2px }
+.lugg-sub{ color:var(--muted-blue); font-size:.9rem; margin-bottom:6px }
+.lugg-list{ margin:0 0 0 18px; padding:0 }
+.lugg-list li{ color:#dfe8f3; line-height:1.35; margin:4px 0 }
 .lugg-list li::marker{ color:var(--muted-blue) }
