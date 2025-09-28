@@ -19,10 +19,10 @@ html,body{
   margin:0; padding:0; background:#000; color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
-  -webkit-text-size-adjust:100%;               /* evita zoom raro en iOS */
+  -webkit-text-size-adjust:100%;
 }
 :focus-visible{ outline:2px solid #c89366; outline-offset:2px }
-a,button{ -webkit-tap-highlight-color: transparent } /* quita flash azul iOS */
+a,button{ -webkit-tap-highlight-color: transparent }
 
 header{ display:flex; justify-content:center; padding:18px 12px }
 .logo{ width:160px; height:auto; filter:drop-shadow(0 6px 18px rgba(0,0,0,.35)) }
@@ -31,17 +31,17 @@ header{ display:flex; justify-content:center; padding:18px 12px }
 main{
   width:min(920px, 92vw); margin:0 auto; padding:12px;
   display:flex; flex-direction:column; gap:12px;
-  padding-left: max(12px, env(safe-area-inset-left));   /* iPhone notches */
+  padding-left: max(12px, env(safe-area-inset-left));
   padding-right:max(12px, env(safe-area-inset-right));
 }
 
 /* =================== Inputs =================== */
 label{ font-weight:700; color:#ffdeb3; margin-top:8px }
 input, textarea, select{
-  width:100%; min-height:44px;                  /* 44px táctil */
+  width:100%; min-height:44px;
   border-radius:10px; outline:none;
   border:1px solid var(--border); background:#0a0f14; color:#ffddae;
-  padding:10px 12px; font-size:16px;            /* 16px evita zoom en iOS */
+  padding:10px 12px; font-size:16px;
   transition:border .15s, box-shadow .15s, background .15s, color .15s;
 }
 textarea{ min-height:96px; resize:vertical }
@@ -51,7 +51,7 @@ input:focus, textarea:focus, select:focus{
 ::placeholder{ color:#cba686; opacity:.75 }
 .hint{ font-size:12px; color:var(--muted); margin-top:2px }
 
-/* Helper de inválido (tu estilo) */
+/* Helper de inválido */
 .invalid{ border-color:#b74a4a !important; box-shadow:0 0 0 3px rgba(183,74,74,.22) !important }
 
 /* Grid 2 cols (fecha/hora) */
@@ -181,6 +181,8 @@ button:active:not([disabled]){ transform:translateY(1px) }
   padding:10px 12px; min-height:120px; color:#d7e3f0;
   position:relative; z-index:2;
 }
+/* Botón PAY NOW dentro del resumen */
+#info .pay-now{ width:100%; margin-top:10px }
 
 /* --- Google Maps / Places hardening --- */
 .pac-container { z-index: 10000 !important; }
@@ -250,11 +252,24 @@ select:-webkit-autofill:focus {
 #flightPrivate input{ padding:14px 16px; min-height:48px; }
 #flightPrivateHint{ color:var(--muted); margin-top:6px; }
 
+/* ► FIX de alineación: forzamos misma altura de label en ambas columnas */
+#flightCommercial .field-col > label,
+#flightPrivate .field-col > label{
+  display:block;
+  min-height:40px;              /* ~2 líneas; evita que una columna quede más alta/baja */
+  margin:0 0 8px;
+  line-height:1.25;
+}
+
 /* En móvil */
 @media (max-width:640px){
   #flightBox .flight-grid,
   #flightPrivate .flight-grid{
     grid-template-columns:1fr;
     row-gap:14px;
+  }
+  #flightCommercial .field-col > label,
+  #flightPrivate .field-col > label{
+    min-height:0;               /* en 1 columna no hace falta forzar altura */
   }
 }
