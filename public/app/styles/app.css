@@ -262,14 +262,24 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 
 .lugg-thumb{
   display:block;
-  max-width:160px;
-  max-height:90px;
+  width:100%;
+  max-width:200px;
+  height:auto;
   object-fit:contain;
   margin:0 auto;
   filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));
-  background:transparent;   /* elimina recuadro */
+  background:transparent;
   border-radius:8px;
   padding:4px;
+}
+
+/* Escala dinámica: en pantallas grandes crece hasta 220px */
+@media (min-width:1024px){
+  .lugg-thumb{ max-width:220px; }
+}
+/* En móvil se compacta un poco */
+@media (max-width:640px){
+  .lugg-thumb{ max-width:160px; }
 }
 
 /* Opciones en columnas */
