@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#0a0c0f" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#000000"   media="(prefers-color-scheme: light)">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <link rel="stylesheet" href="/app/styles/app.css?v=5" />
 
@@ -20,7 +20,7 @@
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
-      MAP_ID:    "be9f7b3d0f62a46ba10dc0ba",
+      MAP_ID:    "1803eda89e913c8354156119", // ← estilo oscuro nuevo
       STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp"
     };
   </script>
@@ -32,6 +32,25 @@
     @media (max-width:640px){ .flight-grid{ grid-template-columns:1fr } }
     .badge{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:#ffdeb3; margin-left:6px; font-size:.78rem }
     .muted{ color:#9fb0c3; font-size:.9rem; }
+
+    /* === iOS autofill (evita el amarillo y mantiene el dark theme) === */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus,
+    select:-webkit-autofill,
+    select:-webkit-autofill:hover,
+    select:-webkit-autofill:focus{
+      -webkit-text-fill-color:#ffddae;
+      caret-color:#ffddae;
+      transition: background-color 9999s ease-in-out 0s;
+      box-shadow: 0 0 0px 1000px #0a0f14 inset; /* mismo fondo que inputs en app.css */
+      border-radius:10px; /* coincide con tus inputs */
+    }
+    /* Barra inferior (notch) negra en iOS */
+    body{ background:#000; color:#e9d5c1; }
   </style>
 </head>
 <body>
