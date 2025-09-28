@@ -14,7 +14,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <link rel="stylesheet" href="/app/styles/app.css?v=6" />
+  <!-- ↑ bump a v=7 para forzar refresco de estilos -->
+  <link rel="stylesheet" href="/app/styles/app.css?v=7" />
 
   <!-- Config pública -->
   <script>
@@ -73,7 +74,6 @@
         <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
         <span id="flightBadge" class="badge">Commercial</span>
       </div>
-      <!-- Este texto lo rellena booking.js según categoría -->
       <div id="flightExplain" class="muted"></div>
 
       <!-- Commercial / JSX -->
@@ -101,7 +101,6 @@
         </div>
       </div>
 
-      <!-- Mensaje inferior de ayuda/estado -->
       <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
 
@@ -158,6 +157,7 @@
     <!-- Acciones -->
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
+    <!-- El botón #pay se insertará dentro de #info después del cálculo -->
     <button id="pay" disabled style="display:none">PAY NOW</button>
 
     <!-- Resumen -->
