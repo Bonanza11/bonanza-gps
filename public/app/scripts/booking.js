@@ -343,7 +343,7 @@
     }
   }
   const shouldToggle = (e) => !e.target.closest("a");
-  const toggleAccept = (e) => { if (shouldToggle(e)) setAccepted(!isAccepted()); };
+  const toggleAccept = (e) => { if (shouldToggle(e)) { e.stopPropagation(); setAccepted(!isAccepted()); } };
   ["click","pointerup","touchend"].forEach(evt=>{
     acceptPill?.addEventListener(evt, toggleAccept);
     termsSummary?.addEventListener(evt, toggleAccept);
@@ -431,7 +431,7 @@
   }
 
   /**
-   * Verifica/normailza datos de vuelo.
+   * Verifica/normaliza datos de vuelo.
    * Devuelve { ok, normalized, message, raw }
    *  normalized (posibles campos):
    *   - type: "commercial"|"jsx"|"private"
@@ -439,19 +439,15 @@
    *   - tailNumber
    */
   async function verifyFlight(cat, flightNumber, originCity, tailNumber, whenISO){
-    // No hay nada que verificar
     if (!(cat==="slc"||cat==="pvu"||cat==="jsx"||cat==="fbo"||cat==="municipal")) {
       return { ok:true, normalized:null, message:"No flight verification needed" };
     }
-
     const payload = { cat, flightNumber, originCity, tailNumber, whenISO };
 
-    // 1) intenta /verify
     try{
       const data = await postJSON(`${FLIGHTCHECK_URL}/verify`, payload);
       return shapeFlightcheckResponse(data);
     }catch(_e1){
-      // 2) fallback /check (por si usaste ese path)
       try{
         const data2 = await postJSON(`${FLIGHTCHECK_URL}/check`, payload);
         return shapeFlightcheckResponse(data2);
@@ -463,7 +459,6 @@
 
   // Adapta cualquier respuesta razonable del backend
   function shapeFlightcheckResponse(data){
-    // Permite varios esquemas.
     const ok = !!(data.ok ?? data.valid ?? data.success ?? false);
     const n  = data.normalized || data.data || data.result || null;
     const msg = data.message || data.error || "";
@@ -511,6 +506,10 @@
     let flightNumber = flightNumberEl?.value?.trim();
     let originCity   = originCityEl?.value?.trim();
     let tailNumber   = tailNumberEl?.value?.trim();
+
+    // Normaliza formatos básicos
+    if (flightNumber) flightNumber = flightNumber.replace(/\s+/g,"").toUpperCase();
+    if (tailNumber)   tailNumber   = tailNumber.replace(/\s+/g,"").toUpperCase();
 
     if (cat === "slc" || cat === "pvu" || cat === "jsx"){
       if (!flightNumber || !originCity){
