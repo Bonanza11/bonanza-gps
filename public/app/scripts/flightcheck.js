@@ -12,13 +12,16 @@
     });
     try{
       const res = await fetch(FC_URL + "?" + params.toString(), {
-        method: "GET", mode: "cors", headers: { "Accept":"application/json" }
+        method: "GET",
+        mode: "cors",
+        headers: { "Accept":"application/json" }
       });
       if (!res.ok) return { ok:false, error:"http_"+res.status };
       const data = await res.json();
-      return data; // esperado: { ok:true, flight:{ number, origin, schedArrival, estArrival, status, airline } }
+      // esperado: { ok:true, flight:{ number, origin, schedArrival, estArrival, status, airline } }
+      return data;
     }catch(err){
-      return { ok:false, error:String(err && err.message || err) };
+      return { ok:false, error:String((err && err.message) || err) };
     }
   }
 
