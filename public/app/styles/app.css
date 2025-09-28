@@ -75,13 +75,21 @@ input:focus, textarea:focus, select:focus{
 .veh-btn{
   flex:1 1 320px; min-height:44px; padding:12px 14px; cursor:pointer; border-radius:12px;
   border:2px solid var(--border); background:#0e141b; color:#ffddae; font-weight:800;
-  transition:filter .15s, transform .05s, background .15s, border-color .15s;
+  transition:filter .15s, transform .05s, background .15s, border-color .15s, box-shadow .15s, color .15s;
 }
 .veh-btn:hover{ filter:saturate(1.05) brightness(1.03) }
 .veh-btn:active{ transform:translateY(1px) }
 .veh-btn.active{
   background:linear-gradient(180deg,var(--copper-2),var(--copper));
   color:#111; box-shadow:var(--ring); border-color:var(--copper);
+}
+
+/* Toque oro coherente en hover/active para SUV/Van */
+.veh-btn:hover{
+  border-color:#d9a575; box-shadow:inset 0 0 0 1px rgba(231,185,133,.14), 0 6px 14px rgba(231,185,133,.10);
+}
+.veh-btn:active{
+  background:linear-gradient(180deg,#f0c892,#d9a575); color:#111; border-color:#f0c892;
 }
 
 /* =================== Turntable visual =================== */
@@ -95,10 +103,15 @@ input:focus, textarea:focus, select:focus{
 /* =================== Meet & Greet =================== */
 .mg-card{ position:relative; z-index:4; border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px }
 .mg-options{ display:flex; gap:12px; flex-wrap:wrap; margin-top:8px }
-.mg-btn{ display:inline-block; min-height:44px; padding:10px 14px; border-radius:12px; border:2px solid var(--border);
-  background:#10151b; color:#ffddae; font-weight:700; cursor:pointer; user-select:none; transition:background .15s, border-color .15s, transform .05s }
-.mg-btn:hover{ filter:saturate(1.05) brightness(1.03) }
-.mg-btn:active{ transform:translateY(1px) }
+
+/* Botones MG al mismo estilo refinado */
+.mg-btn{
+  display:inline-block; min-height:44px; padding:10px 14px; border-radius:12px; border:2px solid var(--border);
+  background:#10151b; color:#ffddae; font-weight:700; cursor:pointer; user-select:none;
+  transition:background .15s, border-color .15s, transform .05s, box-shadow .15s, color .15s;
+}
+.mg-btn:hover{ filter:saturate(1.05) brightness(1.03); border-color:#d9a575; box-shadow:inset 0 0 0 1px rgba(231,185,133,.14), 0 6px 14px rgba(231,185,133,.10) }
+.mg-btn:active{ transform:translateY(1px); background:linear-gradient(180deg,#f0c892,#d9a575); color:#111; border-color:#f0c892 }
 .mg-btn.active{ background:linear-gradient(180deg,var(--copper-2),var(--copper)); color:#111; border-color:var(--copper); box-shadow:var(--ring) }
 .mg-note{ margin-top:8px; color:#c9d4e1; font-size:.9rem }
 
@@ -121,7 +134,7 @@ input:focus, textarea:focus, select:focus{
 .accept-pill[aria-checked="true"] .accept-dot, .accept-pill.on .accept-dot{ left:23px }
 .terms-link{ color:#ffddae; text-decoration:underline }
 
-/* =================== Buttons (base) =================== */
+/* =================== Buttons =================== */
 button{
   border:1px solid rgba(0,0,0,.45);
   background:linear-gradient(180deg,var(--copper-2),var(--copper));
@@ -174,110 +187,67 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .ts-total span:first-child{ font-weight:900; color:#eedac4; letter-spacing:.2px }
 .ts-total span:last-child{ font-weight:900; font-size:1.05rem; color:#fff2e2 }
 
-.tax-note{ color:#9fb0c3; font-size:.82rem; margin-top:4px }
+.tax-note{ color:var(--muted-blue); font-size:.82rem; margin-top:4px }
 
-/* ===== Botones refinados para Summary ===== */
-/* Calculate Price — pill oscuro con borde cobre (sin glow) */
-#calculate{
-  display:block;
-  width:100%;
-  max-width:260px;
-  margin:18px auto 8px;     /* centrado */
-  min-height:46px;
-  padding:10px 18px;
-  border-radius:999px;
-  border:1px solid var(--copper);
-  background:#0d1319;
-  color:#ffddae;
-  font-weight:900;
-  font-size:1rem;
-  letter-spacing:.3px;
-  text-align:center;
-  cursor:pointer;
-  box-shadow:none;
-  transition:background .15s, border-color .15s, transform .05s, opacity .15s;
-}
-#calculate:hover:not([disabled]){ background:#111922; border-color:var(--copper-2); }
-#calculate:active:not([disabled]){ transform:translateY(1px); }
-#calculate[disabled]{ opacity:.55; cursor:not-allowed; }
-
-/* PAY NOW dentro del summary — mismo look */
+/* PAY NOW dentro del summary (compacto, centrado, elegante) */
 #info .pay-now{
   display:block;
-  width:100%;
-  max-width:240px;
-  margin:16px auto 8px;     /* centrado */
-  min-height:46px;
-  padding:10px 22px;
+  margin:14px auto 8px;
+  padding:10px 28px;
+  min-height:40px;
+  min-width:160px;
   border-radius:999px;
-  border:1px solid var(--copper);
-  background:#0d1319;
-  color:#ffddae;
   font-weight:900;
-  font-size:.98rem;
-  letter-spacing:.3px;
+  font-size:.95rem;
+  background:linear-gradient(180deg, #d7a577, #b97a4f);
+  box-shadow:0 8px 18px rgba(185,122,79,.28);
   text-align:center;
-  box-shadow:none;          /* sin resplandor */
-  transition:background .15s, border-color .15s, transform .05s, opacity .15s;
+  width:auto;
 }
-#info .pay-now:hover:not([disabled]){ background:#111922; border-color:var(--copper-2); }
-#info .pay-now:active:not([disabled]){ transform:translateY(1px); }
-#info .pay-now[disabled]{ opacity:.55; cursor:not-allowed; }
 
 /* ---- Promo code refinado ---- */
-.promo{
-  margin:18px 0 12px;      /* más aire general */
-}
-
+.promo{ margin:14px 0 10px; }
 .promo-field{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;                /* separación input/botón */
-  margin-top:8px;          /* entre label e input */
+  display:flex; align-items:center; justify-content:center; gap:10px; margin-top:8px;
 }
-
 .promo-input{
-  width:min(260px, 72%);   /* un poquito más compacto */
-  height:38px;             /* menos alto */
-  border:1px solid var(--copper);
-  background:#0a0f14;
-  color:#ffddae;
-  padding:6px 14px;        /* equilibrio visual */
-  border-radius:999px;
-  font-weight:700;
-  letter-spacing:.25px;
-  font-size:.95rem;
+  width:min(280px, 70%); height:40px; border:1px solid var(--copper);
+  background:#0a0f14; color:#ffddae; padding:8px 16px; border-radius:999px;
+  font-weight:700; letter-spacing:.25px; font-size:.95rem;
 }
+.promo-input::placeholder{ color:#cba686; opacity:.6; }
+.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
 
-.promo-input::placeholder{
-  color:#cba686;
-  opacity:.6;
-}
-
-.promo-input:focus{
-  box-shadow:var(--ring);
-  outline:none;
-  border-color:var(--copper);
-}
-
-/* Botón Apply sin glow, consistente con los otros */
+/* Botón Apply sin glow y con toque oro */
 .promo-btn{
-  min-height:38px;
-  padding:6px 16px;
-  border-radius:999px;
-  border:1px solid var(--copper);
-  background:#0d1319;
-  color:#b6c4d6;           /* azul-gris de la UI */
-  font-weight:900;
-  cursor:pointer;
-  box-shadow:none;         /* sin resplandor */
-  text-shadow:none;
-  transition:background .15s, border-color .15s, transform .05s, opacity .15s;
+  min-height:40px; padding:8px 16px; border-radius:999px;
+  border:1px solid var(--border); background:#0d1319; color:var(--muted-blue);
+  font-weight:900; cursor:pointer; box-shadow:none; text-shadow:none;
+  transition:background .15s, border-color .15s, transform .05s, box-shadow .15s, color .15s;
 }
-.promo-btn:hover:not([disabled]){ background:#10161d; border-color:var(--copper-2); }
-.promo-btn:active:not([disabled]){ transform:translateY(1px); }
+.promo-btn:hover{ background:#10161d; border-color:#d9a575; box-shadow:inset 0 0 0 1px rgba(231,185,133,.14), 0 6px 14px rgba(231,185,133,.10) }
+.promo-btn:active{ transform:translateY(1px); background:linear-gradient(180deg,#f0c892,#d9a575); color:#111; border-color:#f0c892 }
 .promo-btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+/* ===== Toque oro al interactuar (Calculate / PAY NOW) ===== */
+#calculate{
+  border:1px solid rgba(0,0,0,.45);
+  background:#0d1319;
+  color:#ffddae;
+  font-weight:900;
+}
+#calculate:hover:not([disabled]){
+  background:#10161d;
+  border-color:#d9a575;
+  box-shadow:inset 0 0 0 1px rgba(231,185,133,.14), 0 6px 14px rgba(231,185,133,.10);
+}
+#calculate:active:not([disabled]){
+  background:linear-gradient(180deg,#f0c892,#d9a575);
+  border-color:#f0c892;
+  color:#111;
+  transform:translateY(1px);
+}
+#calculate:focus-visible{ outline:2px solid #f0c892; outline-offset:2px }
 
 /* --- Google Maps / Places --- */
 .pac-container { z-index:10000 !important }
@@ -331,74 +301,30 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 }
 
 /* =================== Luggage — Pro cards =================== */
-.lugg-policy{
-  display:grid;
-  gap:12px;
-}
+.lugg-policy{ display:grid; gap:12px; }
 .lugg-card{
   border:1px solid var(--border);
   border-radius:12px;
-  background:#0d1319;
+  background:var(--panel);
   box-shadow:0 8px 18px rgba(0,0,0,.22);
   overflow:hidden;
   padding:12px;
 }
 .lugg-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding-bottom:8px;
-  border-bottom:1px solid rgba(155,178,203,.18);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding-bottom:8px; border-bottom:1px solid rgba(155,178,203,.18);
 }
-.lugg-title{
-  margin:0;
-  font-size:1.02rem;
-  font-weight:900;
-  letter-spacing:.2px;
-  color:#ffdeb3;
-}
+.lugg-title{ margin:0; font-size:1.02rem; font-weight:900; letter-spacing:.2px; color:#ffdeb3; }
 .lugg-thumb{
-  width:120px;
-  max-height:72px;
-  object-fit:contain;
-  display:block;
+  width:120px; max-height:72px; object-fit:contain; display:block;
   filter:drop-shadow(0 2px 8px rgba(0,0,0,.35));
-  background:transparent;
-  mix-blend-mode:screen;   /* 🔥 Fusión con el fondo */
+  background:transparent; mix-blend-mode:screen;   /* 🔥 Fusión con el fondo */
 }
-.lugg-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin-top:10px;
-}
-@media (max-width:720px){
-  .lugg-grid{ grid-template-columns:1fr }
-}
-.lugg-opt{
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#0d1319;
-  padding:10px 12px;
-}
-.lugg-opt-title{
-  font-weight:800;
-  color:var(--muted-blue);
-  margin-bottom:2px;
-}
-.lugg-sub{
-  color:var(--muted-blue);
-  font-size:.9rem;
-  margin-bottom:6px;
-}
-.lugg-list{
-  margin:0 0 0 18px;
-  padding:0;
-}
-.lugg-list li{
-  color:#dfe8f3;
-  line-height:1.35;
-  margin:4px 0;
-}
+.lugg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; }
+@media (max-width:720px){ .lugg-grid{ grid-template-columns:1fr } }
+.lugg-opt{ border:1px solid var(--border); border-radius:10px; background:#0d1319; padding:10px 12px; }
+.lugg-opt-title{ font-weight:800; color:var(--muted-blue); margin-bottom:2px; }
+.lugg-sub{ color:var(--muted-blue); font-size:.9rem; margin-bottom:6px; }
+.lugg-list{ margin:0 0 0 18px; padding:0; }
+.lugg-list li{ color:#dfe8f3; line-height:1.35; margin:4px 0; }
 .lugg-list li::marker{ color:var(--muted-blue) }
