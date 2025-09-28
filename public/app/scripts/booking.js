@@ -12,6 +12,10 @@
   const SUV_IMG = "/images/suburban.png";
   const VAN_IMG = "/images/van-sprinter.png";
 
+  // 🏷️ Promo
+  const PROMO_CODE = "BONANZA10";
+  const PROMO_RATE = 0.10;
+
   // Coincidencias
   const SLC_MATCHES = (window.BNZ_AIRPORTS?.slcNames) || [
     "salt lake city international airport","slc airport","slc intl","slc int’l","salt lake city airport",
@@ -57,7 +61,15 @@
 
   // Estado
   const BNZ = window.BNZ = window.BNZ || {};
-  BNZ.state = BNZ.state || { vehicle:"suv", mgChoice:"none", last:null };
+  BNZ.state = BNZ.state || {
+    vehicle:"suv",
+    mgChoice:"none",
+    last:null,
+    // promo
+    promoCode:"",
+    promoValid:false,
+    discount:0
+  };
 
   // Precios
   function baseFare(m){ if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4; }
@@ -117,11 +129,11 @@
   BNZ.onPickupPlaceChanged=function(){ mgSyncCard(); flightSyncUI(); };
   window.updateMeetGreetVisibility=mgSyncCard;
 
-  // Publicar totales para stripe
+  // Publicar totales para stripe (usa el total final con descuento si aplica)
   function publishTotals(t){
-    window.__lastQuotedTotal=t.total;
-    window.__lastDistanceMiles=t.miles;
-    window.__vehicleType=BNZ.state.vehicle;
+    window.__lastQuotedTotal = t.finalTotal ?? t.total; // compat
+    window.__lastDistanceMiles = t.miles;
+    window.__vehicleType = BNZ.state.vehicle;
   }
 
   // Inyectar PAY NOW dentro del summary
@@ -135,8 +147,8 @@
     else{ document.dispatchEvent(new CustomEvent("bnz:pay-mounted",{detail:{button:btn}})); }
   }
 
-  // Render de presupuesto
-  BNZ.renderQuote=function(leg,{surcharge=0}={}){
+  // Calcular totales + promo
+  function computeTotals(leg, {surcharge=0}={}){
     const miles=(leg?.distance?.value||0)/1609.34;
     let adjustedSurcharge=surcharge; if(isPickupSLCorJSX()) adjustedSurcharge=0;
     const base=baseFare(miles);
@@ -144,21 +156,38 @@
     const ah=isAfterHours(ds,ts) ? (base+adjustedSurcharge)*AFTER_HOURS_PCT : 0;
     const mg=mgFee();
     const subtotal=base+adjustedSurcharge+ah+mg;
-    const total=applyVehicle(subtotal);
 
-    BNZ.state.last={ miles, base, surcharge:adjustedSurcharge, ah, mg, total, leg };
+    const totalBeforeDiscount = applyVehicle(subtotal);
+    const discount = BNZ.state.promoValid ? round2(totalBeforeDiscount * PROMO_RATE) : 0;
+    const finalTotal = round2(totalBeforeDiscount - discount);
+
+    return { miles, base, surcharge:adjustedSurcharge, ah, mg, total: totalBeforeDiscount, discount, finalTotal, leg };
+  }
+  function round2(x){ return Math.round(x*100)/100; }
+
+  // Render de presupuesto
+  BNZ.renderQuote=function(leg,opts={}){
+    BNZ.state.last = computeTotals(leg, opts);
     publishTotals(BNZ.state.last);
     paintSummary(BNZ.state.last, leg);
     injectPayNow();
     enablePayIfReady();
+    wirePromoHandlers(); // asegura eventos después de re-render
   };
 
   function paintSummary(t,leg){
     const el=document.getElementById("info"); if(!el) return;
     const distTxt=t.miles.toFixed(1)+" mi"; const durTxt=leg?.duration?.text||"";
-    const rows=[ t.surcharge>0? row("Distance Surcharge",t.surcharge):"",
-                 t.ah>0?        row("After-Hours (25%)",t.ah):"",
-                 t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
+    const rows=[
+      t.surcharge>0? row("Distance Surcharge",t.surcharge):"",
+      t.ah>0?        row("After-Hours (25%)",t.ah):"",
+      t.mg>0?        row("Meet & Greet (SLC)",t.mg):""
+    ].filter(Boolean).join("");
+
+    const discountRow = (t.discount>0)
+      ? `<div class="row discount-row"><span>Promo Discount (10%)</span><span>−$${t.discount.toFixed(2)}</span></div>`
+      : "";
+
     const cn=window.__lastCN || window.__reservationCode || "";
 
     el.style.display="block";
@@ -172,13 +201,23 @@
         <div class="kpis">
           <div class="kpi"><div class="label">Distance</div><div class="value">${distTxt}</div></div>
           <div class="kpi"><div class="label">Duration</div><div class="value">${durTxt}</div></div>
-          <div class="kpi"><div class="label">Price</div><div class="value">$${t.total.toFixed(2)}</div></div>
+          <div class="kpi"><div class="label">Price</div><div class="value">$${(t.finalTotal??t.total).toFixed(2)}</div></div>
         </div>
 
-        ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
+        ${rows||discountRow?`<div class="divider"></div><div class="breakdown">${rows}${discountRow}</div>`:""}
+
+        <div class="promo-box" role="region" aria-label="Promo code">
+          <div class="promo-row">
+            <input id="promoInput" class="promo-input" placeholder="Promo code (e.g. BONANZA10)" inputmode="text" autocomplete="off" value="${BNZ.state.promoCode||""}">
+            <button id="promoApply" class="promo-apply" type="button">${BNZ.state.promoValid ? "Applied" : "Apply"}</button>
+          </div>
+          <div id="promoHelp" class="promo-help ${BNZ.state.promoValid?"ok":""}">
+            ${BNZ.state.promoValid ? "Discount applied." : "Enter a valid code and press Apply."}
+          </div>
+        </div>
 
         <div class="ts-total">
-          <span>Total</span><span>$${t.total.toFixed(2)}</span>
+          <span>Total</span><span>$${(t.finalTotal??t.total).toFixed(2)}</span>
         </div>
         <div class="tax-note">Taxes & gratuity included</div>
       </div>
@@ -186,6 +225,43 @@
 
     function row(label,val){
       return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
+    }
+  }
+
+  // Promo UI
+  function applyPromoFromInput(){
+    const inp = document.getElementById("promoInput");
+    const help = document.getElementById("promoHelp");
+    const btn  = document.getElementById("promoApply");
+    if(!inp||!btn) return;
+
+    const raw = (inp.value||"").trim();
+    const code = raw.replace(/\s+/g,"").toUpperCase();
+
+    const valid = code === PROMO_CODE;
+    BNZ.state.promoCode  = raw;
+    BNZ.state.promoValid = valid;
+
+    if(help){
+      help.textContent = valid ? "Discount applied." : "Invalid code.";
+      help.classList.toggle("ok", valid);
+      help.classList.toggle("err", !valid);
+    }
+    if(btn){ btn.textContent = valid ? "Applied" : "Apply"; }
+
+    // Recalcular totales si ya hay quote
+    if(BNZ.state.last && BNZ.state.last.leg){
+      BNZ.renderQuote(BNZ.state.last.leg, {surcharge:BNZ.state.last.surcharge});
+    }
+  }
+  function wirePromoHandlers(){
+    const btn  = document.getElementById("promoApply");
+    const inp  = document.getElementById("promoInput");
+    if(btn){ btn.addEventListener("click", applyPromoFromInput); }
+    if(inp){
+      inp.addEventListener("keydown",(e)=>{
+        if(e.key==="Enter"){ e.preventDefault(); applyPromoFromInput(); }
+      });
     }
   }
 
