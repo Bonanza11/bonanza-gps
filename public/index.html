@@ -12,7 +12,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <link rel="stylesheet" href="/app/styles/app.css?v=8" />
+  <!-- forzar refresco de estilos del Trip Summary -->
+  <link rel="stylesheet" href="/app/styles/app.css?v=9" />
 
   <script>
     window.__PUBLIC_CFG__ = {
@@ -153,8 +154,8 @@
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
 
-    <!-- Resumen + (PAY NOW se insertará aquí dinámicamente) -->
-    <div id="info"></div>
+    <!-- Resumen (PAY NOW se inyecta aquí) -->
+    <div id="info" role="region" aria-live="polite" aria-label="Trip Summary"></div>
   </main>
 
   <!-- ====== Scripts de la app ====== -->
