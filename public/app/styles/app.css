@@ -24,21 +24,22 @@ a,button{ -webkit-tap-highlight-color: transparent }
 
 header{ display:flex; justify-content:center; padding:18px 12px }
 
-/* Logo superior integrado — versión grande, sin borde */
+/* Logo superior integrado — versión más grande, sin borde */
 header .logo {
-  width:200px;              /* más grande para que se lea el texto */
-  height:200px;
+  width:240px;              /* más grande para resaltar el texto */
+  height:240px;
   border-radius:50%;        /* mantiene la forma redonda */
-  padding:10px;             /* espacio interno */
+  padding:12px;             /* espacio interno */
   background:radial-gradient(circle at center,
     #10151b 0%, #0a0c0f 70%, #000 100%);  /* fondo integrado */
   box-shadow:
-    0 0 12px rgba(0,0,0,.5),
-    0 6px 18px rgba(0,0,0,.65),
-    inset 0 0 8px rgba(0,0,0,.35);        /* sin neón, más natural */
+    0 0 14px rgba(0,0,0,.55),
+    0 8px 20px rgba(0,0,0,.7),
+    inset 0 0 10px rgba(0,0,0,.35);       /* sin neón, elegante */
   object-fit:contain;
   display:block;
 }
+
 /* Contenedor principal */
 main{
   width:min(920px, 92vw); margin:0 auto; padding:12px;
