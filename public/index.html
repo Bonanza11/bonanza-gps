@@ -20,17 +20,15 @@
   <script>
     window.__PUBLIC_CFG__ = {
       GMAPS_KEY: "AIzaSyDN6B8izVVhi9CGiO-_TXdhquQAE_i5Lts",
-      MAP_ID:    "b2ff3b1036f246da10cb0dea",  // tu Map ID
+      MAP_ID:    "b2ff3b1036f246da10cb0dea",
       STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
-      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"  // Cloud Run
+      FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"
     };
-
-    // ← espeja a la variable que usa booking.js
+    // Espejo para booking.js
     window.__FLIGHTCHECK_URL = window.__PUBLIC_CFG__.FLIGHTCHECK_URL;
   </script>
 
   <style>
-    /* Mini-estilos para la sección de vuelo (reutiliza tu tema) */
     .flight-box{ border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px; }
     .flight-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
     @media (max-width:640px){ .flight-grid{ grid-template-columns:1fr } }
@@ -44,26 +42,20 @@
   </header>
 
   <main>
-    <!-- Datos del cliente -->
     <label for="fullname">Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
-
     <label for="phone">Phone Number (US)</label>
     <input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="(555) 123-4567" />
     <div id="phoneHelp" class="hint"></div>
-
     <label for="email">Email Address</label>
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
     <div id="emailHelp" class="hint"></div>
 
-    <!-- Direcciones -->
     <label for="pickup">Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
-
     <label for="dropoff">Drop-off Address</label>
     <input id="dropoff" placeholder="e.g. Montage Deer Valley" />
 
-    <!-- Meet & Greet (SLC) -->
     <div class="mg-card" id="meetGreetCard" aria-label="Meet & Greet options">
       <h3>Meet & Greet — SLC Only</h3>
       <p>Choose where you want your driver to meet you inside the terminal.</p>
@@ -72,20 +64,16 @@
         <div class="mg-btn" data-choice="baggage_claim" aria-pressed="false">Baggage Claim (+$50)</div>
         <div class="mg-btn active" data-choice="none" aria-pressed="true">No Meet & Greet</div>
       </div>
-      <div class="mg-note">
-        Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use curbside pickup.
-      </div>
+      <div class="mg-note">Available only for SUV arrivals at Salt Lake City International (SLC). Vans must use curbside pickup.</div>
     </div>
 
-    <!-- VUELO / ORIGEN (visible según pickup) -->
+    <!-- Flight -->
     <div class="flight-box" id="flightBox" style="display:none">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
         <span id="flightBadge" class="badge">Commercial</span>
       </div>
       <div id="flightExplain" class="muted" style="margin-bottom:6px"></div>
-
-      <!-- Commercial / JSX -->
       <div id="flightCommercial" class="flight-grid" style="display:none">
         <div>
           <label for="flightNumber">Flight Number</label>
@@ -96,46 +84,32 @@
           <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
         </div>
       </div>
-
-      <!-- FBO / Municipales (private) -->
       <div id="flightPrivate" style="display:none">
         <label for="tailNumber">Tail Number</label>
         <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
       </div>
-
       <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
 
-    <!-- Notas -->
     <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <!-- Fecha/Hora -->
     <div class="grid2" style="margin-top:10px">
-      <div>
-        <label for="date">Date</label>
-        <input id="date" type="date" />
-      </div>
-      <div>
-        <label for="time">Time</label>
-        <input id="time" type="time" step="900" />
-      </div>
+      <div><label for="date">Date</label><input id="date" type="date" /></div>
+      <div><label for="time">Time</label><input id="time" type="time" step="900" /></div>
     </div>
 
-    <!-- Selector de vehículo -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Visual del vehículo -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Acordeón equipaje -->
     <div class="luggage-accordion" id="luggageAccordion">
       <div class="luggage-summary">
         <span class="luggage-title">Luggage Guidelines</span>
@@ -144,35 +118,27 @@
       <div class="luggage-body"></div>
     </div>
 
-    <!-- Terms -->
     <div class="terms-box" id="termsBox">
       <div class="terms-summary" role="button" tabindex="0" aria-label="Accept Terms and Conditions">
         <div class="accept-pill" id="acceptPill" tabindex="0" role="switch" aria-checked="false" aria-label="Terms switch">
           <div class="accept-dot"></div>
         </div>
-        <div class="accept-label">
-          I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
-        </div>
+        <div class="accept-label">I accept the <a class="terms-link" href="/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a></div>
       </div>
     </div>
 
-    <!-- Acciones -->
     <button id="calculate" disabled>Calculate Price</button>
     <div id="map"></div>
     <button id="pay" disabled style="display:none">PAY NOW</button>
-
-    <!-- Resumen -->
     <div id="info"></div>
   </main>
 
-  <!-- ====== Scripts de la app ====== -->
+  <!-- App scripts -->
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
-  <!-- flight.js es opcional; si no existe puedes quitar esta línea -->
-  <script src="/app/scripts/flight.js" defer></script>
 
-  <!-- ====== Google Maps (orden importante) ====== -->
+  <!-- Google Maps -->
   <script src="/app/scripts/maps-loader.js"></script>
   <script src="/app/scripts/maps.js"></script>
   <script>
@@ -197,7 +163,6 @@
       const btns=document.querySelectorAll(".veh-btn");
       const img=document.getElementById("vehImg");
       const cap=document.getElementById("vehCap");
-
       function applyVisual(){
         if(!img||!cap) return;
         if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
@@ -211,18 +176,10 @@
       }
       btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
       setActive(window.__vehicleType);
-
       const acc=document.getElementById("luggageAccordion");
-      const sum=acc?.querySelector(".luggage-summary");
-      sum?.addEventListener("click",()=>acc.classList.toggle("open"));
-
+      acc?.querySelector(".luggage-summary")?.addEventListener("click",()=>acc.classList.toggle("open"));
       const ts = document.querySelector("#termsBox .terms-summary");
-      ts?.addEventListener("keydown", (e)=>{
-        if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){
-          e.preventDefault();
-          document.getElementById("acceptPill")?.click();
-        }
-      });
+      ts?.addEventListener("keydown",(e)=>{ if ((e.key==="Enter"||e.key===" ") && !e.target.closest("a")){ e.preventDefault(); document.getElementById("acceptPill")?.click(); }});
     })();
   </script>
 </body>
