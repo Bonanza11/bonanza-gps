@@ -134,13 +134,12 @@ button:active:not([disabled]){ transform:translateY(1px) }
   position:relative; z-index:2;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 18px rgba(0,0,0,.25);
 }
-.trip-summary{ display:flex; flex-direction:column; gap:10px }
 .ts-header{ display:flex; justify-content:space-between; align-items:center }
-.ts-title{ font-weight:800; letter-spacing:.2px; color:#eedaC4; font-size:1.05rem }
-.ts-confirm{ color:#eedaC4; font-weight:700; font-size:.93rem }
+.ts-title{ font-weight:800; letter-spacing:.2px; color:#eedac4; font-size:1.05rem }
+.ts-confirm{ color:#eedac4; font-weight:700; font-size:.93rem }
 .ts-confirm .code{ letter-spacing:.35px; }
 
-.kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px }
+.kpis{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top:8px }
 .kpi{
   border:1px solid var(--border);
   border-radius:12px;
@@ -150,25 +149,25 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .kpi .label{ font-size:.78rem; color:var(--muted-blue); font-weight:700; letter-spacing:.2px }
 .kpi .value{ font-size:1.05rem; font-weight:800; color:#f2e6d6; margin-top:4px }
 
-.divider{ height:1px; background:linear-gradient(90deg, transparent, rgba(155,178,203,.35), transparent); margin:2px 0 2px }
+.divider{ height:1px; background:linear-gradient(90deg, transparent, rgba(155,178,203,.35), transparent); margin:6px 0 }
 
 .breakdown .row{ display:flex; justify-content:space-between; align-items:center; padding:6px 2px }
 .breakdown .row span:first-child{ color:var(--muted-blue); font-weight:700 }
 .breakdown .row span:last-child{ font-weight:800; color:#f2e6d6 }
 
-.ts-total{ display:flex; justify-content:space-between; align-items:center; padding-top:4px; }
-.ts-total span:first-child{ font-weight:900; color:#eedaC4; letter-spacing:.2px }
+.ts-total{ display:flex; justify-content:space-between; align-items:center; padding-top:6px; }
+.ts-total span:first-child{ font-weight:900; color:#eedac4; letter-spacing:.2px }
 .ts-total span:last-child{ font-weight:900; font-size:1.05rem; color:#fff2e2 }
 
-.tax-note{ color:var(--muted-blue); font-size:.82rem; }
+.tax-note{ color:var(--muted-blue); font-size:.82rem; margin-top:4px }
 
-/* PAY NOW dentro del summary (más pequeño, centrado y elegante) */
+/* PAY NOW dentro del summary (compacto, centrado, elegante) */
 #info .pay-now{
   display:block;
   margin:14px auto 8px;       /* centrado */
-  padding:10px 28px;          /* más compacto en horizontal */
+  padding:10px 28px;          /* compacto horizontal */
   min-height:40px;
-  min-width:160px;            /* evita que se vea demasiado chico */
+  min-width:160px;
   border-radius:999px;        /* pill */
   font-weight:900;
   font-size:.95rem;
