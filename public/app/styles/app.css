@@ -23,23 +23,22 @@ html,body{
 a,button{ -webkit-tap-highlight-color: transparent }
 
 header{ display:flex; justify-content:center; padding:18px 12px }
-/* Logo superior integrado */
+
+/* Logo superior integrado — versión grande, sin borde */
 header .logo {
-  width:140px;
-  height:140px;
-  border-radius:50%;                 /* Redondo */
-  padding:8px;                       /* espacio para el borde */
+  width:200px;              /* más grande para que se lea el texto */
+  height:200px;
+  border-radius:50%;        /* mantiene la forma redonda */
+  padding:10px;             /* espacio interno */
   background:radial-gradient(circle at center,
-    #10151b 0%, #0a0c0f 70%, #000 100%);  /* fondo elegante */
-  border:2px solid rgba(200,147,102,.65); /* anillo cobre sutil */
+    #10151b 0%, #0a0c0f 70%, #000 100%);  /* fondo integrado */
   box-shadow:
-    0 0 10px rgba(0,0,0,.45),
-    0 4px 12px rgba(0,0,0,.65),
-    inset 0 0 8px rgba(168,116,79,.25);   /* brillo interno */
+    0 0 12px rgba(0,0,0,.5),
+    0 6px 18px rgba(0,0,0,.65),
+    inset 0 0 8px rgba(0,0,0,.35);        /* sin neón, más natural */
   object-fit:contain;
   display:block;
 }
-
 /* Contenedor principal */
 main{
   width:min(920px, 92vw); margin:0 auto; padding:12px;
