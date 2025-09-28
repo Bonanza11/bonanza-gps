@@ -192,40 +192,70 @@ button:active:not([disabled]){ transform:translateY(1px) }
   width:auto;
 }
 
-/* ---- Promo code (más fino, centrado y sin resplandor) ---- */
-.promo{ margin:8px 0 4px }
-.promo-field{
-  display:flex; align-items:center; justify-content:center; gap:6px;
+/* ---- Promo code refinado ---- */
+.promo{
+  margin:14px 0 10px;   /* más espacio vertical */
 }
-.promo-input{
-  width:min(300px, 72%);
-  height:36px;                         /* más pequeño */
-  border:1px solid var(--copper);      /* borde delgado */
-  background:#0a0f14; color:#ffddae;
-  padding:6px 14px;
-  border-radius:999px;
-  font-weight:700; letter-spacing:.25px;
-}
-.promo-input::placeholder{ color:#cba686; opacity:.6 }
-.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
 
-/* Botón Apply sin glow/neón */
+.promo-field{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;             /* separación input/botón */
+  margin-top:6px;      /* espacio entre label y input */
+}
+
+.promo-input{
+  width:min(280px, 70%);
+  height:40px;                      /* un poco más alto */
+  border:1px solid var(--copper);
+  background:#0a0f14;
+  color:#ffddae;
+  padding:8px 16px;                 /* más respirado */
+  border-radius:999px;
+  font-weight:700;
+  letter-spacing:.25px;
+  font-size:.95rem;
+}
+
+.promo-input::placeholder{
+  color:#cba686;
+  opacity:.6;
+}
+
+.promo-input:focus{
+  box-shadow:var(--ring);
+  outline:none;
+  border-color:var(--copper);
+}
+
+/* Botón Apply sin glow */
 .promo-btn{
-  min-height:36px; padding:8px 14px;
+  min-height:40px;
+  padding:8px 16px;
   border-radius:999px;
   border:1px solid var(--border);
-  background:#0d1319;                  /* tono panel */
+  background:#0d1319;
   color:var(--muted-blue);
-  font-weight:900; cursor:pointer;
-  box-shadow:none; text-shadow:none;   /* 🔧 sin resplandor */
-  transition:background .15s, border-color .15s, transform .05s, filter .15s;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:none;
+  text-shadow:none;
+  transition:background .15s, border-color .15s, transform .05s;
 }
+
 .promo-btn:hover:not([disabled]){
-  background:#10161d;                  /* sutil */
-  filter:none;                          /* sin brillo */
+  background:#10161d;
 }
-.promo-btn:active:not([disabled]){ transform:translateY(1px) }
-.promo-btn[disabled]{ opacity:.55; cursor:not-allowed }
+
+.promo-btn:active:not([disabled]){
+  transform:translateY(1px);
+}
+
+.promo-btn[disabled]{
+  opacity:.55;
+  cursor:not-allowed;
+}
 
 /* --- Google Maps / Places --- */
 .pac-container { z-index:10000 !important }
