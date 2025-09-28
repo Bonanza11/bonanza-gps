@@ -24,7 +24,7 @@
       STRIPE_PK: "pk_test_51Rr9g0LxdVPME4zrpMHQ6iMQfdhpgwwb4EeluF5zGj0yKgspPu3KPm0Zogu6WvRhWcMx7BagtJQPGqwH6PUJGpG300QcSfhJmp",
       FLIGHTCHECK_URL: "https://flightcheck-7728622851.us-west3.run.app"
     };
-    // Espejo para booking.js
+    // espejo legacy para booking.js si se usara
     window.__FLIGHTCHECK_URL = window.__PUBLIC_CFG__.FLIGHTCHECK_URL;
   </script>
 
@@ -136,6 +136,8 @@
   <!-- App scripts -->
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
+  <!-- IMPORTANTE: incluir el cliente de FlightCheck antes de booking.js -->
+  <script src="/app/scripts/flightcheck.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
 
   <!-- Google Maps -->
