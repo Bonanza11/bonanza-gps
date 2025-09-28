@@ -19,10 +19,10 @@ html,body{
   margin:0; padding:0; background:#000; color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
-  -webkit-text-size-adjust:100%;
+  -webkit-text-size-adjust:100%;               /* evita zoom raro en iOS */
 }
 :focus-visible{ outline:2px solid #c89366; outline-offset:2px }
-a,button{ -webkit-tap-highlight-color: transparent }
+a,button{ -webkit-tap-highlight-color: transparent } /* quita flash azul iOS */
 
 header{ display:flex; justify-content:center; padding:18px 12px }
 .logo{ width:160px; height:auto; filter:drop-shadow(0 6px 18px rgba(0,0,0,.35)) }
@@ -31,44 +31,27 @@ header{ display:flex; justify-content:center; padding:18px 12px }
 main{
   width:min(920px, 92vw); margin:0 auto; padding:12px;
   display:flex; flex-direction:column; gap:12px;
-  padding-left: max(12px, env(safe-area-inset-left));
+  padding-left: max(12px, env(safe-area-inset-left));   /* iPhone notches */
   padding-right:max(12px, env(safe-area-inset-right));
 }
 
 /* =================== Inputs =================== */
 label{ font-weight:700; color:#ffdeb3; margin-top:8px }
 input, textarea, select{
-  width:100%; min-height:44px;
+  width:100%; min-height:44px;                  /* 44px táctil */
   border-radius:10px; outline:none;
   border:1px solid var(--border); background:#0a0f14; color:#ffddae;
-  padding:10px 12px; font-size:16px;
+  padding:10px 12px; font-size:16px;            /* 16px evita zoom en iOS */
   transition:border .15s, box-shadow .15s, background .15s, color .15s;
 }
 textarea{ min-height:96px; resize:vertical }
 input:focus, textarea:focus, select:focus{
   border-color:var(--copper); box-shadow:var(--ring); background:#0d1319;
 }
+::placeholder{ color:#cba686; opacity:.75 }
+.hint{ font-size:12px; color:#9fb0c3; margin-top:2px }
 
-/* Placeholders más visibles */
-::placeholder{
-  color:#cba686; opacity:.85;
-  padding-top:2px; padding-bottom:2px;
-}
-
-/* Texto auxiliar y muted más sueltos */
-.hint{
-  font-size:12px; color:var(--muted);
-  margin-top:6px; margin-bottom:6px;
-  display:block;
-}
-.muted{
-  color:var(--muted);
-  font-size:.9rem;
-  margin-top:6px; margin-bottom:8px;
-  display:block;
-}
-
-/* Helper de inválido */
+/* Helper de inválido (tu estilo) */
 .invalid{ border-color:#b74a4a !important; box-shadow:0 0 0 3px rgba(183,74,74,.22) !important }
 
 /* Grid 2 cols (fecha/hora) */
@@ -78,8 +61,8 @@ input:focus, textarea:focus, select:focus{
 /* =================== Vehicle toggle =================== */
 .veh-toggle{ display:flex; gap:12px; margin-top:8px; position:relative; z-index:3; flex-wrap:wrap }
 .veh-btn{
-  flex:1 1 320px;
-  min-height:44px;
+  flex:1 1 320px;                              /* se apilan si no cabe */
+  min-height:44px;                              /* target táctil */
   padding:12px 14px; cursor:pointer; border-radius:12px;
   border:2px solid var(--border); background:#0e141b; color:#ffddae; font-weight:800;
   transition:filter .15s, transform .05s, background .15s, border-color .15s;
@@ -186,7 +169,7 @@ button:active:not([disabled]){ transform:translateY(1px) }
   z-index:1;
 }
 @media (max-width:480px){
-  #map{ min-height:52vh }
+  #map{ min-height:52vh }                          /* mejor uso de pantalla en móvil */
 }
 @media (min-width:1024px){
   #map{ min-height:420px }
@@ -200,10 +183,10 @@ button:active:not([disabled]){ transform:translateY(1px) }
 }
 
 /* --- Google Maps / Places hardening --- */
-.pac-container { z-index: 10000 !important; }
-#map img { max-width: none !important; }
+.pac-container { z-index: 10000 !important; }   /* dropdown por encima de todo */
+#map img { max-width: none !important; }        /* evita que resets afecten tiles */
 
-/* Accesibilidad */
+/* Accesibilidad: foco visible en elementos interactivos (fallback) */
 .veh-btn:focus,
 .mg-btn:focus,
 button:focus,
@@ -214,18 +197,18 @@ button:focus,
 
 /* ===== Ajustes finos responsivos ===== */
 @media (max-width:400px){
-  .veh-btn{ flex:1 1 100% }
+  .veh-btn{ flex:1 1 100% }                      /* botones de vehículo en columna */
   .mg-options{ gap:10px }
-  .mg-btn{ flex:1 1 100% }
+  .mg-btn{ flex:1 1 100% }                       /* botones MG full width si hace falta */
   .car{ width: clamp(220px, 70vw, 340px) }
 }
 
-/* Reduce motion */
+/* Reduce motion si el usuario lo pide */
 @media (prefers-reduced-motion: reduce) {
   *{ transition:none !important; animation:none !important }
 }
 
-/* --- Fix iOS Safari autofill --- */
+/* --- Fix iOS Safari autofill to match desktop style --- */
 input:-webkit-autofill,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
@@ -236,4 +219,20 @@ select:-webkit-autofill:focus {
   -webkit-text-fill-color: #ffddae !important;
   caret-color: #ffddae !important;
   transition: background-color 9999s ease-in-out 0s !important;
+}
+
+/* ==== Ajustes para Flight Details ==== */
+#flightBox {
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+#flightBox label {
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+#flightBox input {
+  margin-bottom: 12px;
+  min-height: 52px;
+  font-size: 16px;
+  padding: 12px 14px;
 }
