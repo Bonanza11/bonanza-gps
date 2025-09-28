@@ -164,17 +164,17 @@ button:active:not([disabled]){ transform:translateY(1px) }
 /* PAY NOW dentro del summary (compacto, centrado, elegante) */
 #info .pay-now{
   display:block;
-  margin:14px auto 8px;       /* centrado */
-  padding:10px 28px;          /* compacto horizontal */
+  margin:14px auto 8px;
+  padding:10px 28px;
   min-height:40px;
   min-width:160px;
-  border-radius:999px;        /* pill */
+  border-radius:999px;
   font-weight:900;
   font-size:.95rem;
   background:linear-gradient(180deg, #d7a577, #b97a4f);
   box-shadow:0 8px 18px rgba(185,122,79,.28);
   text-align:center;
-  width:auto;                 /* no ocupa todo */
+  width:auto;
 }
 
 /* --- Google Maps / Places --- */
@@ -231,56 +231,40 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 /* =================== Luggage — Pro cards =================== */
 .lugg-policy{
   display:grid;
-  gap:14px;
+  gap:12px;
 }
-
 .lugg-card{
   border:1px solid var(--border);
-  border-radius:14px;
-  background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,0)),
-             var(--panel-2);
-  box-shadow:0 6px 14px rgba(0,0,0,.25);
-  padding:14px;
+  border-radius:12px;
+  background:var(--panel);
+  box-shadow:0 8px 18px rgba(0,0,0,.22);
+  overflow:hidden;
+  padding:12px;
 }
-
 .lugg-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:14px;
-  margin-bottom:12px;
+  gap:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(155,178,203,.18);
 }
-
 .lugg-title{
   margin:0;
-  font-size:1.05rem;
+  font-size:1.02rem;
   font-weight:900;
   letter-spacing:.2px;
   color:#ffdeb3;
-  flex:1;
 }
-
 .lugg-thumb{
-  display:block;
-  width:100%;
-  max-width:200px;
-  height:auto;
+  width:120px;
+  max-height:72px;
   object-fit:contain;
-  margin:0 auto;
-  filter:drop-shadow(0 6px 16px rgba(0,0,0,.45)); /* sombra más elegante */
-  background:transparent;   /* elimina contraste */
-  border:none;              /* sin borde */
-  border-radius:0;          /* sin esquinas redondeadas */
-  padding:0;                /* sin relleno */
+  display:block;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.35));
+  background:transparent;
+  mix-blend-mode:screen;   /* 🔥 Fusión con el fondo */
 }
-@media (min-width:1024px){
-  .lugg-thumb{ max-width:220px; }
-}
-@media (max-width:640px){
-  .lugg-thumb{ max-width:160px; }
-}
-
-/* Opciones en columnas */
 .lugg-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -290,14 +274,12 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 @media (max-width:720px){
   .lugg-grid{ grid-template-columns:1fr }
 }
-
 .lugg-opt{
   border:1px solid var(--border);
   border-radius:10px;
   background:#0d1319;
   padding:10px 12px;
 }
-
 .lugg-opt-title{
   font-weight:800;
   color:var(--muted-blue);
@@ -308,7 +290,6 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   font-size:.9rem;
   margin-bottom:6px;
 }
-
 .lugg-list{
   margin:0 0 0 18px;
   padding:0;
