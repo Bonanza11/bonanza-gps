@@ -2,6 +2,7 @@
    Depende de:
      - maps.js  → escucha 'bnz:calculate' y llama BNZ.renderQuote(leg,{surcharge})
      - stripe.js → usa window.__lastQuotedTotal, __vehicleType, __lastDistanceMiles
+     - flightcheck.js → window.lookupFlight(number, origin)
 */
 (function(){
   "use strict";
@@ -217,8 +218,6 @@
       title.textContent = "Tail Number";
       explain.textContent = "For private/FBO or municipal airports, provide the aircraft tail number.";
       hint.textContent = "Example: N123AB. If tracking isn’t possible, leave blank and add details in Special Instructions.";
-    } else {
-      // nothing
     }
   }
 
@@ -271,6 +270,9 @@
     if(!el) return;
 
     const distTxt = t.miles.toFixed(1) + " mi";
+    theDuration: {
+      /* keep original */
+    }
     const durTxt  = leg?.duration?.text || "";
     const rows = [
       t.surcharge>0 ? row("Distance Surcharge", t.surcharge) : "",
@@ -416,9 +418,9 @@
   })();
 
   // ────────────────────────────────────────────────────────────
-  // FlightCheck API (Cloud Run)
+  // FlightCheck API (preferir lookupFlight; fallback a POST /verify)
   // ────────────────────────────────────────────────────────────
-  const FLIGHTCHECK_URL = window.__FLIGHTCHECK_URL || "https://flightcheck-7728622851.us-west3.run.app";
+  const FLIGHTCHECK_URL = window.__PUBLIC_CFG__?.FLIGHTCHECK_URL || window.__FLIGHTCHECK_URL || "";
 
   async function postJSON(url, payload){
     const res = await fetch(url, {
@@ -430,20 +432,42 @@
     return res.json();
   }
 
-  /**
-   * Verifica/normaliza datos de vuelo.
-   * Devuelve { ok, normalized, message, raw }
-   *  normalized (posibles campos):
-   *   - type: "commercial"|"jsx"|"private"
-   *   - airline, flightNumber, originCity, originIata, scheduled, estimated, status
-   *   - tailNumber
-   */
-  async function verifyFlight(cat, flightNumber, originCity, tailNumber, whenISO){
-    if (!(cat==="slc"||cat==="pvu"||cat==="jsx"||cat==="fbo"||cat==="municipal")) {
-      return { ok:true, normalized:null, message:"No flight verification needed" };
-    }
-    const payload = { cat, flightNumber, originCity, tailNumber, whenISO };
+  // Adapta cualquier respuesta razonable del backend
+  function shapeFlightcheckResponse(data){
+    const ok = !!(data.ok ?? data.valid ?? data.success ?? false);
+    const n  = data.normalized || data.data || data.result || null;
+    const msg = data.message || data.error || "";
+    return { ok, normalized:n, message:msg, raw:data };
+  }
 
+  async function verifyFlight(cat, flightNumber, originCity, tailNumber, whenISO){
+    // 1) Comercial/JSX: usa lookupFlight si existe
+    if ((cat === "slc" || cat === "pvu" || cat === "jsx") && typeof window.lookupFlight === "function") {
+      const r = await window.lookupFlight(flightNumber, originCity);
+      if (r && r.ok && r.flight){
+        const f = r.flight;
+        return {
+          ok:true,
+          normalized:{
+            type: cat === "jsx" ? "jsx" : "commercial",
+            airline: f.airline,
+            flightNumber: f.number || flightNumber,
+            originCity: f.origin || originCity,
+            scheduled: f.schedArrival,
+            estimated: f.estArrival,
+            status: f.status
+          },
+          message:"OK (lookupFlight)",
+          raw:r
+        };
+      }
+      // si falla, seguirá el fallback abajo
+    }
+
+    // 2) Fallback: POST a /verify o /check
+    if (!FLIGHTCHECK_URL) return { ok:false, normalized:null, message:"FlightCheck URL missing" };
+
+    const payload = { cat, flightNumber, originCity, tailNumber, whenISO };
     try{
       const data = await postJSON(`${FLIGHTCHECK_URL}/verify`, payload);
       return shapeFlightcheckResponse(data);
@@ -457,21 +481,12 @@
     }
   }
 
-  // Adapta cualquier respuesta razonable del backend
-  function shapeFlightcheckResponse(data){
-    const ok = !!(data.ok ?? data.valid ?? data.success ?? false);
-    const n  = data.normalized || data.data || data.result || null;
-    const msg = data.message || data.error || "";
-    return { ok, normalized:n, message:msg, raw:data };
-  }
-
   function setFlightHint(text, good){
     const el = document.getElementById("flightHint");
     if (!el) return;
     el.textContent = text || "";
     el.style.color = good ? "#b7f2c6" : "var(--muted)";
   }
-
   function blockCalculate(block){
     const btn = document.getElementById("calculate");
     if (!btn) return;
@@ -543,8 +558,6 @@
 
     if (verification && verification.ok && verification.normalized){
       const n = verification.normalized;
-
-      // normaliza valores en UI si vinieron
       if (n.flightNumber && flightNumberEl) {
         flightNumberEl.value = String(n.flightNumber).toUpperCase();
         flightNumber = flightNumberEl.value;
@@ -557,7 +570,6 @@
         tailNumberEl.value = String(n.tailNumber).toUpperCase();
         tailNumber = tailNumberEl.value;
       }
-
       setFlightHint(
         n.status
           ? `✓ Flight verified: ${n.status}${n.estimated ? ` — ETA ${n.estimated}` : ""}.`
@@ -565,16 +577,13 @@
         true
       );
     } else if (verification && !verification.ok){
-      // No bloquea: solo informa
       setFlightHint(`⚠ Could not verify: ${verification.message || "service unavailable"}.`, false);
     } else {
       setFlightHint("", false);
     }
 
-    // UX: cierra teclado/focus móvil antes de calcular
     if (document.activeElement?.blur) document.activeElement.blur();
 
-    // Dispara cálculo con metadatos de vuelo
     document.dispatchEvent(new CustomEvent("bnz:calculate", {
       detail: {
         flight: {
