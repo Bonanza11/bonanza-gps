@@ -227,3 +227,86 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   #flightBox .flight-grid, #flightPrivate .flight-grid{ grid-template-columns:1fr; row-gap:14px }
   #flightCommercial .field-col > label, #flightPrivate .field-col > label{ min-height:0 }
 }
+/* =================== Luggage — Pro cards =================== */
+/* Contenedor general dentro del acordeón */
+.lugg-policy{
+  display:grid;
+  gap:12px;
+}
+
+/* Tarjeta */
+.lugg-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel);
+  box-shadow:0 8px 18px rgba(0,0,0,.22);
+  overflow:hidden;
+  padding:12px;
+}
+
+/* Header: título + mini foto a la derecha */
+.lugg-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(155,178,203,.18);
+}
+.lugg-title{
+  margin:0;
+  font-size:1.02rem;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#ffdeb3;
+}
+.lugg-thumb{
+  width:120px;           /* controla tamaño de imagen */
+  max-height:72px;
+  object-fit:contain;    /* nunca se deforma */
+  display:block;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.35));
+}
+
+/* Cuerpo con las dos opciones en columnas (desktop) */
+.lugg-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+@media (max-width:720px){
+  .lugg-grid{ grid-template-columns:1fr }
+}
+
+/* Cada opción en su “cajita” */
+.lugg-opt{
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#0d1319;
+  padding:10px 12px;
+}
+
+/* Títulos/Notas con azul grisáceo de tu paleta */
+.lugg-opt-title{
+  font-weight:800;
+  color:var(--muted-blue);
+  margin-bottom:2px;
+}
+.lugg-sub{
+  color:var(--muted-blue);
+  font-size:.9rem;
+  margin-bottom:6px;
+}
+
+/* Listas limpias y legibles */
+.lugg-list{
+  margin:0 0 0 18px;
+  padding:0;
+}
+.lugg-list li{
+  color:#dfe8f3;
+  line-height:1.35;
+  margin:4px 0;
+}
+.lugg-list li::marker{ color:var(--muted-blue) }
