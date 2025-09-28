@@ -5,29 +5,36 @@
   <title>Terms & Conditions — Bonanza Transportation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="/images/bonanza-logo.png">
-  <link rel="stylesheet" href="/app/styles/app.css?v=15">
+  <link rel="stylesheet" href="/app/styles/app.css?v=12">
   <style>
     body{ background:#000; }
-    main{ max-width:860px; margin:32px auto 24px; padding:0 16px; text-align:center; }
+    main{ max-width:860px; margin:32px auto 24px; padding:0 16px; }
 
-    /* Botón volver (centrado, más pequeño) */
+    /* Botón volver */
     .back-link{
-      display:inline-flex; align-items:center; justify-content:center; gap:6px;
-      padding:6px 14px;
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      gap:6px;
+
+      padding:12px 48px;           /* más ancho */
       border-radius:999px;
-      font-weight:700; font-size:.88rem;
-      border:1px solid var(--copper);
-      background:#0c0c0c;
-      color:var(--muted-blue);
+      font-weight:800;
+      font-size:1rem;
+      letter-spacing:.35px;
+
+      border:2px solid var(--copper);
+      background:#0a0c0f;
+      color:var(--copper-2);
       text-decoration:none;
+
       box-shadow:0 4px 12px rgba(0,0,0,.35);
       transition:all .25s ease;
-      margin:0 auto 18px;
     }
     .back-link:hover{
-      border-color:#ffdeb3;
-      box-shadow:0 0 10px rgba(255,222,179,.7), 0 0 18px rgba(200,147,102,.6);
-      color:#ffdeb3;
+      box-shadow:0 0 12px rgba(200,147,102,.6), 0 0 24px rgba(168,116,79,.5);
+      border-color:#e1b98a;
+      color:#f8e3c8;
     }
 
     /* Contenedor general */
@@ -36,105 +43,68 @@
       flex-direction:column;
       gap:16px;
       margin-top:20px;
-      text-align:left;
     }
 
     /* Card individual */
     .term-card{
       border:1px solid var(--border);
-      border-radius:14px;
+      border-radius:12px;
       background:var(--panel-2);
-      padding:18px 20px;
-      box-shadow:0 8px 18px rgba(0,0,0,.3);
+      padding:16px 18px;
+      box-shadow:0 6px 16px rgba(0,0,0,.25);
     }
 
-    /* Título con degradado cobre-champagne */
+    /* Títulos lujosos */
     .term-title{
-      font-size:1.08rem;
+      font-size:1.15rem;
       font-weight:900;
       margin:0 0 12px;
-      background:linear-gradient(90deg,#d6a67c,#c89366,#a8744f);
+      letter-spacing:.35px;
+      background:linear-gradient(90deg,
+        #f8e3c8 0%,
+        #e1b98a 35%,
+        #c89366 65%,
+        #a8744f 100%
+      );
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
-      letter-spacing:.3px;
+      text-shadow:0 1px 1px rgba(0,0,0,.4);
+      transition:all .25s ease;
+    }
+    .term-card:hover .term-title{
+      text-shadow:0 0 6px rgba(255,222,179,.25), 0 0 12px rgba(200,147,102,.35);
     }
 
-    /* Texto */
-    p, li{
-      color:var(--muted-blue);
-      font-size:.96rem;
-      line-height:1.58;
-    }
+    p, li{ color:var(--text); font-size:.95rem; line-height:1.55; }
     ul{ margin:6px 0 0 20px; padding:0; }
     li{ margin:6px 0; }
-    li::marker{ color:var(--copper-2); }
+    li::marker{ color:var(--muted-blue); }
 
     .logo{
-      display:block; margin:0 auto 20px;
-      width:120px; height:120px; border-radius:50%;
+      display:block;
+      margin:0 auto 20px;
+      width:120px; height:120px;
+      border-radius:50%;
       filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));
     }
 
     h1{
       text-align:center; margin:10px 0 6px;
-      font-size:1.7rem; font-weight:900;
-      background:linear-gradient(90deg,#f0d2b0,#c89366,#a8744f);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      font-size:1.6rem; font-weight:900;
+      color:var(--copper-2);
     }
     .meta{
       text-align:center; font-size:.9rem;
       color:var(--muted-blue); margin-bottom:22px;
     }
     .meta strong{ color:var(--text); }
-
-    /* Links de contacto */
-    .contact a{
-      color:var(--muted-blue);
-      text-decoration:none;
-      font-weight:700;
-      transition:all .2s ease;
-    }
-    .contact a:hover{
-      color:#f0d2b0;
-      text-shadow:0 0 8px rgba(240,210,176,.35);
-    }
-
-    /* Botón secreto HQ */
-    .hq-btn{
-      position:fixed;
-      bottom:18px;
-      right:18px;
-      width:48px;
-      height:48px;
-      border-radius:50%;
-      overflow:hidden;
-      background:#000;
-      border:1px solid var(--copper);
-      box-shadow:0 4px 12px rgba(0,0,0,.45);
-      cursor:pointer;
-      z-index:9999;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transition:transform .15s, filter .25s;
-    }
-    .hq-btn img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      border-radius:50%;
-    }
-    .hq-btn:hover{
-      transform:scale(1.08);
-      filter:brightness(1.08);
-      box-shadow:0 0 12px rgba(200,147,102,.55);
-    }
   </style>
 </head>
 <body>
   <main>
-    <a class="back-link" id="backLink" href="/">← Back</a>
+    <div style="text-align:center;">
+      <a class="back-link" id="backLink" href="/">← Back to booking</a>
+    </div>
 
     <img class="logo" src="/images/bonanza-logo.png" alt="Bonanza Transportation">
 
@@ -225,28 +195,25 @@
         <p>These terms are governed by the laws of the State of Utah, USA. Any dispute will be submitted to the competent courts of Utah.</p>
       </div>
 
-      <div class="term-card contact">
+      <div class="term-card">
         <div class="term-title">Contact</div>
         <p>
-          Phone: <a href="tel:+17866835128">(786) 683-5128</a><br>
-          Email: <a href="mailto:bonanzatransportation1@outlook.com">bonanzatransportation1@outlook.com</a><br>
+          Phone: <a href="tel:+17866835128" style="color:var(--muted-blue); font-weight:700;">(786) 683-5128</a><br>
+          Email: <a href="mailto:bonanzatransportation1@outlook.com" style="color:var(--muted-blue); font-weight:700;">bonanzatransportation1@outlook.com</a><br>
           Park City, Utah — USA
         </p>
       </div>
     </div>
   </main>
 
-  <!-- Botón HQ -->
-  <a class="hq-btn" href="https://maps.google.com/?q=Park+City+Utah" target="_blank" rel="noopener" title="Headquarters">
-    <img src="/images/bonanza-logo.png" alt="HQ">
-  </a>
-
   <script>
     (function(){
       var back = document.getElementById('backLink');
       back.addEventListener('click', function(ev){
         setTimeout(function(){
-          if (document.visibilityState === 'visible') { window.location.href = '/index.html'; }
+          if (document.visibilityState === 'visible') {
+            window.location.href = '/index.html';
+          }
         }, 350);
       });
     })();
