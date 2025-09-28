@@ -12,14 +12,11 @@
   const SUV_IMG = "/images/suburban.png";
   const VAN_IMG = "/images/van-sprinter.png";
 
-  // ===== PROMO =====
-  const VALID_PROMO = /^bonanza10$/i;   // acepta BONANZA10 (may/min)
-  const PROMO_PCT   = 0.10;
-
-  // Coincidencias
+  // Coincidencias (ampliadas para SLC)
   const SLC_MATCHES = (window.BNZ_AIRPORTS?.slcNames) || [
     "salt lake city international airport","slc airport","slc intl","slc int’l","salt lake city airport",
-    "w terminal dr, salt lake city","slc terminal","salt lake city international"
+    "w terminal dr, salt lake city","slc terminal","salt lake city international",
+    "slc", "salt lake city (slc)", "salt lake city slc"
   ];
   const JSX_MATCHES = (window.BNZ_AIRPORTS?.jsxNames) || [
     "jsx","jsx slc","jsx terminal","jsx salt lake","signature flight support jsx","jsx air"
@@ -61,10 +58,7 @@
 
   // Estado
   const BNZ = window.BNZ = window.BNZ || {};
-  BNZ.state = BNZ.state || {
-    vehicle:"suv", mgChoice:"none", last:null,
-    promo:{ code:"", applied:false, discount:0 }
-  };
+  BNZ.state = BNZ.state || { vehicle:"suv", mgChoice:"none", last:null };
 
   // Precios
   function baseFare(m){ if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4; }
@@ -124,9 +118,14 @@
   BNZ.onPickupPlaceChanged=function(){ mgSyncCard(); flightSyncUI(); };
   window.updateMeetGreetVisibility=mgSyncCard;
 
-  // Publicar totales para stripe (usa total neto con promo aplicada)
+  // 🔁 Re-evaluar al tipear pickup (por si no usan Autocomplete)
+  document.getElementById("pickup")?.addEventListener("input", function(){
+    mgSyncCard(); flightSyncUI();
+  });
+
+  // Publicar totales para stripe
   function publishTotals(t){
-    window.__lastQuotedTotal = t.total_net ?? t.total;
+    window.__lastQuotedTotal=t.total;
     window.__lastDistanceMiles=t.miles;
     window.__vehicleType=BNZ.state.vehicle;
   }
@@ -142,7 +141,7 @@
     else{ document.dispatchEvent(new CustomEvent("bnz:pay-mounted",{detail:{button:btn}})); }
   }
 
-  // ===== Cálculo y render =====
+  // Render de presupuesto
   BNZ.renderQuote=function(leg,{surcharge=0}={}){
     const miles=(leg?.distance?.value||0)/1609.34;
     let adjustedSurcharge=surcharge; if(isPickupSLCorJSX()) adjustedSurcharge=0;
@@ -150,18 +149,10 @@
     const ds=document.getElementById("date")?.value||"", ts=document.getElementById("time")?.value||"";
     const ah=isAfterHours(ds,ts) ? (base+adjustedSurcharge)*AFTER_HOURS_PCT : 0;
     const mg=mgFee();
+    const subtotal=base+adjustedSurcharge+ah+mg;
+    const total=applyVehicle(subtotal);
 
-    const subtotal = base + adjustedSurcharge + ah + mg;
-    const total    = applyVehicle(subtotal);
-
-    // Promo (si está aplicada)
-    let promoDisc = 0;
-    if (BNZ.state.promo?.applied) {
-      promoDisc = +(total * PROMO_PCT).toFixed(2);
-    }
-    const total_net = +(total - promoDisc).toFixed(2);
-
-    BNZ.state.last={ miles, base, surcharge:adjustedSurcharge, ah, mg, total, promoDisc, total_net, leg };
+    BNZ.state.last={ miles, base, surcharge:adjustedSurcharge, ah, mg, total, leg };
     publishTotals(BNZ.state.last);
     paintSummary(BNZ.state.last, leg);
     injectPayNow();
@@ -176,11 +167,6 @@
                  t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
     const cn=window.__lastCN || window.__reservationCode || "";
 
-    // promo row (si hay descuento)
-    const promoRow = (t.promoDisc>0)
-      ? `<div class="row promo-row"><span>Promo (10% off)</span><span>- $${t.promoDisc.toFixed(2)}</span></div>`
-      : "";
-
     el.style.display="block";
     el.innerHTML=`
       <div class="trip-summary">
@@ -189,53 +175,74 @@
           ${cn?`<div class="ts-confirm">Confirmation: <span class="code">${cn}</span></div>`:""}
         </div>
 
+        <!-- Promo code (si ya lo tienes, se respeta; si no, no estorba) -->
+        <div class="promo" id="promoBox" aria-label="Promo code">
+          <label for="promoCode" class="promo-label">Promo Code</label>
+          <div class="promo-field">
+            <input id="promoCode" class="promo-input" inputmode="text" autocomplete="off" />
+            <button id="applyPromo" class="promo-btn" type="button">Apply</button>
+          </div>
+          <div id="promoMsg" class="hint" aria-live="polite" style="text-align:center;margin-top:6px;"></div>
+        </div>
+
         <div class="kpis">
           <div class="kpi"><div class="label">Distance</div><div class="value">${distTxt}</div></div>
           <div class="kpi"><div class="label">Duration</div><div class="value">${durTxt}</div></div>
           <div class="kpi"><div class="label">Price</div><div class="value">$${t.total.toFixed(2)}</div></div>
         </div>
 
-        ${rows?`<div class="divider"></div><div class="breakdown">${rows}${promoRow}</div>`:""}
-
-        <!-- PROMO INPUT -->
-        <div class="promo-wrap" id="promoWrap">
-          <input id="promoInput" class="promo-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Promo code" value="${BNZ.state.promo?.applied?BNZ.state.promo.code:''}">
-          <button id="promoApply" class="promo-btn" type="button">${BNZ.state.promo?.applied?'Applied':'Apply'}</button>
-          <div id="promoMsg" class="promo-msg" aria-live="polite"></div>
-        </div>
+        ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
 
         <div class="ts-total">
-          <span>Total</span><span>$${(t.total_net ?? t.total).toFixed(2)}</span>
+          <span>Total</span><span>$${t.total.toFixed(2)}</span>
         </div>
         <div class="tax-note">Taxes & gratuity included</div>
       </div>
     `;
 
-    // wiring promo
-    const input = document.getElementById("promoInput");
-    const btn   = document.getElementById("promoApply");
-    const msg   = document.getElementById("promoMsg");
-
-    const setMsg = (text,type)=>{ msg.textContent=text||""; msg.dataset.type=type||""; };
-    const applyPromo = ()=>{
-      const code = (input.value||"").trim();
-      if (!code) { BNZ.state.promo={code:"",applied:false,discount:0}; setMsg("", ""); BNZ.renderQuote(t.leg,{surcharge:t.surcharge}); return; }
-      if (VALID_PROMO.test(code)) {
-        BNZ.state.promo={ code, applied:true, discount:PROMO_PCT };
-        setMsg("10% discount applied.", "ok");
-      } else {
-        BNZ.state.promo={ code, applied:false, discount:0 };
-        setMsg("Invalid code.", "err");
-      }
-      BNZ.renderQuote(t.leg,{surcharge:t.surcharge});
-    };
-
-    btn?.addEventListener("click", applyPromo);
-    input?.addEventListener("keydown", (e)=>{ if(e.key==="Enter") applyPromo(); });
-
     function row(label,val){
       return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
     }
+
+    // ——— Promo logic minimal (si ya lo tienes, no duplica listeners) ———
+    (function wirePromo(){
+      const input = document.getElementById("promoCode");
+      const btn   = document.getElementById("applyPromo");
+      const msg   = document.getElementById("promoMsg");
+      if (!input || !btn) return;
+
+      if (!window.__promoAppliedOnce) {
+        // No placeholder para que no muestre ejemplo.
+        input.setAttribute("placeholder", "");
+      }
+
+      function fmt(x){ return `$${x.toFixed(2)}`; }
+
+      btn.onclick = function(){
+        const code = String(input.value||"").trim().toLowerCase();
+        if (!code) { msg.textContent = "Enter a code."; return; }
+        if (window.__promoAppliedOnce) { msg.textContent = "Promo already applied for this session."; return; }
+        if (code !== "bonanza10") { msg.textContent = "Invalid code."; return; }
+
+        // aplicar 10% una sola vez por sesión
+        const last = BNZ.state.last;
+        if (!last) { msg.textContent = "Calculate price first."; return; }
+
+        const discounted = Math.round(last.total * 0.90); // 10%
+        BNZ.state.last.total = discounted;
+        publishTotals(BNZ.state.last);
+        // Re-pintar sólo la parte de Price/Total
+        const kpisPrice = document.querySelector("#info .kpis .kpi:nth-child(3) .value");
+        const totalEl   = document.querySelector("#info .ts-total span:last-child");
+        if (kpisPrice) kpisPrice.textContent = fmt(discounted);
+        if (totalEl)   totalEl.textContent   = fmt(discounted);
+
+        msg.textContent = "10% off applied.";
+        window.__promoAppliedOnce = true;
+        input.disabled = true;
+        btn.disabled   = true;
+      };
+    })();
   }
 
   // Términos & botones
