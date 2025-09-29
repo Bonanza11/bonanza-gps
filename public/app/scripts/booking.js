@@ -2,7 +2,7 @@
 (function(){
   "use strict";
 
-  // Reglas
+  // ===== Reglas / Precios =====
   const OPERATING_START = "07:00";
   const OPERATING_END   = "22:00";
   const AFTER_HOURS_PCT = 0.25;
@@ -32,6 +32,7 @@
   const MUNICIPAL_KEYWORDS = ["municipal airport","city airport"];
   const HEBER_MATCHES = ["heber valley airport","heber city municipal","russ mcdonald field","khcr","hcr","south airport road, heber city"];
 
+  // ===== Helpers =====
   function norm(x){ return String(x||"").toLowerCase().replace(/\s+/g," ").trim(); }
   function getPickupText(){
     const inputVal = document.getElementById("pickup")?.value || "";
@@ -56,15 +57,15 @@
   }
   function isPickupSLCorJSX(){ const t=getPickupText(); return t && (hasAny(t,SLC_MATCHES) || hasAny(t,JSX_MATCHES)); }
 
-  // Estado
+  // ===== Estado =====
   const BNZ = window.BNZ = window.BNZ || {};
   BNZ.state = BNZ.state || { vehicle:"suv", mgChoice:"none", last:null };
 
-  // Precios
+  // ===== Pricing =====
   function baseFare(m){ if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4; }
   function applyVehicle(x){ return BNZ.state.vehicle==="van" ? Math.round(x*VAN_MULTIPLIER) : Math.round(x); }
 
-  // 24h
+  // ===== 24h / after-hours =====
   function nextQuarter(d){ const m=d.getMinutes(); const add=15-(m%15||15); d.setMinutes(m+add,0,0); return d; }
   function earliestAllowed(){ return nextQuarter(new Date(Date.now()+24*60*60*1000)); }
   function localISO(d){ const off=d.getTimezoneOffset()*60000; return new Date(d-off).toISOString().slice(0,10); }
@@ -82,18 +83,21 @@
     return (d<start)||(d>end);
   }
 
-  // Meet & Greet (solo SLC comercial + SUV)
+  // ===== Meet & Greet (solo SLC + SUV) =====
   function mgShouldShow(){ return BNZ.state.vehicle==="suv" && pickupCategory()==="slc"; }
   function mgFee(){ return BNZ.state.mgChoice!=="none" ? MG_FEE_USD : 0; }
   function mgSyncCard(){
     const card=document.getElementById("meetGreetCard"); if(!card) return;
     if(mgShouldShow()){ card.style.display="block"; } else { card.style.display="none"; BNZ.state.mgChoice="none"; }
-    card.querySelectorAll(".mg-btn")?.forEach(b=>{ const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
-      b.classList.toggle("active",on); b.setAttribute("aria-pressed",String(on)); b.setAttribute("tabindex","0");
+    card.querySelectorAll(".mg-btn")?.forEach(b=>{
+      const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
+      b.classList.toggle("active",on);
+      b.setAttribute("aria-pressed",String(on));
+      b.setAttribute("tabindex","0");
     });
   }
 
-  // Flight UI
+  // ===== Flight UI =====
   function flightSyncUI(){
     const box=document.getElementById("flightBox"), comm=document.getElementById("flightCommercial"),
           priv=document.getElementById("flightPrivate"), badge=document.getElementById("flightBadge"),
@@ -118,19 +122,19 @@
   BNZ.onPickupPlaceChanged=function(){ mgSyncCard(); flightSyncUI(); };
   window.updateMeetGreetVisibility=mgSyncCard;
 
-  // Re-evaluar al tipear pickup (por si no usan Autocomplete)
+  // Re-evaluar al tipear pickup
   document.getElementById("pickup")?.addEventListener("input", function(){
     mgSyncCard(); flightSyncUI();
   });
 
-  // Publicar totales para stripe
+  // ===== Stripe totals =====
   function publishTotals(t){
     window.__lastQuotedTotal=t.total;
     window.__lastDistanceMiles=t.miles;
     window.__vehicleType=BNZ.state.vehicle;
   }
 
-  // Inyectar PAY NOW dentro del summary
+  // ===== PAY NOW dentro del summary =====
   function injectPayNow(){
     const box=document.getElementById("info"); if(!box) return;
     let btn=document.getElementById("pay");
@@ -141,7 +145,7 @@
     else{ document.dispatchEvent(new CustomEvent("bnz:pay-mounted",{detail:{button:btn}})); }
   }
 
-  // Render de presupuesto
+  // ===== Render de presupuesto =====
   BNZ.renderQuote=function(leg,{surcharge=0}={}){
     const miles=(leg?.distance?.value||0)/1609.34;
     let adjustedSurcharge=surcharge; if(isPickupSLCorJSX()) adjustedSurcharge=0;
@@ -188,7 +192,7 @@
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
         ${afterNote}
 
-        <!-- Promo code — fila compacta entre breakdown y total -->
+        <!-- Promo -->
         <div class="promo" id="promoBox" aria-label="Promo code">
           <div class="promo-row">
             <div class="promo-label">Promo Code</div>
@@ -207,9 +211,7 @@
       </div>
     `;
 
-    function row(label,val){
-      return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
-    }
+    function row(label,val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
 
     // Promo logic
     (function wirePromo(){
@@ -217,8 +219,8 @@
       const btn   = document.getElementById("applyPromo");
       const msg   = document.getElementById("promoMsg");
       if (!input || !btn) return;
-
       input.setAttribute("placeholder","");
+
       function fmt(x){ return `$${x.toFixed(2)}`; }
 
       btn.onclick = function(){
@@ -246,7 +248,7 @@
     })();
   }
 
-  // ====== Terms (solo visual; NO bloqueo) ======
+  // ===== Terms (solo visual; NO bloqueo) =====
   const acceptPill=document.getElementById("acceptPill");
   const termsBox=document.getElementById("termsBox");
   const termsSummary=document.querySelector("#termsBox .terms-summary");
@@ -254,28 +256,30 @@
   const calcBtn=document.getElementById("calculate");
   let payBtn=document.getElementById("pay");
 
-  // Siempre “aceptado” para efectos de flujo
+  // Siempre aceptado a efectos del flujo
   function isAccepted(){ return true; }
-
-  // Mantener compatibilidad con estilos/aria pero sin bloquear
-  function setAccepted(on){
+  function setAccepted(){ // solo apariencia
     if(acceptPill){
-      acceptPill.classList.toggle("on", true);
+      acceptPill.classList.add("on");
       acceptPill.setAttribute("aria-checked","true");
     }
     syncButtons();
   }
   function syncButtons(){
-    if(calcBtn) calcBtn.disabled = false;   // SIEMPRE habilitado
+    if(calcBtn) calcBtn.disabled = false; // siempre habilitado
     enablePayIfReady();
   }
   function enablePayIfReady(){
     payBtn = payBtn || document.getElementById("pay");
-    const ready=!!window.__lastQuotedTotal; // sin check de T&C
-    if(payBtn){ payBtn.disabled=!ready; payBtn.style.opacity=ready?1:.5; payBtn.style.cursor=ready?"pointer":"not-allowed"; }
+    const ready=!!window.__lastQuotedTotal;
+    if(payBtn){
+      payBtn.disabled=!ready;
+      payBtn.style.opacity=ready?1:.5;
+      payBtn.style.cursor=ready?"pointer":"not-allowed";
+    }
   }
 
-  // (Listeners inofensivos para accesibilidad)
+  // Listeners de accesibilidad (no afectan flujo)
   const shouldToggle=(e)=>!e.target.closest("a");
   const toggleAccept=(e)=>{ if(shouldToggle(e)){ e.stopPropagation(); setAccepted(true); } };
   ["click","pointerup","touchend"].forEach(evt=>{
@@ -288,7 +292,7 @@
   acceptPill?.addEventListener("keydown",kbd);
   termsSummary?.addEventListener("keydown",kbd);
 
-  // Vehículo
+  // ===== Vehículo =====
   (function wireVehicle(){
     const btns=document.querySelectorAll(".veh-btn");
     const img=document.querySelector(".turntable .car");
@@ -308,28 +312,41 @@
     });
   })();
 
-  // Meet & Greet
+  // ===== Meet & Greet =====
   (function wireMG(){
     const card=document.getElementById("meetGreetCard"); if(!card) return;
     const btns=card.querySelectorAll(".mg-btn");
     btns.forEach(b=>{
       const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
-      b.classList.toggle("active",on); b.setAttribute("aria-pressed",String(on)); b.setAttribute("tabindex","0");
+      b.classList.toggle("active",on);
+      b.setAttribute("aria-pressed",String(on));
+      b.setAttribute("tabindex","0");
       b.addEventListener("click",()=>{
         BNZ.state.mgChoice=b.dataset.choice||"none";
-        btns.forEach(x=>{ const on2=x.dataset.choice===BNZ.state.mgChoice; x.classList.toggle("active",on2); x.setAttribute("aria-pressed",String(on2)); });
+        btns.forEach(x=>{
+          const on2=x.dataset.choice===BNZ.state.mgChoice;
+          x.classList.toggle("active",on2);
+          x.setAttribute("aria-pressed",String(on2));
+        });
         if(BNZ.state.last){ BNZ.renderQuote(BNZ.state.last.leg, {surcharge:BNZ.state.last.surcharge}); }
       });
     });
     mgSyncCard();
   })();
 
-  // Calculate (sin bloqueo de T&C)
+  // ===== Calculate (sin bloqueo T&C) =====
   const handleCalculate=async ()=>{
     const need=["fullname","phone","email","pickup","dropoff","date","time"];
-    const missing=need.filter(id=>{ const el=document.getElementById(id); const empty=!el||!el.value||!String(el.value).trim(); if(el) el.classList.toggle("invalid",empty); return empty; });
+    const missing=need.filter(id=>{
+      const el=document.getElementById(id);
+      const empty=!el||!el.value||!String(el.value).trim();
+      if(el) el.classList.toggle("invalid",empty);
+      return empty;
+    });
     if(missing.length){ alert("Please complete all required fields."); return; }
-    const dt=selectedDateTime(); if(!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
+
+    const dt=selectedDateTime();
+    if(!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
     const cat=pickupCategory();
     const flightNumberEl=document.getElementById("flightNumber");
@@ -353,9 +370,17 @@
   };
   document.getElementById("calculate")?.addEventListener("click",handleCalculate);
 
-  // Init
+  // ===== Re-cálculo desde cache (lo usa index.html al cambiar vehículo) =====
+  window.recalcFromCache = function(){
+    if (BNZ.state.last){
+      BNZ.renderQuote(BNZ.state.last.leg, { surcharge: BNZ.state.last.surcharge });
+    }
+  };
+
+  // ===== Init =====
   document.addEventListener("DOMContentLoaded",()=>{
     ensureMin24h();
+    // Pill solo visual
     if(acceptPill){ acceptPill.classList.add("on"); acceptPill.setAttribute("aria-checked","true"); }
     mgSyncCard(); flightSyncUI();
     syncButtons(); // habilita Calculate Price desde el inicio
