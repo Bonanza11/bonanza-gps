@@ -110,7 +110,7 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 .accept-pill[aria-checked="true"] .accept-dot, .accept-pill.on .accept-dot{ left:23px }
 .terms-link{ color:#ffddae; text-decoration:underline }
 
-/* =================== Buttons =================== */
+/* =================== Buttons (genérico) =================== */
 button{
   border:1px solid rgba(0,0,0,.45);
   background:linear-gradient(180deg,var(--copper-2),var(--copper));
@@ -121,10 +121,18 @@ button[disabled]{ opacity:.5; cursor:not-allowed }
 button:hover:not([disabled]){ filter:saturate(1.06) brightness(1.02) }
 button:active:not([disabled]){ transform:translateY(1px) }
 
-/* =================== Map container =================== */
+/* =================== Map container (posición nueva) =================== */
 #map{ width:100%; min-height:340px; border:1px solid var(--border); border-radius:12px; background:#0b1016; position:relative; z-index:1 }
 @media (max-width:480px){ #map{ min-height:52vh } }
 @media (min-width:1024px){ #map{ min-height:420px } }
+
+/* Contenedor cuando el mapa se reubica */
+.map-block{ margin:12px 0 12px; }
+.map-block #map{
+  width:100%; min-height:340px; border:1px solid var(--border); border-radius:12px; background:#0b1016;
+}
+@media (max-width:480px){ .map-block #map{ min-height:52vh } }
+@media (min-width:1024px){ .map-block #map{ min-height:420px } }
 
 /* =================== Trip Summary (pro) =================== */
 #info{
@@ -149,19 +157,18 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .breakdown .row span:first-child{ color:var(--muted-blue); font-weight:700 }
 .breakdown .row span:last-child{ font-weight:800; color:#f2e6d6 }
 
-/* Nota de after-hours (se muestra solo cuando aplica) */
+/* Nota after-hours (sin íconos) */
 .after-hours-note{
-  margin:8px 0 0;
-  font-size:.85rem;
-  color:var(--muted-blue);
-  text-align:center;
+  margin:8px 2px 0;
+  font-size:.86rem;
+  color:#c9d4e1;
 }
 
+/* Total + tax */
 .ts-total{ display:flex; justify-content:space-between; align-items:center; padding-top:6px; }
 .ts-total span:first-child{ font-weight:900; color:#eedac4; letter-spacing:.2px }
 .ts-total span:last-child{ font-weight:900; font-size:1.05rem; color:#fff2e2 }
-
-.tax-note{ color:var(--muted-blue); font-size:.82rem; margin-top:4px }
+.tax-note{ color:#muted-blue; font-size:.82rem; margin-top:4px }
 
 /* PAY NOW dentro del summary (compacto, centrado, elegante) */
 #info .pay-now{
@@ -179,23 +186,13 @@ button:active:not([disabled]){ transform:translateY(1px) }
   padding:10px 12px;
   margin:10px 0 8px;
 }
-.promo-row{
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-}
-.promo-label{
-  font-weight:800; color:var(--muted-blue);
-  min-width:120px; letter-spacing:.2px;
-}
-.promo-field{
-  flex:1; display:flex; align-items:center; justify-content:flex-start; gap:10px;
-}
+.promo-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.promo-label{ font-weight:800; color:var(--muted-blue); min-width:120px; letter-spacing:.2px; }
+.promo-field{ flex:1; display:flex; align-items:center; justify-content:flex-start; gap:10px; }
 .promo-input{
-  width:100%; max-width:260px;
-  height:38px;
-  border:1px solid var(--copper);
-  background:#0a0f14; color:#ffddae;
-  padding:8px 14px; border-radius:999px;
-  font-weight:700; letter-spacing:.25px; font-size:.95rem;
+  width:100%; max-width:260px; height:38px;
+  border:1px solid var(--copper); background:#0a0f14; color:#ffddae;
+  padding:8px 14px; border-radius:999px; font-weight:700; letter-spacing:.25px; font-size:.95rem;
 }
 .promo-input::placeholder{ color:#cba686; opacity:.6; }
 .promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
