@@ -1,10 +1,7 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
-──────────────────────────────────────────────────────────────
-- Mapa usa MAP_ID de window.__PUBLIC_CFG__.
-- Autocomplete para pickup/dropoff.
-- 🚗 Al elegir ambas direcciones: DIBUJA LA RUTA (línea negra) pero NO muestra el Trip Summary.
-- 🧮 Al presionar "Calculate Price": calcula recargo y llama BNZ.renderQuote() para mostrar el summary.
+- Dibuja la ruta (línea negra) al tener pickup+dropoff, sin mostrar summary.
+- Al hacer "Calculate Price": calcula recargo y llama BNZ.renderQuote() para pintar el summary.
 */
 (function () {
   "use strict";
@@ -19,12 +16,8 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   let map, dirService, dirRenderer;
   let originText = "", destinationText = "";
   let lastLeg = null;   // cache de la última pierna (para usar al calcular)
-  let lastRoute = null; // cache del DirectionsResult (opcional)
 
-  window.pickupPlace  = window.pickupPlace  || null;
-  window.dropoffPlace = window.dropoffPlace || null;
-
-  // Alias disponibles para booking.js
+  // Alias disponibles para booking.js (si no vienen del server)
   window.BNZ_AIRPORTS = window.BNZ_AIRPORTS || {
     slcNames: [
       "salt lake city international airport",
@@ -44,31 +37,15 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     ]
   };
 
-  // ───────── helpers comunes
+  // Estado compartido con booking.js
+  window.pickupPlace  = window.pickupPlace  || null;
+  window.dropoffPlace = window.dropoffPlace || null;
+
+  // ───────── helpers
   function isAirport(place) {
     const t = place?.types || [];
     const txt = `${place?.name || ""} ${place?.formatted_address || ""}`.toLowerCase();
     return t.includes("airport") || /airport/.test(txt);
-  }
-  function isUtah(place) {
-    const addr = (place?.formatted_address || "").toLowerCase();
-    return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
-  }
-  function isPrivateUtahAirport(place) {
-    if (!place || !isAirport(place) || !isUtah(place)) return false;
-    const text = `${place.name || ""} ${place.formatted_address || ""}`;
-    const FBO_RX = /\b(fbo|jet center|private terminal|general aviation|hangar|atlantic aviation|million air|signature|ross aviation|tac air|ok3 air|lynx|modern aviation|provo jet center)\b/i;
-    return FBO_RX.test(text);
-  }
-  function isSLCInternational(place) {
-    if (!place) return false;
-    const name = (place.name || "").toLowerCase();
-    const addr = (place.formatted_address || "").toLowerCase();
-    const hit  =
-      /salt lake city international/.test(name) ||
-      /salt lake city international/.test(addr) ||
-      /\bslc\b/.test(name) || /\bslc\b/.test(addr);
-    return hit && isAirport(place) && !isPrivateUtahAirport(place);
   }
   function countyFrom(place) {
     const comps = place?.address_components || [];
@@ -107,7 +84,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     return leg.distance.value / 1609.34;
   }
 
-  // ───────── recargo $3/mi
+  // ───────── recargo $3/mi fuera de Summit/Wasatch (según origen o aeropuerto)
   async function computeSurchargeAsync() {
     if (!window.pickupPlace && !window.dropoffPlace) return 0;
 
@@ -147,7 +124,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     if (!input) return;
     input.setAttribute("autocomplete", "off");
 
-    if (!google.maps.places || !google.maps.places.Autocomplete) {
+    if (!google?.maps?.places?.Autocomplete) {
       console.error("[maps] Places library not loaded");
       return;
     }
@@ -175,9 +152,9 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
         window.dropoffPlace = place || null;
       }
 
-      // 🚗 Dibujar ruta AUTOMÁTICAMENTE si ya hay ambos (pero sin mostrar summary)
+      // 🚗 Dibuja solo la ruta (sin summary)
       if (originText && destinationText) {
-        drawRouteOnly().catch(()=>{ /* silencioso en auto */ });
+        drawRouteOnly().catch(()=>{});
       }
     });
 
@@ -185,6 +162,8 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
         if (inputId === "pickup") originText = v; else destinationText = v;
+        // Si limpian uno de los campos, limpiar cache de ruta
+        if (!originText || !destinationText) { lastLeg = null; dirRenderer?.set('directions', null); }
       });
     });
   }
@@ -207,16 +186,12 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     dirRenderer.setDirections(result);
     lastLeg = leg;
-    lastRoute = result;
   }
 
-  // ───────── Calcular para Summary (se usa al click en Calculate Price)
+  // ───────── Calcular para Summary (al click en Calculate Price)
   async function computeAndRenderQuote() {
     if (!lastLeg) { await drawRouteOnly(); }
-    if (!lastLeg) {
-      alert("Could not compute a route. Please refine the addresses.");
-      return;
-    }
+    if (!lastLeg) { alert("Could not compute a route. Please refine the addresses."); return; }
     const surcharge = await computeSurchargeAsync();
     if (window.BNZ?.renderQuote) BNZ.renderQuote(lastLeg, { surcharge });
   }
@@ -243,7 +218,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   window.initMap = function () {
     const mapEl = document.getElementById("map");
     if (!mapEl) { console.warn("[maps] #map not found"); return; }
-    mapEl.style.opacity = "0"; // fade-in suave
+    mapEl.style.opacity = "0";
 
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
