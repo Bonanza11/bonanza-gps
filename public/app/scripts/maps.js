@@ -3,9 +3,8 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 ──────────────────────────────────────────────────────────────
 - Mapa usa MAP_ID de window.__PUBLIC_CFG__.
 - Autocomplete para pickup/dropoff.
-- 🚗 Al elegir ambas direcciones: DIBUJA LA RUTA (solo mapa).
+- 🚗 Al elegir ambas direcciones: DIBUJA LA RUTA (hilo negro, súper delgado).
 - 🧮 Al presionar "Calculate Price": calcula recargo y llama BNZ.renderQuote().
-- ✨ Efecto “hilo cobre con resplandor”: 2 halos + línea central fina.
 */
 (function () {
   "use strict";
@@ -17,10 +16,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     ? window.__PUBLIC_CFG__.MAP_ID
     : "1803eda89e913c8354156119";
 
-  let map, dirService;
-  // Renderers en capas para el efecto de brillo
-  let dirGlowOuter, dirGlowInner, dirRenderer;
-
+  let map, dirService, dirRenderer;
   let originText = "", destinationText = "";
   let lastLeg = null;   // cache de la última pierna (para usar al calcular)
   let lastRoute = null; // cache del DirectionsResult (opcional)
@@ -209,11 +205,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     const leg    = route?.legs?.[0];
     if (!route || !leg) return;
 
-    // Pintar en las TRES capas para el efecto glow
-    dirGlowOuter.setDirections(result);
-    dirGlowInner.setDirections(result);
-    dirRenderer.setDirections(result);
-
+    dirRenderer.setDirections(result); // 🧵 hilo negro ultra delgado
     lastLeg = leg;
     lastRoute = result;
   }
@@ -265,36 +257,13 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     addHomeMarker();
     dirService  = new google.maps.DirectionsService();
 
-    // ====== Efecto “hilo cobre con resplandor” (tres renderers) ======
-    // 1) Halo externo (luz difusa)
-    dirGlowOuter = new google.maps.DirectionsRenderer({
-      map,
-      polylineOptions: {
-        strokeColor: "#FFDFA8",  // dorado muy claro
-        strokeOpacity: 0.28,     // tenue
-        strokeWeight: 9          // ancho (difusión)
-      },
-      suppressMarkers: true
-    });
-
-    // 2) Halo intermedio (brillo concentrado)
-    dirGlowInner = new google.maps.DirectionsRenderer({
-      map,
-      polylineOptions: {
-        strokeColor: "#FFC870",  // dorado cobre brillante
-        strokeOpacity: 0.6,      // más intenso
-        strokeWeight: 5
-      },
-      suppressMarkers: true
-    });
-
-    // 3) Línea principal (hilo cobre fino)
+    // 🎯 Línea principal: negro puro, súper delgada
     dirRenderer = new google.maps.DirectionsRenderer({
       map,
       polylineOptions: {
-        strokeColor: "#D87C3D",  // cobre intenso
+        strokeColor: "#000000",
         strokeOpacity: 1,
-        strokeWeight: 2          // fino (el grosor “perfecto”)
+        strokeWeight: 1 // ultra fino
       },
       suppressMarkers: false
     });
