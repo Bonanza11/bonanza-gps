@@ -167,7 +167,7 @@
                  t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
     const cn=window.__lastCN || window.__reservationCode || "";
 
-    // Nota de horario SIN el relojito
+    // Nota de horario (sin icono)
     const afterNote = (t.ah>0)
       ? `<div class="after-hours-note" role="note">Operating hours: <strong>7:00 AM – 10:00 PM</strong>. Rides outside this window incur an <strong>after-hours surcharge</strong>.</div>`
       : "";
@@ -286,6 +286,7 @@
   (function wireVehicle(){
     const btns=document.querySelectorAll(".veh-btn");
     const img=document.querySelector(".turntable .car");
+    the
     const cap=document.querySelector(".turntable .vehicle-caption");
     const initiallyActive=Array.from(btns).find(b=>b.classList.contains("active"));
     if(initiallyActive) BNZ.state.vehicle=initiallyActive.dataset.type||"suv";
@@ -304,4 +305,80 @@
 
   // Meet & Greet
   (function wireMG(){
-    const card=document.getElementById("meetGreetCard");
+    const card=document.getElementById("meetGreetCard"); if(!card) return;
+    const btns=card.querySelectorAll(".mg-btn");
+    btns.forEach(b=>{
+      const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
+      b.classList.toggle("active",on);
+      b.setAttribute("aria-pressed",String(on));
+      b.setAttribute("tabindex","0");
+      b.addEventListener("click",()=>{
+        BNZ.state.mgChoice=b.dataset.choice||"none";
+        btns.forEach(x=>{
+          const on2=x.dataset.choice===BNZ.state.mgChoice;
+          x.classList.toggle("active",on2);
+          x.setAttribute("aria-pressed",String(on2));
+        });
+        if(BNZ.state.last){
+          BNZ.renderQuote(BNZ.state.last.leg, {surcharge:BNZ.state.last.surcharge});
+        }
+      });
+    });
+    mgSyncCard();
+  })();
+
+  // Calculate (sin validación de vuelos)
+  const handleCalculate=async ()=>{
+    if(!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
+    const need=["fullname","phone","email","pickup","dropoff","date","time"];
+    const missing=need.filter(id=>{
+      const el=document.getElementById(id);
+      const empty=!el||!el.value||!String(el.value).trim();
+      if(el) el.classList.toggle("invalid",empty);
+      return empty;
+    });
+    if(missing.length){ alert("Please complete all required fields."); return; }
+    const dt=selectedDateTime(); if(!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
+
+    const cat=pickupCategory();
+    const flightNumberEl=document.getElementById("flightNumber");
+    const originCityEl  =document.getElementById("flightOrigin");
+    const tailNumberEl  =document.getElementById("tailNumber");
+    const fboCityEl     =document.getElementById("fboCity");
+
+    let flightNumber=flightNumberEl?.value?.trim();
+    let originCity  =originCityEl?.value?.trim();
+    let tailNumber  =tailNumberEl?.value?.trim();
+    let privCity    =fboCityEl?.value?.trim();
+
+    if(flightNumber) flightNumber=flightNumber.replace(/\s+/g,"").toUpperCase();
+    if(tailNumber)   tailNumber  =tailNumber.replace(/\s+/g,"").toUpperCase();
+
+    if(document.activeElement?.blur) document.activeElement.blur();
+
+    document.dispatchEvent(new CustomEvent("bnz:calculate",{
+      detail:{ flight:{
+        cat,
+        flightNumber,
+        originCity:originCity||privCity||"",
+        privateCity:privCity||"",
+        tailNumber,
+        verified:false,
+        verification:null
+      } }
+    }));
+  };
+  document.getElementById("calculate")?.addEventListener("click",handleCalculate);
+
+  // Init
+  document.addEventListener("DOMContentLoaded",()=>{
+    ensureMin24h();
+    const pill=document.getElementById("acceptPill");
+    if(pill){
+      const startOn=pill.getAttribute("aria-checked")==="true"||pill.classList.contains("on");
+      if(startOn) pill.classList.add("on");
+    }
+    mgSyncCard();
+    flightSyncUI();
+  });
+})();
