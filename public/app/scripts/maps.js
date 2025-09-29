@@ -232,14 +232,14 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     addHomeMarker();
     dirService  = new google.maps.DirectionsService();
     dirRenderer = new google.maps.DirectionsRenderer({
-      map,
-      polylineOptions: {
-        strokeColor: "#000000",   // ⚫ ruta negra
-        strokeOpacity: 0.95,
-        strokeWeight: 5
-      },
-      suppressMarkers: false
-    });
+  map,
+  polylineOptions: {
+    strokeColor: "#E8C06A",   // dorado elegante
+    strokeOpacity: 0.92,      // brillo sutil (no 100%)
+    strokeWeight: 2.5         // delgado tipo hilo
+  },
+  suppressMarkers: false
+});
 
     attachAutocomplete("pickup");
     attachAutocomplete("dropoff");
