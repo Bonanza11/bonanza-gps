@@ -149,6 +149,14 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .breakdown .row span:first-child{ color:var(--muted-blue); font-weight:700 }
 .breakdown .row span:last-child{ font-weight:800; color:#f2e6d6 }
 
+/* Nota de after-hours (se muestra solo cuando aplica) */
+.after-hours-note{
+  margin:8px 0 0;
+  font-size:.85rem;
+  color:var(--muted-blue);
+  text-align:center;
+}
+
 .ts-total{ display:flex; justify-content:space-between; align-items:center; padding-top:6px; }
 .ts-total span:first-child{ font-weight:900; color:#eedac4; letter-spacing:.2px }
 .ts-total span:last-child{ font-weight:900; font-size:1.05rem; color:#fff2e2 }
