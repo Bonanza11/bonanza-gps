@@ -16,7 +16,7 @@
   const SLC_MATCHES = (window.BNZ_AIRPORTS?.slcNames) || [
     "salt lake city international airport","slc airport","slc intl","slc int’l","salt lake city airport",
     "w terminal dr, salt lake city","slc terminal","salt lake city international",
-    "slc", "salt lake city (slc)", "salt lake city slc"
+    "slc","salt lake city (slc)","salt lake city slc"
   ];
   const JSX_MATCHES = (window.BNZ_AIRPORTS?.jsxNames) || [
     "jsx","jsx slc","jsx terminal","jsx salt lake","signature flight support jsx","jsx air"
@@ -118,7 +118,7 @@
   BNZ.onPickupPlaceChanged=function(){ mgSyncCard(); flightSyncUI(); };
   window.updateMeetGreetVisibility=mgSyncCard;
 
-  // 🔁 Re-evaluar al tipear pickup (por si no usan Autocomplete)
+  // Re-evaluar al tipear pickup (por si no usan Autocomplete)
   document.getElementById("pickup")?.addEventListener("input", function(){
     mgSyncCard(); flightSyncUI();
   });
@@ -175,16 +175,6 @@
           ${cn?`<div class="ts-confirm">Confirmation: <span class="code">${cn}</span></div>`:""}
         </div>
 
-        <!-- Promo code (si ya lo tienes, se respeta; si no, no estorba) -->
-        <div class="promo" id="promoBox" aria-label="Promo code">
-          <label for="promoCode" class="promo-label">Promo Code</label>
-          <div class="promo-field">
-            <input id="promoCode" class="promo-input" inputmode="text" autocomplete="off" />
-            <button id="applyPromo" class="promo-btn" type="button">Apply</button>
-          </div>
-          <div id="promoMsg" class="hint" aria-live="polite" style="text-align:center;margin-top:6px;"></div>
-        </div>
-
         <div class="kpis">
           <div class="kpi"><div class="label">Distance</div><div class="value">${distTxt}</div></div>
           <div class="kpi"><div class="label">Duration</div><div class="value">${durTxt}</div></div>
@@ -192,6 +182,18 @@
         </div>
 
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
+
+        <!-- Promo code — fila compacta entre breakdown y total -->
+        <div class="promo" id="promoBox" aria-label="Promo code">
+          <div class="promo-row">
+            <div class="promo-label">Promo Code</div>
+            <div class="promo-field">
+              <input id="promoCode" class="promo-input" inputmode="text" autocomplete="off" />
+              <button id="applyPromo" class="promo-btn" type="button">Apply</button>
+            </div>
+          </div>
+          <div id="promoMsg" class="hint promo-msg" aria-live="polite"></div>
+        </div>
 
         <div class="ts-total">
           <span>Total</span><span>$${t.total.toFixed(2)}</span>
@@ -204,34 +206,29 @@
       return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
     }
 
-    // ——— Promo logic minimal (si ya lo tienes, no duplica listeners) ———
+    // Promo logic
     (function wirePromo(){
       const input = document.getElementById("promoCode");
       const btn   = document.getElementById("applyPromo");
       const msg   = document.getElementById("promoMsg");
       if (!input || !btn) return;
 
-      if (!window.__promoAppliedOnce) {
-        // No placeholder para que no muestre ejemplo.
-        input.setAttribute("placeholder", "");
-      }
-
+      input.setAttribute("placeholder",""); // sin ejemplo
       function fmt(x){ return `$${x.toFixed(2)}`; }
 
       btn.onclick = function(){
         const code = String(input.value||"").trim().toLowerCase();
-        if (!code) { msg.textContent = "Enter a code."; return; }
-        if (window.__promoAppliedOnce) { msg.textContent = "Promo already applied for this session."; return; }
-        if (code !== "bonanza10") { msg.textContent = "Invalid code."; return; }
+        if (!code){ msg.textContent="Enter a code."; return; }
+        if (window.__promoAppliedOnce){ msg.textContent="Promo already applied for this session."; return; }
+        if (code !== "bonanza10"){ msg.textContent="Invalid code."; return; }
 
-        // aplicar 10% una sola vez por sesión
         const last = BNZ.state.last;
-        if (!last) { msg.textContent = "Calculate price first."; return; }
+        if (!last){ msg.textContent="Calculate price first."; return; }
 
-        const discounted = Math.round(last.total * 0.90); // 10%
+        const discounted = Math.round(last.total * 0.90);
         BNZ.state.last.total = discounted;
         publishTotals(BNZ.state.last);
-        // Re-pintar sólo la parte de Price/Total
+
         const kpisPrice = document.querySelector("#info .kpis .kpi:nth-child(3) .value");
         const totalEl   = document.querySelector("#info .ts-total span:last-child");
         if (kpisPrice) kpisPrice.textContent = fmt(discounted);
@@ -239,8 +236,7 @@
 
         msg.textContent = "10% off applied.";
         window.__promoAppliedOnce = true;
-        input.disabled = true;
-        btn.disabled   = true;
+        input.disabled = true; btn.disabled = true;
       };
     })();
   }
