@@ -170,7 +170,6 @@
                  t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
     const cn=window.__lastCN || window.__reservationCode || "";
 
-    // Nota de horario (SIN iconos)
     const afterNote = (t.ah>0)
       ? `<div class="after-hours-note" role="note">Operating hours: <strong>7:00 AM – 10:00 PM</strong>. Rides outside this window incur an <strong>after-hours surcharge</strong>.</div>`
       : "";
@@ -192,7 +191,7 @@
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
         ${afterNote}
 
-        <!-- Promo code -->
+        <!-- Promo -->
         <div class="promo" id="promoBox" aria-label="Promo code">
           <div class="promo-row">
             <div class="promo-label">Promo Code</div>
@@ -211,46 +210,34 @@
       </div>
     `;
 
-    function row(label,val){
-      return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
-    }
+    function row(label,val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
 
-    // Promo logic
+    // Promo
     (function wirePromo(){
       const input = document.getElementById("promoCode");
       const btn   = document.getElementById("applyPromo");
       const msg   = document.getElementById("promoMsg");
       if (!input || !btn) return;
-
-      input.setAttribute("placeholder","");
       function fmt(x){ return `$${x.toFixed(2)}`; }
-
       btn.onclick = function(){
         const code = String(input.value||"").trim().toLowerCase();
         if (!code){ msg.textContent="Enter a code."; return; }
         if (window.__promoAppliedOnce){ msg.textContent="Promo already applied for this session."; return; }
         if (code !== "bonanza10"){ msg.textContent="Invalid code."; return; }
-
-        const last = BNZ.state.last;
-        if (!last){ msg.textContent="Calculate price first."; return; }
-
+        const last = BNZ.state.last; if (!last){ msg.textContent="Calculate price first."; return; }
         const discounted = Math.round(last.total * 0.90);
-        BNZ.state.last.total = discounted;
-        publishTotals(BNZ.state.last);
-
+        BNZ.state.last.total = discounted; publishTotals(BNZ.state.last);
         const kpisPrice = document.querySelector("#info .kpis .kpi:nth-child(3) .value");
         const totalEl   = document.querySelector("#info .ts-total span:last-child");
         if (kpisPrice) kpisPrice.textContent = fmt(discounted);
         if (totalEl)   totalEl.textContent   = fmt(discounted);
-
         msg.textContent = "10% off applied.";
-        window.__promoAppliedOnce = true;
-        input.disabled = true; btn.disabled = true;
+        window.__promoAppliedOnce = true; input.disabled = true; btn.disabled = true;
       };
     })();
   }
 
-  // ===== Botones (sin dependencia de T&C) =====
+  // ===== Botones (sin T&C)
   const calcBtn=document.getElementById("calculate");
   let payBtn=document.getElementById("pay");
 
@@ -338,7 +325,7 @@
   document.addEventListener("DOMContentLoaded",()=>{
     ensureMin24h();
     mgSyncCard(); flightSyncUI();
-    // Calculate siempre disponible
+    // Calculate siempre habilitado
     const btn = document.getElementById("calculate");
     if(btn) btn.disabled = false;
   });
