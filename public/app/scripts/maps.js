@@ -231,24 +231,24 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     addHomeMarker();
     dirService  = new google.maps.DirectionsService();
-    // Glow externo (resplandor)
+    // Glow externo (resplandor cobre cálido)
 const dirGlow = new google.maps.DirectionsRenderer({
   map,
   polylineOptions: {
-    strokeColor: "#FFD700",
-    strokeOpacity: 0.35,   // más tenue
-    strokeWeight: 6        // más grueso para el halo
+    strokeColor: "#E1A95F",  // cobre claro dorado
+    strokeOpacity: 0.45,     // halo tenue
+    strokeWeight: 7          // grosor del resplandor
   },
   suppressMarkers: true
 });
 
-// Línea principal (hilo brillante)
+// Línea principal (hilo cobre brillante)
 dirRenderer = new google.maps.DirectionsRenderer({
   map,
   polylineOptions: {
-    strokeColor: "#FFD700",
+    strokeColor: "#D87C3D",  // cobre intenso
     strokeOpacity: 1,
-    strokeWeight: 2.5      // fino tipo hilo
+    strokeWeight: 2.5        // fino tipo hilo
   },
   suppressMarkers: false
 });
