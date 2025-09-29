@@ -131,16 +131,91 @@
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Acordeón equipaje -->
-    <div class="luggage-accordion" id="luggageAccordion">
-      <div class="luggage-summary">
-        <span class="luggage-title">Luggage Guidelines</span>
-        <span class="luggage-chev"></span>
+   <!-- Acordeón equipaje -->
+<div class="luggage-accordion" id="luggageAccordion">
+  <div class="luggage-summary" id="luggageToggle" role="button" tabindex="0" aria-controls="luggagePanel" aria-expanded="false">
+    <span class="luggage-title">Luggage Guidelines</span>
+    <span class="luggage-chev"></span>
+  </div>
+
+  <div class="luggage-body" id="luggagePanel">
+    <div class="lugg-policy">
+
+      <!-- SUV -->
+      <div class="lugg-card">
+        <div class="lugg-head">
+          <h4 class="lugg-title">SUV — Typical Capacity</h4>
+        </div>
+        <div class="lugg-grid">
+          <div class="lugg-opt">
+            <div class="lugg-opt-title">Standard fit</div>
+            <ul class="lugg-list">
+              <li>Up to 5 passengers</li>
+              <li>4 large suitcases <em>or</em> 5 carry-ons</li>
+              <li>+ small backpacks/hand bags</li>
+            </ul>
+          </div>
+          <div class="lugg-opt">
+            <div class="lugg-opt-title">Long items</div>
+            <ul class="lugg-list">
+              <li>Skis/snowboards: cuentan como 1 pieza larga</li>
+              <li>Strollers: plegados, ocupan espacio de 1 maleta</li>
+              <li>Golf bags: 1 por maleta grande</li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div class="luggage-body">
-        <!-- ... (contenido igual que antes) ... -->
+
+      <!-- Van -->
+      <div class="lugg-card">
+        <div class="lugg-head">
+          <h4 class="lugg-title">Van — Typical Capacity</h4>
+        </div>
+        <div class="lugg-grid">
+          <div class="lugg-opt">
+            <div class="lugg-opt-title">Standard fit</div>
+            <ul class="lugg-list">
+              <li>Up to 12 passengers</li>
+              <li>8–10 large suitcases <em>o</em> 12+ carry-ons</li>
+              <li>Espacio variable según configuración de asientos</li>
+            </ul>
+          </div>
+          <div class="lugg-opt">
+            <div class="lugg-opt-title">Notas</div>
+            <ul class="lugg-list">
+              <li>Si llevas muchas piezas largas, avísanos en “Special Instructions”.</li>
+              <li>Equipaje extra puede requerir vehículo adicional.</li>
+            </ul>
+          </div>
+        </div>
       </div>
+
+      <!-- Tips generales -->
+      <div class="lugg-card">
+        <div class="lugg-head">
+          <h4 class="lugg-title">Tips</h4>
+        </div>
+        <div class="lugg-grid">
+          <div class="lugg-opt">
+            <div class="lugg-opt-title">Para agilizar</div>
+            <ul class="lugg-list">
+              <li>Indica número de maletas y piezas largas al reservar.</li>
+              <li>Usa maletas “stackables” cuando sea posible.</li>
+            </ul>
+          </div>
+          <div class="lugg-opt">
+            <div class="lugg-opt-title">Piezas especiales</div>
+            <ul class="lugg-list">
+              <li>Instrumentos/arte: indícalo para traer mantas o anclajes.</li>
+              <li>Fragile: márcalo y colócalo de último.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
+</div>
 
     <!-- Terms (SOLO texto y enlace, sin switch) -->
     <div class="terms-box" id="termsBox">
