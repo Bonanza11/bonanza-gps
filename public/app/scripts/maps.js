@@ -1,7 +1,11 @@
 /*
 maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
-- Dibuja la ruta (línea negra) al tener pickup+dropoff, sin mostrar summary.
-- Al hacer "Calculate Price": calcula recargo y llama BNZ.renderQuote() para pintar el summary.
+──────────────────────────────────────────────────────────────
+- Mapa usa MAP_ID de window.__PUBLIC_CFG__.
+- Autocomplete para pickup/dropoff.
+- 🚗 Al elegir ambas direcciones: DIBUJA LA RUTA (solo mapa).
+- 🧮 Al presionar "Calculate Price": calcula recargo y llama BNZ.renderQuote().
+- ✨ Efecto “hilo cobre con resplandor”: 2 halos + línea central fina.
 */
 (function () {
   "use strict";
@@ -13,11 +17,18 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     ? window.__PUBLIC_CFG__.MAP_ID
     : "1803eda89e913c8354156119";
 
-  let map, dirService, dirRenderer;
+  let map, dirService;
+  // Renderers en capas para el efecto de brillo
+  let dirGlowOuter, dirGlowInner, dirRenderer;
+
   let originText = "", destinationText = "";
   let lastLeg = null;   // cache de la última pierna (para usar al calcular)
+  let lastRoute = null; // cache del DirectionsResult (opcional)
 
-  // Alias disponibles para booking.js (si no vienen del server)
+  window.pickupPlace  = window.pickupPlace  || null;
+  window.dropoffPlace = window.dropoffPlace || null;
+
+  // Alias disponibles para booking.js
   window.BNZ_AIRPORTS = window.BNZ_AIRPORTS || {
     slcNames: [
       "salt lake city international airport",
@@ -37,15 +48,31 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     ]
   };
 
-  // Estado compartido con booking.js
-  window.pickupPlace  = window.pickupPlace  || null;
-  window.dropoffPlace = window.dropoffPlace || null;
-
-  // ───────── helpers
+  // ───────── helpers comunes
   function isAirport(place) {
     const t = place?.types || [];
     const txt = `${place?.name || ""} ${place?.formatted_address || ""}`.toLowerCase();
     return t.includes("airport") || /airport/.test(txt);
+  }
+  function isUtah(place) {
+    const addr = (place?.formatted_address || "").toLowerCase();
+    return /\but\b/.test(addr) || /, ut(ah)?\b/.test(addr);
+  }
+  function isPrivateUtahAirport(place) {
+    if (!place || !isAirport(place) || !isUtah(place)) return false;
+    const text = `${place.name || ""} ${place.formatted_address || ""}`;
+    const FBO_RX = /\b(fbo|jet center|private terminal|general aviation|hangar|atlantic aviation|million air|signature|ross aviation|tac air|ok3 air|lynx|modern aviation|provo jet center)\b/i;
+    return FBO_RX.test(text);
+  }
+  function isSLCInternational(place) {
+    if (!place) return false;
+    const name = (place.name || "").toLowerCase();
+    const addr = (place.formatted_address || "").toLowerCase();
+    const hit  =
+      /salt lake city international/.test(name) ||
+      /salt lake city international/.test(addr) ||
+      /\bslc\b/.test(name) || /\bslc\b/.test(addr);
+    return hit && isAirport(place) && !isPrivateUtahAirport(place);
   }
   function countyFrom(place) {
     const comps = place?.address_components || [];
@@ -84,7 +111,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     return leg.distance.value / 1609.34;
   }
 
-  // ───────── recargo $3/mi fuera de Summit/Wasatch (según origen o aeropuerto)
+  // ───────── recargo $3/mi
   async function computeSurchargeAsync() {
     if (!window.pickupPlace && !window.dropoffPlace) return 0;
 
@@ -124,7 +151,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     if (!input) return;
     input.setAttribute("autocomplete", "off");
 
-    if (!google?.maps?.places?.Autocomplete) {
+    if (!google.maps.places || !google.maps.places.Autocomplete) {
       console.error("[maps] Places library not loaded");
       return;
     }
@@ -152,9 +179,9 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
         window.dropoffPlace = place || null;
       }
 
-      // 🚗 Dibuja solo la ruta (sin summary)
+      // 🚗 Dibujar ruta AUTOMÁTICAMENTE si ya hay ambos (solo mapa, sin summary)
       if (originText && destinationText) {
-        drawRouteOnly().catch(()=>{});
+        drawRouteOnly().catch(()=>{ /* silencioso en auto */ });
       }
     });
 
@@ -162,8 +189,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       input.addEventListener(ev, () => {
         const v = (input.value || "").trim();
         if (inputId === "pickup") originText = v; else destinationText = v;
-        // Si limpian uno de los campos, limpiar cache de ruta
-        if (!originText || !destinationText) { lastLeg = null; dirRenderer?.set('directions', null); }
       });
     });
   }
@@ -184,14 +209,22 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     const leg    = route?.legs?.[0];
     if (!route || !leg) return;
 
+    // Pintar en las TRES capas para el efecto glow
+    dirGlowOuter.setDirections(result);
+    dirGlowInner.setDirections(result);
     dirRenderer.setDirections(result);
+
     lastLeg = leg;
+    lastRoute = result;
   }
 
-  // ───────── Calcular para Summary (al click en Calculate Price)
+  // ───────── Calcular para Summary (click en Calculate Price)
   async function computeAndRenderQuote() {
     if (!lastLeg) { await drawRouteOnly(); }
-    if (!lastLeg) { alert("Could not compute a route. Please refine the addresses."); return; }
+    if (!lastLeg) {
+      alert("Could not compute a route. Please refine the addresses.");
+      return;
+    }
     const surcharge = await computeSurchargeAsync();
     if (window.BNZ?.renderQuote) BNZ.renderQuote(lastLeg, { surcharge });
   }
@@ -218,7 +251,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   window.initMap = function () {
     const mapEl = document.getElementById("map");
     if (!mapEl) { console.warn("[maps] #map not found"); return; }
-    mapEl.style.opacity = "0";
+    mapEl.style.opacity = "0"; // fade-in suave
 
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
@@ -231,27 +264,40 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     addHomeMarker();
     dirService  = new google.maps.DirectionsService();
-    // Glow externo (resplandor cobre cálido)
-const dirGlow = new google.maps.DirectionsRenderer({
-  map,
-  polylineOptions: {
-    strokeColor: "#E1A95F",  // cobre claro dorado
-    strokeOpacity: 0.45,     // halo tenue
-    strokeWeight: 7          // grosor del resplandor
-  },
-  suppressMarkers: true
-});
 
-// Línea principal (hilo cobre brillante)
-dirRenderer = new google.maps.DirectionsRenderer({
-  map,
-  polylineOptions: {
-    strokeColor: "#D87C3D",  // cobre intenso
-    strokeOpacity: 1,
-    strokeWeight: 2.5        // fino tipo hilo
-  },
-  suppressMarkers: false
-});
+    // ====== Efecto “hilo cobre con resplandor” (tres renderers) ======
+    // 1) Halo externo (luz difusa)
+    dirGlowOuter = new google.maps.DirectionsRenderer({
+      map,
+      polylineOptions: {
+        strokeColor: "#FFDFA8",  // dorado muy claro
+        strokeOpacity: 0.28,     // tenue
+        strokeWeight: 9          // ancho (difusión)
+      },
+      suppressMarkers: true
+    });
+
+    // 2) Halo intermedio (brillo concentrado)
+    dirGlowInner = new google.maps.DirectionsRenderer({
+      map,
+      polylineOptions: {
+        strokeColor: "#FFC870",  // dorado cobre brillante
+        strokeOpacity: 0.6,      // más intenso
+        strokeWeight: 5
+      },
+      suppressMarkers: true
+    });
+
+    // 3) Línea principal (hilo cobre fino)
+    dirRenderer = new google.maps.DirectionsRenderer({
+      map,
+      polylineOptions: {
+        strokeColor: "#D87C3D",  // cobre intenso
+        strokeOpacity: 1,
+        strokeWeight: 2          // fino (el grosor “perfecto”)
+      },
+      suppressMarkers: false
+    });
 
     attachAutocomplete("pickup");
     attachAutocomplete("dropoff");
