@@ -167,7 +167,7 @@
                  t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
     const cn=window.__lastCN || window.__reservationCode || "";
 
-    // Nota de horario (SIN iconos)
+    // Nota de horario (sin iconos)
     const afterNote = (t.ah>0)
       ? `<div class="after-hours-note" role="note">Operating hours: <strong>7:00 AM – 10:00 PM</strong>. Rides outside this window incur an <strong>after-hours surcharge</strong>.</div>`
       : "";
@@ -187,10 +187,9 @@
         </div>
 
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
-
         ${afterNote}
 
-        <!-- Promo code — fila compacta entre breakdown y total -->
+        <!-- Promo -->
         <div class="promo" id="promoBox" aria-label="Promo code">
           <div class="promo-row">
             <div class="promo-label">Promo Code</div>
@@ -202,16 +201,12 @@
           <div id="promoMsg" class="hint promo-msg" aria-live="polite"></div>
         </div>
 
-        <div class="ts-total">
-          <span>Total</span><span>$${t.total.toFixed(2)}</span>
-        </div>
+        <div class="ts-total"><span>Total</span><span>$${t.total.toFixed(2)}</span></div>
         <div class="tax-note">Taxes & gratuity included</div>
       </div>
     `;
 
-    function row(label,val){
-      return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
-    }
+    function row(label,val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
 
     // Promo logic
     (function wirePromo(){
@@ -220,7 +215,7 @@
       const msg   = document.getElementById("promoMsg");
       if (!input || !btn) return;
 
-      input.setAttribute("placeholder",""); // sin ejemplo
+      input.setAttribute("placeholder","");
       function fmt(x){ return `$${x.toFixed(2)}`; }
 
       btn.onclick = function(){
@@ -246,83 +241,6 @@
         input.disabled = true; btn.disabled = true;
       };
     })();
-  }
-
-  // ===== Reubicación robusta del mapa: entre Date/Time y Special Instructions =====
-  function relocateMapBetweenDateAndSpecial(){
-    const map = document.getElementById("map");
-    if(!map) return;
-
-    // Envuelve el mapa en .map-block una vez
-    let wrapper = map.closest(".map-block");
-    if(!wrapper){
-      wrapper = document.createElement("div");
-      wrapper.className = "map-block";
-      map.parentNode.insertBefore(wrapper, map);
-      wrapper.appendChild(map);
-    }
-
-    const findDateBlock = () => {
-      const dateEl = document.getElementById("date");
-      const timeEl = document.getElementById("time");
-      const anchor = dateEl || timeEl;
-      return anchor
-        ? (anchor.closest(".field, .field-col, .grid2, section, form, .row, div") || anchor.parentElement)
-        : null;
-    };
-
-    const findSpecialBlock = () => {
-      const el =
-        document.getElementById("notes") ||
-        document.getElementById("specialInstructions") ||
-        document.getElementById("instructions") ||
-        document.querySelector('textarea[name*="special" i]') ||
-        document.querySelector('textarea[name*="instruction" i]');
-      return el
-        ? (el.closest(".field, .field-col, section, form, .row, div") || el.parentElement)
-        : null;
-    };
-
-    function isAfter(nodeA, nodeB){
-      return !!(nodeA && nodeB && nodeB.compareDocumentPosition(nodeA) & Node.DOCUMENT_POSITION_FOLLOWING);
-    }
-
-    const moveIfReady = ()=>{
-      const dateBlock = findDateBlock();
-      const specialBlock = findSpecialBlock();
-
-      // Solo movemos si hay al menos uno de los dos anchors.
-      if(!dateBlock && !specialBlock) return false;
-
-      // Si ya está colocado correctamente, no hacemos nada.
-      if(dateBlock && wrapper.previousElementSibling === dateBlock) return true;
-      if(specialBlock && wrapper.nextElementSibling === specialBlock) return true;
-
-      // Preferencia: poner el mapa inmediatamente ANTES de Special Instructions.
-      if(specialBlock && specialBlock.parentNode){
-        specialBlock.parentNode.insertBefore(wrapper, specialBlock);
-        return true;
-      }
-
-      // Si no encontramos Special, lo ponemos DESPUÉS del bloque de Date/Time.
-      if(dateBlock && dateBlock.parentNode){
-        if(isAfter(wrapper, dateBlock)){
-          dateBlock.parentNode.insertBefore(wrapper, dateBlock.nextSibling);
-        }
-        return true;
-      }
-
-      return false;
-    };
-
-    // Intentos escalonados por si el DOM aún no está listo
-    let tries = 0;
-    const maxTries = 20;
-    const tick = ()=>{
-      if(moveIfReady() || ++tries >= maxTries) return;
-      setTimeout(tick, 150);
-    };
-    tick();
   }
 
   // Términos & botones
@@ -431,6 +349,6 @@
     const pill=document.getElementById("acceptPill");
     if(pill) { const startOn=pill.getAttribute("aria-checked")==="true"||pill.classList.contains("on"); if(startOn) pill.classList.add("on"); }
     mgSyncCard(); flightSyncUI();
-    relocateMapBetweenDateAndSpecial(); // mover mapa de forma segura
+    // 👇 Ya no se toca el mapa aquí (el HTML lo ubica fijo).
   });
 })();
