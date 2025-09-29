@@ -231,13 +231,25 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     addHomeMarker();
     dirService  = new google.maps.DirectionsService();
-    dirRenderer = new google.maps.DirectionsRenderer({
+    // Glow externo (resplandor)
+const dirGlow = new google.maps.DirectionsRenderer({
   map,
- polylineOptions: {
-  strokeColor: "#FFD700",   // dorado brillante
-  strokeOpacity: 1,         // brillo completo
-  strokeWeight: 2.5         // delgado tipo hilo
-},
+  polylineOptions: {
+    strokeColor: "#FFD700",
+    strokeOpacity: 0.35,   // más tenue
+    strokeWeight: 6        // más grueso para el halo
+  },
+  suppressMarkers: true
+});
+
+// Línea principal (hilo brillante)
+dirRenderer = new google.maps.DirectionsRenderer({
+  map,
+  polylineOptions: {
+    strokeColor: "#FFD700",
+    strokeOpacity: 1,
+    strokeWeight: 2.5      // fino tipo hilo
+  },
   suppressMarkers: false
 });
 
