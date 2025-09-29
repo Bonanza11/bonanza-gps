@@ -84,7 +84,7 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 .mg-btn.active{ background:linear-gradient(180deg,var(--copper-2),var(--copper)); color:#111; border-color:var(--copper); box-shadow:var(--ring) }
 .mg-note{ margin-top:8px; color:#c9d4e1; font-size:.9rem }
 
-/* Luggage accordion */
+/* Luggage accordion (clases genéricas) */
 .luggage-accordion{ border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel); position:relative; z-index:2 }
 .luggage-summary{ display:flex; justify-content:space-between; align-items:center; padding:10px 12px; cursor:pointer; user-select:none; min-height:44px }
 .luggage-title{ font-weight:800; color:#ffdeb3 }
@@ -92,6 +92,26 @@ input:focus, textarea:focus, select:focus{ border-color:var(--copper); box-shado
 .luggage-accordion.open .luggage-chev::after{ transform:rotate(-180deg) }
 .luggage-body{ display:none; padding:10px 12px; color:#d7e3f0 }
 .luggage-accordion.open .luggage-body{ display:block }
+
+/* —— Luggage Guide (IDs) — compatible con booking.js wireLuggage() —— */
+#luggageToggle{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  cursor:pointer; user-select:none; min-height:44px; padding:10px 12px;
+  border:1px solid var(--border); border-radius:12px; background:var(--panel);
+}
+#luggageToggle .luggage-title{ font-weight:800; color:#ffdeb3; }
+#luggageToggle .luggage-chev::after{
+  content:"▾"; display:inline-block; transform:rotate(0deg); transition:transform .15s ease;
+}
+#luggageToggle[aria-expanded="true"] .luggage-chev::after{ transform:rotate(-180deg); }
+
+#luggagePanel{
+  border:1px solid var(--border); border-radius:12px; background:var(--panel);
+  padding:10px 12px; margin-top:8px; overflow:hidden;
+  max-height:0; transition:max-height .28s ease;
+}
+#luggagePanel.open{ max-height:800px; } /* ajusta según contenido */
+#luggagePanel[hidden]{ display:none !important; max-height:0 !important; }
 
 /* Terms switch */
 .terms-box{ border:1px solid var(--border); border-radius:12px; background:var(--panel); padding:10px 12px; position:relative; z-index:3 }
