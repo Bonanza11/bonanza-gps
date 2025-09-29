@@ -61,9 +61,7 @@
   BNZ.state = BNZ.state || { vehicle:"suv", mgChoice:"none", last:null };
 
   // Precios
-  function baseFare(m){
-    if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4;
-  }
+  function baseFare(m){ if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4; }
   function applyVehicle(x){ return BNZ.state.vehicle==="van" ? Math.round(x*VAN_MULTIPLIER) : Math.round(x); }
 
   // 24h
@@ -90,8 +88,7 @@
   function mgSyncCard(){
     const card=document.getElementById("meetGreetCard"); if(!card) return;
     if(mgShouldShow()){ card.style.display="block"; } else { card.style.display="none"; BNZ.state.mgChoice="none"; }
-    card.querySelectorAll(".mg-btn")?.forEach(b=>{
-      const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
+    card.querySelectorAll(".mg-btn")?.forEach(b=>{ const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
       b.classList.toggle("active",on); b.setAttribute("aria-pressed",String(on)); b.setAttribute("tabindex","0");
     });
   }
@@ -191,7 +188,7 @@
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
         ${afterNote}
 
-        <!-- Promo -->
+        <!-- Promo code — fila compacta entre breakdown y total -->
         <div class="promo" id="promoBox" aria-label="Promo code">
           <div class="promo-row">
             <div class="promo-label">Promo Code</div>
@@ -210,42 +207,87 @@
       </div>
     `;
 
-    function row(label,val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
+    function row(label,val){
+      return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
+    }
 
-    // Promo
+    // Promo logic
     (function wirePromo(){
       const input = document.getElementById("promoCode");
       const btn   = document.getElementById("applyPromo");
       const msg   = document.getElementById("promoMsg");
       if (!input || !btn) return;
+
+      input.setAttribute("placeholder","");
       function fmt(x){ return `$${x.toFixed(2)}`; }
+
       btn.onclick = function(){
         const code = String(input.value||"").trim().toLowerCase();
         if (!code){ msg.textContent="Enter a code."; return; }
         if (window.__promoAppliedOnce){ msg.textContent="Promo already applied for this session."; return; }
         if (code !== "bonanza10"){ msg.textContent="Invalid code."; return; }
-        const last = BNZ.state.last; if (!last){ msg.textContent="Calculate price first."; return; }
+
+        const last = BNZ.state.last;
+        if (!last){ msg.textContent="Calculate price first."; return; }
+
         const discounted = Math.round(last.total * 0.90);
-        BNZ.state.last.total = discounted; publishTotals(BNZ.state.last);
+        BNZ.state.last.total = discounted;
+        publishTotals(BNZ.state.last);
+
         const kpisPrice = document.querySelector("#info .kpis .kpi:nth-child(3) .value");
         const totalEl   = document.querySelector("#info .ts-total span:last-child");
         if (kpisPrice) kpisPrice.textContent = fmt(discounted);
         if (totalEl)   totalEl.textContent   = fmt(discounted);
+
         msg.textContent = "10% off applied.";
-        window.__promoAppliedOnce = true; input.disabled = true; btn.disabled = true;
+        window.__promoAppliedOnce = true;
+        input.disabled = true; btn.disabled = true;
       };
     })();
   }
 
-  // ===== Botones (sin T&C)
+  // ====== Terms (solo visual; NO bloqueo) ======
+  const acceptPill=document.getElementById("acceptPill");
+  const termsBox=document.getElementById("termsBox");
+  const termsSummary=document.querySelector("#termsBox .terms-summary");
+  const acceptLabel=document.querySelector("#termsBox .accept-label");
   const calcBtn=document.getElementById("calculate");
   let payBtn=document.getElementById("pay");
 
+  // Siempre “aceptado” para efectos de flujo
+  function isAccepted(){ return true; }
+
+  // Mantener compatibilidad con estilos/aria pero sin bloquear
+  function setAccepted(on){
+    // opcional: reflejar ON para apariencia
+    if(acceptPill){
+      acceptPill.classList.toggle("on", true);
+      acceptPill.setAttribute("aria-checked","true");
+    }
+    syncButtons();
+  }
+  function syncButtons(){
+    if(calcBtn) calcBtn.disabled = false;   // SIEMPRE habilitado
+    enablePayIfReady();
+  }
   function enablePayIfReady(){
     payBtn = payBtn || document.getElementById("pay");
-    const ready=!!window.__lastQuotedTotal;
+    const ready=!!window.__lastQuotedTotal; // sin check de T&C
     if(payBtn){ payBtn.disabled=!ready; payBtn.style.opacity=ready?1:.5; payBtn.style.cursor=ready?"pointer":"not-allowed"; }
   }
+
+  // (Dejamos los listeners por accesibilidad, pero no afectan el flujo)
+  const shouldToggle=(e)=>!e.target.closest("a");
+  const toggleAccept=(e)=>{ if(shouldToggle(e)){ e.stopPropagation(); setAccepted(true); } };
+  ["click","pointerup","touchend"].forEach(evt=>{
+    acceptPill?.addEventListener(evt,toggleAccept,{passive:true});
+    termsSummary?.addEventListener(evt,toggleAccept,{passive:true});
+    termsBox?.addEventListener(evt,toggleAccept,{passive:true});
+    acceptLabel?.addEventListener(evt,toggleAccept,{passive:true});
+  });
+  const kbd=(e)=>{ if(e.key===" "||e.key==="Enter"){ if(e.target.closest("a"))return; e.preventDefault(); setAccepted(true); } };
+  acceptPill?.addEventListener("keydown",kbd);
+  termsSummary?.addEventListener("keydown",kbd);
 
   // Vehículo
   (function wireVehicle(){
@@ -276,26 +318,17 @@
       b.classList.toggle("active",on); b.setAttribute("aria-pressed",String(on)); b.setAttribute("tabindex","0");
       b.addEventListener("click",()=>{
         BNZ.state.mgChoice=b.dataset.choice||"none";
-        btns.forEach(x=>{
-          const on2=x.dataset.choice===BNZ.state.mgChoice;
-          x.classList.toggle("active",on2);
-          x.setAttribute("aria-pressed",String(on2));
-        });
+        btns.forEach(x=>{ const on2=x.dataset.choice===BNZ.state.mgChoice; x.classList.toggle("active",on2); x.setAttribute("aria-pressed",String(on2)); });
         if(BNZ.state.last){ BNZ.renderQuote(BNZ.state.last.leg, {surcharge:BNZ.state.last.surcharge}); }
       });
     });
     mgSyncCard();
   })();
 
-  // Calculate (sin validación de T&C)
+  // Calculate (sin bloqueo de T&C)
   const handleCalculate=async ()=>{
     const need=["fullname","phone","email","pickup","dropoff","date","time"];
-    const missing=need.filter(id=>{
-      const el=document.getElementById(id);
-      const empty=!el||!el.value||!String(el.value).trim();
-      if(el) el.classList.toggle("invalid",empty);
-      return empty;
-    });
+    const missing=need.filter(id=>{ const el=document.getElementById(id); const empty=!el||!el.value||!String(el.value).trim(); if(el) el.classList.toggle("invalid",empty); return empty; });
     if(missing.length){ alert("Please complete all required fields."); return; }
     const dt=selectedDateTime(); if(!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
@@ -319,14 +352,14 @@
       detail:{ flight:{ cat, flightNumber, originCity:originCity||privCity||"", privateCity:privCity||"", tailNumber, verified:false, verification:null } }
     }));
   };
-  calcBtn?.addEventListener("click",handleCalculate);
+  document.getElementById("calculate")?.addEventListener("click",handleCalculate);
 
   // Init
   document.addEventListener("DOMContentLoaded",()=>{
     ensureMin24h();
+    // Visualmente marcamos el pill como ON (pero no bloquea nada)
+    if(acceptPill){ acceptPill.classList.add("on"); acceptPill.setAttribute("aria-checked","true"); }
     mgSyncCard(); flightSyncUI();
-    // Calculate siempre habilitado
-    const btn = document.getElementById("calculate");
-    if(btn) btn.disabled = false;
+    syncButtons(); // habilita Calculate Price desde el inicio
   });
 })();
