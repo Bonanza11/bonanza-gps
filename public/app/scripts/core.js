@@ -1,70 +1,66 @@
 /* =========================================================================
-   core.js — Bonanza (T&C visuales, sin bloqueo) + evento calcular
+   core.js — Bonanza (control general del flujo + botón Calculate)
+   Limpio: sin bloqueo por T&C, sin dependencias al switch.
    ======================================================================== */
-
 (function(){
   "use strict";
 
-  const $   = (id)=> document.getElementById(id);
-  const pill = $('acceptPill');
-  const btnCalc = $('calculate');
-  const btnPay  = $('pay');
+  const $ = (id)=> document.getElementById(id);
 
-  // Estado global del vehículo (si otro módulo ya lo setea, lo respeta)
+  // Estado global del vehículo (si otro módulo ya lo setea, se respeta)
   window.__vehicleType = window.__vehicleType || 'suv';
 
-  // ⚠️ Importante: desde ahora SIEMPRE consideramos aceptado para el flujo
-  function isAccepted(){ return true; }
-
-  function syncButtons(){
-    // Calculate siempre habilitado
-    if (btnCalc) btnCalc.disabled = false;
-
-    // PAY NOW se habilita cuando ya existe un total (no depende del pill)
-    if (btnPay){
-      const ready = !!window.__lastQuotedTotal;
-      btnPay.disabled = !ready;
-      btnPay.style.display = 'block';
-      btnPay.style.opacity = ready ? 1 : .5;
-      btnPay.style.cursor  = ready ? 'pointer' : 'not-allowed';
-    }
+  // --- Validaciones ligeras (apoyadas en validators.js si existe)
+  function requireFilled(ids){
+    let ok = true;
+    ids.forEach(id=>{
+      const el = $(id);
+      const empty = !el || !String(el.value||"").trim();
+      if (el) el.classList.toggle('invalid', empty);
+      if (empty) ok = false;
+    });
+    return ok;
+  }
+  function isEmail(v){
+    const V = window.BNZ?.validators;
+    return V?.email ? V.email(v) : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v||"");
+  }
+  function isUSPhone(v){
+    const V = window.BNZ?.validators;
+    return V?.usPhone ? V.usPhone(v) : /^\D*?(\d\D*){10}$/.test(v||"");
   }
 
-  // Mantener el pill sólo como visual (no afecta el flujo)
-  function toggleTerms(on){
-    if (!pill) return;
-    pill.classList.toggle('on', !!on);
-    pill.setAttribute('aria-checked', on ? 'true' : 'false');
-    // No bloqueamos nada, sólo sincronizamos por si hay botones en pantalla
-    syncButtons();
+  // 24h mínimo (local)
+  function atLeast24hAhead(dateStr,timeStr){
+    if(!dateStr||!timeStr) return false;
+    const dt = new Date(`${dateStr}T${timeStr}:00`);
+    return (dt.getTime() - Date.now()) >= 24*60*60*1000;
   }
 
-  // Interacción del “switch” (opcional/visual)
-  pill?.addEventListener('click', ()=> toggleTerms(true));
-  pill?.addEventListener('keydown', (e)=>{
-    if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleTerms(true); }
-  });
-
-  // Calculate: validaciones mínimas y dispara el cálculo de ruta
+  // --- Click en Calculate: valida y dispara cálculo (maps.js escucha)
   $('calculate')?.addEventListener('click', (e)=>{
     e.preventDefault();
 
     const required = ['fullname','phone','email','pickup','dropoff','date','time'];
-    const V = window.BNZ?.validators;
+    if (!requireFilled(required)){ alert('Please complete all required fields.'); return; }
+    if (!isEmail($('email')?.value)){ alert('Invalid email.'); return; }
+    if (!isUSPhone($('phone')?.value)){ alert('Invalid US phone number.'); return; }
+    if (!atLeast24hAhead($('date')?.value, $('time')?.value)){
+      alert('Please choose Date & Time at least 24 hours in advance.');
+      return;
+    }
 
-    // Validaciones básicas (sin T&C)
-    if (!V?.requireFilled(required)){ alert('Please complete all required fields.'); return; }
-    if (!V.email($('email').value)){ alert('Invalid email.'); return; }
-    if (!V.usPhone($('phone').value)){ alert('Invalid US phone number.'); return; }
-
-    // Dispara el cálculo de ruta (maps.js escucha este evento y luego booking.js pinta el summary)
+    // Dispara el cómputo de ruta + presupuesto (maps.js -> BNZ.renderQuote)
     document.dispatchEvent(new CustomEvent('bnz:calculate'));
   });
 
-  // Exponer para otros módulos
+  // Exponer utilidades mínimas (opcional)
   window.BNZ = window.BNZ || {};
-  window.BNZ.syncButtons = syncButtons;
-
-  // Boot inicial: dejamos el pill visualmente en ON y botones sincronizados
-  toggleTerms(true);
+  window.BNZ.recalcFromCache = function(){
+    // hook suave por si el visual de vehículo cambia y ya hay quote
+    if (window.BNZ?.state?.last?.leg && window.BNZ?.renderQuote) {
+      const last = window.BNZ.state.last;
+      window.BNZ.renderQuote(last.leg, { surcharge:last.surcharge||0 });
+    }
+  };
 })();
