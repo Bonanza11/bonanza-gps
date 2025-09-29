@@ -5,10 +5,9 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 - Autocomplete clásico (estable).
 - Calcula ruta al disparar "bnz:calculate" y notifica BNZ.renderQuote(leg,{ surcharge }).
 - Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
-- ✅ Fuerza que #map quede entre Special Instructions y Date/Time.
-- ✅ Recentrado/resize si el contenedor se mueve o cambia de tamaño.
-- ✅ Ruta automática al elegir pickup+dropoff.
-- ✅ Polyline negra para la ruta.
+- 🧹 Sin mover el #map en runtime (evita “flash” arriba).
+- 🚀 Ruta automática al elegir pickup+dropoff.
+- ⚫ Polyline negra para la ruta.
 */
 (function () {
   "use strict";
@@ -16,7 +15,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   const DEFAULT_CENTER = { lat: 40.7608, lng: -111.8910 }; // SLC
   const BASE_ADDRESS   = "13742 N Jordanelle Pkwy, Kamas, UT 84036";
 
-  // Usa el MAP_ID de la config pública; fallback al estilo oscuro nuevo
+  // Usa el MAP_ID de la config pública; fallback
   const MAP_ID = (window.__PUBLIC_CFG__ && window.__PUBLIC_CFG__.MAP_ID)
     ? window.__PUBLIC_CFG__.MAP_ID
     : "1803eda89e913c8354156119";
@@ -26,22 +25,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
   window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
-
-  // ─────────────── Forzar ubicación del mapa en el DOM
-  function placeMapBetweenInstructionsAndDate() {
-    const mapEl = document.getElementById("map");
-    const si    = document.getElementById("specialInstructions");
-    const dateGrid = document.querySelector(".grid2"); // bloque Date/Time
-
-    if (!mapEl || !si || !dateGrid) return;
-
-    // Si el map no está exactamente después de Special Instructions, muévelo allí.
-    if (si.nextElementSibling !== mapEl) {
-      si.insertAdjacentElement("afterend", mapEl);
-    }
-  }
-  // Garantizarlo apenas cargue el DOM (antes de que gmaps dibuje)
-  document.addEventListener("DOMContentLoaded", placeMapBetweenInstructionsAndDate);
 
   // Alias disponibles para booking.js
   window.BNZ_AIRPORTS = window.BNZ_AIRPORTS || {
@@ -275,11 +258,11 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
   // ─────────────── callback global
   window.initMap = function () {
-    // Asegúrate de que el nodo esté en la posición correcta
-    placeMapBetweenInstructionsAndDate();
-
     const mapEl = document.getElementById("map");
     if (!mapEl) { console.warn("[maps] #map not found"); return; }
+
+    // Evita flash: aparece suavemente al terminar init
+    mapEl.style.opacity = "0";
 
     map = new google.maps.Map(mapEl, {
       center: DEFAULT_CENTER,
@@ -309,7 +292,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     originText      = document.getElementById("pickup")?.value || originText;
     destinationText = document.getElementById("dropoff")?.value || destinationText;
 
-    // Recentrar si el contenedor cambia de tamaño (por ejemplo, al abrir/ cerrar acordeones, etc.)
+    // Recentrar si el contenedor cambia de tamaño
     try {
       const ro = new ResizeObserver(() => {
         if (!map) return;
@@ -319,7 +302,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       });
       ro.observe(mapEl);
     } catch (e) {
-      // Fallback suave: pequeño timeout para reajustar
       setTimeout(() => {
         if (!map) return;
         const c = map.getCenter();
@@ -329,5 +311,8 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     }
 
     wireCalculateListener();
+
+    // Mostrar el mapa ya listo (sin flash arriba)
+    requestAnimationFrame(() => { mapEl.style.opacity = "1"; });
   };
 })();
