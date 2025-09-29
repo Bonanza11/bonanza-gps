@@ -167,6 +167,10 @@
                  t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
     const cn=window.__lastCN || window.__reservationCode || "";
 
+    const afterNote = (t.ah>0)
+      ? `<div class="after-hours-note" role="note">⏰ Operating hours: <strong>7:00 AM – 10:00 PM</strong>. Rides outside this window incur an <strong>after-hours surcharge</strong>.</div>`
+      : "";
+
     el.style.display="block";
     el.innerHTML=`
       <div class="trip-summary">
@@ -182,6 +186,8 @@
         </div>
 
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
+
+        ${afterNote}
 
         <!-- Promo code — fila compacta entre breakdown y total -->
         <div class="promo" id="promoBox" aria-label="Promo code">
