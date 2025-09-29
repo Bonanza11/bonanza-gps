@@ -242,17 +242,6 @@ const dirGlow = new google.maps.DirectionsRenderer({
   suppressMarkers: true
 });
 
-// Glow externo (resplandor cobre cálido)
-const dirGlow = new google.maps.DirectionsRenderer({
-  map,
-  polylineOptions: {
-    strokeColor: "#E1A95F",  // cobre claro dorado
-    strokeOpacity: 0.45,     // halo tenue
-    strokeWeight: 7          // grosor del resplandor
-  },
-  suppressMarkers: true
-});
-
 // Línea principal (hilo cobre brillante)
 dirRenderer = new google.maps.DirectionsRenderer({
   map,
