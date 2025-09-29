@@ -256,3 +256,38 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 .lugg-list{ margin:0 0 0 18px; padding:0; }
 .lugg-list li{ color:#dfe8f3; line-height:1.35; margin:4px 0; }
 .lugg-list li::marker{ color:var(--muted-blue) }
+/* ==== Flight Details — estilo tipo Meet & Greet ==== */
+#flightBox.flight-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel);
+  box-shadow:0 8px 18px rgba(0,0,0,.25);
+}
+
+.flight-header{
+  display:flex; align-items:center; gap:8px; margin-bottom:6px;
+}
+.flight-badge{
+  display:inline-block; padding:4px 8px; border-radius:999px;
+  background:#10161d; color:#ffdeb3; font-weight:800; font-size:.78rem;
+  border:1px solid var(--border);
+}
+
+.flight-section{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0d1319;
+  padding:12px;
+  box-shadow:inset 0 0 0 1px rgba(231,185,133,.05), 0 6px 14px rgba(0,0,0,.18);
+}
+
+#flightBox .flight-grid{
+  display:grid; grid-template-columns:1fr 1fr; column-gap:18px; row-gap:18px;
+}
+#flightBox .field-col{ display:flex; flex-direction:column; gap:10px }
+#flightBox .field-col > label{ font-weight:700; color:#ffdeb3; margin:2px 0 4px }
+
+/* Mobile */
+@media (max-width:640px){
+  #flightBox .flight-grid{ grid-template-columns:1fr; row-gap:14px }
+}
