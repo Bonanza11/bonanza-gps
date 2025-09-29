@@ -128,7 +128,7 @@
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
-      <div id="vehCap" class="vehicle-caption">SUV / or similar</div>
+      <div id="vehCap" class="vehicle-caption">SUV (or similar)</div>
     </div>
 
     <!-- Luggage Accordion -->
@@ -260,9 +260,9 @@
       function applyVisual(){
         if(!img||!cap) return;
         if(window.__vehicleType==="van"){
-          img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)";
+          img.src=VAN_IMG; cap.textContent="Van (Sprinter / Transit)";
         } else {
-          img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases";
+          img.src=SUV_IMG; cap.textContent="SUV (or similar)";
         }
       }
       function setActive(t){
