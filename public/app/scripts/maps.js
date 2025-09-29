@@ -7,6 +7,8 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 - Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
 - ✅ Fuerza que #map quede entre Special Instructions y Date/Time.
 - ✅ Recentrado/resize si el contenedor se mueve o cambia de tamaño.
+- ✅ Ruta automática al elegir pickup+dropoff.
+- ✅ Polyline negra para la ruta.
 */
 (function () {
   "use strict";
@@ -203,6 +205,11 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
         destinationText = pretty;
         window.dropoffPlace = place || null;
       }
+
+      // 🚀 Ruta automática si ya hay ambos (sin alerts)
+      if (originText && destinationText) {
+        routeAndQuote(true);
+      }
     });
 
     ["input","change","blur"].forEach(ev => {
@@ -214,12 +221,12 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
   }
 
   // ─────────────── Routing + Quote
-  async function routeAndQuote() {
+  async function routeAndQuote(auto = false) {
     const origin      = originText || document.getElementById("pickup")?.value || "";
     const destination = destinationText || document.getElementById("dropoff")?.value || "";
 
     if (!origin || !destination) {
-      alert("Please enter both Pick-up and Drop-off addresses.");
+      if (!auto) alert("Please enter both Pick-up and Drop-off addresses.");
       return;
     }
 
@@ -233,7 +240,10 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       const result = await routeAsync(req);
       const route  = result?.routes?.[0];
       const leg    = route?.legs?.[0];
-      if (!route || !leg) { alert("Could not compute a route. Please refine the addresses."); return; }
+      if (!route || !leg) {
+        if (!auto) alert("Could not compute a route. Please refine the addresses.");
+        return;
+      }
 
       dirRenderer.setDirections(result);
 
@@ -241,12 +251,12 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
       if (window.BNZ?.renderQuote) BNZ.renderQuote(leg, { surcharge });
     } catch (err) {
       console.error("[maps] route error:", err);
-      alert("There was an error calculating the route. Try again.");
+      if (!auto) alert("There was an error calculating the route. Try again.");
     }
   }
 
   function wireCalculateListener() {
-    document.addEventListener("bnz:calculate", routeAndQuote);
+    document.addEventListener("bnz:calculate", () => routeAndQuote(false));
   }
 
   // ─────────────── marcador
@@ -282,7 +292,16 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     addHomeMarker();
     dirService  = new google.maps.DirectionsService();
-    dirRenderer = new google.maps.DirectionsRenderer({ map });
+    dirRenderer = new google.maps.DirectionsRenderer({
+      map,
+      // ⚫ Polyline negra para tu ruta
+      polylineOptions: {
+        strokeColor: "#000000",
+        strokeOpacity: 0.95,
+        strokeWeight: 5
+      },
+      suppressMarkers: false
+    });
 
     attachAutocomplete("pickup");
     attachAutocomplete("dropoff");
