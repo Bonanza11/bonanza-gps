@@ -334,6 +334,32 @@
     mgSyncCard();
   })();
 
+  // ===== Luggage Guide (toggle) =====
+  (function wireLuggage(){
+    const btn   = document.getElementById("luggageToggle");
+    const panel = document.getElementById("luggagePanel");
+    if (!btn || !panel) return;
+
+    // Estado inicial seguro
+    if (!btn.hasAttribute("aria-controls")) btn.setAttribute("aria-controls","luggagePanel");
+    btn.setAttribute("aria-expanded","false");
+    panel.hidden = true;
+
+    function toggle(){
+      const isOpen = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!isOpen));
+      panel.hidden = isOpen;
+      panel.classList.toggle("open", !isOpen);
+      // Opcional: scroll suave al abrir
+      if (!isOpen) { panel.scrollIntoView({behavior:"smooth", block:"nearest"}); }
+    }
+
+    btn.addEventListener("click", toggle);
+    btn.addEventListener("keydown", (e)=>{
+      if (e.key === " " || e.key === "Enter"){ e.preventDefault(); toggle(); }
+    });
+  })();
+
   // ===== Calculate (sin bloqueo T&C) =====
   const handleCalculate=async ()=>{
     const need=["fullname","phone","email","pickup","dropoff","date","time"];
