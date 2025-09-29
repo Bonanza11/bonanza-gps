@@ -248,32 +248,12 @@
     })();
   }
 
-  // ===== Mover mapa entre Date/Time y Special Instruction =====
+  // ===== Reubicación robusta del mapa: entre Date/Time y Special Instructions =====
   function relocateMapBetweenDateAndSpecial(){
     const map = document.getElementById("map");
     if(!map) return;
 
-    // Bloque Date/Time (usamos #date y #time como anclas)
-    const dateEl = document.getElementById("date");
-    const timeEl = document.getElementById("time");
-    const dateBlock =
-      dateEl?.closest(".field, .field-col, .grid2, .row, section, div") ||
-      timeEl?.closest(".field, .field-col, .grid2, .row, section, div") ||
-      dateEl?.parentElement || timeEl?.parentElement;
-
-    // Bloque Special Instruction (IDs comunes o por nombre)
-    const specialEl =
-      document.getElementById("notes") ||
-      document.getElementById("specialInstructions") ||
-      document.getElementById("instructions") ||
-      document.querySelector('textarea[name*="special" i]') ||
-      document.querySelector('textarea[name*="instruction" i]');
-
-    const specialBlock =
-      specialEl?.closest(".field, .field-col, .row, section, div") ||
-      specialEl?.parentElement;
-
-    // Envolver mapa si no tiene wrapper
+    // Envuelve el mapa en .map-block una vez
     let wrapper = map.closest(".map-block");
     if(!wrapper){
       wrapper = document.createElement("div");
@@ -282,11 +262,67 @@
       wrapper.appendChild(map);
     }
 
-    if(specialBlock && specialBlock.parentNode){
-      specialBlock.parentNode.insertBefore(wrapper, specialBlock);
-    }else if(dateBlock && dateBlock.parentNode){
-      dateBlock.parentNode.insertBefore(wrapper, dateBlock.nextSibling);
+    const findDateBlock = () => {
+      const dateEl = document.getElementById("date");
+      const timeEl = document.getElementById("time");
+      const anchor = dateEl || timeEl;
+      return anchor
+        ? (anchor.closest(".field, .field-col, .grid2, section, form, .row, div") || anchor.parentElement)
+        : null;
+    };
+
+    const findSpecialBlock = () => {
+      const el =
+        document.getElementById("notes") ||
+        document.getElementById("specialInstructions") ||
+        document.getElementById("instructions") ||
+        document.querySelector('textarea[name*="special" i]') ||
+        document.querySelector('textarea[name*="instruction" i]');
+      return el
+        ? (el.closest(".field, .field-col, section, form, .row, div") || el.parentElement)
+        : null;
+    };
+
+    function isAfter(nodeA, nodeB){
+      return !!(nodeA && nodeB && nodeB.compareDocumentPosition(nodeA) & Node.DOCUMENT_POSITION_FOLLOWING);
     }
+
+    const moveIfReady = ()=>{
+      const dateBlock = findDateBlock();
+      const specialBlock = findSpecialBlock();
+
+      // Solo movemos si hay al menos uno de los dos anchors.
+      if(!dateBlock && !specialBlock) return false;
+
+      // Si ya está colocado correctamente, no hacemos nada.
+      if(dateBlock && wrapper.previousElementSibling === dateBlock) return true;
+      if(specialBlock && wrapper.nextElementSibling === specialBlock) return true;
+
+      // Preferencia: poner el mapa inmediatamente ANTES de Special Instructions.
+      if(specialBlock && specialBlock.parentNode){
+        specialBlock.parentNode.insertBefore(wrapper, specialBlock);
+        return true;
+      }
+
+      // Si no encontramos Special, lo ponemos DESPUÉS del bloque de Date/Time.
+      if(dateBlock && dateBlock.parentNode){
+        if(isAfter(wrapper, dateBlock)){
+          dateBlock.parentNode.insertBefore(wrapper, dateBlock.nextSibling);
+        }
+        return true;
+      }
+
+      return false;
+    };
+
+    // Intentos escalonados por si el DOM aún no está listo
+    let tries = 0;
+    const maxTries = 20;
+    const tick = ()=>{
+      if(moveIfReady() || ++tries >= maxTries) return;
+      setTimeout(tick, 150);
+    };
+    tick();
   }
 
   // Términos & botones
@@ -395,6 +431,6 @@
     const pill=document.getElementById("acceptPill");
     if(pill) { const startOn=pill.getAttribute("aria-checked")==="true"||pill.classList.contains("on"); if(startOn) pill.classList.add("on"); }
     mgSyncCard(); flightSyncUI();
-    relocateMapBetweenDateAndSpecial(); // mover mapa
+    relocateMapBetweenDateAndSpecial(); // mover mapa de forma segura
   });
 })();
