@@ -259,7 +259,6 @@
 
   // Mantener compatibilidad con estilos/aria pero sin bloquear
   function setAccepted(on){
-    // opcional: reflejar ON para apariencia
     if(acceptPill){
       acceptPill.classList.toggle("on", true);
       acceptPill.setAttribute("aria-checked","true");
@@ -276,7 +275,7 @@
     if(payBtn){ payBtn.disabled=!ready; payBtn.style.opacity=ready?1:.5; payBtn.style.cursor=ready?"pointer":"not-allowed"; }
   }
 
-  // (Dejamos los listeners por accesibilidad, pero no afectan el flujo)
+  // (Listeners inofensivos para accesibilidad)
   const shouldToggle=(e)=>!e.target.closest("a");
   const toggleAccept=(e)=>{ if(shouldToggle(e)){ e.stopPropagation(); setAccepted(true); } };
   ["click","pointerup","touchend"].forEach(evt=>{
@@ -357,7 +356,6 @@
   // Init
   document.addEventListener("DOMContentLoaded",()=>{
     ensureMin24h();
-    // Visualmente marcamos el pill como ON (pero no bloquea nada)
     if(acceptPill){ acceptPill.classList.add("on"); acceptPill.setAttribute("aria-checked","true"); }
     mgSyncCard(); flightSyncUI();
     syncButtons(); // habilita Calculate Price desde el inicio
