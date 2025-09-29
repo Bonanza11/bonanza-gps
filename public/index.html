@@ -243,45 +243,44 @@
   <script src="/app/scripts/maps-loader.js"></script>
   <script src="/app/scripts/maps.js"></script>
   <script>
-    (function startMaps(){
-      var cfg = window.__PUBLIC_CFG__ || {};
-      if (!cfg.GMAPS_KEY) { console.error("[maps-init] Missing Google Maps API key"); return; }
-      window.loadGoogleMaps(cfg.GMAPS_KEY, { libraries: "places,marker" })
-        .then(function(){ if (window.initMap) window.initMap(); })
-        .catch(function(err){ console.error("GMAPS load failed", err); });
-    })();
-  </script>
+  (function(){
+    const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
+    window.__vehicleType=window.__vehicleType||"suv";
+    const btns=document.querySelectorAll(".veh-btn");
+    const img=document.getElementById("vehImg");
+    const cap=document.getElementById("vehCap");
 
-  <!-- Stripe -->
-  <script src="https://js.stripe.com/v3"></script>
-  <script src="/app/scripts/stripe.js" defer></script>
+    function applyVisual(){
+      if(!img||!cap) return;
+      if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
+      else { img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
+    }
+    function setActive(t){
+      window.__vehicleType=(t==="van")?"van":"suv";
+      btns.forEach(b=>b.classList.toggle("active", b.dataset.type===window.__vehicleType));
+      applyVisual();
+      if(typeof window.recalcFromCache==="function") window.recalcFromCache();
+    }
+    btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
+    setActive(window.__vehicleType);
 
-  <!-- Visual vehículo + acordeón -->
-  <script>
-    (function(){
-      const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
-      window.__vehicleType=window.__vehicleType||"suv";
-      const btns=document.querySelectorAll(".veh-btn");
-      const img=document.getElementById("vehImg");
-      const cap=document.getElementById("vehCap");
-
-      function applyVisual(){
-        if(!img||!cap) return;
-        if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
-        else { img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
-      }
-      function setActive(t){
-        window.__vehicleType=(t==="van")?"van":"suv";
-        btns.forEach(b=>b.classList.toggle("active", b.dataset.type===window.__vehicleType));
-        applyVisual();
-        if(typeof window.recalcFromCache==="function") window.recalcFromCache();
-      }
-      btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
-      setActive(window.__vehicleType);
-
-      const acc=document.getElementById("luggageAccordion");
-      acc?.querySelector(".luggage-summary")?.addEventListener("click",()=>acc.classList.toggle("open"));
-    })();
-  </script>
+    // ---- Acordeón equipaje (con ARIA y teclado) ----
+    const acc  = document.getElementById("luggageAccordion");
+    const tog  = document.getElementById("luggageToggle");
+    const panel= document.getElementById("luggagePanel");
+    function setOpen(on){
+      acc.classList.toggle("open", !!on);
+      tog.setAttribute("aria-expanded", on ? "true" : "false");
+    }
+    function toggle(){ setOpen(tog.getAttribute("aria-expanded")!=="true"); }
+    tog?.addEventListener("click", toggle);
+    tog?.addEventListener("keydown", (e)=>{
+      if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); }
+      if(e.key==="ArrowDown" && acc.classList.contains("open")) panel?.focus?.();
+    });
+    // empieza cerrado
+    setOpen(false);
+  })();
+</script>
 </body>
 </html>
