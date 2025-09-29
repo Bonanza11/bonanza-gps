@@ -212,15 +212,11 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
   // ───────── Calcular para Summary (se usa al click en Calculate Price)
   async function computeAndRenderQuote() {
-    // si no tenemos ruta dibujada aún, intenta calcularla
-    if (!lastLeg) {
-      await drawRouteOnly();
-    }
+    if (!lastLeg) { await drawRouteOnly(); }
     if (!lastLeg) {
       alert("Could not compute a route. Please refine the addresses.");
       return;
     }
-
     const surcharge = await computeSurchargeAsync();
     if (window.BNZ?.renderQuote) BNZ.renderQuote(lastLeg, { surcharge });
   }
@@ -263,7 +259,7 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     dirRenderer = new google.maps.DirectionsRenderer({
       map,
       polylineOptions: {
-        strokeColor: "#000000",      // ⚫ ruta negra
+        strokeColor: "#000000",   // ⚫ ruta negra
         strokeOpacity: 0.95,
         strokeWeight: 5
       },
@@ -288,7 +284,6 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     } catch {}
 
     wireCalculateListener();
-
     requestAnimationFrame(() => { mapEl.style.opacity = "1"; });
   };
 })();
