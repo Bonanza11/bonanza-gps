@@ -291,3 +291,65 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 @media (max-width:640px){
   #flightBox .flight-grid{ grid-template-columns:1fr; row-gap:14px }
 }
+/* ==== Flight Details — estilo mejorado ==== */
+.flight-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel-2); /* azulito-grisáceo */
+  box-shadow:0 8px 18px rgba(0,0,0,.25);
+  padding:12px;
+}
+
+.flight-header{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+
+.flight-title{
+  font-weight:900;
+  font-size:1.05rem;
+  color:#eedac4;
+  letter-spacing:.25px;
+}
+
+.flight-badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#0d1319;
+  color:var(--muted-blue);
+  font-weight:800;
+  font-size:.8rem;
+  border:1px solid var(--border);
+}
+
+.flight-explain{
+  color:var(--muted-blue);
+  font-size:.9rem;
+  margin-bottom:12px;
+}
+
+.flight-section{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0d1319;
+  padding:12px;
+  margin-bottom:10px;
+  box-shadow:inset 0 0 0 1px rgba(231,185,133,.05),
+             0 6px 14px rgba(0,0,0,.18);
+}
+
+#flightBox .flight-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  column-gap:18px; row-gap:18px;
+}
+#flightBox .field-col{ display:flex; flex-direction:column; gap:10px }
+#flightBox .field-col > label{
+  font-weight:700; color:#ffdeb3; margin:2px 0 4px
+}
+
+/* Mobile */
+@media (max-width:640px){
+  #flightBox .flight-grid{ grid-template-columns:1fr; row-gap:14px }
+}
