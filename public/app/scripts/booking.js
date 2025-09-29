@@ -61,7 +61,9 @@
   BNZ.state = BNZ.state || { vehicle:"suv", mgChoice:"none", last:null };
 
   // Precios
-  function baseFare(m){ if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4; }
+  function baseFare(m){
+    if(m<=10)return 120; if(m<=35)return 190; if(m<=39)return 210; if(m<=48)return 230; if(m<=55)return 250; return m*5.4;
+  }
   function applyVehicle(x){ return BNZ.state.vehicle==="van" ? Math.round(x*VAN_MULTIPLIER) : Math.round(x); }
 
   // 24h
@@ -88,7 +90,8 @@
   function mgSyncCard(){
     const card=document.getElementById("meetGreetCard"); if(!card) return;
     if(mgShouldShow()){ card.style.display="block"; } else { card.style.display="none"; BNZ.state.mgChoice="none"; }
-    card.querySelectorAll(".mg-btn")?.forEach(b=>{ const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
+    card.querySelectorAll(".mg-btn")?.forEach(b=>{
+      const on=(b.dataset.choice||"none")===BNZ.state.mgChoice;
       b.classList.toggle("active",on); b.setAttribute("aria-pressed",String(on)); b.setAttribute("tabindex","0");
     });
   }
@@ -167,7 +170,7 @@
                  t.mg>0?        row("Meet & Greet (SLC)",t.mg):"" ].filter(Boolean).join("");
     const cn=window.__lastCN || window.__reservationCode || "";
 
-    // Nota de horario (sin iconos)
+    // Nota de horario (SIN iconos)
     const afterNote = (t.ah>0)
       ? `<div class="after-hours-note" role="note">Operating hours: <strong>7:00 AM – 10:00 PM</strong>. Rides outside this window incur an <strong>after-hours surcharge</strong>.</div>`
       : "";
@@ -189,7 +192,7 @@
         ${rows?`<div class="divider"></div><div class="breakdown">${rows}</div>`:""}
         ${afterNote}
 
-        <!-- Promo -->
+        <!-- Promo code -->
         <div class="promo" id="promoBox" aria-label="Promo code">
           <div class="promo-row">
             <div class="promo-label">Promo Code</div>
@@ -201,12 +204,16 @@
           <div id="promoMsg" class="hint promo-msg" aria-live="polite"></div>
         </div>
 
-        <div class="ts-total"><span>Total</span><span>$${t.total.toFixed(2)}</span></div>
+        <div class="ts-total">
+          <span>Total</span><span>$${t.total.toFixed(2)}</span>
+        </div>
         <div class="tax-note">Taxes & gratuity included</div>
       </div>
     `;
 
-    function row(label,val){ return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`; }
+    function row(label,val){
+      return `<div class="row"><span>${label}</span><span>$${val.toFixed(2)}</span></div>`;
+    }
 
     // Promo logic
     (function wirePromo(){
@@ -243,39 +250,15 @@
     })();
   }
 
-  // Términos & botones
-  const acceptPill=document.getElementById("acceptPill");
-  const termsBox=document.getElementById("termsBox");
-  const termsSummary=document.querySelector("#termsBox .terms-summary");
-  const acceptLabel=document.querySelector("#termsBox .accept-label");
+  // ===== Botones (sin dependencia de T&C) =====
   const calcBtn=document.getElementById("calculate");
   let payBtn=document.getElementById("pay");
 
-  function isAccepted(){ return acceptPill?.classList.contains("on") || acceptPill?.getAttribute("aria-checked")==="true"; }
-  function setAccepted(on){
-    if(!acceptPill) return;
-    acceptPill.classList.toggle("on",on);
-    acceptPill.setAttribute("aria-checked", on?"true":"false");
-    termsSummary?.setAttribute("aria-pressed", on?"true":"false");
-    syncButtons();
-  }
-  function syncButtons(){ if(calcBtn) calcBtn.disabled=!isAccepted(); enablePayIfReady(); }
   function enablePayIfReady(){
     payBtn = payBtn || document.getElementById("pay");
-    const ready=!!window.__lastQuotedTotal && isAccepted();
+    const ready=!!window.__lastQuotedTotal;
     if(payBtn){ payBtn.disabled=!ready; payBtn.style.opacity=ready?1:.5; payBtn.style.cursor=ready?"pointer":"not-allowed"; }
   }
-  const shouldToggle=(e)=>!e.target.closest("a");
-  const toggleAccept=(e)=>{ if(shouldToggle(e)){ e.stopPropagation(); setAccepted(!isAccepted()); } };
-  ["click","pointerup","touchend"].forEach(evt=>{
-    acceptPill?.addEventListener(evt,toggleAccept,{passive:true});
-    termsSummary?.addEventListener(evt,toggleAccept,{passive:true});
-    termsBox?.addEventListener(evt,toggleAccept,{passive:true});
-    acceptLabel?.addEventListener(evt,toggleAccept,{passive:true});
-  });
-  const kbd=(e)=>{ if(e.key===" "||e.key==="Enter"){ if(e.target.closest("a"))return; e.preventDefault(); setAccepted(!isAccepted()); } };
-  acceptPill?.addEventListener("keydown",kbd);
-  termsSummary?.addEventListener("keydown",kbd);
 
   // Vehículo
   (function wireVehicle(){
@@ -306,18 +289,26 @@
       b.classList.toggle("active",on); b.setAttribute("aria-pressed",String(on)); b.setAttribute("tabindex","0");
       b.addEventListener("click",()=>{
         BNZ.state.mgChoice=b.dataset.choice||"none";
-        btns.forEach(x=>{ const on2=x.dataset.choice===BNZ.state.mgChoice; x.classList.toggle("active",on2); x.setAttribute("aria-pressed",String(on2)); });
+        btns.forEach(x=>{
+          const on2=x.dataset.choice===BNZ.state.mgChoice;
+          x.classList.toggle("active",on2);
+          x.setAttribute("aria-pressed",String(on2));
+        });
         if(BNZ.state.last){ BNZ.renderQuote(BNZ.state.last.leg, {surcharge:BNZ.state.last.surcharge}); }
       });
     });
     mgSyncCard();
   })();
 
-  // Calculate (sin validación de vuelos)
+  // Calculate (sin validación de T&C)
   const handleCalculate=async ()=>{
-    if(!isAccepted()){ alert("Please accept Terms & Conditions first."); return; }
     const need=["fullname","phone","email","pickup","dropoff","date","time"];
-    const missing=need.filter(id=>{ const el=document.getElementById(id); const empty=!el||!el.value||!String(el.value).trim(); if(el) el.classList.toggle("invalid",empty); return empty; });
+    const missing=need.filter(id=>{
+      const el=document.getElementById(id);
+      const empty=!el||!el.value||!String(el.value).trim();
+      if(el) el.classList.toggle("invalid",empty);
+      return empty;
+    });
     if(missing.length){ alert("Please complete all required fields."); return; }
     const dt=selectedDateTime(); if(!atLeast24h(dt)){ alert("Please choose Date & Time at least 24 hours in advance."); return; }
 
@@ -341,14 +332,14 @@
       detail:{ flight:{ cat, flightNumber, originCity:originCity||privCity||"", privateCity:privCity||"", tailNumber, verified:false, verification:null } }
     }));
   };
-  document.getElementById("calculate")?.addEventListener("click",handleCalculate);
+  calcBtn?.addEventListener("click",handleCalculate);
 
   // Init
   document.addEventListener("DOMContentLoaded",()=>{
     ensureMin24h();
-    const pill=document.getElementById("acceptPill");
-    if(pill) { const startOn=pill.getAttribute("aria-checked")==="true"||pill.classList.contains("on"); if(startOn) pill.classList.add("on"); }
     mgSyncCard(); flightSyncUI();
-    // 👇 Ya no se toca el mapa aquí (el HTML lo ubica fijo).
+    // Calculate siempre disponible
+    const btn = document.getElementById("calculate");
+    if(btn) btn.disabled = false;
   });
 })();
