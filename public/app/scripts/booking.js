@@ -3,8 +3,8 @@
   "use strict";
 
   // Reglas
-  const OPERATING_START = "06:00";
-  const OPERATING_END   = "23:00";
+  const OPERATING_START = "07:00";
+  const OPERATING_END   = "22:00";
   const AFTER_HOURS_PCT = 0.25;
   const MG_FEE_USD      = 50;
   const VAN_MULTIPLIER  = 1.30;
