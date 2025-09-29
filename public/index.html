@@ -30,7 +30,7 @@
   </header>
 
   <main>
-    <!-- Datos del cliente -->
+    <!-- Customer Info -->
     <label for="fullname">Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
 
@@ -42,7 +42,7 @@
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
     <div id="emailHelp" class="hint"></div>
 
-    <!-- Direcciones -->
+    <!-- Addresses -->
     <label for="pickup">Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
 
@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <!-- Flight / Tail -->
+    <!-- Flight Info -->
     <div class="flight-box" id="flightBox" style="display:none">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
@@ -83,7 +83,7 @@
         </div>
       </div>
 
-      <!-- Private / FBO / Municipales -->
+      <!-- Private / FBO -->
       <div id="flightPrivate" class="flight-grid" style="display:none">
         <div class="field-col">
           <label for="tailNumber">Tail Number</label>
@@ -99,14 +99,14 @@
       <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
 
-    <!-- Notas -->
+    <!-- Special Instructions -->
     <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <!-- Mapa -->
+    <!-- Map -->
     <div id="map" style="opacity:0; transition:opacity .15s ease"></div>
 
-    <!-- Fecha/Hora -->
+    <!-- Date/Time -->
     <div class="grid2" style="margin-top:10px">
       <div>
         <label for="date">Date</label>
@@ -118,20 +118,20 @@
       </div>
     </div>
 
-    <!-- Selector de vehículo -->
+    <!-- Vehicle Selector -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Visual del vehículo -->
+    <!-- Vehicle Visual -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Acordeón equipaje -->
+    <!-- Luggage Accordion -->
     <div class="luggage-accordion" id="luggageAccordion">
       <div class="luggage-summary" id="luggageToggle" role="button" tabindex="0" aria-controls="luggagePanel" aria-expanded="false">
         <span class="luggage-title">Luggage Guidelines</span>
@@ -140,10 +140,11 @@
 
       <div class="luggage-body" id="luggagePanel">
         <div class="lugg-policy">
+
           <!-- SUV -->
           <div class="lugg-card">
             <div class="lugg-head">
-              <h4 class="lugg-title">SUV — Typical Capacity</h4>
+              <h4 class="lugg-title">SUV — Capacity</h4>
             </div>
             <div class="lugg-grid">
               <div class="lugg-opt">
@@ -151,15 +152,15 @@
                 <ul class="lugg-list">
                   <li>Up to 5 passengers</li>
                   <li>4 large suitcases <em>or</em> 5 carry-ons</li>
-                  <li>+ small backpacks/hand bags</li>
+                  <li>Plus small backpacks/hand bags</li>
                 </ul>
               </div>
               <div class="lugg-opt">
                 <div class="lugg-opt-title">Long items</div>
                 <ul class="lugg-list">
-                  <li>Skis/snowboards: cuentan como 1 pieza larga</li>
-                  <li>Strollers: plegados, ocupan espacio de 1 maleta</li>
-                  <li>Golf bags: 1 por maleta grande</li>
+                  <li>Skis/snowboards: count as 1 long item each</li>
+                  <li>Strollers: folded, count as 1 suitcase</li>
+                  <li>Golf bags: roughly 1 large suitcase each</li>
                 </ul>
               </div>
             </div>
@@ -168,49 +169,27 @@
           <!-- Van -->
           <div class="lugg-card">
             <div class="lugg-head">
-              <h4 class="lugg-title">Van — Typical Capacity</h4>
+              <h4 class="lugg-title">Van — Capacity</h4>
             </div>
             <div class="lugg-grid">
               <div class="lugg-opt">
                 <div class="lugg-opt-title">Standard fit</div>
                 <ul class="lugg-list">
                   <li>Up to 12 passengers</li>
-                  <li>8–10 large suitcases <em>o</em> 12+ carry-ons</li>
-                  <li>Espacio variable según configuración de asientos</li>
+                  <li>8–10 large suitcases <em>or</em> 12+ carry-ons</li>
+                  <li>Space varies by seating configuration</li>
                 </ul>
               </div>
               <div class="lugg-opt">
-                <div class="lugg-opt-title">Notas</div>
+                <div class="lugg-opt-title">Notes</div>
                 <ul class="lugg-list">
-                  <li>Si llevas muchas piezas largas, avísanos en “Special Instructions”.</li>
-                  <li>Equipaje extra puede requerir vehículo adicional.</li>
+                  <li>If you have multiple long items, let us know in “Special Instructions”.</li>
+                  <li>Extra luggage may require an additional vehicle.</li>
                 </ul>
               </div>
             </div>
           </div>
 
-          <!-- Tips generales -->
-          <div class="lugg-card">
-            <div class="lugg-head">
-              <h4 class="lugg-title">Tips</h4>
-            </div>
-            <div class="lugg-grid">
-              <div class="lugg-opt">
-                <div class="lugg-opt-title">Para agilizar</div>
-                <ul class="lugg-list">
-                  <li>Indica número de maletas y piezas largas al reservar.</li>
-                  <li>Usa maletas “stackables” cuando sea posible.</li>
-                </ul>
-              </div>
-              <div class="lugg-opt">
-                <div class="lugg-opt-title">Piezas especiales</div>
-                <ul class="lugg-list">
-                  <li>Instrumentos/arte: indícalo para traer mantas o anclajes.</li>
-                  <li>Fragile: márcalo y colócalo de último.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -225,83 +204,58 @@
       </div>
     </div>
 
-    <!-- Acciones -->
+    <!-- Actions -->
     <button id="calculate">Calculate Price</button>
 
-    <!-- Resumen -->
+    <!-- Trip Summary -->
     <div id="info" role="region" aria-live="polite" aria-label="Trip Summary"></div>
   </main>
 
-  <!-- ====== Scripts de la app ====== -->
+  <!-- ====== Scripts ====== -->
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
-
-  <!-- ====== Google Maps ====== -->
   <script src="/app/scripts/maps-loader.js"></script>
   <script src="/app/scripts/maps.js"></script>
+
   <script>
-    (function startMaps(){
-      var cfg = window.__PUBLIC_CFG__ || {};
-      if (!cfg.GMAPS_KEY) { console.error("[maps-init] Missing Google Maps API key"); return; }
-      window.loadGoogleMaps(cfg.GMAPS_KEY, { libraries: "places,marker" })
-        .then(function(){ if (window.initMap) window.initMap(); })
-        .catch(function(err){ console.error("GMAPS load failed", err); });
-    })();
-  </script>
+  (function(){
+    const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
+    window.__vehicleType=window.__vehicleType||"suv";
+    const btns=document.querySelectorAll(".veh-btn");
+    const img=document.getElementById("vehImg");
+    const cap=document.getElementById("vehCap");
 
-  <!-- Stripe -->
-  <script src="https://js.stripe.com/v3"></script>
-  <script src="/app/scripts/stripe.js" defer></script>
+    function applyVisual(){
+      if(!img||!cap) return;
+      if(window.__vehicleType==="van"){ img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)"; }
+      else { img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases"; }
+    }
+    function setActive(t){
+      window.__vehicleType=(t==="van")?"van":"suv";
+      btns.forEach(b=>b.classList.toggle("active", b.dataset.type===window.__vehicleType));
+      applyVisual();
+      if(typeof window.recalcFromCache==="function") window.recalcFromCache();
+    }
+    btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
+    setActive(window.__vehicleType);
 
-  <!-- Vehículo + acordeón -->
-  <script>
-    window.addEventListener("DOMContentLoaded", function(){
-      // ---- Visual / toggle de vehículo ----
-      const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
-      window.__vehicleType=window.__vehicleType||"suv";
-      const btns=document.querySelectorAll(".veh-btn");
-      const img=document.getElementById("vehImg");
-      const cap=document.getElementById("vehCap");
-
-      function applyVisual(){
-        if(!img||!cap) return;
-        if(window.__vehicleType==="van"){
-          img.src=VAN_IMG; cap.textContent="Van — Up to 12 passengers (luggage varies)";
-        } else {
-          img.src=SUV_IMG; cap.textContent="SUV — Max 5 passengers, 5 suitcases";
-        }
-      }
-      function setActive(t){
-        window.__vehicleType=(t==="van")?"van":"suv";
-        btns.forEach(b=>b.classList.toggle("active", b.dataset.type===window.__vehicleType));
-        applyVisual();
-        if(typeof window.recalcFromCache==="function") window.recalcFromCache();
-      }
-      btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
-      setActive(window.__vehicleType);
-
-      // ---- Acordeón equipaje ----
-      const acc   = document.getElementById("luggageAccordion");
-      if(!acc) return;
-      const tog   = acc.querySelector(".luggage-summary");
-      const panel = acc.querySelector(".luggage-body");
-      if(!tog||!panel) return;
-
-      function setOpen(on){
-        acc.classList.toggle("open", !!on);
-        tog.setAttribute("aria-expanded", on ? "true" : "false");
-      }
-      function toggle(){ setOpen(!acc.classList.contains("open")); }
-
-      tog.addEventListener("click", toggle);
-      tog.addEventListener("keydown", (e)=>{
-        if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); }
-        if(e.key==="ArrowDown" && acc.classList.contains("open")) panel.focus?.();
-      });
-
-      setOpen(false); // empieza cerrado
+    // ---- Luggage accordion ----
+    const acc  = document.getElementById("luggageAccordion");
+    const tog  = document.getElementById("luggageToggle");
+    const panel= document.getElementById("luggagePanel");
+    function setOpen(on){
+      acc.classList.toggle("open", !!on);
+      tog.setAttribute("aria-expanded", on ? "true" : "false");
+    }
+    function toggle(){ setOpen(tog.getAttribute("aria-expanded")!=="true"); }
+    tog?.addEventListener("click", toggle);
+    tog?.addEventListener("keydown", (e)=>{
+      if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); }
+      if(e.key==="ArrowDown" && acc.classList.contains("open")) panel?.focus?.();
     });
+    setOpen(false);
+  })();
   </script>
 </body>
 </html>
