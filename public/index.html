@@ -64,40 +64,44 @@
     </div>
 
     <!-- Flight / Tail -->
-    <div class="flight-box" id="flightBox" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
-        <span id="flightBadge" class="badge">Commercial</span>
-      </div>
-      <div id="flightExplain" class="muted"></div>
+<div class="flight-card" id="flightBox" style="display:none">
+  <div class="flight-header">
+    <strong id="flightTitle" style="color:#ffdeb3">Flight Details</strong>
+    <span id="flightBadge" class="flight-badge">Commercial</span>
+  </div>
+  <div id="flightExplain" class="muted"></div>
 
-      <!-- Commercial / JSX -->
-      <div id="flightCommercial" class="flight-grid" style="display:none">
-        <div class="field-col">
-          <label for="flightNumber">Flight Number</label>
-          <input id="flightNumber" placeholder="e.g. DL1234" autocomplete="off" />
-        </div>
-        <div class="field-col">
-          <label for="flightOrigin">Origin City</label>
-          <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
-        </div>
+  <!-- Commercial / JSX -->
+  <div class="flight-section">
+    <div id="flightCommercial" class="flight-grid" style="display:none">
+      <div class="field-col">
+        <label for="flightNumber">Flight Number</label>
+        <input id="flightNumber" placeholder="e.g. DL1234" autocomplete="off" />
       </div>
-
-      <!-- Private / FBO / Municipales -->
-      <div id="flightPrivate" class="flight-grid" style="display:none">
-        <div class="field-col">
-          <label for="tailNumber">Tail Number</label>
-          <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
-          <div class="hint" id="tailHint" aria-hidden="true"></div>
-        </div>
-        <div class="field-col">
-          <label for="fboCity">City (Origin or Destination)</label>
-          <input id="fboCity" placeholder="e.g. Burbank (BUR) or Denver (DEN)" autocomplete="off" />
-        </div>
+      <div class="field-col">
+        <label for="flightOrigin">Origin City</label>
+        <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
       </div>
-
-      <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
+  </div>
+
+  <!-- Private / FBO / Municipales -->
+  <div class="flight-section">
+    <div id="flightPrivate" class="flight-grid" style="display:none">
+      <div class="field-col">
+        <label for="tailNumber">Tail Number</label>
+        <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
+        <div class="hint" id="tailHint" aria-hidden="true"></div>
+      </div>
+      <div class="field-col">
+        <label for="fboCity">City (Origin or Destination)</label>
+        <input id="fboCity" placeholder="e.g. Burbank (BUR) or Denver (DEN)" autocomplete="off" />
+      </div>
+    </div>
+  </div>
+
+  <div id="flightHint" class="hint" style="margin-top:6px"></div>
+</div>
 
     <!-- Notes -->
     <label for="specialInstructions">Special Instructions</label>
