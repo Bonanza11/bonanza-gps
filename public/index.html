@@ -30,7 +30,7 @@
   </header>
 
   <main>
-    <!-- Datos del cliente -->
+    <!-- Customer Info -->
     <label for="fullname">Full Name</label>
     <input id="fullname" autocomplete="name" placeholder="John Doe" />
 
@@ -42,7 +42,7 @@
     <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
     <div id="emailHelp" class="hint"></div>
 
-    <!-- Direcciones -->
+    <!-- Addresses -->
     <label for="pickup">Pick-up Address</label>
     <input id="pickup" placeholder="e.g. SLC Airport" />
 
@@ -99,14 +99,14 @@
       <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
 
-    <!-- Notas -->
+    <!-- Notes -->
     <label for="specialInstructions">Special Instructions</label>
     <textarea id="specialInstructions" placeholder="Gate code, luggage, pickup location…"></textarea>
 
-    <!-- Mapa -->
+    <!-- Map -->
     <div id="map" style="opacity:0; transition:opacity .15s ease"></div>
 
-    <!-- Fecha/Hora -->
+    <!-- Date/Time -->
     <div class="grid2" style="margin-top:10px">
       <div>
         <label for="date">Date</label>
@@ -118,20 +118,20 @@
       </div>
     </div>
 
-    <!-- Selector de vehículo -->
+    <!-- Vehicle Selector -->
     <div class="veh-toggle">
       <button class="veh-btn active" data-type="suv">SUV (1–5 Passengers)</button>
       <button class="veh-btn" data-type="van">Van (up to 12 Passengers)</button>
     </div>
 
-    <!-- Visual del vehículo -->
+    <!-- Vehicle Visual -->
     <div id="vehTurntable" class="turntable">
       <img id="vehImg" class="car" src="/images/suburban.png" alt="Selected Vehicle">
       <div class="platform"></div>
       <div id="vehCap" class="vehicle-caption">SUV — Max 5 passengers, 5 suitcases</div>
     </div>
 
-    <!-- Acordeón equipaje -->
+    <!-- Luggage Accordion -->
     <div class="luggage-accordion" id="luggageAccordion">
       <div class="luggage-summary" id="luggageToggle" role="button" tabindex="0" aria-controls="luggagePanel" aria-expanded="false">
         <span class="luggage-title">Luggage Guidelines</span>
@@ -140,26 +140,34 @@
 
       <div class="luggage-body" id="luggagePanel">
         <div class="lugg-policy">
+
           <!-- SUV -->
           <div class="lugg-card">
             <div class="lugg-head">
-              <h4 class="lugg-title">SUV — Typical Capacity</h4>
+              <h4 class="lugg-title">SUV (Suburban or similar)</h4>
             </div>
             <div class="lugg-grid">
               <div class="lugg-opt">
-                <div class="lugg-opt-title">Standard fit</div>
+                <div class="lugg-opt-title">Maximum capacity</div>
                 <ul class="lugg-list">
-                  <li>Up to 5 passengers</li>
-                  <li>4 large suitcases <em>or</em> 5 carry-ons</li>
-                  <li>+ small backpacks/hand bags</li>
+                  <li>Always 5 passengers</li>
                 </ul>
               </div>
               <div class="lugg-opt">
-                <div class="lugg-opt-title">Long items</div>
+                <div class="lugg-opt-title">Option 1 – Luggage only</div>
                 <ul class="lugg-list">
-                  <li>Skis/snowboards: cuentan como 1 pieza larga</li>
-                  <li>Strollers: plegados, ocupan espacio de 1 maleta</li>
-                  <li>Golf bags: 1 por maleta grande</li>
+                  <li>5 passengers</li>
+                  <li>4 large suitcases</li>
+                  <li>2 carry-ons</li>
+                </ul>
+              </div>
+              <div class="lugg-opt">
+                <div class="lugg-opt-title">Option 2 – With sports equipment</div>
+                <ul class="lugg-list">
+                  <li>5 passengers</li>
+                  <li>Golf clubs: up to 3 bags</li>
+                  <li>Ski bags: up to 5 bags</li>
+                  <li>Additionally: up to 3 large suitcases and 2 carry-ons</li>
                 </ul>
               </div>
             </div>
@@ -168,49 +176,34 @@
           <!-- Van -->
           <div class="lugg-card">
             <div class="lugg-head">
-              <h4 class="lugg-title">Van — Typical Capacity</h4>
+              <h4 class="lugg-title">Van (Sprinter / Transit)</h4>
             </div>
             <div class="lugg-grid">
               <div class="lugg-opt">
-                <div class="lugg-opt-title">Standard fit</div>
+                <div class="lugg-opt-title">Maximum capacity</div>
                 <ul class="lugg-list">
-                  <li>Up to 12 passengers</li>
-                  <li>8–10 large suitcases <em>o</em> 12+ carry-ons</li>
-                  <li>Espacio variable según configuración de asientos</li>
+                  <li>Always 10 passengers</li>
                 </ul>
               </div>
               <div class="lugg-opt">
-                <div class="lugg-opt-title">Notas</div>
+                <div class="lugg-opt-title">Option 1 – Luggage only</div>
                 <ul class="lugg-list">
-                  <li>Si llevas muchas piezas largas, avísanos en “Special Instructions”.</li>
-                  <li>Equipaje extra puede requerir vehículo adicional.</li>
+                  <li>10 passengers</li>
+                  <li>Up to 10 large suitcases</li>
+                  <li>Extra carry-ons without problem</li>
+                </ul>
+              </div>
+              <div class="lugg-opt">
+                <div class="lugg-opt-title">Option 2 – With sports equipment</div>
+                <ul class="lugg-list">
+                  <li>10 passengers</li>
+                  <li>Ski bags: up to 10 bags</li>
+                  <li>Additionally: 6–8 large suitcases or carry-ons</li>
                 </ul>
               </div>
             </div>
           </div>
 
-          <!-- Tips generales -->
-          <div class="lugg-card">
-            <div class="lugg-head">
-              <h4 class="lugg-title">Tips</h4>
-            </div>
-            <div class="lugg-grid">
-              <div class="lugg-opt">
-                <div class="lugg-opt-title">Para agilizar</div>
-                <ul class="lugg-list">
-                  <li>Indica número de maletas y piezas largas al reservar.</li>
-                  <li>Usa maletas “stackables” cuando sea posible.</li>
-                </ul>
-              </div>
-              <div class="lugg-opt">
-                <div class="lugg-opt-title">Piezas especiales</div>
-                <ul class="lugg-list">
-                  <li>Instrumentos/arte: indícalo para traer mantas o anclajes.</li>
-                  <li>Fragile: márcalo y colócalo de último.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -225,14 +218,14 @@
       </div>
     </div>
 
-    <!-- Acciones -->
+    <!-- Actions -->
     <button id="calculate">Calculate Price</button>
 
-    <!-- Resumen -->
+    <!-- Summary -->
     <div id="info" role="region" aria-live="polite" aria-label="Trip Summary"></div>
   </main>
 
-  <!-- ====== Scripts de la app ====== -->
+  <!-- ====== App Scripts ====== -->
   <script src="/app/scripts/validators.js" defer></script>
   <script src="/app/scripts/core.js" defer></script>
   <script src="/app/scripts/booking.js" defer></script>
@@ -254,10 +247,10 @@
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Vehículo + acordeón -->
+  <!-- Vehicle + Accordion -->
   <script>
     window.addEventListener("DOMContentLoaded", function(){
-      // ---- Visual / toggle de vehículo ----
+      // ---- Vehicle Visual ----
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
       window.__vehicleType=window.__vehicleType||"suv";
       const btns=document.querySelectorAll(".veh-btn");
@@ -281,7 +274,7 @@
       btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
       setActive(window.__vehicleType);
 
-      // ---- Acordeón equipaje ----
+      // ---- Luggage Accordion ----
       const acc   = document.getElementById("luggageAccordion");
       if(!acc) return;
       const tog   = acc.querySelector(".luggage-summary");
@@ -300,7 +293,7 @@
         if(e.key==="ArrowDown" && acc.classList.contains("open")) panel.focus?.();
       });
 
-      setOpen(false); // empieza cerrado
+      setOpen(false); // start closed
     });
   </script>
 </body>
