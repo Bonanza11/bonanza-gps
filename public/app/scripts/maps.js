@@ -5,6 +5,8 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 - Autocomplete clásico (estable).
 - Calcula ruta al disparar "bnz:calculate" y notifica BNZ.renderQuote(leg,{ surcharge }).
 - Recargo: $3/mi desde BASE→PICKUP según reglas Summit/Wasatch / Aeropuerto.
+- ✅ Fuerza que #map quede entre Special Instructions y Date/Time.
+- ✅ Recentrado/resize si el contenedor se mueve o cambia de tamaño.
 */
 (function () {
   "use strict";
@@ -22,6 +24,22 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
   window.pickupPlace  = window.pickupPlace  || null;
   window.dropoffPlace = window.dropoffPlace || null;
+
+  // ─────────────── Forzar ubicación del mapa en el DOM
+  function placeMapBetweenInstructionsAndDate() {
+    const mapEl = document.getElementById("map");
+    const si    = document.getElementById("specialInstructions");
+    const dateGrid = document.querySelector(".grid2"); // bloque Date/Time
+
+    if (!mapEl || !si || !dateGrid) return;
+
+    // Si el map no está exactamente después de Special Instructions, muévelo allí.
+    if (si.nextElementSibling !== mapEl) {
+      si.insertAdjacentElement("afterend", mapEl);
+    }
+  }
+  // Garantizarlo apenas cargue el DOM (antes de que gmaps dibuje)
+  document.addEventListener("DOMContentLoaded", placeMapBetweenInstructionsAndDate);
 
   // Alias disponibles para booking.js
   window.BNZ_AIRPORTS = window.BNZ_AIRPORTS || {
@@ -247,6 +265,9 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
   // ─────────────── callback global
   window.initMap = function () {
+    // Asegúrate de que el nodo esté en la posición correcta
+    placeMapBetweenInstructionsAndDate();
+
     const mapEl = document.getElementById("map");
     if (!mapEl) { console.warn("[maps] #map not found"); return; }
 
@@ -268,6 +289,25 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
 
     originText      = document.getElementById("pickup")?.value || originText;
     destinationText = document.getElementById("dropoff")?.value || destinationText;
+
+    // Recentrar si el contenedor cambia de tamaño (por ejemplo, al abrir/ cerrar acordeones, etc.)
+    try {
+      const ro = new ResizeObserver(() => {
+        if (!map) return;
+        const c = map.getCenter();
+        google.maps.event.trigger(map, "resize");
+        if (c) map.setCenter(c);
+      });
+      ro.observe(mapEl);
+    } catch (e) {
+      // Fallback suave: pequeño timeout para reajustar
+      setTimeout(() => {
+        if (!map) return;
+        const c = map.getCenter();
+        google.maps.event.trigger(map, "resize");
+        if (c) map.setCenter(c);
+      }, 50);
+    }
 
     wireCalculateListener();
   };
