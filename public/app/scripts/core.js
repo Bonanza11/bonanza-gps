@@ -1,11 +1,11 @@
 /* =========================================================================
-   core.js — Bonanza (términos + habilitar botones + evento calcular)
+   core.js — Bonanza (T&C visuales, sin bloqueo) + evento calcular
    ======================================================================== */
 
 (function(){
   "use strict";
 
-  const $  = (id)=> document.getElementById(id);
+  const $   = (id)=> document.getElementById(id);
   const pill = $('acceptPill');
   const btnCalc = $('calculate');
   const btnPay  = $('pay');
@@ -13,12 +13,16 @@
   // Estado global del vehículo (si otro módulo ya lo setea, lo respeta)
   window.__vehicleType = window.__vehicleType || 'suv';
 
-  function isAccepted(){ return pill?.classList.contains('on'); }
+  // ⚠️ Importante: desde ahora SIEMPRE consideramos aceptado para el flujo
+  function isAccepted(){ return true; }
 
   function syncButtons(){
-    if (btnCalc) btnCalc.disabled = !isAccepted();
+    // Calculate siempre habilitado
+    if (btnCalc) btnCalc.disabled = false;
+
+    // PAY NOW se habilita cuando ya existe un total (no depende del pill)
     if (btnPay){
-      const ready = !!window.__lastQuotedTotal && isAccepted();
+      const ready = !!window.__lastQuotedTotal;
       btnPay.disabled = !ready;
       btnPay.style.display = 'block';
       btnPay.style.opacity = ready ? 1 : .5;
@@ -26,31 +30,34 @@
     }
   }
 
+  // Mantener el pill sólo como visual (no afecta el flujo)
   function toggleTerms(on){
     if (!pill) return;
     pill.classList.toggle('on', !!on);
     pill.setAttribute('aria-checked', on ? 'true' : 'false');
+    // No bloqueamos nada, sólo sincronizamos por si hay botones en pantalla
     syncButtons();
   }
 
-  // Interacción del “switch”
-  pill?.addEventListener('click', ()=> toggleTerms(!isAccepted()));
+  // Interacción del “switch” (opcional/visual)
+  pill?.addEventListener('click', ()=> toggleTerms(true));
   pill?.addEventListener('keydown', (e)=>{
-    if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleTerms(!isAccepted()); }
+    if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleTerms(true); }
   });
 
-  // Calculate: validaciones mínimas antes de pedir ruta
+  // Calculate: validaciones mínimas y dispara el cálculo de ruta
   $('calculate')?.addEventListener('click', (e)=>{
     e.preventDefault();
-    if (!isAccepted()){ alert('Please accept Terms & Conditions first.'); return; }
 
     const required = ['fullname','phone','email','pickup','dropoff','date','time'];
     const V = window.BNZ?.validators;
+
+    // Validaciones básicas (sin T&C)
     if (!V?.requireFilled(required)){ alert('Please complete all required fields.'); return; }
     if (!V.email($('email').value)){ alert('Invalid email.'); return; }
     if (!V.usPhone($('phone').value)){ alert('Invalid US phone number.'); return; }
 
-    // Dispara el cálculo de ruta (maps.js escucha este evento)
+    // Dispara el cálculo de ruta (maps.js escucha este evento y luego booking.js pinta el summary)
     document.dispatchEvent(new CustomEvent('bnz:calculate'));
   });
 
@@ -58,6 +65,6 @@
   window.BNZ = window.BNZ || {};
   window.BNZ.syncButtons = syncButtons;
 
-  // boot inicial
-  toggleTerms(false); // empieza apagado
+  // Boot inicial: dejamos el pill visualmente en ON y botones sincronizados
+  toggleTerms(true);
 })();
