@@ -233,11 +233,11 @@ maps.js — Bonanza Transportation (Google Maps + Places + Rutas)
     dirService  = new google.maps.DirectionsService();
     dirRenderer = new google.maps.DirectionsRenderer({
   map,
-  polylineOptions: {
-    strokeColor: "#E8C06A",   // dorado elegante
-    strokeOpacity: 0.92,      // brillo sutil (no 100%)
-    strokeWeight: 2.5         // delgado tipo hilo
-  },
+ polylineOptions: {
+  strokeColor: "#FFD700",   // dorado brillante
+  strokeOpacity: 1,         // brillo completo
+  strokeWeight: 2.5         // delgado tipo hilo
+},
   suppressMarkers: false
 });
 
