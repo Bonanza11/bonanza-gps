@@ -60,7 +60,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",     // sobre el fondo; bajo la UI interactiva
+    zIndex: "9998",     // sobre el fondo; bajo la UI
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -71,7 +71,7 @@
   let W = 0, H = 0, dpr = 1;
 
   function resize(){
-    // Subimos a 3x para iMac/Retina grandes
+    // hasta 3x para iMac/Retina
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
     W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
     H = Math.max(1, Math.floor(window.innerHeight || document.documentElement.clientHeight || 1));
@@ -113,14 +113,14 @@
     const s  = (season==="winter" ? rnd(1.2,3.2)
                : season==="spring" ? rnd(1.1,2.6)
                : season==="summer" ? rnd(1.0,2.2)
-               : rnd(2.5,5.0)) * SIZE_K;
+               : rnd(2.8,5.6)) * SIZE_K;   // ↑ un toque más grande en fall
 
     // Velocidades (ligero boost en móvil)
     const vBoost = isMobile ? 1.1 : 1.0;
     const vx = (season==="winter" ? rnd(-0.35,0.65)
               : season==="spring" ? rnd(-0.25,0.55)
               : season==="summer" ? rnd(-0.15,0.35)
-              : rnd(-0.5,0.3)) * vBoost;
+              : rnd(-0.45,0.35)) * vBoost;
 
     const vy = (season==="winter" ? rnd(0.6,1.4)
               : season==="spring" ? rnd(0.5,1.2)
@@ -160,32 +160,77 @@
     ctx.stroke(); ctx.restore();
   }
 
-  // ---- Hoja tipo "maple" canadiense (simplificada) ----
-  function drawLeaf(p){
+  // ===== Hoja "maple" canadiense (más fiel, con lóbulos) =====
+  function drawMapleLeaf(p){
+    const s = p.s; // escala base
+
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rot);
     ctx.fillStyle = p.color;
 
-    // Polígono estilizado de 8 vértices (tres puntas arriba y alas laterales)
+    // Silueta aproximada de hoja de maple con curvas (simétrica)
     ctx.beginPath();
-    ctx.moveTo(0, -p.s*3.0);             // punta superior
-    ctx.lineTo(p.s*1.2, -p.s*1.4);       // arriba derecha
-    ctx.lineTo(p.s*2.0, -p.s*0.4);       // ala derecha media
-    ctx.lineTo(p.s*1.2, p.s*0.9);        // ala derecha baja
-    ctx.lineTo(0, p.s*2.4);              // tallo (abajo centro)
-    ctx.lineTo(-p.s*1.2, p.s*0.9);       // ala izquierda baja
-    ctx.lineTo(-p.s*2.0, -p.s*0.4);      // ala izquierda media
-    ctx.lineTo(-p.s*1.2, -p.s*1.4);      // arriba izquierda
+    // punta central superior
+    ctx.moveTo(0, -3.2*s);
+
+    // lóbulo superior derecho
+    ctx.lineTo(0.6*s, -2.2*s);
+    ctx.lineTo(1.5*s, -2.4*s);
+    ctx.lineTo(1.0*s, -1.5*s);
+
+    // muesca entre lóbulo sup. y medio derecho
+    ctx.lineTo(1.8*s, -1.0*s);
+    ctx.lineTo(1.2*s, -0.6*s);
+
+    // lóbulo medio derecho
+    ctx.lineTo(2.2*s, 0.0*s);
+    ctx.lineTo(1.1*s, 0.2*s);
+
+    // muesca hacia ala derecha
+    ctx.lineTo(1.6*s, 0.8*s);
+    ctx.lineTo(0.9*s, 0.9*s);
+
+    // ala derecha inferior
+    ctx.lineTo(1.2*s, 1.6*s);
+    ctx.lineTo(0.6*s, 1.4*s);
+
+    // base hacia el tallo
+    ctx.lineTo(0.4*s, 2.1*s);
+    ctx.lineTo(0.2*s, 2.6*s);
+
+    // tallo
+    ctx.lineTo(0, 2.8*s);
+    ctx.lineTo(-0.2*s, 2.6*s);
+    ctx.lineTo(-0.4*s, 2.1*s);
+
+    // lado izquierdo (espejo)
+    ctx.lineTo(-0.6*s, 1.4*s);
+    ctx.lineTo(-1.2*s, 1.6*s);
+    ctx.lineTo(-0.9*s, 0.9*s);
+    ctx.lineTo(-1.6*s, 0.8*s);
+    ctx.lineTo(-1.1*s, 0.2*s);
+    ctx.lineTo(-2.2*s, 0.0*s);
+    ctx.lineTo(-1.2*s, -0.6*s);
+    ctx.lineTo(-1.8*s, -1.0*s);
+    ctx.lineTo(-1.0*s, -1.5*s);
+    ctx.lineTo(-1.5*s, -2.4*s);
+    ctx.lineTo(-0.6*s, -2.2*s);
+
     ctx.closePath();
     ctx.fill();
 
-    // Nervio central
-    ctx.strokeStyle = "rgba(0,0,0,.2)";
+    // Nervio central y toque de borde
+    ctx.strokeStyle = "rgba(0,0,0,.25)";
     ctx.lineWidth = 0.9;
     ctx.beginPath();
-    ctx.moveTo(0, -p.s*3.0);
-    ctx.lineTo(0, p.s*2.4);
+    ctx.moveTo(0, -3.2*s);
+    ctx.lineTo(0, 2.8*s);
+    ctx.stroke();
+
+    // sutil contorno externo
+    ctx.strokeStyle = "rgba(0,0,0,.18)";
+    ctx.lineWidth = 0.8;
     ctx.stroke();
 
     ctx.restore();
@@ -211,7 +256,7 @@
       if (p.type==="snow") drawSnow(p);
       else if (p.type==="petal") drawPetal(p);
       else if (p.type==="spark") drawSpark(p);
-      else drawLeaf(p);
+      else drawMapleLeaf(p);
     }
     raf = requestAnimationFrame(tick);
   }
