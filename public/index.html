@@ -63,47 +63,47 @@
       </div>
     </div>
 
-<!-- Flight / Tail -->
-<div class="flight-card" id="flightBox" style="display:none">
-  <div class="flight-header">
-    <div class="flight-title">Flight Details</div>
-    <span id="flightBadge" class="flight-badge">Commercial</span>
-  </div>
-  <div id="flightExplain" class="flight-explain">
-    Add your flight number and origin city.
-  </div>
+    <!-- Flight / Tail -->
+    <div class="flight-card" id="flightBox" style="display:none">
+      <div class="flight-header">
+        <div class="flight-title">Flight Details</div>
+        <span id="flightBadge" class="flight-badge">Commercial</span>
+      </div>
+      <div id="flightExplain" class="flight-explain">
+        Add your flight number and origin city.
+      </div>
 
-  <!-- Commercial -->
-  <div class="flight-section">
-    <div id="flightCommercial" class="flight-grid" style="display:none">
-      <div class="field-col">
-        <label for="flightNumber">Flight Number</label>
-        <input id="flightNumber" placeholder="e.g. DL1234" autocomplete="off" />
+      <!-- Commercial -->
+      <div class="flight-section">
+        <div id="flightCommercial" class="flight-grid" style="display:none">
+          <div class="field-col">
+            <label for="flightNumber">Flight Number</label>
+            <input id="flightNumber" placeholder="e.g. DL1234" autocomplete="off" />
+          </div>
+          <div class="field-col">
+            <label for="flightOrigin">Origin City</label>
+            <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
+          </div>
+        </div>
       </div>
-      <div class="field-col">
-        <label for="flightOrigin">Origin City</label>
-        <input id="flightOrigin" placeholder="e.g. Los Angeles (LAX)" autocomplete="off" />
+
+      <!-- Private -->
+      <div class="flight-section">
+        <div id="flightPrivate" class="flight-grid" style="display:none">
+          <div class="field-col">
+            <label for="tailNumber">Tail Number</label>
+            <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
+            <div class="hint" id="tailHint" aria-hidden="true"></div>
+          </div>
+          <div class="field-col">
+            <label for="fboCity">City (Origin or Destination)</label>
+            <input id="fboCity" placeholder="e.g. Burbank (BUR) or Denver (DEN)" autocomplete="off" />
+          </div>
+        </div>
       </div>
+
+      <div id="flightHint" class="hint" style="margin-top:6px"></div>
     </div>
-  </div>
-
-  <!-- Private -->
-  <div class="flight-section">
-    <div id="flightPrivate" class="flight-grid" style="display:none">
-      <div class="field-col">
-        <label for="tailNumber">Tail Number</label>
-        <input id="tailNumber" placeholder="e.g. N123AB" autocomplete="off" />
-        <div class="hint" id="tailHint" aria-hidden="true"></div>
-      </div>
-      <div class="field-col">
-        <label for="fboCity">City (Origin or Destination)</label>
-        <input id="fboCity" placeholder="e.g. Burbank (BUR) or Denver (DEN)" autocomplete="off" />
-      </div>
-    </div>
-  </div>
-
-  <div id="flightHint" class="hint" style="margin-top:6px"></div>
-</div>
 
     <!-- Notes -->
     <label for="specialInstructions">Special Instructions</label>
@@ -253,7 +253,7 @@
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Seasonal (AGREGADO) -->
+  <!-- Seasonal particles (UNA sola vez) -->
   <script src="/app/scripts/seasonal.js" defer></script>
 
   <!-- Vehicle + Accordion -->
@@ -304,7 +304,6 @@
 
       setOpen(false); // start closed
     });
-  <!-- Seasonal particles -->
-<script src="/app/scripts/seasonal.js" defer></script>
+  </script>
 </body>
 </html>
