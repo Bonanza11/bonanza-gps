@@ -60,7 +60,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",     // sobre el fondo; bajo la UI
+    zIndex: "9998",
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -71,8 +71,7 @@
   let W = 0, H = 0, dpr = 1;
 
   function resize(){
-    // hasta 3x para iMac/Retina
-    dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1)); // iMac/Retina OK
     W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
     H = Math.max(1, Math.floor(window.innerHeight || document.documentElement.clientHeight || 1));
     c.width  = Math.floor(W * dpr);
@@ -83,39 +82,40 @@
   addEventListener("resize", resize);
 
   // ---------- Escalado visual ----------
-  const isMobile = Math.min(W, H) <= 640;     // heurística simple
-  const isUltra  = Math.max(W, H) >= 1800;    // iMac / pantallas grandes
+  const isMobile = Math.min(W, H) <= 640;
+  const isUltra  = Math.max(W, H) >= 1800;
 
-  // Factor de tamaño (afecta radio/alto de cada partícula)
-  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
+  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.25 : 1.0;
 
-  // Densidad base por ancho (y + para pantallas grandes)
+  // Densidad base
   let base = Math.min(90, Math.max(28, Math.floor(W / 20)));
   if (isUltra) base = Math.floor(base * 1.15);
 
-  // Menos hojas en otoño para que luzcan mejor
+  // Otoño: menos hojas para que se aprecie la forma
   const COUNT = season==="winter" ? base+12
               : season==="spring" ? base
               : season==="summer" ? Math.floor(base*0.85)
-              : Math.floor(base*0.5); // otoño: ~50%
+              : Math.floor(base*0.45); // fall
 
   // ---------- Utilidades y colores ----------
   const rnd = (a,b)=> a + Math.random()*(b-a);
-  const leafColors  = ["#c58b41","#a86b2d","#8b5720","#7a4a1a","#d19a57"];
-  const petalColors = ["#ffd1dc","#ffe4f0","#ffd8a8","#e6f7ff","#ffe8b3"];
-  const sparkColors = ["#ffe7b0","#ffd27e","#fff0c9","#ffe0a1"];
-  const snowColors  = ["rgba(255,255,255,.95)","rgba(255,255,255,.85)","rgba(230,240,255,.9)"];
+
+  // Paleta ROJA para otoño (parecida a la foto)
+  const mapleReds  = ["#b12a1d","#c43724","#d2432a","#de4f30","#e35a33","#b93a27"];
+  const petalColors= ["#ffd1dc","#ffe4f0","#ffd8a8","#e6f7ff","#ffe8b3"];
+  const sparkColors= ["#ffe7b0","#ffd27e","#fff0c9","#ffe0a1"];
+  const snowColors = ["rgba(255,255,255,.95)","rgba(255,255,255,.85)","rgba(230,240,255,.9)"];
 
   function makeParticle(){
     const x = rnd(0, W), y = rnd(-H, 0);
 
-    // Tamaños base por temporada * SIZE_K (otoño más grande)
+    // Tamaños base * SIZE_K (otoño más grande)
     const s  = (season==="winter" ? rnd(1.2,3.2)
                : season==="spring" ? rnd(1.1,2.6)
                : season==="summer" ? rnd(1.0,2.2)
-               : rnd(2.8,5.6)) * SIZE_K;   // ↑ un toque más grande en fall
+               : rnd(3.2,6.0)) * SIZE_K;   // fall grande
 
-    // Velocidades (ligero boost en móvil)
+    // Velocidades
     const vBoost = isMobile ? 1.1 : 1.0;
     const vx = (season==="winter" ? rnd(-0.35,0.65)
               : season==="spring" ? rnd(-0.25,0.55)
@@ -134,7 +134,7 @@
     if (season==="winter"){ color = snowColors[Math|rnd(0,snowColors.length)]; type="snow"; }
     else if (season==="spring"){ color = petalColors[Math|rnd(0,petalColors.length)]; type="petal"; }
     else if (season==="summer"){ color = sparkColors[Math|rnd(0,sparkColors.length)]; type="spark"; }
-    else { color = leafColors[Math|rnd(0,leafColors.length)]; type="leaf"; }
+    else { color = mapleReds[Math|rnd(0,mapleReds.length)]; type="leaf"; }
 
     return { x, y, s, vx, vy, rot, vr, color, type, t: rnd(0, Math.PI*2) };
   }
@@ -160,75 +160,59 @@
     ctx.stroke(); ctx.restore();
   }
 
-  // ===== Hoja "maple" canadiense (más fiel, con lóbulos) =====
+  // ===== Hoja de MAPLE canadiense (5 lóbulos) =====
+  // Contorno estilizado pero reconocible, con tallo y nervio central.
   function drawMapleLeaf(p){
-    const s = p.s; // escala base
+    const s = p.s;
 
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rot);
-    ctx.fillStyle = p.color;
 
-    // Silueta aproximada de hoja de maple con curvas (simétrica)
+    // Relleno rojo con un pequeño gradiente para “vida”
+    const g = ctx.createRadialGradient(0, -0.8*s, 0, 0, 0, 3.2*s);
+    g.addColorStop(0, p.color);
+    g.addColorStop(1, "#8c261e");
+    ctx.fillStyle = g;
+
+    // Contorno del maple (simétrico, con puntas marcadas)
     ctx.beginPath();
-    // punta central superior
-    ctx.moveTo(0, -3.2*s);
-
-    // lóbulo superior derecho
-    ctx.lineTo(0.6*s, -2.2*s);
-    ctx.lineTo(1.5*s, -2.4*s);
-    ctx.lineTo(1.0*s, -1.5*s);
-
-    // muesca entre lóbulo sup. y medio derecho
-    ctx.lineTo(1.8*s, -1.0*s);
-    ctx.lineTo(1.2*s, -0.6*s);
-
-    // lóbulo medio derecho
-    ctx.lineTo(2.2*s, 0.0*s);
-    ctx.lineTo(1.1*s, 0.2*s);
-
-    // muesca hacia ala derecha
-    ctx.lineTo(1.6*s, 0.8*s);
-    ctx.lineTo(0.9*s, 0.9*s);
-
-    // ala derecha inferior
-    ctx.lineTo(1.2*s, 1.6*s);
-    ctx.lineTo(0.6*s, 1.4*s);
-
-    // base hacia el tallo
-    ctx.lineTo(0.4*s, 2.1*s);
-    ctx.lineTo(0.2*s, 2.6*s);
-
-    // tallo
-    ctx.lineTo(0, 2.8*s);
-    ctx.lineTo(-0.2*s, 2.6*s);
+    ctx.moveTo(0, -3.3*s);            // punta central
+    ctx.lineTo(0.6*s, -2.3*s);
+    ctx.lineTo(1.6*s, -2.6*s);        // pico sup. derecho
+    ctx.lineTo(1.0*s, -1.6*s);
+    ctx.lineTo(1.9*s, -1.0*s);        // muesca
+    ctx.lineTo(1.2*s, -0.5*s);
+    ctx.lineTo(2.3*s, 0.0*s);         // pico medio derecho
+    ctx.lineTo(1.2*s, 0.25*s);
+    ctx.lineTo(1.7*s, 0.9*s);         // muesca ala
+    ctx.lineTo(0.9*s, 1.0*s);
+    ctx.lineTo(1.2*s, 1.7*s);         // pico ala inferior
+    ctx.lineTo(0.6*s, 1.5*s);
+    ctx.lineTo(0.4*s, 2.1*s);         // base
+    ctx.lineTo(0.2*s, 2.7*s);
+    ctx.lineTo(0, 2.9*s);             // tallo
+    ctx.lineTo(-0.2*s, 2.7*s);
     ctx.lineTo(-0.4*s, 2.1*s);
-
-    // lado izquierdo (espejo)
-    ctx.lineTo(-0.6*s, 1.4*s);
-    ctx.lineTo(-1.2*s, 1.6*s);
-    ctx.lineTo(-0.9*s, 0.9*s);
-    ctx.lineTo(-1.6*s, 0.8*s);
-    ctx.lineTo(-1.1*s, 0.2*s);
-    ctx.lineTo(-2.2*s, 0.0*s);
-    ctx.lineTo(-1.2*s, -0.6*s);
-    ctx.lineTo(-1.8*s, -1.0*s);
-    ctx.lineTo(-1.0*s, -1.5*s);
-    ctx.lineTo(-1.5*s, -2.4*s);
-    ctx.lineTo(-0.6*s, -2.2*s);
-
+    ctx.lineTo(-0.6*s, 1.5*s);
+    ctx.lineTo(-1.2*s, 1.7*s);
+    ctx.lineTo(-0.9*s, 1.0*s);
+    ctx.lineTo(-1.7*s, 0.9*s);
+    ctx.lineTo(-1.2*s, 0.25*s);
+    ctx.lineTo(-2.3*s, 0.0*s);
+    ctx.lineTo(-1.2*s, -0.5*s);
+    ctx.lineTo(-1.9*s, -1.0*s);
+    ctx.lineTo(-1.0*s, -1.6*s);
+    ctx.lineTo(-1.6*s, -2.6*s);
+    ctx.lineTo(-0.6*s, -2.3*s);
     ctx.closePath();
     ctx.fill();
 
-    // Nervio central y toque de borde
-    ctx.strokeStyle = "rgba(0,0,0,.25)";
+    // Nervio central + contorno sutil
+    ctx.strokeStyle = "rgba(0,0,0,.28)";
     ctx.lineWidth = 0.9;
-    ctx.beginPath();
-    ctx.moveTo(0, -3.2*s);
-    ctx.lineTo(0, 2.8*s);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -3.1*s); ctx.lineTo(0, 2.9*s); ctx.stroke();
 
-    // sutil contorno externo
     ctx.strokeStyle = "rgba(0,0,0,.18)";
     ctx.lineWidth = 0.8;
     ctx.stroke();
