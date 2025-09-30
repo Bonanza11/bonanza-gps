@@ -3,6 +3,7 @@
 // Overrides por query:
 //   ?season=winter|spring|summer|fall|off
 //   &rmo=off  (ignora prefers-reduced-motion para pruebas)
+//   &fallStyle=emoji|simple   (elige estilo para otoño)
 (function(){
   "use strict";
 
@@ -14,18 +15,17 @@
     return;
   }
 
-  // Reduced motion (se puede ignorar con &rmo=off)
+  // Reduced-motion (se puede ignorar con &rmo=off)
   const rmoOff = qp.get("rmo") === "off";
   const prefersReduce =
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
   if (prefersReduce && !rmoOff) {
     console.info("[seasonal] prefers-reduced-motion is ON (no animation). Add &rmo=off to test.");
     return;
   }
 
-  // ---- Determinar temporada ----
+  // ---- Temporada ----
   const now = new Date();
   const m = now.getMonth(); // 0=Ene … 11=Dic
   const d = now.getDate();
@@ -60,7 +60,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",     // por encima del fondo, por debajo de UI
+    zIndex: "9998",
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -69,7 +69,6 @@
   if (!ctx) { console.warn("[seasonal] no 2D context"); return; }
 
   let W = 0, H = 0, dpr = 1;
-
   function resize(){
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
     W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
@@ -81,61 +80,76 @@
   resize();
   addEventListener("resize", resize);
 
-  // ---------- Escalado visual ----------
   const isMobile = Math.min(W, H) <= 640;
   const isUltra  = Math.max(W, H) >= 1800;
+  const SIZE_K   = isMobile ? 1.9 : isUltra ? 1.25 : 1.0;
 
-  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
-
+  // Densidad base (otoño ahora a la MITAD: 0.20 en vez de 0.40)
   let base = Math.min(90, Math.max(28, Math.floor(W / 20)));
   if (isUltra) base = Math.floor(base * 1.15);
-
-  // 🎯 Aquí está la densidad corregida (otoño = 20%)
   const COUNT = season==="winter" ? base+12
               : season==="spring" ? base
               : season==="summer" ? Math.floor(base*0.85)
-              : Math.floor(base*0.20); // fall
+              : Math.floor(base*0.20); // ← fall (mitad)
 
-  // ---------- Utilidades y colores ----------
+  // Colores y utilidades (para otras estaciones)
   const rnd = (a,b)=> a + Math.random()*(b-a);
-  const leafColors  = ["#c58b41","#a86b2d","#8b5720","#7a4a1a","#d19a57"];
-  const petalColors = ["#ffd1dc","#ffe4f0","#ffd8a8","#e6f7ff","#ffe8b3"];
-  const sparkColors = ["#ffe7b0","#ffd27e","#fff0c9","#ffe0a1"];
-  const snowColors  = ["rgba(255,255,255,.95)","rgba(255,255,255,.85)","rgba(230,240,255,.9)"];
+  const petalColors= ["#ffd1dc","#ffe4f0","#ffd8a8","#e6f7ff","#ffe8b3"];
+  const sparkColors= ["#ffe7b0","#ffd27e","#fff0c9","#ffe0a1"];
+  const snowColors = ["rgba(255,255,255,.95)","rgba(255,255,255,.85)","rgba(230,240,255,.9)"];
+
+  // Estilo de otoño: default emoji 🍁/🍂
+  const fallStyle = (qp.get("fallStyle") || "emoji").toLowerCase(); // emoji|simple
 
   function makeParticle(){
     const x = rnd(0, W), y = rnd(-H, 0);
+    const isFall = season === "fall";
 
-    const s  = (season==="winter" ? rnd(1.2,3.2)
-               : season==="spring" ? rnd(1.1,2.6)
-               : season==="summer" ? rnd(1.0,2.2)
-               :                     rnd(1.3,3.3)) * SIZE_K;
+    let s, vx, vy, rot, vr, type, color, char;
 
-    const vBoost = isMobile ? 1.1 : 1.0;
-    const vx = (season==="winter" ? rnd(-0.35,0.65)
-              : season==="spring" ? rnd(-0.25,0.55)
-              : season==="summer" ? rnd(-0.15,0.35)
-              :                     rnd(-0.5,0.3)) * vBoost;
+    if (isFall && fallStyle === "emoji") {
+      // Emoji grandes
+      s   = rnd(22, 42) * SIZE_K;        // tamaño en px (fontSize)
+      vx  = rnd(-0.35, 0.25);
+      vy  = rnd(0.6, 1.3);
+      rot = rnd(-0.6, 0.6);
+      vr  = rnd(-0.005, 0.005);
+      type= "leafEmoji";
+      char= Math.random() < 0.55 ? "🍁" : "🍂";
+      color = "#000";
+    } else if (isFall && fallStyle === "simple") {
+      // Alternativa simple
+      s   = rnd(3.0, 5.8) * SIZE_K;
+      vx  = rnd(-0.45,0.35);
+      vy  = rnd(0.7,1.5);
+      rot = rnd(0, Math.PI*2);
+      vr  = rnd(-0.02, 0.02);
+      type= "leafSimple";
+      color = ["#b12a1d","#c43724","#d2432a","#de4f30","#e35a33","#b93a27"][Math|rnd(0,6)];
+    } else {
+      // Otras estaciones
+      s   = (season==="winter" ? rnd(1.2,3.2)
+           : season==="spring" ? rnd(1.1,2.6)
+           : rnd(1.0,2.2)) * SIZE_K;
+      vx  = (season==="winter" ? rnd(-0.35,0.65)
+           : season==="spring" ? rnd(-0.25,0.55)
+           : rnd(-0.15,0.35)) * (isMobile ? 1.1 : 1.0);
+      vy  = (season==="winter" ? rnd(0.6,1.4)
+           : season==="spring" ? rnd(0.5,1.2)
+           : rnd(0.3,0.9)) * (isMobile ? 1.1 : 1.0);
+      rot = rnd(0, Math.PI*2);
+      vr  = rnd(-0.02, 0.02);
+      if (season==="winter"){ color = snowColors[Math|rnd(0,snowColors.length)]; type="snow"; }
+      else if (season==="spring"){ color = petalColors[Math|rnd(0,petalColors.length)]; type="petal"; }
+      else { color = sparkColors[Math|rnd(0,sparkColors.length)]; type="spark"; }
+    }
 
-    const vy = (season==="winter" ? rnd(0.6,1.4)
-              : season==="spring" ? rnd(0.5,1.2)
-              : season==="summer" ? rnd(0.3,0.9)
-              :                     rnd(0.7,1.5)) * vBoost;
-
-    const rot = rnd(0, Math.PI*2);
-    const vr  = rnd(-0.02, 0.02);
-
-    let color, type;
-    if (season==="winter"){ color = snowColors[Math|rnd(0,snowColors.length)]; type="snow"; }
-    else if (season==="spring"){ color = petalColors[Math|rnd(0,petalColors.length)]; type="petal"; }
-    else if (season==="summer"){ color = sparkColors[Math|rnd(0,sparkColors.length)]; type="spark"; }
-    else { color = leafColors[Math|rnd(0,leafColors.length)]; type="leaf"; }
-
-    return { x, y, s, vx, vy, rot, vr, color, type, t: rnd(0, Math.PI*2) };
+    return { x, y, s, vx, vy, rot, vr, color, type, t: rnd(0, Math.PI*2), char };
   }
 
   const parts = Array.from({ length: COUNT }, makeParticle);
 
+  // Dibujadores
   function drawSnow(p){
     ctx.beginPath(); ctx.fillStyle = p.color;
     ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
@@ -154,18 +168,24 @@
     ctx.moveTo(0,-r); ctx.lineTo(0,r);
     ctx.stroke(); ctx.restore();
   }
-  function drawLeaf(p){
+  function drawLeafSimple(p){
     ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
     ctx.fillStyle=p.color;
-    const w=p.s*2.2, h=p.s*3;
-    ctx.beginPath();
-    ctx.moveTo(0,-h/2);
-    ctx.quadraticCurveTo(w/2,0,0,h/2);
-    ctx.quadraticCurveTo(-w/2,0,0,-h/2);
-    ctx.fill();
-    ctx.strokeStyle="rgba(0,0,0,.15)";
-    ctx.lineWidth=.6;
-    ctx.beginPath(); ctx.moveTo(0,-h/2); ctx.lineTo(0,h/2); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0,0,p.s*2.1,p.s*1.3,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  function drawLeafEmoji(p){
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.shadowColor = "rgba(0,0,0,.35)";
+    ctx.shadowBlur  = 6;
+    ctx.shadowOffsetY = 1;
+    ctx.font = `${Math.max(16, p.s)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(p.char || "🍁", 0, 0);
+    ctx.shadowColor = "transparent";
     ctx.restore();
   }
 
@@ -180,15 +200,17 @@
       p.y += p.vy * dt;
       p.rot += p.vr * dt;
 
-      if (p.y > H + 20 || p.x < -20 || p.x > W + 20){
+      if (p.y > H + 40 || p.x < -40 || p.x > W + 40){
         const np = makeParticle();
-        p.x=np.x; p.y=-10; p.vx=np.vx; p.vy=np.vy; p.rot=np.rot; p.vr=np.vr; p.color=np.color; p.type=np.type; p.s=np.s; p.t=np.t;
+        p.x=np.x; p.y=-10; p.vx=np.vx; p.vy=np.vy; p.rot=np.rot; p.vr=np.vr;
+        p.color=np.color; p.type=np.type; p.s=np.s; p.t=np.t; p.char=np.char;
       }
 
       if (p.type==="snow") drawSnow(p);
       else if (p.type==="petal") drawPetal(p);
       else if (p.type==="spark") drawSpark(p);
-      else drawLeaf(p);
+      else if (p.type==="leafEmoji") drawLeafEmoji(p);
+      else drawLeafSimple(p);
     }
     raf = requestAnimationFrame(tick);
   }
