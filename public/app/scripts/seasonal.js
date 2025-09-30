@@ -7,16 +7,11 @@
 
   const qp = new URLSearchParams(location.search);
 
-  // Apagar completamente si lo pides explícito
+  // Apagar completamente
   if (qp.get("season") === "off") {
     console.info("[seasonal] disabled via ?season=off");
     return;
   }
-
-  // ⚠️ Forzamos animación SIEMPRE (ignoramos Reduce Motion del sistema).
-  // Si alguna vez quieres volver a respetarlo, repón este bloque:
-  // const prefersReduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // if (prefersReduce && qp.get("rmo") !== "off") return;
 
   // ---- Determinar temporada ----
   const now = new Date();
@@ -53,7 +48,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",              // debajo de tu UI
+    zIndex: "9998",     // por encima del fondo, debajo de UI
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -62,10 +57,11 @@
   if (!ctx) { console.warn("[seasonal] no 2D context"); return; }
 
   let W = 0, H = 0, dpr = 1;
+
   function resize(){
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-    W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
-    H = Math.max(1, Math.floor(window.innerHeight || document.documentElement.clientHeight || 1));
+    W = Math.max(1, Math.floor(window.innerWidth));
+    H = Math.max(1, Math.floor(window.innerHeight));
     c.width  = Math.floor(W * dpr);
     c.height = Math.floor(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -75,17 +71,16 @@
 
   // ---------- Escalado visual ----------
   const isMobile = Math.min(W, H) <= 640;
-  const isUltra  = Math.max(W, H) >= 1800;   // iMac / 5K
-  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.5 : 1.1; // ← más grande en desktop grande
+  const isUltra  = Math.max(W, H) >= 1800;
+  const SIZE_K   = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
 
-  // Densidad
   let base = Math.min(90, Math.max(28, Math.floor(W / 20)));
-  if (isUltra) base = Math.floor(base * 1.2);
+  if (isUltra) base = Math.floor(base * 1.15);
 
-  const COUNT = season==="winter" ? base+14
+  const COUNT = season==="winter" ? base+12
               : season==="spring" ? base
               : season==="summer" ? Math.floor(base*0.85)
-              :                     base+10;
+              :                     base+8;
 
   // ---------- Utilidades y colores ----------
   const rnd = (a,b)=> a + Math.random()*(b-a);
@@ -96,11 +91,10 @@
 
   function makeParticle(){
     const x = rnd(0, W), y = rnd(-H, 0);
-
-    const s  = (season==="winter" ? rnd(1.4,3.6)
-               : season==="spring" ? rnd(1.3,3.0)
-               : season==="summer" ? rnd(1.2,2.6)
-               :                     rnd(1.6,3.8)) * SIZE_K;
+    const s  = (season==="winter" ? rnd(1.2,3.2)
+               : season==="spring" ? rnd(1.1,2.6)
+               : season==="summer" ? rnd(1.0,2.2)
+               :                     rnd(1.3,3.3)) * SIZE_K;
 
     const vBoost = isMobile ? 1.1 : 1.0;
     const vx = (season==="winter" ? rnd(-0.35,0.65)
@@ -127,38 +121,10 @@
 
   const parts = Array.from({ length: COUNT }, makeParticle);
 
-  function drawSnow(p){
-    ctx.beginPath(); ctx.fillStyle = p.color;
-    ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
-  }
-  function drawPetal(p){
-    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-    ctx.fillStyle=p.color;
-    ctx.beginPath(); ctx.ellipse(0,0,p.s*1.6,p.s*0.9,0,0,Math.PI*2);
-    ctx.fill(); ctx.restore();
-  }
-  function drawSpark(p){
-    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-    ctx.strokeStyle=p.color; ctx.lineWidth=1;
-    const r=p.s*2; ctx.beginPath();
-    ctx.moveTo(-r,0); ctx.lineTo(r,0);
-    ctx.moveTo(0,-r); ctx.lineTo(0,r);
-    ctx.stroke(); ctx.restore();
-  }
-  function drawLeaf(p){
-    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-    ctx.fillStyle=p.color;
-    const w=p.s*2.2, h=p.s*3;
-    ctx.beginPath();
-    ctx.moveTo(0,-h/2);
-    ctx.quadraticCurveTo(w/2,0,0,h/2);
-    ctx.quadraticCurveTo(-w/2,0,0,-h/2);
-    ctx.fill();
-    ctx.strokeStyle="rgba(0,0,0,.15)";
-    ctx.lineWidth=.6;
-    ctx.beginPath(); ctx.moveTo(0,-h/2); ctx.lineTo(0,h/2); ctx.stroke();
-    ctx.restore();
-  }
+  function drawSnow(p){ ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill(); }
+  function drawPetal(p){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color; ctx.beginPath(); ctx.ellipse(0,0,p.s*1.6,p.s*0.9,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+  function drawSpark(p){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.strokeStyle=p.color; ctx.lineWidth=1; const r=p.s*2; ctx.beginPath(); ctx.moveTo(-r,0); ctx.lineTo(r,0); ctx.moveTo(0,-r); ctx.lineTo(0,r); ctx.stroke(); ctx.restore(); }
+  function drawLeaf(p){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color; const w=p.s*2.2, h=p.s*3; ctx.beginPath(); ctx.moveTo(0,-h/2); ctx.quadraticCurveTo(w/2,0,0,h/2); ctx.quadraticCurveTo(-w/2,0,0,-h/2); ctx.fill(); ctx.strokeStyle="rgba(0,0,0,.15)"; ctx.lineWidth=.6; ctx.beginPath(); ctx.moveTo(0,-h/2); ctx.lineTo(0,h/2); ctx.stroke(); ctx.restore(); }
 
   let last = performance.now(), raf;
   function tick(now){
@@ -170,12 +136,10 @@
       p.x += (p.vx + wind) * dt;
       p.y += p.vy * dt;
       p.rot += p.vr * dt;
-
       if (p.y > H + 20 || p.x < -20 || p.x > W + 20){
         const np = makeParticle();
-        p.x=np.x; p.y=-10; p.vx=np.vx; p.vy=np.vy; p.rot=np.rot; p.vr=np.vr; p.color=np.color; p.type=np.type; p.s=np.s; p.t=np.t;
+        Object.assign(p, np, { y: -10 });
       }
-
       if (p.type==="snow") drawSnow(p);
       else if (p.type==="petal") drawPetal(p);
       else if (p.type==="spark") drawSpark(p);
