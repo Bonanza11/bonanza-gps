@@ -184,7 +184,7 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .promo-field{ flex:1; display:flex; align-items:center; justify-content:flex-start; gap:10px; }
 .promo-input{ width:100%; max-width:260px; height:38px; border:1px solid var(--copper); background:#0a0f14; color:#ffddae; padding:8px 14px; border-radius:999px; font-weight:700; letter-spacing:.25px; font-size:.95rem; }
 .promo-input::placeholder{ color:#cba686; opacity:.6; }
-.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:#copper; }
+.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
 .promo-btn{
   min-height:38px;
   padding:8px 16px;
@@ -341,12 +341,12 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 #flightBox .field-col > label{ font-weight:700; color:#ffdeb3; margin:2px 0 4px }
 @media (max-width:640px){ #flightBox .flight-grid{ grid-template-columns:1fr; row-gap:14px } }
 
-/* === Calculate Price — upgrade de visibilidad (sobrescribe estilos previos) === */
+/* === Calculate Price — upgrade de visibilidad === */
 #calculate{
   position:relative;
   overflow:hidden;
-  background:#0d1319;                 /* se mantiene oscuro */
-  color:#ffedd1;                       /* texto un poco más claro */
+  background:#0d1319;
+  color:#ffedd1;
   font-size:1rem;
   letter-spacing:.3px;
   border:1px solid rgba(240,200,146,.55);
@@ -354,10 +354,8 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
     inset 0 0 0 1px rgba(231,185,133,.12),
     0 0 0 3px rgba(168,116,79,.15),
     0 10px 24px rgba(168,116,79,.35);
-  animation:calcHeartbeat 2.8s ease-in-out infinite;  /* pulso suave */
+  animation:calcHeartbeat 2.8s ease-in-out infinite;
 }
-
-/* Barrido de brillo (shine) */
 #calculate::before{
   content:"";
   position:absolute;
@@ -367,8 +365,6 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   transform:skewX(-20deg);
   animation:calcShineSweep 3.2s infinite;
 }
-
-/* Flecha sutil para indicar acción */
 #calculate::after{
   content:"→";
   position:absolute;
@@ -377,58 +373,28 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   opacity:.85;
   transition:transform .15s ease, opacity .15s ease;
 }
+#calculate:hover:not([disabled]){ transform:scale(1.02); }
+#calculate:hover::after{ transform:translateY(-50%) translateX(4px); opacity:1; }
+#calculate:active:not([disabled]){ background:linear-gradient(180deg,#f0c892,#d9a575); border-color:#f0c892; color:#111; transform:scale(1.0) translateY(1px); }
+#calculate:focus-visible{ outline:2px solid #f0c892; outline-offset:2px; }
 
-/* Hover: un pelín más grande y la flecha se mueve */
-#calculate:hover:not([disabled]){
-  transform:scale(1.02);
-}
-#calculate:hover::after{
-  transform:translateY(-50%) translateX(4px);
-  opacity:1;
-}
-
-/* Active y Focus se mantienen pero con mejor contraste */
-#calculate:active:not([disabled]){
-  background:linear-gradient(180deg,#f0c892,#d9a575);
-  border-color:#f0c892; color:#111; transform:scale(1.0) translateY(1px);
-}
-#calculate:focus-visible{
-  outline:2px solid #f0c892; outline-offset:2px;
-}
-
-/* Animaciones */
-@keyframes calcShineSweep{
-  0% { left:-75%; }
-  60%{ left:125%; }
-  100%{ left:125%; }
-}
+@keyframes calcShineSweep{ 0%{left:-75%} 60%{left:125%} 100%{left:125%} }
 @keyframes calcHeartbeat{
-  0%,100%{
-    box-shadow:
-      inset 0 0 0 1px rgba(231,185,133,.12),
-      0 0 0 3px rgba(168,116,79,.12),
-      0 10px 24px rgba(168,116,79,.30);
-  }
-  50%{
-    box-shadow:
-      inset 0 0 0 1px rgba(231,185,133,.16),
-      0 0 0 6px rgba(168,116,79,.18),
-      0 14px 30px rgba(168,116,79,.40);
-  }
+  0%,100%{ box-shadow: inset 0 0 0 1px rgba(231,185,133,.12), 0 0 0 3px rgba(168,116,79,.12), 0 10px 24px rgba(168,116,79,.30) }
+  50%{ box-shadow: inset 0 0 0 1px rgba(231,185,133,.16), 0 0 0 6px rgba(168,116,79,.18), 0 14px 30px rgba(168,116,79,.40) }
 }
 
-/* Respeto accesibilidad: sin animaciones si el usuario lo pide */
 @media (prefers-reduced-motion: reduce){
   #calculate{ animation:none; }
   #calculate::before{ animation:none; }
 }
 
-/* ===== Seasonal overlay (ultra ligero) ===== */
+/* ===== Seasonal overlay ===== */
 .seasonal-canvas{
   position:fixed; inset:0; width:100vw; height:100vh;
   pointer-events:none;
-  z-index:50; /* subido: partículas por encima de los paneles */
-  opacity:.9; /* muy sutil sobre el fondo */
+  z-index:9998; /* ⬆️ ahora por encima de todo, pero sin tapar clics */
+  opacity:.9;
 }
 @media (prefers-reduced-motion: reduce){
   .seasonal-canvas{ display:none !important; }
