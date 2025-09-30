@@ -2,6 +2,7 @@
 // Nieve forzada: del 15-Nov al 15-Abr (inclusive)
 // Overrides por query:
 //   ?season=winter|spring|summer|fall|off
+//   &rmo=off  (ignora prefers-reduced-motion para pruebas)
 (function(){
   "use strict";
 
@@ -10,6 +11,17 @@
   // Apagar completamente
   if (qp.get("season") === "off") {
     console.info("[seasonal] disabled via ?season=off");
+    return;
+  }
+
+  // Reduced motion (se puede ignorar con &rmo=off)
+  const rmoOff = qp.get("rmo") === "off";
+  const prefersReduce =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (prefersReduce && !rmoOff) {
+    console.info("[seasonal] prefers-reduced-motion is ON (no animation). Add &rmo=off to test.");
     return;
   }
 
@@ -48,7 +60,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",     // por encima del fondo, por debajo de UI
+    zIndex: "9998",     // sobre el fondo; bajo la UI interactiva
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -59,10 +71,10 @@
   let W = 0, H = 0, dpr = 1;
 
   function resize(){
+    // Subimos a 3x para iMac/Retina grandes
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
     W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
     H = Math.max(1, Math.floor(window.innerHeight || document.documentElement.clientHeight || 1));
-
     c.width  = Math.floor(W * dpr);
     c.height = Math.floor(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -71,17 +83,21 @@
   addEventListener("resize", resize);
 
   // ---------- Escalado visual ----------
-  const isMobile = Math.min(W, H) <= 640;
-  const isUltra  = Math.max(W, H) >= 1800;
-  const SIZE_K   = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
+  const isMobile = Math.min(W, H) <= 640;     // heurística simple
+  const isUltra  = Math.max(W, H) >= 1800;    // iMac / pantallas grandes
 
+  // Factor de tamaño (afecta radio/alto de cada partícula)
+  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
+
+  // Densidad base por ancho (y + para pantallas grandes)
   let base = Math.min(90, Math.max(28, Math.floor(W / 20)));
   if (isUltra) base = Math.floor(base * 1.15);
 
+  // Menos hojas en otoño para que luzcan mejor
   const COUNT = season==="winter" ? base+12
               : season==="spring" ? base
               : season==="summer" ? Math.floor(base*0.85)
-              :                     base+8;
+              : Math.floor(base*0.5); // otoño: ~50%
 
   // ---------- Utilidades y colores ----------
   const rnd = (a,b)=> a + Math.random()*(b-a);
@@ -93,21 +109,23 @@
   function makeParticle(){
     const x = rnd(0, W), y = rnd(-H, 0);
 
+    // Tamaños base por temporada * SIZE_K (otoño más grande)
     const s  = (season==="winter" ? rnd(1.2,3.2)
                : season==="spring" ? rnd(1.1,2.6)
                : season==="summer" ? rnd(1.0,2.2)
-               :                     rnd(1.3,3.3)) * SIZE_K;
+               : rnd(2.5,5.0)) * SIZE_K;
 
+    // Velocidades (ligero boost en móvil)
     const vBoost = isMobile ? 1.1 : 1.0;
     const vx = (season==="winter" ? rnd(-0.35,0.65)
               : season==="spring" ? rnd(-0.25,0.55)
               : season==="summer" ? rnd(-0.15,0.35)
-              :                     rnd(-0.5,0.3)) * vBoost;
+              : rnd(-0.5,0.3)) * vBoost;
 
     const vy = (season==="winter" ? rnd(0.6,1.4)
               : season==="spring" ? rnd(0.5,1.2)
               : season==="summer" ? rnd(0.3,0.9)
-              :                     rnd(0.7,1.5)) * vBoost;
+              : rnd(0.7,1.5)) * vBoost;
 
     const rot = rnd(0, Math.PI*2);
     const vr  = rnd(-0.02, 0.02);
@@ -123,10 +141,55 @@
 
   const parts = Array.from({ length: COUNT }, makeParticle);
 
-  function drawSnow(p){ ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill(); }
-  function drawPetal(p){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color; ctx.beginPath(); ctx.ellipse(0,0,p.s*1.6,p.s*0.9,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
-  function drawSpark(p){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.strokeStyle=p.color; ctx.lineWidth=1; const r=p.s*2; ctx.beginPath(); ctx.moveTo(-r,0); ctx.lineTo(r,0); ctx.moveTo(0,-r); ctx.lineTo(0,r); ctx.stroke(); ctx.restore(); }
-  function drawLeaf(p){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color; const w=p.s*2.2,h=p.s*3; ctx.beginPath(); ctx.moveTo(0,-h/2); ctx.quadraticCurveTo(w/2,0,0,h/2); ctx.quadraticCurveTo(-w/2,0,0,-h/2); ctx.fill(); ctx.strokeStyle="rgba(0,0,0,.15)"; ctx.lineWidth=.6; ctx.beginPath(); ctx.moveTo(0,-h/2); ctx.lineTo(0,h/2); ctx.stroke(); ctx.restore(); }
+  function drawSnow(p){
+    ctx.beginPath(); ctx.fillStyle = p.color;
+    ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
+  }
+  function drawPetal(p){
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.ellipse(0,0,p.s*1.6,p.s*0.9,0,0,Math.PI*2);
+    ctx.fill(); ctx.restore();
+  }
+  function drawSpark(p){
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    ctx.strokeStyle=p.color; ctx.lineWidth=1;
+    const r=p.s*2; ctx.beginPath();
+    ctx.moveTo(-r,0); ctx.lineTo(r,0);
+    ctx.moveTo(0,-r); ctx.lineTo(0,r);
+    ctx.stroke(); ctx.restore();
+  }
+
+  // ---- Hoja tipo "maple" canadiense (simplificada) ----
+  function drawLeaf(p){
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+
+    // Polígono estilizado de 8 vértices (tres puntas arriba y alas laterales)
+    ctx.beginPath();
+    ctx.moveTo(0, -p.s*3.0);             // punta superior
+    ctx.lineTo(p.s*1.2, -p.s*1.4);       // arriba derecha
+    ctx.lineTo(p.s*2.0, -p.s*0.4);       // ala derecha media
+    ctx.lineTo(p.s*1.2, p.s*0.9);        // ala derecha baja
+    ctx.lineTo(0, p.s*2.4);              // tallo (abajo centro)
+    ctx.lineTo(-p.s*1.2, p.s*0.9);       // ala izquierda baja
+    ctx.lineTo(-p.s*2.0, -p.s*0.4);      // ala izquierda media
+    ctx.lineTo(-p.s*1.2, -p.s*1.4);      // arriba izquierda
+    ctx.closePath();
+    ctx.fill();
+
+    // Nervio central
+    ctx.strokeStyle = "rgba(0,0,0,.2)";
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(0, -p.s*3.0);
+    ctx.lineTo(0, p.s*2.4);
+    ctx.stroke();
+
+    ctx.restore();
+  }
 
   let last = performance.now(), raf;
   function tick(now){
@@ -139,6 +202,7 @@
       p.y += p.vy * dt;
       p.rot += p.vr * dt;
 
+      // Reposicionar cuando sale de pantalla
       if (p.y > H + 20 || p.x < -20 || p.x > W + 20){
         const np = makeParticle();
         p.x=np.x; p.y=-10; p.vx=np.vx; p.vy=np.vy; p.rot=np.rot; p.vr=np.vr; p.color=np.color; p.type=np.type; p.s=np.s; p.t=np.t;
