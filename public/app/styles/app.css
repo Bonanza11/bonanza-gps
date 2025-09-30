@@ -184,39 +184,58 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .promo-field{ flex:1; display:flex; align-items:center; justify-content:flex-start; gap:10px; }
 .promo-input{ width:100%; max-width:260px; height:38px; border:1px solid var(--copper); background:#0a0f14; color:#ffddae; padding:8px 14px; border-radius:999px; font-weight:700; letter-spacing:.25px; font-size:.95rem; }
 .promo-input::placeholder{ color:#cba686; opacity:.6; }
-.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
+.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:#copper; }
+
 .promo-btn{
   min-height:38px;
   padding:8px 16px;
   border-radius:999px;
   border:1px solid var(--copper);
   background:linear-gradient(180deg,var(--copper-2),var(--copper));
-  color:#111; /* texto oscuro sobre botón dorado */
+  color:#111;
   font-weight:900;
   cursor:pointer;
   transition:background .15s, border-color .15s, transform .05s, box-shadow .15s;
 }
+.promo-btn:hover{ filter:saturate(1.08) brightness(1.05); box-shadow:0 6px 14px rgba(168,116,79,.25); }
+.promo-btn:active{ transform:translateY(1px); }
+.promo-btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
-.promo-btn:hover{
-  filter:saturate(1.08) brightness(1.05);
-  box-shadow:0 6px 14px rgba(168,116,79,.25);
-}
-
-.promo-btn:active{
-  transform:translateY(1px);
-}
-
-.promo-btn[disabled]{
-  opacity:.55; cursor:not-allowed;
-}
+/* (los antiguos estados de .promo-btn se mantienen si los tenías en otro bloque) */
 .promo-btn:hover{ background:#10161d; border-color:#d9a575; box-shadow:inset 0 0 0 1px rgba(231,185,133,.14), 0 6px 14px rgba(231,185,133,.10) }
 .promo-btn:active{ transform:translateY(1px); background:linear-gradient(180deg,#f0c892,#d9a575); color:#111; border-color:#f0c892 }
 .promo-btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
+/* Calculate Price — base existente */
 #calculate{ border:1px solid rgba(0,0,0,.45); background:#0d1319; color:#ffddae; font-weight:900; }
 #calculate:hover:not([disabled]){ background:#10161d; border-color:#d9a575; box-shadow:inset 0 0 0 1px rgba(231,185,133,.14), 0 6px 14px rgba(231,185,133,.10) }
 #calculate:active:not([disabled]){ background:linear-gradient(180deg,#f0c892,#d9a575); border-color:#f0c892; color:#111; transform:translateY(1px) }
 #calculate:focus-visible{ outline:2px solid #f0c892; outline-offset:2px }
+
+/* === Calculate Price — efecto “shine” para hacerlo más llamativo === */
+#calculate{
+  position:relative;           /* necesario para el ::before */
+  overflow:hidden;             /* oculta el barrido fuera del botón */
+}
+#calculate::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-75%;
+  width:50%;
+  height:100%;
+  background:linear-gradient(120deg, transparent, rgba(255,255,255,.25), transparent);
+  transform:skewX(-20deg);
+  animation:calcShineSweep 3s infinite;
+}
+@keyframes calcShineSweep{
+  0%   { left:-75%; }
+  60%  { left:125%; }
+  100% { left:125%; }
+}
+@media (prefers-reduced-motion: reduce){
+  #calculate::before{ animation:none; }
+}
 
 .pac-container { z-index:10000 !important }
 #map img { max-width:none !important }
@@ -279,6 +298,7 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 .lugg-list{ margin:0 0 0 18px; padding:0; }
 .lugg-list li{ color:#dfe8f3; line-height:1.35; margin:4px 0; }
 .lugg-list li::marker{ color:var(--muted-blue) }
+
 /* ==== Flight Details — estilo tipo Meet & Greet ==== */
 #flightBox.flight-card{
   border:1px solid var(--border);
@@ -314,6 +334,7 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 @media (max-width:640px){
   #flightBox .flight-grid{ grid-template-columns:1fr; row-gap:14px }
 }
+
 /* ==== Flight Details — estilo mejorado ==== */
 .flight-card{
   border:1px solid var(--border);
