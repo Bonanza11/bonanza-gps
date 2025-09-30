@@ -1,4 +1,5 @@
-// seasonal.js — Partículas por temporada (Utah, fijo por mes)
+// seasonal.js — Partículas por temporada (Utah, fijo por fecha)
+// Nieve forzada: del 15 de Nov al 15 de Abr (inclusive)
 (function(){
   "use strict";
 
@@ -9,12 +10,30 @@
   // Respeta reduced motion
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  // Utah (Hemisferio Norte): Invierno (Dic–Feb), Primavera (Mar–May), Verano (Jun–Ago), Otoño (Sep–Nov)
-  const m = (new Date()).getMonth(); // 0=Ene … 11=Dic
-  const season = (m === 11 || m === 0 || m === 1) ? "winter"   // Dic, Ene, Feb
-               : (m >= 2  && m <= 4)               ? "spring"   // Mar, Abr, May
-               : (m >= 5  && m <= 7)               ? "summer"   // Jun, Jul, Ago
-               :                                     "fall";     // Sep, Oct, Nov
+  // ---- Fecha actual (local) ----
+  const now = new Date();
+  const m   = now.getMonth(); // 0=Ene … 11=Dic
+  const d   = now.getDate();
+
+  // Nieve: Nov 15 → Dic → Ene → Feb → Mar → Abr 15
+  const IN_SNOW_WINDOW =
+    (m === 10 && d >= 15) ||  // Nov (10) desde el 15
+    (m === 11) ||             // Dic
+    (m === 0)  ||             // Ene
+    (m === 1)  ||             // Feb
+    (m === 2)  ||             // Mar
+    (m === 3 && d <= 15);     // Abr (3) hasta el 15
+
+  // Temporada base por mes (solo si no estamos en la ventana de nieve)
+  // Invierno: Dic–Feb | Primavera: Mar–May | Verano: Jun–Ago | Otoño: Sep–Nov
+  const baseSeason =
+    (m >= 2 && m <= 4) ? "spring" :
+    (m >= 5 && m <= 7) ? "summer" :
+    (m >= 8 && m <= 10) ? "fall" :
+    "winter";
+
+  // Temporada final
+  const season = IN_SNOW_WINDOW ? "winter" : baseSeason;
 
   // Canvas
   const c = document.createElement("canvas");
@@ -25,6 +44,11 @@
   let W=0, H=0, dpr=1;
   function resize(){
     dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    // Usa el viewport completo:
+    c.style.position = "fixed";
+    c.style.inset = "0";
+    c.style.width = "100vw";
+    c.style.height = "100vh";
     W = c.clientWidth; H = c.clientHeight;
     c.width  = Math.floor(W*dpr);
     c.height = Math.floor(H*dpr);
