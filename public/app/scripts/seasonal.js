@@ -60,7 +60,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",     // por encima del fondo, por debajo de UI (tus botones tienen z-index 3–4)
+    zIndex: "9998",  // encima del fondo; por debajo de tu UI
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -71,13 +71,11 @@
   let W = 0, H = 0, dpr = 1;
 
   function resize(){
-    // Soportar pantallas 5K/Retina: subimos a 3
+    // soporta pantallas Retina/5K
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-
-    // Viewport real para evitar clientWidth=0 en layouts raros
+    // usar viewport real
     W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
     H = Math.max(1, Math.floor(window.innerHeight || document.documentElement.clientHeight || 1));
-
     c.width  = Math.floor(W * dpr);
     c.height = Math.floor(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -86,14 +84,11 @@
   addEventListener("resize", resize);
 
   // ---------- Escalado visual ----------
-  // Móvil: hojas/pétalos más grandes; Escritorio ultra grande: un pelín más grandes
-  const isMobile = Math.min(W, H) <= 640;     // heurística simple
-  const isUltra  = Math.max(W, H) >= 1800;    // iMac / pantallas grandes
-
-  // Factor de tamaño (afecta radio/alto de cada partícula)
+  const isMobile = Math.min(W, H) <= 640;   // simple
+  const isUltra  = Math.max(W, H) >= 1800;  // iMac/pantallas grandes
   const SIZE_K = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
 
-  // Densidad base por ancho (y un + para pantallas muy grandes)
+  // Densidad
   let base = Math.min(90, Math.max(28, Math.floor(W / 20)));
   if (isUltra) base = Math.floor(base * 1.15);
 
@@ -112,13 +107,11 @@
   function makeParticle(){
     const x = rnd(0, W), y = rnd(-H, 0);
 
-    // Tamaños base por temporada * SIZE_K
     const s  = (season==="winter" ? rnd(1.2,3.2)
                : season==="spring" ? rnd(1.1,2.6)
                : season==="summer" ? rnd(1.0,2.2)
                :                     rnd(1.3,3.3)) * SIZE_K;
 
-    // Velocidades con leve boost en móvil para que se noten más
     const vBoost = isMobile ? 1.1 : 1.0;
     const vx = (season==="winter" ? rnd(-0.35,0.65)
               : season==="spring" ? rnd(-0.25,0.55)
@@ -188,7 +181,6 @@
       p.y += p.vy * dt;
       p.rot += p.vr * dt;
 
-      // Reposicionar cuando sale de pantalla
       if (p.y > H + 20 || p.x < -20 || p.x > W + 20){
         const np = makeParticle();
         p.x=np.x; p.y=-10; p.vx=np.vx; p.vy=np.vy; p.rot=np.rot; p.vr=np.vr; p.color=np.color; p.type=np.type; p.s=np.s; p.t=np.t;
