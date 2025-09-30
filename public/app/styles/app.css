@@ -184,7 +184,7 @@ button:active:not([disabled]){ transform:translateY(1px) }
 .promo-field{ flex:1; display:flex; align-items:center; justify-content:flex-start; gap:10px; }
 .promo-input{ width:100%; max-width:260px; height:38px; border:1px solid var(--copper); background:#0a0f14; color:#ffddae; padding:8px 14px; border-radius:999px; font-weight:700; letter-spacing:.25px; font-size:.95rem; }
 .promo-input::placeholder{ color:#cba686; opacity:.6; }
-.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:var(--copper); }
+.promo-input:focus{ box-shadow:var(--ring); outline:none; border-color:#copper; }
 .promo-btn{
   min-height:38px;
   padding:8px 16px;
@@ -340,6 +340,7 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
 #flightBox .field-col{ display:flex; flex-direction:column; gap:10px }
 #flightBox .field-col > label{ font-weight:700; color:#ffdeb3; margin:2px 0 4px }
 @media (max-width:640px){ #flightBox .flight-grid{ grid-template-columns:1fr; row-gap:14px } }
+
 /* === Calculate Price — upgrade de visibilidad (sobrescribe estilos previos) === */
 #calculate{
   position:relative;
@@ -421,10 +422,12 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   #calculate{ animation:none; }
   #calculate::before{ animation:none; }
 }
+
 /* ===== Seasonal overlay (ultra ligero) ===== */
 .seasonal-canvas{
   position:fixed; inset:0; width:100vw; height:100vh;
-  pointer-events:none; z-index:0; /* detrás de todo lo cliqueable */
+  pointer-events:none;
+  z-index:50; /* subido: partículas por encima de los paneles */
   opacity:.9; /* muy sutil sobre el fondo */
 }
 @media (prefers-reduced-motion: reduce){
