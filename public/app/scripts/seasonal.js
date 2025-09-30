@@ -2,28 +2,21 @@
 // Nieve forzada: del 15-Nov al 15-Abr (inclusive)
 // Overrides por query:
 //   ?season=winter|spring|summer|fall|off
-//   &rmo=off  (ignora prefers-reduced-motion para pruebas)
 (function(){
   "use strict";
 
   const qp = new URLSearchParams(location.search);
 
-  // Apagar completamente
+  // Apagar completamente si lo pides explícito
   if (qp.get("season") === "off") {
     console.info("[seasonal] disabled via ?season=off");
     return;
   }
 
-  // Reduced motion (se puede ignorar con &rmo=off)
-  const rmoOff = qp.get("rmo") === "off";
-  const prefersReduce =
-    window.matchMedia &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  if (prefersReduce && !rmoOff) {
-    console.info("[seasonal] prefers-reduced-motion is ON (no animation). Add &rmo=off to test.");
-    return;
-  }
+  // ⚠️ Forzamos animación SIEMPRE (ignoramos Reduce Motion del sistema).
+  // Si alguna vez quieres volver a respetarlo, repón este bloque:
+  // const prefersReduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // if (prefersReduce && qp.get("rmo") !== "off") return;
 
   // ---- Determinar temporada ----
   const now = new Date();
@@ -49,7 +42,7 @@
   const valid = { winter:1, spring:1, summer:1, fall:1 };
   const season = valid[qSeason] ? qSeason : (IN_SNOW_WINDOW ? "winter" : baseSeason);
 
-  console.info("[seasonal] running — season:", season, valid[qSeason] ? "(forced by query)" : IN_SNOW_WINDOW ? "(snow window)" : "(by month)");
+  console.info("[seasonal] running — season:", season);
 
   // ---- Canvas ----
   const c = document.createElement("canvas");
@@ -60,7 +53,7 @@
     width: "100vw",
     height: "100vh",
     pointerEvents: "none",
-    zIndex: "9998",  // encima del fondo; por debajo de tu UI
+    zIndex: "9998",              // debajo de tu UI
     opacity: "0.9"
   });
   document.body.appendChild(c);
@@ -69,11 +62,8 @@
   if (!ctx) { console.warn("[seasonal] no 2D context"); return; }
 
   let W = 0, H = 0, dpr = 1;
-
   function resize(){
-    // soporta pantallas Retina/5K
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-    // usar viewport real
     W = Math.max(1, Math.floor(window.innerWidth  || document.documentElement.clientWidth  || 1));
     H = Math.max(1, Math.floor(window.innerHeight || document.documentElement.clientHeight || 1));
     c.width  = Math.floor(W * dpr);
@@ -84,18 +74,18 @@
   addEventListener("resize", resize);
 
   // ---------- Escalado visual ----------
-  const isMobile = Math.min(W, H) <= 640;   // simple
-  const isUltra  = Math.max(W, H) >= 1800;  // iMac/pantallas grandes
-  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.2 : 1.0;
+  const isMobile = Math.min(W, H) <= 640;
+  const isUltra  = Math.max(W, H) >= 1800;   // iMac / 5K
+  const SIZE_K = isMobile ? 1.9 : isUltra ? 1.5 : 1.1; // ← más grande en desktop grande
 
   // Densidad
   let base = Math.min(90, Math.max(28, Math.floor(W / 20)));
-  if (isUltra) base = Math.floor(base * 1.15);
+  if (isUltra) base = Math.floor(base * 1.2);
 
-  const COUNT = season==="winter" ? base+12
+  const COUNT = season==="winter" ? base+14
               : season==="spring" ? base
               : season==="summer" ? Math.floor(base*0.85)
-              :                     base+8;
+              :                     base+10;
 
   // ---------- Utilidades y colores ----------
   const rnd = (a,b)=> a + Math.random()*(b-a);
@@ -107,10 +97,10 @@
   function makeParticle(){
     const x = rnd(0, W), y = rnd(-H, 0);
 
-    const s  = (season==="winter" ? rnd(1.2,3.2)
-               : season==="spring" ? rnd(1.1,2.6)
-               : season==="summer" ? rnd(1.0,2.2)
-               :                     rnd(1.3,3.3)) * SIZE_K;
+    const s  = (season==="winter" ? rnd(1.4,3.6)
+               : season==="spring" ? rnd(1.3,3.0)
+               : season==="summer" ? rnd(1.2,2.6)
+               :                     rnd(1.6,3.8)) * SIZE_K;
 
     const vBoost = isMobile ? 1.1 : 1.0;
     const vx = (season==="winter" ? rnd(-0.35,0.65)
