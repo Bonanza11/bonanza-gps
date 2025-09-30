@@ -421,3 +421,12 @@ select:-webkit-autofill, select:-webkit-autofill:focus{
   #calculate{ animation:none; }
   #calculate::before{ animation:none; }
 }
+/* ===== Seasonal overlay (ultra ligero) ===== */
+.seasonal-canvas{
+  position:fixed; inset:0; width:100vw; height:100vh;
+  pointer-events:none; z-index:0; /* detrás de todo lo cliqueable */
+  opacity:.9; /* muy sutil sobre el fondo */
+}
+@media (prefers-reduced-motion: reduce){
+  .seasonal-canvas{ display:none !important; }
+}
