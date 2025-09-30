@@ -249,17 +249,16 @@
     })();
   </script>
 
-  <!-- Stripe -->
+   <!-- Stripe -->
   <script src="https://js.stripe.com/v3"></script>
   <script src="/app/scripts/stripe.js" defer></script>
 
-  <!-- Seasonal particles (UNA sola vez) -->
+  <!-- Seasonal particles -->
   <script src="/app/scripts/seasonal.js" defer></script>
 
   <!-- Vehicle + Accordion -->
   <script>
     window.addEventListener("DOMContentLoaded", function(){
-      // ---- Vehicle Visual ----
       const SUV_IMG="/images/suburban.png", VAN_IMG="/images/van-sprinter.png";
       window.__vehicleType=window.__vehicleType||"suv";
       const btns=document.querySelectorAll(".veh-btn");
@@ -283,11 +282,11 @@
       btns.forEach(b=>b.addEventListener("click",()=>setActive(b.dataset.type||"suv")));
       setActive(window.__vehicleType);
 
-      // ---- Luggage Accordion ----
-      const acc   = document.getElementById("luggageAccordion");
+      // Luggage Accordion
+      const acc=document.getElementById("luggageAccordion");
       if(!acc) return;
-      const tog   = acc.querySelector(".luggage-summary");
-      const panel = acc.querySelector(".luggage-body");
+      const tog=acc.querySelector(".luggage-summary");
+      const panel=acc.querySelector(".luggage-body");
       if(!tog||!panel) return;
 
       function setOpen(on){
@@ -302,7 +301,7 @@
         if(e.key==="ArrowDown" && acc.classList.contains("open")) panel.focus?.();
       });
 
-      setOpen(false); // start closed
+      setOpen(false);
     });
   </script>
 </body>
